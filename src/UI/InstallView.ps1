@@ -16,31 +16,31 @@ function Initialize-WinToolInstallView {
         $header.ColumnDefinitions.Add((New-WinToolColumn -Auto))
 
         $titleStack = New-Object System.Windows.Controls.StackPanel
-        $titleStack.Children.Add((New-WinToolText -Text ([string]$category.name) -Size 18 -Weight "SemiBold"))
+        [void]$titleStack.Children.Add((New-WinToolText -Text ([string]$category.name) -Size 18 -Weight "SemiBold"))
         $description = [string](Get-WinToolNote -Object $category -Name "description" -Default "")
-        $titleStack.Children.Add((New-WinToolText -Text $description -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 4, 16, 0))))
+        [void]$titleStack.Children.Add((New-WinToolText -Text $description -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 4, 16, 0))))
         [System.Windows.Controls.Grid]::SetColumn($titleStack, 0)
-        $header.Children.Add($titleStack)
+        [void]$header.Children.Add($titleStack)
 
         $selectAll = New-Object System.Windows.Controls.CheckBox
         $selectAll.Content = "Select all"
         $selectAll.VerticalAlignment = "Center"
         $selectAll.IsThreeState = $true
         [System.Windows.Controls.Grid]::SetColumn($selectAll, 1)
-        $header.Children.Add($selectAll)
-        $stack.Children.Add($header)
+        [void]$header.Children.Add($selectAll)
+        [void]$stack.Children.Add($header)
 
         $appsPanel = New-Object System.Windows.Controls.StackPanel
         $appsPanel.Margin = [System.Windows.Thickness]::new(0, 12, 0, 0)
         $appRows = @()
         foreach ($app in @(Get-WinToolNote -Object $category -Name "apps" -Default @())) {
             $row = New-WinToolAppRow -App $app -CategoryName ([string]$category.name)
-            $appsPanel.Children.Add($row.Panel)
+            [void]$appsPanel.Children.Add($row.Panel)
             $appRows += $row
         }
-        $stack.Children.Add($appsPanel)
+        [void]$stack.Children.Add($appsPanel)
         $card.Child = $stack
-        $hostPanel.Children.Add($card)
+        [void]$hostPanel.Children.Add($card)
 
         $categoryRow = [pscustomobject]@{
             Id = [string]$category.id
@@ -104,14 +104,14 @@ function New-WinToolAppRow {
     $checkbox.VerticalAlignment = "Top"
     $checkbox.Margin = [System.Windows.Thickness]::new(0, 2, 10, 0)
     [System.Windows.Controls.Grid]::SetColumn($checkbox, 0)
-    $panel.Children.Add($checkbox)
+    [void]$panel.Children.Add($checkbox)
 
     $text = New-Object System.Windows.Controls.StackPanel
-    $text.Children.Add((New-WinToolText -Text ([string]$App.name) -Weight "SemiBold"))
-    $text.Children.Add((New-WinToolText -Text ([string]$App.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
-    $text.Children.Add((New-WinToolText -Text ("winget: " + [string]$App.wingetId) -Size 12 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
+    [void]$text.Children.Add((New-WinToolText -Text ([string]$App.name) -Weight "SemiBold"))
+    [void]$text.Children.Add((New-WinToolText -Text ([string]$App.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
+    [void]$text.Children.Add((New-WinToolText -Text ("winget: " + [string]$App.wingetId) -Size 12 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
     [System.Windows.Controls.Grid]::SetColumn($text, 1)
-    $panel.Children.Add($text)
+    [void]$panel.Children.Add($text)
 
     $search = (@([string]$App.name, [string]$App.description, [string]$App.wingetId, [string]$App.id, $tags, $CategoryName) -join " ")
     return [pscustomobject]@{

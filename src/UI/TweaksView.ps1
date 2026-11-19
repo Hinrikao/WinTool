@@ -15,7 +15,7 @@ function Initialize-WinToolTweakView {
         $button.Add_Click({
             Select-WinToolPreset -Preset $boundPreset
         }.GetNewClosure())
-        $presetPanel.Children.Add($button)
+        [void]$presetPanel.Children.Add($button)
     }
 
     $hostPanel = Get-WinToolUi -Name "TweakCategories"
@@ -36,16 +36,16 @@ function Initialize-WinToolTweakView {
     foreach ($categoryName in $order) {
         $card = New-WinToolCard
         $stack = New-Object System.Windows.Controls.StackPanel
-        $stack.Children.Add((New-WinToolText -Text $categoryName -Size 18 -Weight "SemiBold" -Margin ([System.Windows.Thickness]::new(0, 0, 0, 10))))
+        [void]$stack.Children.Add((New-WinToolText -Text $categoryName -Size 18 -Weight "SemiBold" -Margin ([System.Windows.Thickness]::new(0, 0, 0, 10))))
         $rows = @()
         foreach ($tweak in @($groups[$categoryName])) {
             $row = New-WinToolTweakRow -Tweak $tweak -CategoryName $categoryName
-            $stack.Children.Add($row.Panel)
+            [void]$stack.Children.Add($row.Panel)
             $rows += $row
             $script:WinToolState.TweakRows += $row
         }
         $card.Child = $stack
-        $hostPanel.Children.Add($card)
+        [void]$hostPanel.Children.Add($card)
         $script:WinToolState.TweakGroups += [pscustomobject]@{
             Name = $categoryName
             Card = $card
@@ -82,22 +82,22 @@ function New-WinToolTweakRow {
     $checkbox.VerticalAlignment = "Top"
     $checkbox.Margin = [System.Windows.Thickness]::new(0, 3, 10, 0)
     [System.Windows.Controls.Grid]::SetColumn($checkbox, 0)
-    $panel.Children.Add($checkbox)
+    [void]$panel.Children.Add($checkbox)
 
     $text = New-Object System.Windows.Controls.StackPanel
     $title = New-Object System.Windows.Controls.StackPanel
     $title.Orientation = "Horizontal"
-    $title.Children.Add((New-WinToolText -Text ([string]$Tweak.name) -Weight "SemiBold"))
+    [void]$title.Children.Add((New-WinToolText -Text ([string]$Tweak.name) -Weight "SemiBold"))
     $risk = [string](Get-WinToolNote -Object $Tweak -Name "risk" -Default "safe")
     $badgeText = "Safe"
     if ($risk -eq "caution") {
         $badgeText = "Caution"
     }
-    $title.Children.Add((New-WinToolBadge -Text $badgeText -Kind $risk))
-    $text.Children.Add($title)
-    $text.Children.Add((New-WinToolText -Text ([string]$Tweak.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 4, 0, 0))))
+    [void]$title.Children.Add((New-WinToolBadge -Text $badgeText -Kind $risk))
+    [void]$text.Children.Add($title)
+    [void]$text.Children.Add((New-WinToolText -Text ([string]$Tweak.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 4, 0, 0))))
     [System.Windows.Controls.Grid]::SetColumn($text, 1)
-    $panel.Children.Add($text)
+    [void]$panel.Children.Add($text)
 
     $search = (@([string]$Tweak.name, [string]$Tweak.description, [string]$Tweak.id, $CategoryName) -join " ")
     return [pscustomobject]@{

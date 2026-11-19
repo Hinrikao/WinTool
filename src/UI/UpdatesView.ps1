@@ -34,7 +34,7 @@ function Initialize-WinToolUpdateView {
         $button.Add_Click({
             Open-WinToolUri -Uri ([string]$args[0].Tag)
         })
-        $panel.Children.Add($button)
+        [void]$panel.Children.Add($button)
     }
 
     (Get-WinToolUi -Name "ScanDrivers").Add_Click({ Invoke-WinToolScanClick })

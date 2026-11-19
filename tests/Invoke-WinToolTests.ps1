@@ -229,6 +229,28 @@ Invoke-WinToolCase -Name "Every script parses and the window names exist" -Body 
     }
 }
 
+Invoke-WinToolCase -Name "UI collection adds do not leak indexes" -Body {
+    $roots = @(
+        (Join-Path $script:WinToolRoot "src"),
+        (Join-Path $script:WinToolRoot "build"),
+        (Join-Path $script:WinToolRoot "tests")
+    )
+    $pattern = '\.(Children|Items)\.Add\('
+    foreach ($rootPath in $roots) {
+        foreach ($file in (Get-ChildItem -LiteralPath $rootPath -Recurse -Filter *.ps1)) {
+            $lineNumber = 0
+            foreach ($line in [System.IO.File]::ReadAllLines($file.FullName)) {
+                $lineNumber++
+                if ($line -notmatch $pattern) {
+                    continue
+                }
+                $suppressed = $line -match '\[void\]' -or $line -match '\$null\s*=' -or $line -match '\|\s*Out-Null'
+                Test-WinToolExpectation -Condition $suppressed -Message ("Uncaptured collection Add in " + $file.Name + ":" + $lineNumber)
+            }
+        }
+    }
+}
+
 Invoke-WinToolCase -Name "The single-file build embeds the catalogs" -Body {
     $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-build-" + [guid]::NewGuid().ToString() + ".ps1")
     try {
