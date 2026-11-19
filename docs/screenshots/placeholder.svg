@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="720" viewBox="0 0 1120 720" role="img" aria-label="Placeholder drawing of the WinTool window">
+  <rect width="1120" height="720" rx="28" fill="#EEF2F7"/>
+  <rect x="28" y="28" width="240" height="664" rx="20" fill="#152033"/>
+  <text x="52" y="78" fill="#FFFFFF" font-family="Segoe UI, sans-serif" font-size="28" font-weight="600">WinTool</text>
+  <text x="52" y="108" fill="#A9B6C9" font-family="Segoe UI, sans-serif" font-size="13">Fresh Windows 11, calmly.</text>
+  <rect x="48" y="140" width="200" height="42" rx="10" fill="#2F6FED"/>
+  <text x="68" y="166" fill="#FFFFFF" font-family="Segoe UI, sans-serif" font-size="15">Install</text>
+  <text x="68" y="214" fill="#E7EEF8" font-family="Segoe UI, sans-serif" font-size="15">Tweaks</text>
+  <text x="68" y="258" fill="#E7EEF8" font-family="Segoe UI, sans-serif" font-size="15">Terminal</text>
+  <text x="68" y="302" fill="#E7EEF8" font-family="Segoe UI, sans-serif" font-size="15">Updates</text>
+  <text x="68" y="346" fill="#E7EEF8" font-family="Segoe UI, sans-serif" font-size="15">Config</text>
+  <text x="292" y="86" fill="#152033" font-family="Segoe UI, sans-serif" font-size="28" font-weight="600">Install</text>
+  <text x="292" y="116" fill="#5E6E86" font-family="Segoe UI, sans-serif" font-size="14">Choose apps. WinTool installs them with winget.</text>
+  <rect x="292" y="146" width="780" height="92" rx="16" fill="#FFFFFF" stroke="#E1E8F2"/>
+  <text x="316" y="180" fill="#152033" font-family="Segoe UI, sans-serif" font-size="16" font-weight="600">Browsers</text>
+  <text x="316" y="206" fill="#5E6E86" font-family="Segoe UI, sans-serif" font-size="13">Firefox, Chrome, Brave, and a few others.</text>
+  <rect x="292" y="254" width="780" height="92" rx="16" fill="#FFFFFF" stroke="#E1E8F2"/>
+  <text x="316" y="288" fill="#152033" font-family="Segoe UI, sans-serif" font-size="16" font-weight="600">Development</text>
+  <text x="316" y="314" fill="#5E6E86" font-family="Segoe UI, sans-serif" font-size="13">Editors, Git, languages, and terminals.</text>
+  <rect x="292" y="520" width="780" height="150" rx="16" fill="#101826"/>
+  <text x="316" y="552" fill="#FFFFFF" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600">Ready</text>
+  <text x="316" y="586" fill="#D7E2F0" font-family="Consolas, monospace" font-size="13">Welcome to WinTool. Choose what you want, then run it.</text>
+  <text x="292" y="700" fill="#8A9BB3" font-family="Segoe UI, sans-serif" font-size="13">Placeholder drawing. Replace this file with a screenshot taken on Windows.</text>
+</svg>

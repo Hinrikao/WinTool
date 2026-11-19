@@ -1,0 +1,756 @@
+{
+  "schemaVersion": 1,
+  "themes": [
+    {
+      "id": "1_shell",
+      "file": "1_shell.omp.json",
+      "name": "1 shell"
+    },
+    {
+      "id": "M365Princess",
+      "file": "M365Princess.omp.json",
+      "name": "M365Princess"
+    },
+    {
+      "id": "agnoster.minimal",
+      "file": "agnoster.minimal.omp.json",
+      "name": "agnoster minimal"
+    },
+    {
+      "id": "agnoster",
+      "file": "agnoster.omp.json",
+      "name": "agnoster",
+      "preview": [
+        {
+          "text": " # ",
+          "color": "#1B2230"
+        },
+        {
+          "text": " ~/src ",
+          "color": "#0E8F78"
+        },
+        {
+          "text": " main ",
+          "color": "#2F6FED"
+        }
+      ]
+    },
+    {
+      "id": "agnosterplus",
+      "file": "agnosterplus.omp.json",
+      "name": "agnosterplus"
+    },
+    {
+      "id": "aliens",
+      "file": "aliens.omp.json",
+      "name": "aliens"
+    },
+    {
+      "id": "amro",
+      "file": "amro.omp.json",
+      "name": "amro"
+    },
+    {
+      "id": "atomic",
+      "file": "atomic.omp.json",
+      "name": "atomic",
+      "preview": [
+        {
+          "text": "\u276f ",
+          "color": "#F07178"
+        },
+        {
+          "text": "~/src",
+          "color": "#A7B3C9"
+        },
+        {
+          "text": " git",
+          "color": "#3DDC97"
+        }
+      ]
+    },
+    {
+      "id": "atomicBit",
+      "file": "atomicBit.omp.json",
+      "name": "atomicBit"
+    },
+    {
+      "id": "avit",
+      "file": "avit.omp.json",
+      "name": "avit"
+    },
+    {
+      "id": "blue-owl",
+      "file": "blue-owl.omp.json",
+      "name": "blue owl"
+    },
+    {
+      "id": "blueish",
+      "file": "blueish.omp.json",
+      "name": "blueish"
+    },
+    {
+      "id": "bubbles",
+      "file": "bubbles.omp.json",
+      "name": "bubbles"
+    },
+    {
+      "id": "bubblesextra",
+      "file": "bubblesextra.omp.json",
+      "name": "bubblesextra"
+    },
+    {
+      "id": "bubblesline",
+      "file": "bubblesline.omp.json",
+      "name": "bubblesline"
+    },
+    {
+      "id": "capr4n",
+      "file": "capr4n.omp.json",
+      "name": "capr4n"
+    },
+    {
+      "id": "catppuccin",
+      "file": "catppuccin.omp.json",
+      "name": "catppuccin"
+    },
+    {
+      "id": "catppuccin_frappe",
+      "file": "catppuccin_frappe.omp.json",
+      "name": "catppuccin frappe"
+    },
+    {
+      "id": "catppuccin_latte",
+      "file": "catppuccin_latte.omp.json",
+      "name": "catppuccin latte"
+    },
+    {
+      "id": "catppuccin_macchiato",
+      "file": "catppuccin_macchiato.omp.json",
+      "name": "catppuccin macchiato"
+    },
+    {
+      "id": "catppuccin_mocha",
+      "file": "catppuccin_mocha.omp.json",
+      "name": "catppuccin mocha",
+      "preview": [
+        {
+          "text": "~/src",
+          "color": "#CBA6F7"
+        },
+        {
+          "text": " main",
+          "color": "#A6E3A1"
+        },
+        {
+          "text": "\n\u276f ",
+          "color": "#89B4FA"
+        }
+      ]
+    },
+    {
+      "id": "cert",
+      "file": "cert.omp.json",
+      "name": "cert"
+    },
+    {
+      "id": "chips",
+      "file": "chips.omp.json",
+      "name": "chips"
+    },
+    {
+      "id": "cinnamon",
+      "file": "cinnamon.omp.json",
+      "name": "cinnamon"
+    },
+    {
+      "id": "clean-detailed",
+      "file": "clean-detailed.omp.json",
+      "name": "clean detailed"
+    },
+    {
+      "id": "cloud-context",
+      "file": "cloud-context.omp.json",
+      "name": "cloud context"
+    },
+    {
+      "id": "cloud-native-azure",
+      "file": "cloud-native-azure.omp.json",
+      "name": "cloud native azure"
+    },
+    {
+      "id": "cobalt2",
+      "file": "cobalt2.omp.json",
+      "name": "cobalt2"
+    },
+    {
+      "id": "craver",
+      "file": "craver.omp.json",
+      "name": "craver"
+    },
+    {
+      "id": "darkblood",
+      "file": "darkblood.omp.json",
+      "name": "darkblood"
+    },
+    {
+      "id": "di4am0nd",
+      "file": "di4am0nd.omp.json",
+      "name": "di4am0nd"
+    },
+    {
+      "id": "dracula",
+      "file": "dracula.omp.json",
+      "name": "dracula",
+      "preview": [
+        {
+          "text": "\u276f ",
+          "color": "#FF79C6"
+        },
+        {
+          "text": "~/src",
+          "color": "#8BE9FD"
+        },
+        {
+          "text": " main",
+          "color": "#50FA7B"
+        }
+      ]
+    },
+    {
+      "id": "easy-term",
+      "file": "easy-term.omp.json",
+      "name": "easy term"
+    },
+    {
+      "id": "emodipt-extend",
+      "file": "emodipt-extend.omp.json",
+      "name": "emodipt extend"
+    },
+    {
+      "id": "emodipt",
+      "file": "emodipt.omp.json",
+      "name": "emodipt"
+    },
+    {
+      "id": "fish",
+      "file": "fish.omp.json",
+      "name": "fish"
+    },
+    {
+      "id": "free-ukraine",
+      "file": "free-ukraine.omp.json",
+      "name": "free ukraine"
+    },
+    {
+      "id": "froczh",
+      "file": "froczh.omp.json",
+      "name": "froczh"
+    },
+    {
+      "id": "gmay",
+      "file": "gmay.omp.json",
+      "name": "gmay"
+    },
+    {
+      "id": "grandpa-style",
+      "file": "grandpa-style.omp.json",
+      "name": "grandpa style"
+    },
+    {
+      "id": "gruvbox",
+      "file": "gruvbox.omp.json",
+      "name": "gruvbox"
+    },
+    {
+      "id": "half-life",
+      "file": "half-life.omp.json",
+      "name": "half life"
+    },
+    {
+      "id": "honukai",
+      "file": "honukai.omp.json",
+      "name": "honukai"
+    },
+    {
+      "id": "hotstick.minimal",
+      "file": "hotstick.minimal.omp.json",
+      "name": "hotstick minimal"
+    },
+    {
+      "id": "hul10",
+      "file": "hul10.omp.json",
+      "name": "hul10"
+    },
+    {
+      "id": "hunk",
+      "file": "hunk.omp.json",
+      "name": "hunk"
+    },
+    {
+      "id": "huvix",
+      "file": "huvix.omp.json",
+      "name": "huvix"
+    },
+    {
+      "id": "if_tea",
+      "file": "if_tea.omp.json",
+      "name": "if tea"
+    },
+    {
+      "id": "illusi0n",
+      "file": "illusi0n.omp.json",
+      "name": "illusi0n"
+    },
+    {
+      "id": "iterm2",
+      "file": "iterm2.omp.json",
+      "name": "iterm2"
+    },
+    {
+      "id": "jandedobbeleer-accessible",
+      "file": "jandedobbeleer-accessible.omp.json",
+      "name": "jandedobbeleer accessible"
+    },
+    {
+      "id": "jandedobbeleer",
+      "file": "jandedobbeleer.omp.json",
+      "name": "jandedobbeleer",
+      "preview": [
+        {
+          "text": "~/src",
+          "color": "#5B8DEF"
+        },
+        {
+          "text": " main",
+          "color": "#3DDC97"
+        },
+        {
+          "text": "\n\u276f ",
+          "color": "#E8EDF7"
+        }
+      ]
+    },
+    {
+      "id": "jblab_2021",
+      "file": "jblab_2021.omp.json",
+      "name": "jblab 2021"
+    },
+    {
+      "id": "jonnychipz",
+      "file": "jonnychipz.omp.json",
+      "name": "jonnychipz"
+    },
+    {
+      "id": "json",
+      "file": "json.omp.json",
+      "name": "json"
+    },
+    {
+      "id": "jtracey93",
+      "file": "jtracey93.omp.json",
+      "name": "jtracey93"
+    },
+    {
+      "id": "jv_sitecorian",
+      "file": "jv_sitecorian.omp.json",
+      "name": "jv sitecorian"
+    },
+    {
+      "id": "kali",
+      "file": "kali.omp.json",
+      "name": "kali"
+    },
+    {
+      "id": "kushal",
+      "file": "kushal.omp.json",
+      "name": "kushal"
+    },
+    {
+      "id": "lambda",
+      "file": "lambda.omp.json",
+      "name": "lambda"
+    },
+    {
+      "id": "lambdageneration",
+      "file": "lambdageneration.omp.json",
+      "name": "lambdageneration"
+    },
+    {
+      "id": "larserikfinholt",
+      "file": "larserikfinholt.omp.json",
+      "name": "larserikfinholt"
+    },
+    {
+      "id": "lightgreen",
+      "file": "lightgreen.omp.json",
+      "name": "lightgreen"
+    },
+    {
+      "id": "marcduiker",
+      "file": "marcduiker.omp.json",
+      "name": "marcduiker"
+    },
+    {
+      "id": "markbull",
+      "file": "markbull.omp.json",
+      "name": "markbull"
+    },
+    {
+      "id": "material",
+      "file": "material.omp.json",
+      "name": "material"
+    },
+    {
+      "id": "microverse-power",
+      "file": "microverse-power.omp.json",
+      "name": "microverse power"
+    },
+    {
+      "id": "mojada",
+      "file": "mojada.omp.json",
+      "name": "mojada"
+    },
+    {
+      "id": "montys",
+      "file": "montys.omp.json",
+      "name": "montys"
+    },
+    {
+      "id": "mt",
+      "file": "mt.omp.json",
+      "name": "mt"
+    },
+    {
+      "id": "multiverse-neon",
+      "file": "multiverse-neon.omp.json",
+      "name": "multiverse neon"
+    },
+    {
+      "id": "negligible",
+      "file": "negligible.omp.json",
+      "name": "negligible"
+    },
+    {
+      "id": "neko",
+      "file": "neko.omp.json",
+      "name": "neko"
+    },
+    {
+      "id": "night-owl",
+      "file": "night-owl.omp.json",
+      "name": "night owl",
+      "preview": [
+        {
+          "text": "~/src",
+          "color": "#82AAFF"
+        },
+        {
+          "text": " main",
+          "color": "#C3E88D"
+        },
+        {
+          "text": "\n\u276f ",
+          "color": "#F78C6C"
+        }
+      ]
+    },
+    {
+      "id": "nordtron",
+      "file": "nordtron.omp.json",
+      "name": "nordtron"
+    },
+    {
+      "id": "nu4a",
+      "file": "nu4a.omp.json",
+      "name": "nu4a"
+    },
+    {
+      "id": "onehalf.minimal",
+      "file": "onehalf.minimal.omp.json",
+      "name": "onehalf minimal"
+    },
+    {
+      "id": "paradox",
+      "file": "paradox.omp.json",
+      "name": "paradox",
+      "preview": [
+        {
+          "text": "WS ",
+          "color": "#E0B15A"
+        },
+        {
+          "text": "~/src",
+          "color": "#6C9BFF"
+        },
+        {
+          "text": "\n\u276f ",
+          "color": "#F08AA8"
+        }
+      ]
+    },
+    {
+      "id": "pararussel",
+      "file": "pararussel.omp.json",
+      "name": "pararussel"
+    },
+    {
+      "id": "patriksvensson",
+      "file": "patriksvensson.omp.json",
+      "name": "patriksvensson"
+    },
+    {
+      "id": "peru",
+      "file": "peru.omp.json",
+      "name": "peru"
+    },
+    {
+      "id": "pixelrobots",
+      "file": "pixelrobots.omp.json",
+      "name": "pixelrobots"
+    },
+    {
+      "id": "plague",
+      "file": "plague.omp.json",
+      "name": "plague"
+    },
+    {
+      "id": "poshmon",
+      "file": "poshmon.omp.json",
+      "name": "poshmon"
+    },
+    {
+      "id": "powerlevel10k_classic",
+      "file": "powerlevel10k_classic.omp.json",
+      "name": "powerlevel10k classic",
+      "preview": [
+        {
+          "text": "~/src",
+          "color": "#E0B15A"
+        },
+        {
+          "text": " main",
+          "color": "#6C9BFF"
+        },
+        {
+          "text": "\n\u276f ",
+          "color": "#3DDC97"
+        }
+      ]
+    },
+    {
+      "id": "powerlevel10k_lean",
+      "file": "powerlevel10k_lean.omp.json",
+      "name": "powerlevel10k lean"
+    },
+    {
+      "id": "powerlevel10k_modern",
+      "file": "powerlevel10k_modern.omp.json",
+      "name": "powerlevel10k modern"
+    },
+    {
+      "id": "powerlevel10k_rainbow",
+      "file": "powerlevel10k_rainbow.omp.json",
+      "name": "powerlevel10k rainbow"
+    },
+    {
+      "id": "powerline",
+      "file": "powerline.omp.json",
+      "name": "powerline"
+    },
+    {
+      "id": "probua.minimal",
+      "file": "probua.minimal.omp.json",
+      "name": "probua minimal"
+    },
+    {
+      "id": "pure",
+      "file": "pure.omp.json",
+      "name": "pure"
+    },
+    {
+      "id": "quick-term",
+      "file": "quick-term.omp.json",
+      "name": "quick term"
+    },
+    {
+      "id": "remk",
+      "file": "remk.omp.json",
+      "name": "remk"
+    },
+    {
+      "id": "robbyrussell",
+      "file": "robbyrussell.omp.json",
+      "name": "robbyrussell"
+    },
+    {
+      "id": "rudolfs-dark",
+      "file": "rudolfs-dark.omp.json",
+      "name": "rudolfs dark"
+    },
+    {
+      "id": "rudolfs-light",
+      "file": "rudolfs-light.omp.json",
+      "name": "rudolfs light"
+    },
+    {
+      "id": "sim-web",
+      "file": "sim-web.omp.json",
+      "name": "sim web"
+    },
+    {
+      "id": "slim",
+      "file": "slim.omp.json",
+      "name": "slim"
+    },
+    {
+      "id": "slimfat",
+      "file": "slimfat.omp.json",
+      "name": "slimfat"
+    },
+    {
+      "id": "smoothie",
+      "file": "smoothie.omp.json",
+      "name": "smoothie"
+    },
+    {
+      "id": "sonicboom_dark",
+      "file": "sonicboom_dark.omp.json",
+      "name": "sonicboom dark"
+    },
+    {
+      "id": "sonicboom_light",
+      "file": "sonicboom_light.omp.json",
+      "name": "sonicboom light"
+    },
+    {
+      "id": "sorin",
+      "file": "sorin.omp.json",
+      "name": "sorin"
+    },
+    {
+      "id": "space",
+      "file": "space.omp.json",
+      "name": "space"
+    },
+    {
+      "id": "spaceship",
+      "file": "spaceship.omp.json",
+      "name": "spaceship"
+    },
+    {
+      "id": "star",
+      "file": "star.omp.json",
+      "name": "star"
+    },
+    {
+      "id": "stelbent-compact.minimal",
+      "file": "stelbent-compact.minimal.omp.json",
+      "name": "stelbent compact minimal",
+      "preview": [
+        {
+          "text": "~/src",
+          "color": "#E8EDF7"
+        },
+        {
+          "text": " \u276f ",
+          "color": "#6C9BFF"
+        }
+      ]
+    },
+    {
+      "id": "stelbent.minimal",
+      "file": "stelbent.minimal.omp.json",
+      "name": "stelbent minimal"
+    },
+    {
+      "id": "takuya",
+      "file": "takuya.omp.json",
+      "name": "takuya"
+    },
+    {
+      "id": "the-unnamed",
+      "file": "the-unnamed.omp.json",
+      "name": "the unnamed"
+    },
+    {
+      "id": "thecyberden",
+      "file": "thecyberden.omp.json",
+      "name": "thecyberden"
+    },
+    {
+      "id": "tiwahu",
+      "file": "tiwahu.omp.json",
+      "name": "tiwahu"
+    },
+    {
+      "id": "tokyo",
+      "file": "tokyo.omp.json",
+      "name": "tokyo",
+      "preview": [
+        {
+          "text": "~/src",
+          "color": "#7AA2F7"
+        },
+        {
+          "text": " main",
+          "color": "#9ECE6A"
+        },
+        {
+          "text": "\n\u276f ",
+          "color": "#BB9AF7"
+        }
+      ]
+    },
+    {
+      "id": "tokyonight_storm",
+      "file": "tokyonight_storm.omp.json",
+      "name": "tokyonight storm"
+    },
+    {
+      "id": "tonybaloney",
+      "file": "tonybaloney.omp.json",
+      "name": "tonybaloney"
+    },
+    {
+      "id": "uew",
+      "file": "uew.omp.json",
+      "name": "uew"
+    },
+    {
+      "id": "unicorn",
+      "file": "unicorn.omp.json",
+      "name": "unicorn"
+    },
+    {
+      "id": "velvet",
+      "file": "velvet.omp.json",
+      "name": "velvet"
+    },
+    {
+      "id": "wholespace",
+      "file": "wholespace.omp.json",
+      "name": "wholespace"
+    },
+    {
+      "id": "wopian",
+      "file": "wopian.omp.json",
+      "name": "wopian"
+    },
+    {
+      "id": "xtoys",
+      "file": "xtoys.omp.json",
+      "name": "xtoys"
+    },
+    {
+      "id": "ys",
+      "file": "ys.omp.json",
+      "name": "ys"
+    },
+    {
+      "id": "zash",
+      "file": "zash.omp.json",
+      "name": "zash"
+    }
+  ]
+}
