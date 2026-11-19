@@ -4563,9 +4563,13 @@ function Set-WinToolBrushColor {
         [Parameter(Mandatory = $true)][string]$Key,
         [Parameter(Mandatory = $true)][string]$Hex
     )
-    $color = [System.Windows.Media.ColorConverter]::ConvertFromString($Hex)
-    $brush = New-Object System.Windows.Media.SolidColorBrush $color
-    $script:WinToolWindow.Resources[$Key] = $brush
+    $converted = [System.Windows.Media.ColorConverter]::ConvertFromString($Hex)
+    $color = [System.Windows.Media.Color]$converted
+    $brush = [System.Windows.Media.SolidColorBrush]::new($color)
+    if ($script:WinToolWindow.Resources.Contains($Key)) {
+        $script:WinToolWindow.Resources.Remove($Key)
+    }
+    $script:WinToolWindow.Resources.Add($Key, $brush)
 }
 
 function Set-WinToolTheme {
@@ -4614,8 +4618,8 @@ function Sync-WinToolAccentSwatch {
         if ($resolved -eq "light") {
             $hex = [string]$choice.Light
         }
-        $color = [System.Windows.Media.ColorConverter]::ConvertFromString($hex)
-        $swatch.Background = New-Object System.Windows.Media.SolidColorBrush $color
+        $converted = [System.Windows.Media.ColorConverter]::ConvertFromString($hex)
+        $swatch.Background = [System.Windows.Media.SolidColorBrush]::new([System.Windows.Media.Color]$converted)
         if ([string]$swatch.Tag -eq $selected) {
             $swatch.BorderThickness = [System.Windows.Thickness]::new(2)
             $swatch.SetResourceReference([System.Windows.Controls.Control]::BorderBrushProperty, "BrushSidebarText")
@@ -5954,7 +5958,8 @@ function Build-WinToolSchemeCard {
         $swatch = New-Object System.Windows.Controls.Border
         $swatch.Height = 36
         $swatch.CornerRadius = [System.Windows.CornerRadius]::new(8)
-        $swatch.Background = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.ColorConverter]::ConvertFromString([string]$scheme.background))
+        $swatchColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString([string]$scheme.background))
+        $swatch.Background = [System.Windows.Media.SolidColorBrush]::new($swatchColor)
         $swatch.Margin = [System.Windows.Thickness]::new(0, 8, 0, 0)
         $stack = New-Object System.Windows.Controls.StackPanel
         [void]$stack.Children.Add((New-WinToolText -Text ([string]$scheme.name) -Weight "SemiBold"))
@@ -6056,7 +6061,8 @@ function New-WinToolTerminalPreview {
     foreach ($segment in @($Segments)) {
         $run = New-Object System.Windows.Documents.Run
         $run.Text = [string]$segment.text
-        $run.Foreground = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.ColorConverter]::ConvertFromString([string]$segment.color))
+        $runColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString([string]$segment.color))
+        $run.Foreground = [System.Windows.Media.SolidColorBrush]::new($runColor)
         [void]$text.Inlines.Add($run)
     }
     $border.Child = $text

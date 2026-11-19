@@ -215,7 +215,8 @@ function Build-WinToolSchemeCard {
         $swatch = New-Object System.Windows.Controls.Border
         $swatch.Height = 36
         $swatch.CornerRadius = [System.Windows.CornerRadius]::new(8)
-        $swatch.Background = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.ColorConverter]::ConvertFromString([string]$scheme.background))
+        $swatchColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString([string]$scheme.background))
+        $swatch.Background = [System.Windows.Media.SolidColorBrush]::new($swatchColor)
         $swatch.Margin = [System.Windows.Thickness]::new(0, 8, 0, 0)
         $stack = New-Object System.Windows.Controls.StackPanel
         [void]$stack.Children.Add((New-WinToolText -Text ([string]$scheme.name) -Weight "SemiBold"))
@@ -317,7 +318,8 @@ function New-WinToolTerminalPreview {
     foreach ($segment in @($Segments)) {
         $run = New-Object System.Windows.Documents.Run
         $run.Text = [string]$segment.text
-        $run.Foreground = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.ColorConverter]::ConvertFromString([string]$segment.color))
+        $runColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString([string]$segment.color))
+        $run.Foreground = [System.Windows.Media.SolidColorBrush]::new($runColor)
         [void]$text.Inlines.Add($run)
     }
     $border.Child = $text

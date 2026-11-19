@@ -219,9 +219,13 @@ function Set-WinToolBrushColor {
         [Parameter(Mandatory = $true)][string]$Key,
         [Parameter(Mandatory = $true)][string]$Hex
     )
-    $color = [System.Windows.Media.ColorConverter]::ConvertFromString($Hex)
-    $brush = New-Object System.Windows.Media.SolidColorBrush $color
-    $script:WinToolWindow.Resources[$Key] = $brush
+    $converted = [System.Windows.Media.ColorConverter]::ConvertFromString($Hex)
+    $color = [System.Windows.Media.Color]$converted
+    $brush = [System.Windows.Media.SolidColorBrush]::new($color)
+    if ($script:WinToolWindow.Resources.Contains($Key)) {
+        $script:WinToolWindow.Resources.Remove($Key)
+    }
+    $script:WinToolWindow.Resources.Add($Key, $brush)
 }
 
 function Set-WinToolTheme {
@@ -270,8 +274,8 @@ function Sync-WinToolAccentSwatch {
         if ($resolved -eq "light") {
             $hex = [string]$choice.Light
         }
-        $color = [System.Windows.Media.ColorConverter]::ConvertFromString($hex)
-        $swatch.Background = New-Object System.Windows.Media.SolidColorBrush $color
+        $converted = [System.Windows.Media.ColorConverter]::ConvertFromString($hex)
+        $swatch.Background = [System.Windows.Media.SolidColorBrush]::new([System.Windows.Media.Color]$converted)
         if ([string]$swatch.Tag -eq $selected) {
             $swatch.BorderThickness = [System.Windows.Thickness]::new(2)
             $swatch.SetResourceReference([System.Windows.Controls.Control]::BorderBrushProperty, "BrushSidebarText")
