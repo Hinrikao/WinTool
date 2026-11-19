@@ -1,0 +1,495 @@
+{
+  "schemaVersion": 1,
+  "categories": [
+    {
+      "id": "browsers",
+      "name": "Browsers",
+      "description": "Pick the browsers you actually want on a new PC.",
+      "apps": [
+        {
+          "id": "firefox",
+          "name": "Firefox",
+          "description": "A fast browser from Mozilla, with strong tracking protection.",
+          "wingetId": "Mozilla.Firefox",
+          "tags": ["web", "privacy"]
+        },
+        {
+          "id": "chrome",
+          "name": "Google Chrome",
+          "description": "Google's browser, useful when a site expects it.",
+          "wingetId": "Google.Chrome",
+          "tags": ["web"]
+        },
+        {
+          "id": "brave",
+          "name": "Brave",
+          "description": "A Chromium browser that blocks many ads and trackers.",
+          "wingetId": "Brave.Brave",
+          "tags": ["web", "privacy"]
+        },
+        {
+          "id": "vivaldi",
+          "name": "Vivaldi",
+          "description": "A browser with panels, tab stacks, and lots of settings.",
+          "wingetId": "Vivaldi.Vivaldi",
+          "tags": ["web"]
+        },
+        {
+          "id": "librewolf",
+          "name": "LibreWolf",
+          "description": "A Firefox build with stricter privacy defaults.",
+          "wingetId": "LibreWolf.LibreWolf",
+          "tags": ["web", "privacy"]
+        },
+        {
+          "id": "opera",
+          "name": "Opera",
+          "description": "A Chromium browser with a built-in VPN and sidebar.",
+          "wingetId": "Opera.Opera",
+          "tags": ["web"]
+        }
+      ]
+    },
+    {
+      "id": "communication",
+      "name": "Communication",
+      "description": "Chat, calls, and team tools.",
+      "apps": [
+        {
+          "id": "discord",
+          "name": "Discord",
+          "description": "Voice, video, and text for communities and friend groups.",
+          "wingetId": "Discord.Discord",
+          "tags": ["chat", "voice"]
+        },
+        {
+          "id": "telegram",
+          "name": "Telegram",
+          "description": "A cloud messenger with desktop apps for personal chats.",
+          "wingetId": "Telegram.TelegramDesktop",
+          "tags": ["chat"]
+        },
+        {
+          "id": "signal",
+          "name": "Signal",
+          "description": "A private messenger with end-to-end encryption.",
+          "wingetId": "OpenWhisperSystems.Signal",
+          "tags": ["chat", "privacy"]
+        },
+        {
+          "id": "whatsapp",
+          "name": "WhatsApp",
+          "description": "The desktop companion for WhatsApp chats.",
+          "wingetId": "WhatsApp.WhatsApp",
+          "tags": ["chat"]
+        },
+        {
+          "id": "slack",
+          "name": "Slack",
+          "description": "Work chat for teams that already use Slack.",
+          "wingetId": "Slack.Slack",
+          "tags": ["work", "chat"]
+        },
+        {
+          "id": "teams",
+          "name": "Microsoft Teams",
+          "description": "Meetings and work chat from Microsoft.",
+          "wingetId": "Microsoft.Teams",
+          "tags": ["work", "meetings"]
+        },
+        {
+          "id": "zoom",
+          "name": "Zoom",
+          "description": "Video meetings that many schools and offices still use.",
+          "wingetId": "Zoom.Zoom",
+          "tags": ["meetings"]
+        },
+        {
+          "id": "element",
+          "name": "Element",
+          "description": "A Matrix chat client you can use with your own homeserver.",
+          "wingetId": "Element.Element",
+          "tags": ["chat", "privacy"]
+        }
+      ]
+    },
+    {
+      "id": "development",
+      "name": "Development",
+      "description": "Editors, languages, and everyday developer tools.",
+      "apps": [
+        {
+          "id": "vscode",
+          "name": "Visual Studio Code",
+          "description": "A popular editor for scripts, web apps, and notes.",
+          "wingetId": "Microsoft.VisualStudioCode",
+          "tags": ["editor", "code"]
+        },
+        {
+          "id": "visual-studio",
+          "name": "Visual Studio 2022",
+          "description": "Microsoft's full IDE. This install is large.",
+          "wingetId": "Microsoft.VisualStudio.2022.Community",
+          "tags": ["ide", "code"]
+        },
+        {
+          "id": "git",
+          "name": "Git",
+          "description": "Version control from the command line.",
+          "wingetId": "Git.Git",
+          "tags": ["code"]
+        },
+        {
+          "id": "github-desktop",
+          "name": "GitHub Desktop",
+          "description": "A simple window for Git repositories hosted on GitHub.",
+          "wingetId": "GitHub.GitHubDesktop",
+          "tags": ["code", "git"]
+        },
+        {
+          "id": "github-cli",
+          "name": "GitHub CLI",
+          "description": "Work with pull requests and issues from the terminal.",
+          "wingetId": "GitHub.cli",
+          "tags": ["code", "git"]
+        },
+        {
+          "id": "windows-terminal",
+          "name": "Windows Terminal",
+          "description": "A tabbed terminal. The Terminal tab can also set this up.",
+          "wingetId": "Microsoft.WindowsTerminal",
+          "tags": ["terminal"]
+        },
+        {
+          "id": "powershell-7",
+          "name": "PowerShell 7",
+          "description": "The current PowerShell, side by side with Windows PowerShell.",
+          "wingetId": "Microsoft.PowerShell",
+          "tags": ["terminal", "shell"]
+        },
+        {
+          "id": "nodejs-lts",
+          "name": "Node.js LTS",
+          "description": "The long-term support release of Node.js.",
+          "wingetId": "OpenJS.NodeJS.LTS",
+          "tags": ["language"]
+        },
+        {
+          "id": "python",
+          "name": "Python 3.13",
+          "description": "Python for scripts and tools. Change the winget id if you want another version.",
+          "wingetId": "Python.Python.3.13",
+          "tags": ["language"]
+        },
+        {
+          "id": "go",
+          "name": "Go",
+          "description": "The Go programming language.",
+          "wingetId": "GoLang.Go",
+          "tags": ["language"]
+        },
+        {
+          "id": "rustup",
+          "name": "Rustup",
+          "description": "The installer that keeps Rust toolchains up to date.",
+          "wingetId": "Rustlang.Rustup",
+          "tags": ["language"]
+        },
+        {
+          "id": "docker-desktop",
+          "name": "Docker Desktop",
+          "description": "Build and run containers. It needs a restart and a free Docker account for larger setups.",
+          "wingetId": "Docker.DockerDesktop",
+          "tags": ["containers"]
+        },
+        {
+          "id": "postman",
+          "name": "Postman",
+          "description": "A window for trying HTTP APIs.",
+          "wingetId": "Postman.Postman",
+          "tags": ["api"]
+        },
+        {
+          "id": "jetbrains-toolbox",
+          "name": "JetBrains Toolbox",
+          "description": "Installs and updates JetBrains IDEs.",
+          "wingetId": "JetBrains.Toolbox",
+          "tags": ["ide"]
+        },
+        {
+          "id": "azure-cli",
+          "name": "Azure CLI",
+          "description": "Manage Azure resources from the terminal.",
+          "wingetId": "Microsoft.AzureCLI",
+          "tags": ["cloud"]
+        },
+        {
+          "id": "notepadpp",
+          "name": "Notepad++",
+          "description": "A light editor that opens big text files quickly.",
+          "wingetId": "Notepad++.Notepad++",
+          "tags": ["editor"]
+        }
+      ]
+    },
+    {
+      "id": "gaming",
+      "name": "Gaming",
+      "description": "Stores and launchers. Game installs still happen inside each store.",
+      "apps": [
+        {
+          "id": "steam",
+          "name": "Steam",
+          "description": "Valve's game store and library.",
+          "wingetId": "Valve.Steam",
+          "tags": ["games", "store"]
+        },
+        {
+          "id": "epic",
+          "name": "Epic Games Launcher",
+          "description": "The launcher for the Epic Games Store.",
+          "wingetId": "EpicGames.EpicGamesLauncher",
+          "tags": ["games", "store"]
+        },
+        {
+          "id": "gog-galaxy",
+          "name": "GOG GALAXY",
+          "description": "A library for GOG and other stores you connect.",
+          "wingetId": "GOG.Galaxy",
+          "tags": ["games", "store"]
+        },
+        {
+          "id": "ubisoft",
+          "name": "Ubisoft Connect",
+          "description": "The launcher for Ubisoft games.",
+          "wingetId": "Ubisoft.Connect",
+          "tags": ["games", "store"]
+        },
+        {
+          "id": "minecraft",
+          "name": "Minecraft Launcher",
+          "description": "The official launcher for Minecraft.",
+          "wingetId": "Mojang.MinecraftLauncher",
+          "tags": ["games"]
+        },
+        {
+          "id": "prism",
+          "name": "Prism Launcher",
+          "description": "A community launcher for managing Minecraft instances.",
+          "wingetId": "PrismLauncher.PrismLauncher",
+          "tags": ["games"]
+        },
+        {
+          "id": "heroic",
+          "name": "Heroic Games Launcher",
+          "description": "A community launcher for Epic and GOG libraries.",
+          "wingetId": "HeroicGamesLauncher.HeroicGamesLauncher",
+          "tags": ["games"]
+        },
+        {
+          "id": "playnite",
+          "name": "Playnite",
+          "description": "One library window for games from several stores.",
+          "wingetId": "Playnite.Playnite",
+          "tags": ["games"]
+        }
+      ]
+    },
+    {
+      "id": "media",
+      "name": "Media",
+      "description": "Play, edit, and record.",
+      "apps": [
+        {
+          "id": "vlc",
+          "name": "VLC",
+          "description": "Plays almost any video or audio file.",
+          "wingetId": "VideoLAN.VLC",
+          "tags": ["video", "audio"]
+        },
+        {
+          "id": "spotify",
+          "name": "Spotify",
+          "description": "Music streaming. Playback needs a Spotify account.",
+          "wingetId": "Spotify.Spotify",
+          "tags": ["music"]
+        },
+        {
+          "id": "foobar2000",
+          "name": "foobar2000",
+          "description": "A compact music player for local files.",
+          "wingetId": "PeterPawlowski.foobar2000",
+          "tags": ["music"]
+        },
+        {
+          "id": "audacity",
+          "name": "Audacity",
+          "description": "Record and edit audio.",
+          "wingetId": "Audacity.Audacity",
+          "tags": ["audio"]
+        },
+        {
+          "id": "obs",
+          "name": "OBS Studio",
+          "description": "Record the screen and stream when you choose to.",
+          "wingetId": "OBSProject.OBSStudio",
+          "tags": ["video"]
+        },
+        {
+          "id": "handbrake",
+          "name": "HandBrake",
+          "description": "Convert video files to smaller formats.",
+          "wingetId": "HandBrake.HandBrake",
+          "tags": ["video"]
+        },
+        {
+          "id": "gimp",
+          "name": "GIMP",
+          "description": "Edit photos and images.",
+          "wingetId": "GIMP.GIMP",
+          "tags": ["image"]
+        },
+        {
+          "id": "krita",
+          "name": "Krita",
+          "description": "Draw and paint.",
+          "wingetId": "KDE.Krita",
+          "tags": ["image", "draw"]
+        },
+        {
+          "id": "paint-net",
+          "name": "Paint.NET",
+          "description": "A straightforward image editor.",
+          "wingetId": "dotPDN.Paint.NET",
+          "tags": ["image"]
+        }
+      ]
+    },
+    {
+      "id": "utilities",
+      "name": "Utilities",
+      "description": "Small tools that make a fresh PC more comfortable.",
+      "apps": [
+        {
+          "id": "powertoys",
+          "name": "PowerToys",
+          "description": "Extra Windows tools such as FancyZones and PowerRename.",
+          "wingetId": "Microsoft.PowerToys",
+          "tags": ["windows"]
+        },
+        {
+          "id": "7zip",
+          "name": "7-Zip",
+          "description": "Open and create zip, 7z, and many other archives.",
+          "wingetId": "7zip.7zip",
+          "tags": ["files"]
+        },
+        {
+          "id": "everything",
+          "name": "Everything",
+          "description": "Find files by name almost instantly.",
+          "wingetId": "voidtools.Everything",
+          "tags": ["files", "search"]
+        },
+        {
+          "id": "wiztree",
+          "name": "WizTree",
+          "description": "See which folders use the most disk space.",
+          "wingetId": "AntibodySoftware.WizTree",
+          "tags": ["files", "disk"]
+        },
+        {
+          "id": "sharex",
+          "name": "ShareX",
+          "description": "Capture screenshots and short screen recordings.",
+          "wingetId": "ShareX.ShareX",
+          "tags": ["screenshot"]
+        },
+        {
+          "id": "bitwarden",
+          "name": "Bitwarden",
+          "description": "A password manager with a free personal vault.",
+          "wingetId": "Bitwarden.Bitwarden",
+          "tags": ["security", "passwords"]
+        },
+        {
+          "id": "keepassxc",
+          "name": "KeePassXC",
+          "description": "A password manager that keeps the database on your PC.",
+          "wingetId": "KeePassXCTeam.KeePassXC",
+          "tags": ["security", "passwords"]
+        },
+        {
+          "id": "sumatra",
+          "name": "SumatraPDF",
+          "description": "A light reader for PDF and ebook files.",
+          "wingetId": "SumatraPDF.SumatraPDF",
+          "tags": ["pdf"]
+        },
+        {
+          "id": "libreoffice",
+          "name": "LibreOffice",
+          "description": "Documents, spreadsheets, and slides without a subscription.",
+          "wingetId": "TheDocumentFoundation.LibreOffice",
+          "tags": ["office"]
+        },
+        {
+          "id": "obsidian",
+          "name": "Obsidian",
+          "description": "Notes stored as local Markdown files.",
+          "wingetId": "Obsidian.Obsidian",
+          "tags": ["notes"]
+        },
+        {
+          "id": "notion",
+          "name": "Notion",
+          "description": "Shared notes and docs. Needs a Notion account.",
+          "wingetId": "Notion.Notion",
+          "tags": ["notes"]
+        },
+        {
+          "id": "hwinfo",
+          "name": "HWiNFO",
+          "description": "Read temperatures, voltages, and hardware details.",
+          "wingetId": "REALiX.HWiNFO",
+          "tags": ["hardware"]
+        },
+        {
+          "id": "putty",
+          "name": "PuTTY",
+          "description": "SSH and serial connections.",
+          "wingetId": "PuTTY.PuTTY",
+          "tags": ["ssh", "network"]
+        },
+        {
+          "id": "winscp",
+          "name": "WinSCP",
+          "description": "Copy files over SFTP, FTP, and SCP.",
+          "wingetId": "WinSCP.WinSCP",
+          "tags": ["sftp", "files"]
+        },
+        {
+          "id": "qbittorrent",
+          "name": "qBittorrent",
+          "description": "A BitTorrent client without ads.",
+          "wingetId": "qBittorrent.qBittorrent",
+          "tags": ["download"]
+        },
+        {
+          "id": "rufus",
+          "name": "Rufus",
+          "description": "Write a Windows or Linux installer to a USB drive.",
+          "wingetId": "Rufus.Rufus",
+          "tags": ["usb"]
+        },
+        {
+          "id": "etcher",
+          "name": "balenaEtcher",
+          "description": "Flash an OS image to a USB drive or SD card.",
+          "wingetId": "Balena.Etcher",
+          "tags": ["usb"]
+        }
+      ]
+    }
+  ]
+}

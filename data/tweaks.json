@@ -1,0 +1,889 @@
+{
+  "schemaVersion": 1,
+  "presets": [
+    {
+      "id": "minimal",
+      "name": "Minimal",
+      "description": "File Explorer and dark mode only. Easy to undo."
+    },
+    {
+      "id": "recommended",
+      "name": "Recommended",
+      "description": "A calmer everyday PC: Explorer, dark mode, fewer suggestions, less telemetry, and a small set of inbox apps removed."
+    }
+  ],
+  "tweaks": [
+    {
+      "id": "show-file-extensions",
+      "name": "Show file extensions",
+      "description": "Always show extensions such as .pdf and .exe so a file's type is obvious.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["minimal", "recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "HideFileExt",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "HideFileExt",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "show-hidden-files",
+      "name": "Show hidden files",
+      "description": "Show files Windows marks as hidden. Protected system files stay hidden.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["minimal", "recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Hidden",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Hidden",
+            "value": 2,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "explorer-open-this-pc",
+      "name": "Open File Explorer to This PC",
+      "description": "New Explorer windows open on This PC. Undo opens Quick access, which is the usual default.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["minimal", "recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "LaunchTo",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "LaunchTo",
+            "value": 2,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "show-protected-system-files",
+      "name": "Show protected system files",
+      "description": "Also show files Windows hides to protect the system. Leave this off unless you need it.",
+      "category": "Explorer",
+      "risk": "caution",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "ShowSuperHidden",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "ShowSuperHidden",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "dark-mode",
+      "name": "Dark mode",
+      "description": "Use dark colors for Windows and for apps that follow the system theme. Undo returns both to light mode.",
+      "category": "Appearance",
+      "risk": "safe",
+      "refresh": "theme",
+      "presets": ["minimal", "recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "name": "AppsUseLightTheme",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "name": "SystemUsesLightTheme",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "name": "AppsUseLightTheme",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "name": "SystemUsesLightTheme",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "taskbar-search-icon",
+      "name": "Taskbar search as an icon",
+      "description": "Replace the wide search box with a search icon. Undo restores a search box.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+            "name": "SearchboxTaskbarMode",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+            "name": "SearchboxTaskbarMode",
+            "value": 2,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hide-widgets",
+      "name": "Hide the Widgets button",
+      "description": "Remove the Widgets button from the taskbar. The Widgets app is not uninstalled.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "TaskbarDa",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "TaskbarDa",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hide-chat-icon",
+      "name": "Hide the Chat button",
+      "description": "Remove the taskbar Chat button. Teams itself is not uninstalled.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "TaskbarMn",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "TaskbarMn",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hide-copilot-button",
+      "name": "Hide the Copilot button",
+      "description": "Remove the Copilot button from the taskbar when this version of Windows has one.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "ShowCopilotButton",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "ShowCopilotButton",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "enable-end-task",
+      "name": "End Task on the taskbar",
+      "description": "Add End Task to taskbar right-clicks so a frozen app can be closed without Task Manager.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings",
+            "name": "TaskbarEndTask",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\TaskbarDeveloperSettings",
+            "name": "TaskbarEndTask",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quiet-start-suggestions",
+      "name": "Turn off Start menu suggestions",
+      "description": "Stop the Start menu from recommending apps and tips.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Start_IrisRecommendations",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Start_IrisRecommendations",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quiet-tips-and-suggestions",
+      "name": "Turn off tips and suggested apps",
+      "description": "Reduce lock-screen tips, suggested apps, and other Windows promotional notices. Undo turns those notices back on.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SystemPaneSuggestionsEnabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SoftLandingEnabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-338388Enabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-338389Enabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-353694Enabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-353696Enabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-310093Enabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SilentInstalledAppsEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SystemPaneSuggestionsEnabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SoftLandingEnabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-338388Enabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-338389Enabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-353694Enabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-353696Enabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-310093Enabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SilentInstalledAppsEnabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-advertising-id",
+      "name": "Turn off the advertising ID",
+      "description": "Stop apps from using the Windows advertising ID for this account.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+            "name": "Enabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+            "name": "Enabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reduce-telemetry",
+      "name": "Reduce diagnostic data",
+      "description": "Ask Windows for the lowest diagnostic level this edition allows. Home and Pro often ignore a request for zero and keep required diagnostics. Undo removes the policy so Windows can use its own default.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+            "name": "AllowTelemetry",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\DataCollection",
+            "name": "AllowTelemetry",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
+            "name": "TailoredExperiencesWithDiagnosticDataEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "group",
+        "actions": [
+          {
+            "type": "registry-remove",
+            "entries": [
+              {
+                "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+                "name": "AllowTelemetry"
+              },
+              {
+                "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\DataCollection",
+                "name": "AllowTelemetry"
+              }
+            ]
+          },
+          {
+            "type": "registry",
+            "entries": [
+              {
+                "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
+                "name": "TailoredExperiencesWithDiagnosticDataEnabled",
+                "value": 1,
+                "kind": "DWord"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-activity-history",
+      "name": "Turn off activity history",
+      "description": "Stop Windows from collecting and uploading activity history for this PC. Undo removes the policy.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+            "name": "EnableActivityFeed",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+            "name": "PublishUserActivities",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+            "name": "UploadUserActivities",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+            "name": "EnableActivityFeed"
+          },
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+            "name": "PublishUserActivities"
+          },
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+            "name": "UploadUserActivities"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-bing-search",
+      "name": "Turn off Bing in Windows Search",
+      "description": "Keep Windows Search on local apps and files instead of web results. Undo allows web results again.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+            "name": "BingSearchEnabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Policies\\Microsoft\\Windows\\Explorer",
+            "name": "DisableSearchBoxSuggestions",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "group",
+        "actions": [
+          {
+            "type": "registry",
+            "entries": [
+              {
+                "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+                "name": "BingSearchEnabled",
+                "value": 1,
+                "kind": "DWord"
+              }
+            ]
+          },
+          {
+            "type": "registry-remove",
+            "entries": [
+              {
+                "path": "HKCU:\\Software\\Policies\\Microsoft\\Windows\\Explorer",
+                "name": "DisableSearchBoxSuggestions"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-diagtrack",
+      "name": "Disable the Connected User Experiences service",
+      "description": "Stop and disable the DiagTrack service, which sends diagnostic data. Undo sets it back to automatic. This is stronger than the diagnostic-data policy.",
+      "category": "Privacy",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "service",
+        "name": "DiagTrack",
+        "startupType": "Disabled",
+        "stop": true
+      },
+      "undo": {
+        "type": "service",
+        "name": "DiagTrack",
+        "startupType": "Automatic",
+        "stop": false
+      }
+    },
+    {
+      "id": "disable-compatibility-appraiser",
+      "name": "Disable the compatibility appraiser task",
+      "description": "Disable a scheduled task that collects app compatibility data. Undo enables the task again.",
+      "category": "Privacy",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "scheduled-task",
+        "taskPath": "\\Microsoft\\Windows\\Application Experience\\",
+        "taskName": "Microsoft Compatibility Appraiser",
+        "state": "Disabled"
+      },
+      "undo": {
+        "type": "scheduled-task",
+        "taskPath": "\\Microsoft\\Windows\\Application Experience\\",
+        "taskName": "Microsoft Compatibility Appraiser",
+        "state": "Enabled"
+      }
+    },
+    {
+      "id": "classic-context-menu",
+      "name": "Classic File Explorer right-click menu",
+      "description": "Show the full Windows 10 style menu instead of the shorter Windows 11 menu. Undo deletes only the key WinTool adds.",
+      "category": "Explorer",
+      "risk": "caution",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry-key",
+        "operation": "add",
+        "path": "HKCU:\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32",
+        "defaultValue": ""
+      },
+      "undo": {
+        "type": "registry-key",
+        "operation": "remove",
+        "path": "HKCU:\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}"
+      }
+    },
+    {
+      "id": "disable-fast-startup",
+      "name": "Turn off fast startup",
+      "description": "Shut down fully instead of using hybrid sleep. Boot can be a little slower. Helpful when dual-booting or when updates want a real shutdown.",
+      "category": "System",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power",
+            "name": "HiberbootEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power",
+            "name": "HiberbootEnabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "turn-off-mouse-acceleration",
+      "name": "Turn off mouse acceleration",
+      "description": "Make the pointer travel the same distance for the same mouse movement. Sign out if it does not change right away. Undo restores the usual Windows acceleration.",
+      "category": "Input",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Mouse",
+            "name": "MouseSpeed",
+            "value": "0",
+            "kind": "String"
+          },
+          {
+            "path": "HKCU:\\Control Panel\\Mouse",
+            "name": "MouseThreshold1",
+            "value": "0",
+            "kind": "String"
+          },
+          {
+            "path": "HKCU:\\Control Panel\\Mouse",
+            "name": "MouseThreshold2",
+            "value": "0",
+            "kind": "String"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Mouse",
+            "name": "MouseSpeed",
+            "value": "1",
+            "kind": "String"
+          },
+          {
+            "path": "HKCU:\\Control Panel\\Mouse",
+            "name": "MouseThreshold1",
+            "value": "6",
+            "kind": "String"
+          },
+          {
+            "path": "HKCU:\\Control Panel\\Mouse",
+            "name": "MouseThreshold2",
+            "value": "10",
+            "kind": "String"
+          }
+        ]
+      }
+    },
+    {
+      "id": "remove-suggested-inbox-apps",
+      "name": "Remove suggested inbox apps",
+      "description": "Uninstall a short list of promotional and trial apps for the current user. The Microsoft Store, Calculator, Photos, Notepad, and Phone Link stay. Undo tries to put an app back only when Windows still has a provisioned copy.",
+      "category": "Inbox apps",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "appx",
+        "packages": [
+          "Microsoft.BingNews",
+          "Microsoft.BingWeather",
+          "Microsoft.Getstarted",
+          "Microsoft.MicrosoftSolitaireCollection",
+          "Microsoft.People",
+          "Microsoft.WindowsFeedbackHub",
+          "Microsoft.ZuneMusic",
+          "Microsoft.ZuneVideo",
+          "Microsoft.MicrosoftOfficeHub",
+          "Clipchamp.Clipchamp",
+          "Microsoft.Todos",
+          "Microsoft.PowerAutomateDesktop",
+          "Microsoft.549981C3F5F10",
+          "Microsoft.WindowsMaps",
+          "MicrosoftTeams",
+          "Microsoft.OutlookForWindows",
+          "Microsoft.GamingApp",
+          "Microsoft.Windows.DevHome",
+          "Microsoft.XboxApp"
+        ]
+      },
+      "undo": {
+        "type": "appx-restore"
+      }
+    },
+    {
+      "id": "remove-extra-inbox-apps",
+      "name": "Remove extra inbox apps",
+      "description": "Also remove Sticky Notes, Camera, Mail and Calendar, alarms, and Xbox overlays for this user. Skip this if you use those apps. Restore works only while Windows still has the provisioned package.",
+      "category": "Inbox apps",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "appx",
+        "packages": [
+          "Microsoft.MicrosoftStickyNotes",
+          "Microsoft.WindowsAlarms",
+          "Microsoft.WindowsSoundRecorder",
+          "Microsoft.WindowsCamera",
+          "Microsoft.WindowsCommunicationsApps",
+          "Microsoft.MixedReality.Portal",
+          "Microsoft.SkypeApp",
+          "Microsoft.Xbox.TCUI",
+          "Microsoft.XboxGameOverlay",
+          "Microsoft.XboxIdentityProvider",
+          "Microsoft.XboxSpeechToTextOverlay"
+        ]
+      },
+      "undo": {
+        "type": "appx-restore"
+      }
+    }
+  ]
+}

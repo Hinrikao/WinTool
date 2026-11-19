@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "components": {
+    "windowsTerminal": "Microsoft.WindowsTerminal",
+    "powerShell": "Microsoft.PowerShell"
+  },
+  "prompts": [
+    {
+      "id": "oh-my-posh",
+      "name": "Oh My Posh",
+      "wingetId": "JanDeDobbeleer.OhMyPosh",
+      "summary": "A colorful prompt with a built-in theme."
+    },
+    {
+      "id": "starship",
+      "name": "Starship",
+      "wingetId": "Starship.Starship",
+      "summary": "A small, fast prompt that stays out of the way."
+    }
+  ],
+  "fonts": [
+    {
+      "id": "caskaydia-cove",
+      "name": "CaskaydiaCove Nerd Font",
+      "face": "CaskaydiaCove Nerd Font",
+      "match": "CaskaydiaCove",
+      "wingetId": "DEVCOM.CaskaydiaCoveNerdFont"
+    },
+    {
+      "id": "jetbrains-mono",
+      "name": "JetBrainsMono Nerd Font",
+      "face": "JetBrainsMono Nerd Font",
+      "match": "JetBrainsMono",
+      "wingetId": "DEVCOM.JetBrainsMonoNerdFont"
+    },
+    {
+      "id": "fira-code",
+      "name": "FiraCode Nerd Font",
+      "face": "FiraCode Nerd Font",
+      "match": "FiraCode",
+      "wingetId": "DEVCOM.FiraCodeNerdFont"
+    }
+  ]
+}

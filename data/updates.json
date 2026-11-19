@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "vendors": [
+    {
+      "id": "nvidia",
+      "name": "NVIDIA",
+      "match": ["nvidia"],
+      "url": "https://www.nvidia.com/Download/index.aspx",
+      "note": "Official NVIDIA driver downloads"
+    },
+    {
+      "id": "amd",
+      "name": "AMD",
+      "match": ["amd", "radeon", "advanced micro devices"],
+      "url": "https://www.amd.com/en/support",
+      "note": "Official AMD driver and chipset support"
+    },
+    {
+      "id": "intel",
+      "name": "Intel",
+      "match": ["intel"],
+      "url": "https://www.intel.com/content/www/us/en/download-center/home.html",
+      "note": "Official Intel downloads"
+    }
+  ]
+}
