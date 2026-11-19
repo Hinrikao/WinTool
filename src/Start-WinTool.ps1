@@ -16,6 +16,9 @@ param(
 
 $script:WinToolApplyProfile = $ApplyProfile
 $script:WinToolUnattended = [bool]$Unattended
+# Save the entry script before dot-sourcing. Inside a dot-sourced file,
+# $PSCommandPath is that file, not Start-WinTool.ps1.
+$script:WinToolEntryPath = $PSCommandPath
 $script:WinToolRoot = Split-Path -Parent $PSScriptRoot
 $script:WinToolEmbedded = $null
 $versionPath = Join-Path $script:WinToolRoot "build/version.txt"

@@ -42,45 +42,36 @@ function Invoke-WinToolUnattended {
 }
 
 function Start-WinTool {
-    if (-not (Test-WinToolWindows)) {
-        throw "WinTool only runs on Windows 11."
-    }
-    if (-not (Test-WinToolAdministrator)) {
-        Request-WinToolAdministrator
-        return
-    }
-
-    $apartment = [System.Threading.Thread]::CurrentThread.GetApartmentState()
-    if ($apartment -ne "STA" -and -not $script:WinToolUnattended) {
-        if ($env:WINTOOL_STA_RELAUNCHED -eq "1") {
-            throw "WinTool could not start a window because STA mode was not available."
-        }
-        $env:WINTOOL_STA_RELAUNCHED = "1"
-        Request-WinToolStaHost
-        return
-    }
-
-    if ($script:WinToolUnattended) {
-        if ([string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
-            throw "Unattended mode needs -ApplyProfile with a path to a WinTool JSON profile."
-        }
-        Invoke-WinToolUnattended -Path $script:WinToolApplyProfile
-        return
-    }
-
     try {
+        if (-not (Test-WinToolWindows)) {
+            throw "WinTool only runs on Windows 11."
+        }
+        if (-not (Test-WinToolAdministrator)) {
+            Request-WinToolAdministrator
+            return
+        }
+
+        $apartment = [System.Threading.Thread]::CurrentThread.GetApartmentState()
+        if ($apartment -ne "STA" -and -not $script:WinToolUnattended) {
+            if ($env:WINTOOL_STA_RELAUNCHED -eq "1") {
+                throw "WinTool could not start a window because STA mode was not available."
+            }
+            $env:WINTOOL_STA_RELAUNCHED = "1"
+            Request-WinToolStaHost
+            return
+        }
+
+        if ($script:WinToolUnattended) {
+            if ([string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
+                throw "Unattended mode needs -ApplyProfile with a path to a WinTool JSON profile."
+            }
+            Invoke-WinToolUnattended -Path $script:WinToolApplyProfile
+            return
+        }
+
         Show-WinToolWindow
     }
     catch {
-        $message = $_.Exception.Message
-        Write-Host "WinTool could not start: $message"
-        try {
-            Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
-            [System.Windows.MessageBox]::Show($message, "WinTool") | Out-Null
-        }
-        catch {
-            Write-Host $message
-        }
-        throw
+        Show-WinToolFailure -ErrorRecord $_
     }
 }

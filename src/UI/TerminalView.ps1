@@ -57,7 +57,8 @@ function Sync-WinToolTerminalChoice {
     (Get-WinToolUi -Name "PromptOhMyPosh").IsChecked = ($prompt -ne "starship")
     $fontId = [string](Get-WinToolNote -Object $Selection -Name "fontId" -Default "")
     $picker = Get-WinToolUi -Name "FontPicker"
-    foreach ($item in @($picker.Items)) {
+    for ($index = 0; $index -lt $picker.Items.Count; $index++) {
+        $item = $picker.Items[$index]
         if ([string]$item.Tag -eq $fontId) {
             $picker.SelectedItem = $item
         }

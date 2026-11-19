@@ -162,6 +162,95 @@ function ConvertTo-WinToolArgumentLine {
     return ($parts -join " ")
 }
 
+function Format-WinToolErrorText {
+    param(
+        $ErrorRecord
+    )
+    if ($null -eq $ErrorRecord) {
+        return "WinTool could not start."
+    }
+    $body = ""
+    try {
+        $body = ($ErrorRecord | Out-String).Trim()
+    }
+    catch {
+        $body = [string]$ErrorRecord
+    }
+    if ([string]::IsNullOrWhiteSpace($body) -and $null -ne $ErrorRecord.Exception) {
+        $body = [string]$ErrorRecord.Exception.Message
+    }
+    $text = "WinTool could not start.`r`n`r`n" + $body
+    $stack = [string]$ErrorRecord.ScriptStackTrace
+    if (-not [string]::IsNullOrWhiteSpace($stack)) {
+        $text += "`r`n`r`n" + $stack
+    }
+    return $text
+}
+
+function Write-WinToolFailureLog {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
+        [string]$Path
+    )
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        $directory = Join-Path $env:TEMP "WinTool"
+        if (-not (Test-Path -LiteralPath $directory)) {
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+        }
+        $Path = Join-Path $directory "wintool.log"
+    }
+    else {
+        $directory = Split-Path -Parent $Path
+        if (-not [string]::IsNullOrWhiteSpace($directory) -and -not (Test-Path -LiteralPath $directory)) {
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+        }
+    }
+    $stamp = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $block = "==== $stamp ====`r`n" + $Text + "`r`n"
+    Add-Content -LiteralPath $Path -Value $block -Encoding UTF8
+    return $Path
+}
+
+function Show-WinToolFailure {
+    param(
+        $ErrorRecord
+    )
+    $text = Format-WinToolErrorText -ErrorRecord $ErrorRecord
+    $path = $null
+    try {
+        $path = Write-WinToolFailureLog -Text $text
+    }
+    catch {
+        $path = $null
+    }
+    Write-Host ""
+    Write-Host $text
+    if (-not [string]::IsNullOrWhiteSpace($path)) {
+        Write-Host ""
+        Write-Host "Log: $path"
+    }
+    try {
+        Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
+        $dialog = $text
+        if (-not [string]::IsNullOrWhiteSpace($path)) {
+            $dialog += "`r`n`r`nLog: $path"
+        }
+        if ($dialog.Length -gt 3500) {
+            $dialog = $dialog.Substring(0, 3500) + "..."
+        }
+        [System.Windows.MessageBox]::Show($dialog, "WinTool") | Out-Null
+    }
+    catch {
+        Write-Host $_.Exception.Message
+    }
+    if ($env:WINTOOL_PAUSE_ON_ERROR -eq "1") {
+        Write-Host ""
+        Write-Host "Press Enter to close this window."
+        Read-Host | Out-Null
+        exit 1
+    }
+}
+
 function Write-WinToolUtf8File {
     param(
         [Parameter(Mandatory = $true)][string]$Path,

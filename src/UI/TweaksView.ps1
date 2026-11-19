@@ -26,19 +26,25 @@ function Initialize-WinToolTweakView {
     $order = New-Object System.Collections.Generic.List[string]
     foreach ($tweak in @(Get-WinToolNote -Object $catalog -Name "tweaks" -Default @())) {
         $categoryName = [string](Get-WinToolNote -Object $tweak -Name "category" -Default "Other")
+        if ([string]::IsNullOrWhiteSpace($categoryName)) {
+            $categoryName = "Other"
+        }
         if (-not $groups.ContainsKey($categoryName)) {
             $groups[$categoryName] = New-Object System.Collections.Generic.List[object]
-            $order.Add($categoryName)
+            [void]$order.Add($categoryName)
         }
-        $groups[$categoryName].Add($tweak)
+        [void]$groups[$categoryName].Add($tweak)
     }
 
-    foreach ($categoryName in $order) {
+    # ToArray() keeps this on object[], which Windows PowerShell 5.1 can enumerate.
+    # @() around a generic list throws "Argument types do not match" on 5.1.
+    foreach ($categoryName in $order.ToArray()) {
         $card = New-WinToolCard
         $stack = New-Object System.Windows.Controls.StackPanel
         [void]$stack.Children.Add((New-WinToolText -Text $categoryName -Size 18 -Weight "SemiBold" -Margin ([System.Windows.Thickness]::new(0, 0, 0, 10))))
         $rows = @()
-        foreach ($tweak in @($groups[$categoryName])) {
+        $tweaksInCategory = $groups[$categoryName].ToArray()
+        foreach ($tweak in $tweaksInCategory) {
             $row = New-WinToolTweakRow -Tweak $tweak -CategoryName $categoryName
             [void]$stack.Children.Add($row.Panel)
             $rows += $row

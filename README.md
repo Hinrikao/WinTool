@@ -33,7 +33,7 @@ Open PowerShell and paste:
 irm https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1 | iex
 ```
 
-Approve the administrator prompt. The WinTool window opens.
+Approve the administrator prompt. The WinTool window opens. If startup fails, the message stays on screen and the details are appended to `%TEMP%\WinTool\wintool.log`.
 
 To run a copy you already downloaded:
 

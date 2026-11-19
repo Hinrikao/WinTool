@@ -229,6 +229,46 @@ Invoke-WinToolCase -Name "Every script parses and the window names exist" -Body 
     }
 }
 
+Invoke-WinToolCase -Name "Startup errors include the location and a log" -Body {
+    $record = $null
+    try {
+        throw "Argument types do not match"
+    }
+    catch {
+        $record = $_
+    }
+    $text = Format-WinToolErrorText -ErrorRecord $record
+    Test-WinToolExpectation -Condition ($text.Contains("Argument types do not match")) -Message "The startup error keeps the exception message."
+    Test-WinToolExpectation -Condition ($text.Contains("WinTool could not start.")) -Message "The startup error names WinTool."
+    $log = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-log-" + [guid]::NewGuid().ToString() + ".log")
+    try {
+        $written = Write-WinToolFailureLog -Text $text -Path $log
+        $saved = [System.IO.File]::ReadAllText($written)
+        Test-WinToolExpectation -Condition ($saved.Contains("Argument types do not match") -and $saved.Contains("====")) -Message "The startup log file stores the error."
+    }
+    finally {
+        Remove-Item -LiteralPath $log -Force -ErrorAction SilentlyContinue
+    }
+}
+
+Invoke-WinToolCase -Name "Elevation relaunches the entry script" -Body {
+    $source = New-WinToolRelaunchScript -WorkingDirectory "C:\Users\Hinrikao\Desktop\WinTool" -EntryPath "C:\Users\Hinrikao\Desktop\WinTool\src\Start-WinTool.ps1" -ApplyProfile "" -Unattended $false -LaunchUrl ""
+    Test-WinToolExpectation -Condition ($source.Contains("C:\Users\Hinrikao\Desktop\WinTool\src\Start-WinTool.ps1")) -Message "The relaunch runs Start-WinTool.ps1."
+    Test-WinToolExpectation -Condition ($source.Contains("Set-Location -LiteralPath 'C:\Users\Hinrikao\Desktop\WinTool'")) -Message "The relaunch restores the working directory."
+    Test-WinToolExpectation -Condition ($source.Contains('$env:WINTOOL_PAUSE_ON_ERROR = "1"')) -Message "The elevated window stays open after an error."
+    Test-WinToolExpectation -Condition ($source.Contains('Join-Path $env:TEMP "WinTool"')) -Message "The relaunch writes %TEMP%\WinTool\wintool.log."
+    Test-WinToolExpectation -Condition (-not $source.Contains("Elevation.ps1")) -Message "The relaunch does not run a dot-sourced helper file."
+    $quoted = New-WinToolRelaunchScript -WorkingDirectory "C:\O'Brien" -EntryPath "C:\O'Brien\WinTool.ps1" -ApplyProfile "C:\O'Brien\my profile.json" -Unattended $true -LaunchUrl ""
+    Test-WinToolExpectation -Condition ($quoted.Contains("'C:\O''Brien\WinTool.ps1'") -and $quoted.Contains("-Unattended") -and $quoted.Contains("-ApplyProfile")) -Message "Paths with quotes and profile arguments are escaped."
+    $downloaded = New-WinToolRelaunchScript -WorkingDirectory "C:\Users\Hinrikao" -EntryPath "" -ApplyProfile "" -Unattended $false -LaunchUrl "https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1"
+    Test-WinToolExpectation -Condition ($downloaded.Contains("Invoke-RestMethod") -and $downloaded.Contains("https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1")) -Message "A piped launch relaunches by downloading the published script."
+    $hostArguments = @(Get-WinToolHostArgument -LauncherPath "C:\Users\Hinrikao\AppData\Local\Temp\WinTool\relaunch.ps1")
+    $hostLine = ConvertTo-WinToolArgumentLine -ArgumentList $hostArguments
+    Test-WinToolExpectation -Condition ($hostLine.StartsWith("-STA -NoProfile -ExecutionPolicy Bypass -File ")) -Message "The new PowerShell process is STA and bypasses execution policy."
+    $preferred = Resolve-WinToolEntryPath -EntryPath "C:\repo\src\Start-WinTool.ps1" -CommandPath "C:\repo\src\Private\Elevation.ps1"
+    Test-WinToolExpectation -Condition ($preferred -eq "C:\repo\src\Start-WinTool.ps1") -Message "The saved entry path wins over the helper file path."
+}
+
 Invoke-WinToolCase -Name "UI collection adds do not leak indexes" -Body {
     $roots = @(
         (Join-Path $script:WinToolRoot "src"),

@@ -395,7 +395,7 @@ function Initialize-WinToolShellEvent {
     })
 }
 
-function Show-WinToolWindow {
+function New-WinToolWindow {
     Add-Type -AssemblyName PresentationFramework
     Add-Type -AssemblyName PresentationCore
     Add-Type -AssemblyName WindowsBase
@@ -430,7 +430,6 @@ function Show-WinToolWindow {
     Initialize-WinToolUpdateView
     Initialize-WinToolConfigView
     Initialize-WinToolShellEvent
-    Enable-WinToolLogPump
 
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
         try {
@@ -441,5 +440,11 @@ function Show-WinToolWindow {
         }
     }
 
+    return $window
+}
+
+function Show-WinToolWindow {
+    $window = New-WinToolWindow
+    Enable-WinToolLogPump
     $null = $window.ShowDialog()
 }

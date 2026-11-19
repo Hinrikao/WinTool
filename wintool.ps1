@@ -17,6 +17,7 @@ param(
 $script:WinToolVersion = "1.0.0"
 $script:WinToolApplyProfile = $ApplyProfile
 $script:WinToolUnattended = [bool]$Unattended
+$script:WinToolEntryPath = $PSCommandPath
 $script:WinToolRoot = $null
 $script:WinToolEmbedded = @{
     Apps = @'
@@ -1376,6 +1377,95 @@ function ConvertTo-WinToolArgumentLine {
         }
     }
     return ($parts -join " ")
+}
+
+function Format-WinToolErrorText {
+    param(
+        $ErrorRecord
+    )
+    if ($null -eq $ErrorRecord) {
+        return "WinTool could not start."
+    }
+    $body = ""
+    try {
+        $body = ($ErrorRecord | Out-String).Trim()
+    }
+    catch {
+        $body = [string]$ErrorRecord
+    }
+    if ([string]::IsNullOrWhiteSpace($body) -and $null -ne $ErrorRecord.Exception) {
+        $body = [string]$ErrorRecord.Exception.Message
+    }
+    $text = "WinTool could not start.`r`n`r`n" + $body
+    $stack = [string]$ErrorRecord.ScriptStackTrace
+    if (-not [string]::IsNullOrWhiteSpace($stack)) {
+        $text += "`r`n`r`n" + $stack
+    }
+    return $text
+}
+
+function Write-WinToolFailureLog {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
+        [string]$Path
+    )
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        $directory = Join-Path $env:TEMP "WinTool"
+        if (-not (Test-Path -LiteralPath $directory)) {
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+        }
+        $Path = Join-Path $directory "wintool.log"
+    }
+    else {
+        $directory = Split-Path -Parent $Path
+        if (-not [string]::IsNullOrWhiteSpace($directory) -and -not (Test-Path -LiteralPath $directory)) {
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+        }
+    }
+    $stamp = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $block = "==== $stamp ====`r`n" + $Text + "`r`n"
+    Add-Content -LiteralPath $Path -Value $block -Encoding UTF8
+    return $Path
+}
+
+function Show-WinToolFailure {
+    param(
+        $ErrorRecord
+    )
+    $text = Format-WinToolErrorText -ErrorRecord $ErrorRecord
+    $path = $null
+    try {
+        $path = Write-WinToolFailureLog -Text $text
+    }
+    catch {
+        $path = $null
+    }
+    Write-Host ""
+    Write-Host $text
+    if (-not [string]::IsNullOrWhiteSpace($path)) {
+        Write-Host ""
+        Write-Host "Log: $path"
+    }
+    try {
+        Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
+        $dialog = $text
+        if (-not [string]::IsNullOrWhiteSpace($path)) {
+            $dialog += "`r`n`r`nLog: $path"
+        }
+        if ($dialog.Length -gt 3500) {
+            $dialog = $dialog.Substring(0, 3500) + "..."
+        }
+        [System.Windows.MessageBox]::Show($dialog, "WinTool") | Out-Null
+    }
+    catch {
+        Write-Host $_.Exception.Message
+    }
+    if ($env:WINTOOL_PAUSE_ON_ERROR -eq "1") {
+        Write-Host ""
+        Write-Host "Press Enter to close this window."
+        Read-Host | Out-Null
+        exit 1
+    }
 }
 
 function Write-WinToolUtf8File {
@@ -3268,52 +3358,166 @@ function Test-WinToolAdministrator {
     return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-function Get-WinToolLaunchArgument {
-    $arguments = New-Object System.Collections.Generic.List[string]
-    $arguments.Add("-STA")
-    $arguments.Add("-NoProfile")
-    $arguments.Add("-ExecutionPolicy")
-    $arguments.Add("Bypass")
-    $path = $PSCommandPath
-    if (-not [string]::IsNullOrWhiteSpace($path)) {
-        $arguments.Add("-File")
-        $arguments.Add($path)
-        if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
-            $arguments.Add("-ApplyProfile")
-            $arguments.Add($script:WinToolApplyProfile)
-        }
-        if ($script:WinToolUnattended) {
-            $arguments.Add("-Unattended")
-        }
-        return $arguments.ToArray()
+function ConvertTo-WinToolLiteral {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    if ($null -eq $Text) {
+        $Text = ""
     }
+    return "'" + ($Text.Replace("'", "''")) + "'"
+}
 
-    $url = $script:WinToolPublishedUrl
-    if (-not [string]::IsNullOrWhiteSpace($env:WINTOOL_URL)) {
-        $url = $env:WINTOOL_URL
+function Resolve-WinToolEntryPath {
+    param(
+        [string]$EntryPath,
+        [string]$CommandPath
+    )
+    if (-not [string]::IsNullOrWhiteSpace($EntryPath)) {
+        return $EntryPath
     }
-    $arguments.Add("-Command")
-    $arguments.Add("irm '$url' | iex")
-    return $arguments.ToArray()
+    if (-not [string]::IsNullOrWhiteSpace($CommandPath)) {
+        return $CommandPath
+    }
+    return $null
+}
+
+function Get-WinToolPublishedLaunchUrl {
+    if (-not [string]::IsNullOrWhiteSpace($env:WINTOOL_URL)) {
+        return $env:WINTOOL_URL
+    }
+    if (-not [string]::IsNullOrWhiteSpace($script:WinToolPublishedUrl)) {
+        return $script:WinToolPublishedUrl
+    }
+    return "https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1"
+}
+
+function New-WinToolRelaunchScript {
+    param(
+        [string]$WorkingDirectory,
+        [string]$EntryPath,
+        [string]$ApplyProfile,
+        [bool]$Unattended,
+        [string]$LaunchUrl
+    )
+    $lines = New-Object System.Collections.Generic.List[string]
+    [void]$lines.Add('$ErrorActionPreference = "Stop"')
+    [void]$lines.Add('$env:WINTOOL_PAUSE_ON_ERROR = "1"')
+    if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
+        [void]$lines.Add("Set-Location -LiteralPath " + (ConvertTo-WinToolLiteral -Text $WorkingDirectory))
+    }
+    [void]$lines.Add("try {")
+    if (-not [string]::IsNullOrWhiteSpace($EntryPath)) {
+        $call = "    & " + (ConvertTo-WinToolLiteral -Text $EntryPath)
+        if (-not [string]::IsNullOrWhiteSpace($ApplyProfile)) {
+            $call += " -ApplyProfile " + (ConvertTo-WinToolLiteral -Text $ApplyProfile)
+        }
+        if ($Unattended) {
+            $call += " -Unattended"
+        }
+        [void]$lines.Add($call)
+    }
+    else {
+        if ([string]::IsNullOrWhiteSpace($LaunchUrl)) {
+            $LaunchUrl = Get-WinToolPublishedLaunchUrl
+        }
+        $download = "    Invoke-Expression (Invoke-RestMethod -Uri " + (ConvertTo-WinToolLiteral -Text $LaunchUrl) + ")"
+        [void]$lines.Add($download)
+    }
+    [void]$lines.Add("}")
+    [void]$lines.Add("catch {")
+    [void]$lines.Add('    $text = ($_ | Out-String)')
+    [void]$lines.Add('    $logDir = Join-Path $env:TEMP "WinTool"')
+    [void]$lines.Add('    if (-not (Test-Path -LiteralPath $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }')
+    [void]$lines.Add('    $logPath = Join-Path $logDir "wintool.log"')
+    [void]$lines.Add('    Add-Content -LiteralPath $logPath -Value ("==== " + (Get-Date).ToString("o") + " ====") -Encoding UTF8')
+    [void]$lines.Add('    Add-Content -LiteralPath $logPath -Value $text -Encoding UTF8')
+    [void]$lines.Add('    Write-Host $text')
+    [void]$lines.Add('    Write-Host ("Log: " + $logPath)')
+    [void]$lines.Add("    try {")
+    [void]$lines.Add("        Add-Type -AssemblyName PresentationFramework -ErrorAction Stop")
+    [void]$lines.Add('        [System.Windows.MessageBox]::Show($text, "WinTool") | Out-Null')
+    [void]$lines.Add("    }")
+    [void]$lines.Add("    catch {")
+    [void]$lines.Add('        Write-Host $_.Exception.Message')
+    [void]$lines.Add("    }")
+    [void]$lines.Add('    Write-Host "Press Enter to close this window."')
+    [void]$lines.Add("    Read-Host | Out-Null")
+    [void]$lines.Add("    exit 1")
+    [void]$lines.Add("}")
+    return ($lines.ToArray() -join "`r`n") + "`r`n"
+}
+
+function Get-WinToolHostArgument {
+    param(
+        [Parameter(Mandatory = $true)][string]$LauncherPath
+    )
+    return @(
+        "-STA",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        $LauncherPath
+    )
+}
+
+function Get-WinToolWorkingDirectory {
+    try {
+        $current = Get-Location
+        $path = [string]$current.ProviderPath
+        if (-not [string]::IsNullOrWhiteSpace($path) -and (Test-Path -LiteralPath $path -PathType Container)) {
+            return $path
+        }
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE) -and (Test-Path -LiteralPath $env:USERPROFILE)) {
+        return $env:USERPROFILE
+    }
+    return [string]$env:SystemRoot
+}
+
+function Start-WinToolRelaunch {
+    param(
+        [switch]$Elevate
+    )
+    $executable = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+    $entry = Resolve-WinToolEntryPath -EntryPath $script:WinToolEntryPath -CommandPath ""
+    if (-not [string]::IsNullOrWhiteSpace($entry) -and -not (Test-Path -LiteralPath $entry)) {
+        $entry = $null
+    }
+    $directory = Get-WinToolWorkingDirectory
+    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl)
+    $launcherDirectory = Join-Path $env:TEMP "WinTool"
+    if (-not (Test-Path -LiteralPath $launcherDirectory)) {
+        New-Item -ItemType Directory -Path $launcherDirectory -Force | Out-Null
+    }
+    $launcherPath = Join-Path $launcherDirectory "relaunch.ps1"
+    $encoding = New-Object System.Text.UTF8Encoding $true
+    [System.IO.File]::WriteAllText($launcherPath, $scriptText, $encoding)
+    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath)
+    if ($Elevate) {
+        Write-Host "WinTool needs administrator approval. Accept the Windows prompt to continue."
+        try {
+            Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs | Out-Null
+        }
+        catch {
+            Write-Host "WinTool was not started. Administrator approval was declined."
+        }
+        return
+    }
+    Write-Host "WinTool is opening in Windows PowerShell so the window can run."
+    Start-Process -FilePath $executable -ArgumentList $line | Out-Null
 }
 
 function Request-WinToolAdministrator {
-    Write-Host "WinTool needs administrator approval. Accept the Windows prompt to continue."
-    $executable = Join-Path $env:SystemRoot "System32/WindowsPowerShell/v1.0/powershell.exe"
-    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolLaunchArgument)
-    try {
-        Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs | Out-Null
-    }
-    catch {
-        Write-Host "WinTool was not started. Administrator approval was declined."
-    }
+    Start-WinToolRelaunch -Elevate
 }
 
 function Request-WinToolStaHost {
-    Write-Host "WinTool is opening in Windows PowerShell so the window can run."
-    $executable = Join-Path $env:SystemRoot "System32/WindowsPowerShell/v1.0/powershell.exe"
-    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolLaunchArgument)
-    Start-Process -FilePath $executable -ArgumentList $line | Out-Null
+    Start-WinToolRelaunch
 }
 # endregion
 
@@ -3725,19 +3929,25 @@ function Initialize-WinToolTweakView {
     $order = New-Object System.Collections.Generic.List[string]
     foreach ($tweak in @(Get-WinToolNote -Object $catalog -Name "tweaks" -Default @())) {
         $categoryName = [string](Get-WinToolNote -Object $tweak -Name "category" -Default "Other")
+        if ([string]::IsNullOrWhiteSpace($categoryName)) {
+            $categoryName = "Other"
+        }
         if (-not $groups.ContainsKey($categoryName)) {
             $groups[$categoryName] = New-Object System.Collections.Generic.List[object]
-            $order.Add($categoryName)
+            [void]$order.Add($categoryName)
         }
-        $groups[$categoryName].Add($tweak)
+        [void]$groups[$categoryName].Add($tweak)
     }
 
-    foreach ($categoryName in $order) {
+    # ToArray() keeps this on object[], which Windows PowerShell 5.1 can enumerate.
+    # @() around a generic list throws "Argument types do not match" on 5.1.
+    foreach ($categoryName in $order.ToArray()) {
         $card = New-WinToolCard
         $stack = New-Object System.Windows.Controls.StackPanel
         [void]$stack.Children.Add((New-WinToolText -Text $categoryName -Size 18 -Weight "SemiBold" -Margin ([System.Windows.Thickness]::new(0, 0, 0, 10))))
         $rows = @()
-        foreach ($tweak in @($groups[$categoryName])) {
+        $tweaksInCategory = $groups[$categoryName].ToArray()
+        foreach ($tweak in $tweaksInCategory) {
             $row = New-WinToolTweakRow -Tweak $tweak -CategoryName $categoryName
             [void]$stack.Children.Add($row.Panel)
             $rows += $row
@@ -4001,7 +4211,8 @@ function Sync-WinToolTerminalChoice {
     (Get-WinToolUi -Name "PromptOhMyPosh").IsChecked = ($prompt -ne "starship")
     $fontId = [string](Get-WinToolNote -Object $Selection -Name "fontId" -Default "")
     $picker = Get-WinToolUi -Name "FontPicker"
-    foreach ($item in @($picker.Items)) {
+    for ($index = 0; $index -lt $picker.Items.Count; $index++) {
+        $item = $picker.Items[$index]
         if ([string]$item.Tag -eq $fontId) {
             $picker.SelectedItem = $item
         }
@@ -4739,7 +4950,7 @@ function Initialize-WinToolShellEvent {
     })
 }
 
-function Show-WinToolWindow {
+function New-WinToolWindow {
     Add-Type -AssemblyName PresentationFramework
     Add-Type -AssemblyName PresentationCore
     Add-Type -AssemblyName WindowsBase
@@ -4774,7 +4985,6 @@ function Show-WinToolWindow {
     Initialize-WinToolUpdateView
     Initialize-WinToolConfigView
     Initialize-WinToolShellEvent
-    Enable-WinToolLogPump
 
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
         try {
@@ -4785,6 +4995,12 @@ function Show-WinToolWindow {
         }
     }
 
+    return $window
+}
+
+function Show-WinToolWindow {
+    $window = New-WinToolWindow
+    Enable-WinToolLogPump
     $null = $window.ShowDialog()
 }
 # endregion
@@ -4834,46 +5050,37 @@ function Invoke-WinToolUnattended {
 }
 
 function Start-WinTool {
-    if (-not (Test-WinToolWindows)) {
-        throw "WinTool only runs on Windows 11."
-    }
-    if (-not (Test-WinToolAdministrator)) {
-        Request-WinToolAdministrator
-        return
-    }
-
-    $apartment = [System.Threading.Thread]::CurrentThread.GetApartmentState()
-    if ($apartment -ne "STA" -and -not $script:WinToolUnattended) {
-        if ($env:WINTOOL_STA_RELAUNCHED -eq "1") {
-            throw "WinTool could not start a window because STA mode was not available."
-        }
-        $env:WINTOOL_STA_RELAUNCHED = "1"
-        Request-WinToolStaHost
-        return
-    }
-
-    if ($script:WinToolUnattended) {
-        if ([string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
-            throw "Unattended mode needs -ApplyProfile with a path to a WinTool JSON profile."
-        }
-        Invoke-WinToolUnattended -Path $script:WinToolApplyProfile
-        return
-    }
-
     try {
+        if (-not (Test-WinToolWindows)) {
+            throw "WinTool only runs on Windows 11."
+        }
+        if (-not (Test-WinToolAdministrator)) {
+            Request-WinToolAdministrator
+            return
+        }
+
+        $apartment = [System.Threading.Thread]::CurrentThread.GetApartmentState()
+        if ($apartment -ne "STA" -and -not $script:WinToolUnattended) {
+            if ($env:WINTOOL_STA_RELAUNCHED -eq "1") {
+                throw "WinTool could not start a window because STA mode was not available."
+            }
+            $env:WINTOOL_STA_RELAUNCHED = "1"
+            Request-WinToolStaHost
+            return
+        }
+
+        if ($script:WinToolUnattended) {
+            if ([string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
+                throw "Unattended mode needs -ApplyProfile with a path to a WinTool JSON profile."
+            }
+            Invoke-WinToolUnattended -Path $script:WinToolApplyProfile
+            return
+        }
+
         Show-WinToolWindow
     }
     catch {
-        $message = $_.Exception.Message
-        Write-Host "WinTool could not start: $message"
-        try {
-            Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
-            [System.Windows.MessageBox]::Show($message, "WinTool") | Out-Null
-        }
-        catch {
-            Write-Host $message
-        }
-        throw
+        Show-WinToolFailure -ErrorRecord $_
     }
 }
 # endregion
