@@ -33,7 +33,11 @@ Open PowerShell and paste:
 irm https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1 | iex
 ```
 
-Approve the administrator prompt. The WinTool window opens. If startup fails, the message stays on screen and the details are appended to `%TEMP%\WinTool\wintool.log`.
+Approve the administrator prompt. The WinTool window opens in a dark theme. Appearance in the sidebar switches between Dark, Light, and System (the Windows app theme) and lets you pick an accent. That choice is saved in `%APPDATA%\WinTool\settings.json`. The log stays collapsed until a task is running, or until you press Show log.
+
+If startup fails, the message stays on screen and the details are appended to `%TEMP%\WinTool\wintool.log`.
+
+The Terminal tab has a Simple recommendation and an Advanced chooser. Advanced searches the Nerd Fonts catalog and the official Oh My Posh themes, and can refresh both lists from GitHub.
 
 To run a copy you already downloaded:
 

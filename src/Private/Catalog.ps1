@@ -254,11 +254,23 @@ function Test-WinToolDataFile {
     foreach ($prompt in @(Get-WinToolNote -Object $terminal -Name "prompts" -Default @())) {
         $id = [string](Get-WinToolNote -Object $prompt -Name "id" -Default "")
         $wingetId = [string](Get-WinToolNote -Object $prompt -Name "wingetId" -Default "")
-        if ([string]::IsNullOrWhiteSpace($id) -or -not (Test-WinToolWingetId -Id $wingetId)) {
-            Add-WinToolDataError -Errors $errors -Message "A terminal prompt is missing an id or winget id."
+        $shell = [string](Get-WinToolNote -Object $prompt -Name "shell" -Default "")
+        if ([string]::IsNullOrWhiteSpace($id) -or [string]::IsNullOrWhiteSpace($shell)) {
+            Add-WinToolDataError -Errors $errors -Message "A terminal prompt is missing an id or shell."
+        }
+        if (-not [string]::IsNullOrWhiteSpace($wingetId) -and -not (Test-WinToolWingetId -Id $wingetId)) {
+            Add-WinToolDataError -Errors $errors -Message "Terminal prompt '$id' has an unexpected winget id."
         }
     }
-    foreach ($font in @(Get-WinToolNote -Object $terminal -Name "fonts" -Default @())) {
+    if (@(Get-WinToolNote -Object $terminal -Name "prompts" -Default @()).Count -lt 8) {
+        Add-WinToolDataError -Errors $errors -Message "terminal.json should list the prompt engines."
+    }
+    $fontDoc = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Fonts")
+    $fontRows = @(Get-WinToolNote -Object $fontDoc -Name "fonts" -Default @())
+    if ($fontRows.Count -lt 60) {
+        Add-WinToolDataError -Errors $errors -Message "fonts.json should include the Nerd Fonts catalog."
+    }
+    foreach ($font in $fontRows) {
         $id = [string](Get-WinToolNote -Object $font -Name "id" -Default "")
         $face = [string](Get-WinToolNote -Object $font -Name "face" -Default "")
         $match = [string](Get-WinToolNote -Object $font -Name "match" -Default "")
@@ -266,8 +278,24 @@ function Test-WinToolDataFile {
         if ([string]::IsNullOrWhiteSpace($id) -or [string]::IsNullOrWhiteSpace($face) -or [string]::IsNullOrWhiteSpace($match)) {
             Add-WinToolDataError -Errors $errors -Message "A terminal font is missing an id, face, or match token."
         }
-        if (-not (Test-WinToolWingetId -Id $wingetId)) {
+        if (-not [string]::IsNullOrWhiteSpace($wingetId) -and -not (Test-WinToolWingetId -Id $wingetId)) {
             Add-WinToolDataError -Errors $errors -Message "Terminal font '$id' has an unexpected winget id."
+        }
+        $asset = [string](Get-WinToolNote -Object $font -Name "asset" -Default "")
+        if ([string]::IsNullOrWhiteSpace($wingetId) -and [string]::IsNullOrWhiteSpace($asset) -and [string](Get-WinToolNote -Object $font -Name "source" -Default "") -eq "nerd-fonts") {
+            Add-WinToolDataError -Errors $errors -Message "Nerd Font '$id' needs a winget id or a release asset."
+        }
+    }
+    $themeDoc = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "OmpThemes")
+    $themeRows = @(Get-WinToolNote -Object $themeDoc -Name "themes" -Default @())
+    if ($themeRows.Count -lt 80) {
+        Add-WinToolDataError -Errors $errors -Message "omp-themes.json should include the official Oh My Posh themes."
+    }
+    foreach ($theme in $themeRows) {
+        $themeId = [string](Get-WinToolNote -Object $theme -Name "id" -Default "")
+        $themeFile = [string](Get-WinToolNote -Object $theme -Name "file" -Default "")
+        if ([string]::IsNullOrWhiteSpace($themeId) -or -not $themeFile.EndsWith(".omp.json")) {
+            Add-WinToolDataError -Errors $errors -Message "An Oh My Posh theme is missing an id or file name."
         }
     }
 

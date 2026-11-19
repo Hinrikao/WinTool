@@ -78,9 +78,17 @@ foreach ($row in $tweakRows) {
     }
 }
 
-$fontPicker = $window.FindName("FontPicker")
-if ($null -eq $fontPicker -or $fontPicker.Items.Count -lt 1) {
-    throw "The Terminal tab did not list any fonts."
+$fontList = $window.FindName("TerminalFontList")
+if ($null -eq $fontList -or $fontList.Items.Count -lt 50) {
+    throw "The Terminal tab did not list the font catalog."
+}
+$promptHost = $window.FindName("TerminalPromptHost")
+if ($null -eq $promptHost -or $promptHost.Children.Count -lt 8) {
+    throw "The Terminal tab did not list the prompt engines."
+}
+$logPanel = $window.FindName("LogPanel")
+if ($null -eq $logPanel -or $logPanel.Visibility -ne "Collapsed") {
+    throw "The log should be collapsed until a task starts."
 }
 
 try {

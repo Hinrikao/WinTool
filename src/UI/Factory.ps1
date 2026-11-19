@@ -38,7 +38,7 @@ function New-WinToolText {
         throw "Unknown font weight '$Weight'."
     }
     $block.FontWeight = $weightProperty.GetValue($null, $null)
-    $block.Foreground = Get-WinToolBrush -Key $Brush
+    $block.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $Brush)
     $block.Margin = $Margin
     if ($Wrap) {
         $block.TextWrapping = "Wrap"
@@ -48,8 +48,8 @@ function New-WinToolText {
 
 function New-WinToolCard {
     $border = New-Object System.Windows.Controls.Border
-    $border.Background = Get-WinToolBrush -Key "BrushCard"
-    $border.BorderBrush = Get-WinToolBrush -Key "BrushLine"
+    $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushCard")
+    $border.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
     $border.BorderThickness = [System.Windows.Thickness]::new(1)
     $border.CornerRadius = [System.Windows.CornerRadius]::new(12)
     $border.Padding = [System.Windows.Thickness]::new(16)
@@ -72,12 +72,12 @@ function New-WinToolBadge {
     $label.FontSize = 11
     $label.FontWeight = "SemiBold"
     if ($Kind -eq "caution") {
-        $border.Background = Get-WinToolBrush -Key "BrushWarnSoft"
-        $label.Foreground = Get-WinToolBrush -Key "BrushWarn"
+        $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushWarnSoft")
+        $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushWarn")
     }
     else {
-        $border.Background = Get-WinToolBrush -Key "BrushOkSoft"
-        $label.Foreground = Get-WinToolBrush -Key "BrushOk"
+        $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushOkSoft")
+        $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushOk")
     }
     $border.Child = $label
     return $border

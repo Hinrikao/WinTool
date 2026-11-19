@@ -62,6 +62,8 @@ function Get-WinToolPayloadText {
         Apps = "data/apps.json"
         Tweaks = "data/tweaks.json"
         Terminal = "data/terminal.json"
+        Fonts = "data/fonts.json"
+        OmpThemes = "data/omp-themes.json"
         Updates = "data/updates.json"
         Xaml = "assets/MainWindow.xaml"
         Wsl = "data/wsl-setup.sh"

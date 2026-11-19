@@ -4,41 +4,98 @@
     "windowsTerminal": "Microsoft.WindowsTerminal",
     "powerShell": "Microsoft.PowerShell"
   },
+  "simple": {
+    "prompt": "oh-my-posh",
+    "promptStyle": "jandedobbeleer",
+    "fontId": "cascadiacode-nf",
+    "schemeId": "wintool-night",
+    "terminalIcons": true,
+    "psReadLine": true,
+    "zoxide": false,
+    "fzf": false
+  },
   "prompts": [
     {
       "id": "oh-my-posh",
       "name": "Oh My Posh",
+      "summary": "A colorful PowerShell prompt. Pick any official theme.",
       "wingetId": "JanDeDobbeleer.OhMyPosh",
-      "summary": "A colorful prompt with a built-in theme."
+      "shell": "powershell",
+      "installs": ["Windows Terminal", "PowerShell 7", "Oh My Posh", "Your chosen Nerd Font"]
     },
     {
       "id": "starship",
       "name": "Starship",
+      "summary": "A small, fast prompt that stays out of the way.",
       "wingetId": "Starship.Starship",
-      "summary": "A small, fast prompt that stays out of the way."
+      "shell": "powershell",
+      "installs": ["Windows Terminal", "PowerShell 7", "Starship", "Your chosen font"]
+    },
+    {
+      "id": "powerlevel10k",
+      "name": "Powerlevel10k",
+      "summary": "The familiar zsh prompt, inside Ubuntu on WSL, with Oh My Zsh.",
+      "shell": "wsl-zsh",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "zsh", "Oh My Zsh", "Powerlevel10k", "Your chosen Nerd Font"]
+    },
+    {
+      "id": "pure",
+      "name": "Pure",
+      "summary": "A minimal zsh prompt. Installed inside Ubuntu on WSL.",
+      "shell": "wsl-zsh",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "zsh", "Oh My Zsh", "Pure"]
+    },
+    {
+      "id": "spaceship",
+      "name": "Spaceship",
+      "summary": "A feature-rich zsh prompt. Installed inside Ubuntu on WSL.",
+      "shell": "wsl-zsh",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "zsh", "Oh My Zsh", "Spaceship"]
+    },
+    {
+      "id": "oh-my-zsh",
+      "name": "Oh My Zsh theme",
+      "summary": "Use one of the themes that ship with Oh My Zsh.",
+      "shell": "wsl-zsh",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "zsh", "Oh My Zsh", "The theme you pick"]
+    },
+    {
+      "id": "tide",
+      "name": "Tide",
+      "summary": "A Fish prompt for Ubuntu on WSL. This installs Fish as well as zsh.",
+      "shell": "wsl-fish",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "Fish", "Fisher", "Tide"]
+    },
+    {
+      "id": "powerline-go",
+      "name": "Powerline-go",
+      "summary": "A single small program that draws a Powerline-style prompt in PowerShell.",
+      "shell": "powershell",
+      "downloadUrl": "https://github.com/justjanne/powerline-go/releases/latest/download/powerline-go-windows-amd64.exe",
+      "installs": ["Windows Terminal", "PowerShell 7", "powerline-go"]
     }
   ],
-  "fonts": [
-    {
-      "id": "caskaydia-cove",
-      "name": "CaskaydiaCove Nerd Font",
-      "face": "CaskaydiaCove Nerd Font",
-      "match": "CaskaydiaCove",
-      "wingetId": "DEVCOM.CaskaydiaCoveNerdFont"
-    },
-    {
-      "id": "jetbrains-mono",
-      "name": "JetBrainsMono Nerd Font",
-      "face": "JetBrainsMono Nerd Font",
-      "match": "JetBrainsMono",
-      "wingetId": "DEVCOM.JetBrainsMonoNerdFont"
-    },
-    {
-      "id": "fira-code",
-      "name": "FiraCode Nerd Font",
-      "face": "FiraCode Nerd Font",
-      "match": "FiraCode",
-      "wingetId": "DEVCOM.FiraCodeNerdFont"
-    }
+  "starshipPresets": [
+    {"id": "nerd-font-symbols", "name": "Nerd Font symbols", "preview": [{"text": "~/src ", "color": "#6C9BFF"}, {"text": "main ", "color": "#3DDC97"}, {"text": "❯", "color": "#E0B15A"}]},
+    {"id": "tokyo-night", "name": "Tokyo Night", "preview": [{"text": "~/src ", "color": "#7AA2F7"}, {"text": "main ", "color": "#9ECE6A"}, {"text": "❯", "color": "#BB9AF7"}]},
+    {"id": "gruvbox-rainbow", "name": "Gruvbox rainbow", "preview": [{"text": "~/src ", "color": "#FABD2F"}, {"text": "main ", "color": "#B8BB26"}, {"text": "❯", "color": "#FE8019"}]},
+    {"id": "pastel-powerline", "name": "Pastel powerline", "preview": [{"text": " ~/src ", "color": "#F5C2E7"}, {"text": " main ", "color": "#A6E3A1"}, {"text": "❯", "color": "#89B4FA"}]},
+    {"id": "plain-text-symbols", "name": "Plain text", "preview": [{"text": "~/src ", "color": "#E8EDF7"}, {"text": "git:main ", "color": "#A7B3C9"}, {"text": ">", "color": "#6C9BFF"}]}
+  ],
+  "omzThemes": [
+    "robbyrussell", "agnoster", "af-magic", "bira", "crunch", "dst", "fino", "gnzh",
+    "josh", "lambda", "nanotech", "pygmalion", "refined", "smt", "steeef", "ys"
+  ],
+  "extras": [
+    {"id": "terminal-icons", "name": "Terminal-Icons", "description": "Folder and file icons in PowerShell listings.", "kind": "module"},
+    {"id": "psreadline", "name": "PSReadLine predictions", "description": "Suggest the rest of a command from your history.", "kind": "profile"},
+    {"id": "zoxide", "name": "zoxide", "description": "Jump to folders you use often. The command is z.", "kind": "winget", "wingetId": "ajeetdsouza.zoxide"},
+    {"id": "fzf", "name": "fzf", "description": "Fuzzy find files and history from the keyboard.", "kind": "winget", "wingetId": "junegunn.fzf"}
+  ],
+  "schemes": [
+    {"id": "wintool-night", "name": "Night", "background": "#1B2230", "foreground": "#E8EDF7", "cursor": "#6C9BFF", "selection": "#2A3A5C"},
+    {"id": "wintool-paper", "name": "Paper", "background": "#F7F4EC", "foreground": "#2B261C", "cursor": "#A87412", "selection": "#E7D7B0"},
+    {"id": "wintool-ocean", "name": "Ocean", "background": "#10242C", "foreground": "#D5E7EA", "cursor": "#3DCEB5", "selection": "#1A3A36"},
+    {"id": "wintool-berry", "name": "Berry", "background": "#24141C", "foreground": "#F6E7EE", "cursor": "#F08AA8", "selection": "#3D2430"}
   ]
 }

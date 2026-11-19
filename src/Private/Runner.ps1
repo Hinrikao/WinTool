@@ -65,11 +65,37 @@ function Get-WinToolPlanCommand {
             ArgumentList = @("--install", "-d", "Ubuntu", "--no-launch")
         }
     }
+    if ($type -eq "font-download") {
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-font-download.ps1"
+        $body = Get-WinToolFontDownloadScript -Release ([string]$Step.Release) -Asset ([string]$Step.Asset)
+        Write-WinToolUtf8File -Path $scriptPath -Text $body
+        $hostPath = Join-Path $env:SystemRoot "System32/WindowsPowerShell/v1.0/powershell.exe"
+        return [pscustomobject]@{
+            FilePath = $hostPath
+            ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
+        }
+    }
+    if ($type -eq "tool-download") {
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-tool-download.ps1"
+        $body = Get-WinToolToolDownloadScript -Url ([string]$Step.Url) -FileName ([string]$Step.FileName)
+        Write-WinToolUtf8File -Path $scriptPath -Text $body
+        $hostPath = Join-Path $env:SystemRoot "System32/WindowsPowerShell/v1.0/powershell.exe"
+        return [pscustomobject]@{
+            FilePath = $hostPath
+            ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
+        }
+    }
     if ($type -eq "wsl-shell") {
         $wsl = Join-Path $env:SystemRoot "System32/wsl.exe"
         $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-setup.sh"
         $bash = Get-WinToolPayloadText -Name "Wsl"
         $bash = $bash -replace "`r`n", "`n" -replace "`r", "`n"
+        $variant = [string](Get-WinToolNote -Object $Step -Name "Variant" -Default "")
+        $omzTheme = [string](Get-WinToolNote -Object $Step -Name "OmzTheme" -Default "robbyrussell")
+        if ([string]::IsNullOrWhiteSpace($omzTheme)) { $omzTheme = "robbyrussell" }
+        if (-not [string]::IsNullOrWhiteSpace($variant)) {
+            $bash = "export WINTOOL_SHELL_PROMPT=" + $variant + "`nexport WINTOOL_OMZ_THEME=" + $omzTheme + "`n" + $bash
+        }
         Write-WinToolUtf8File -Path $scriptPath -Text $bash
         $unix = $scriptPath
         if (Test-Path -LiteralPath $wsl) {
@@ -99,7 +125,15 @@ function Invoke-WinToolLocalStep {
         return
     }
     if ($type -eq "profile") {
-        Write-WinToolShellProfile -PromptId ([string]$Step.Prompt) -TerminalIcons ([bool]$Step.TerminalIcons)
+        Write-WinToolShellProfile -PromptId ([string]$Step.Prompt) -TerminalIcons ([bool]$Step.TerminalIcons) -PromptStyle ([string]$Step.PromptStyle) -PsReadLine ([bool]$Step.PsReadLine) -Zoxide ([bool]$Step.Zoxide)
+        return
+    }
+    if ($type -eq "scheme") {
+        Invoke-WinToolTerminalScheme -SchemeId ([string]$Step.SchemeId)
+        return
+    }
+    if ($type -eq "starship-preset") {
+        Invoke-WinToolStarshipPreset -Preset ([string]$Step.Preset)
         return
     }
     throw "Step '$type' is not a local step."

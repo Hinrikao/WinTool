@@ -55,11 +55,66 @@ function Sync-WinToolProgress {
     }
 }
 
+function Sync-WinToolLogPanel {
+    $expanded = $false
+    if ($script:WinToolState.LogExpanded) {
+        $expanded = $true
+    }
+    $busy = $false
+    if ($script:WinToolState.Busy) {
+        $busy = $true
+    }
+    $log = Get-WinToolUi -Name "LogPanel"
+    $bar = Get-WinToolUi -Name "MainProgress"
+    $toggle = Get-WinToolUi -Name "ToggleLogButton"
+    $clear = Get-WinToolUi -Name "ClearLogButton"
+    if ($expanded) {
+        $log.Visibility = "Visible"
+        $toggle.Content = "Hide log"
+        $clear.Visibility = "Visible"
+    }
+    else {
+        $log.Visibility = "Collapsed"
+        $toggle.Content = "Show log"
+        $clear.Visibility = "Collapsed"
+    }
+    if ($busy) {
+        $bar.Visibility = "Visible"
+    }
+    else {
+        $bar.Visibility = "Collapsed"
+        $bar.IsIndeterminate = $false
+    }
+}
+
+function Switch-WinToolLogPanel {
+    if ($script:WinToolState.LogExpanded) {
+        $script:WinToolState.LogExpanded = $false
+        $script:WinToolState.LogPinned = $false
+    }
+    else {
+        $script:WinToolState.LogExpanded = $true
+        $script:WinToolState.LogPinned = $true
+    }
+    Sync-WinToolLogPanel
+}
+
 function Sync-WinToolBusyState {
     param(
         [bool]$Busy
     )
+    $wasBusy = $false
+    if ($script:WinToolState.Busy) {
+        $wasBusy = $true
+    }
     $script:WinToolState.Busy = $Busy
+    if ($Busy -and -not $wasBusy) {
+        $script:WinToolState.LogExpanded = $true
+    }
+    elseif (-not $Busy -and $wasBusy -and -not $script:WinToolState.LogPinned) {
+        $script:WinToolState.LogExpanded = $false
+    }
+    Sync-WinToolLogPanel
     $names = @(
         "AppInstall", "AppSelectVisible", "AppClear",
         "TweakApply", "TweakUndo", "TweakClear",
@@ -341,6 +396,9 @@ function Initialize-WinToolShellEvent {
     (Get-WinToolUi -Name "ClearLogButton").Add_Click({
         (Get-WinToolUi -Name "LogBox").Clear()
     })
+    (Get-WinToolUi -Name "ToggleLogButton").Add_Click({
+        Switch-WinToolLogPanel
+    })
     (Get-WinToolUi -Name "CancelRun").Add_Click({
         Stop-WinToolRun
     })
@@ -415,6 +473,8 @@ function New-WinToolWindow {
         PendingTweaks = @()
         PendingDirection = "Apply"
         PendingRestart = $true
+        LogExpanded = $false
+        LogPinned = $false
     }
 
     $xaml = Get-WinToolPayloadText -Name "Xaml"
@@ -424,12 +484,23 @@ function New-WinToolWindow {
     $script:WinToolWindow = $window
     $script:WinToolLogBox = $window.FindName("LogBox")
 
+    Initialize-WinToolAppearance
     Initialize-WinToolInstallView
     Initialize-WinToolTweakView
     Initialize-WinToolTerminalView
     Initialize-WinToolUpdateView
     Initialize-WinToolConfigView
     Initialize-WinToolShellEvent
+    Sync-WinToolLogPanel
+    $window.Add_Activated({
+        if ($null -eq $script:WinToolSetting) { return }
+        if ([string]$script:WinToolSetting.theme -ne "system") { return }
+        $want = "dark"
+        if (Test-WinToolSystemLightTheme) { $want = "light" }
+        if ([string]$script:WinToolResolvedTheme -ne $want) {
+            Set-WinToolTheme -Theme "system" -Accent ([string]$script:WinToolSetting.accent)
+        }
+    })
 
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
         try {

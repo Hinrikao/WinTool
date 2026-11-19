@@ -163,6 +163,29 @@ Invoke-WinToolCase -Name "Terminal plan, font face, and profile block" -Body {
     Test-WinToolExpectation -Condition ($second.Contains("Get-Location") -and -not $second.Contains("Get-Date") -and $second.Contains("Write-Host 'hi'")) -Message "The managed profile block is replaced in place."
     $prompt = Get-WinToolPromptScript -PromptId "oh-my-posh" -TerminalIcons $true
     Test-WinToolExpectation -Condition ($prompt.Contains("oh-my-posh") -and $prompt.Contains("Terminal-Icons")) -Message "The Oh My Posh profile imports icons."
+    $fonts = @(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @())
+    $nerd = @(Select-WinToolFont -Font $fonts -Query "fira" -NerdOnly $true)
+    $plain = @(Select-WinToolFont -Font $fonts -Query "" -PlainOnly $true)
+    Test-WinToolExpectation -Condition ($fonts.Count -ge 70 -and $nerd.Count -ge 1 -and $plain.Count -ge 1) -Message "The font catalog includes Nerd Fonts and plain programming fonts."
+    $themes = @(Get-WinToolNote -Object (Get-WinToolOhMyPoshDocument) -Name "themes" -Default @())
+    Test-WinToolExpectation -Condition ($themes.Count -ge 100) -Message "The Oh My Posh gallery includes the official themes."
+    $simple = Get-WinToolSimpleTerminalChoice
+    $simplePlan = @(Get-WinToolTerminalPlan -Selection $simple)
+    $simpleLabels = @($simplePlan | ForEach-Object { $_.Label }) -join " "
+    Test-WinToolExpectation -Condition ($simpleLabels.Contains("Oh My Posh") -and $simpleLabels.Contains("PowerShell 7")) -Message "Simple mode installs the recommended prompt."
+    $dark = Resolve-WinToolAppearance -Theme "dark" -Accent "teal" -SystemIsLight $true
+    $light = Resolve-WinToolAppearance -Theme "system" -Accent "blue" -SystemIsLight $true
+    Test-WinToolExpectation -Condition ($dark.Resolved -eq "dark" -and $dark.Brushes["BrushAccent"] -eq "#3DCEB5") -Message "Dark theme keeps the chosen accent."
+    Test-WinToolExpectation -Condition ($light.Resolved -eq "light" -and $light.Brushes["BrushCanvas"] -eq "#F3F5F9") -Message "System theme follows a light Windows setting."
+    $settingsPath = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-settings-" + [guid]::NewGuid().ToString() + ".json")
+    try {
+        Save-WinToolSetting -Setting ([pscustomobject]@{ theme = "system"; accent = "rose" }) -Path $settingsPath
+        $loadedSetting = Read-WinToolSetting -Path $settingsPath
+        Test-WinToolExpectation -Condition ($loadedSetting.theme -eq "system" -and $loadedSetting.accent -eq "rose") -Message "Appearance settings round-trip."
+    }
+    finally {
+        Remove-Item -LiteralPath $settingsPath -Force -ErrorAction SilentlyContinue
+    }
 }
 
 Invoke-WinToolCase -Name "Search and GPU vendor matching" -Body {
