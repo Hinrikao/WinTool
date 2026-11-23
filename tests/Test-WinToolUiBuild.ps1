@@ -117,7 +117,12 @@ try {
         [System.IO.File]::WriteAllText($profileFile, $profileText, (New-Object System.Text.UTF8Encoding($true)))
         foreach ($profileHost in $profileHosts) {
             $probe = 'Remove-Item Env:POSH_THEMES_PATH -ErrorAction Ignore; $Error.Clear(); . ''' + $profileFile + '''; foreach ($e in $Error) { "ERR: " + $e }; "PROMPT: " + (prompt); "WINTOOL-OK"'
-            $profileOutput = & $profileHost -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $probe 2>&1
+            # -EncodedCommand: Windows PowerShell drops inner quotes from native arguments.
+            $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($probe))
+            $savedPreference = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            $profileOutput = & $profileHost -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand $encoded 2>&1
+            $ErrorActionPreference = $savedPreference
             $profileJoined = (@($profileOutput) | ForEach-Object { [string]$_ }) -join " | "
             if (-not $profileJoined.Contains("WINTOOL-OK") -or $profileJoined.Contains("ERR:")) {
                 throw ("The " + $promptId + " profile failed in " + $profileHost + ": " + $profileJoined)

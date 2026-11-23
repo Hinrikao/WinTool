@@ -941,7 +941,8 @@ Invoke-WinToolCase -Name "Generated PowerShell profiles never throw" -Body {
             Test-WinToolExpectation -Condition ($text.Contains('ContainsKey("PredictionSource")') -and $text.Contains('ContainsKey("PredictionViewStyle")')) -Message "PSReadLine options are only set when the module has them."
             [System.IO.File]::WriteAllText($temp, $text)
             $command = 'Remove-Item Env:POSH_THEMES_PATH -ErrorAction Ignore; $Error.Clear(); . ''' + $temp + '''; foreach ($e in $Error) { "ERR: " + $e }; "WINTOOL-OK"'
-            $output = & $hostPath -NoProfile -NonInteractive -Command $command 2>&1
+            $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($command))
+            $output = & $hostPath -NoProfile -NonInteractive -EncodedCommand $encoded 2>&1
             $joined = (@($output) | ForEach-Object { [string]$_ }) -join "`n"
             Test-WinToolExpectation -Condition ($joined.Contains("WINTOOL-OK") -and -not $joined.Contains("ERR:")) -Message ("The " + [string]$prompt.id + " profile wrote errors: " + $joined)
         }
