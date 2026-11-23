@@ -529,6 +529,7 @@ function Initialize-WinToolHomeView {
         Started = $null
         Finished = $null
         Seconds = 0
+        Score = $null
         Arc = 0.0
         ArcTarget = 0.0
         AnimStart = [DateTime]::Now
@@ -600,7 +601,8 @@ function Sync-WinToolHomeHeader {
     switch ($hs.Phase) {
         "done" {
             $results = @($hs.Results.Values)
-            $score = Get-WinToolHomeScore -Result $results
+            $score = $hs.Score
+            if ($null -eq $score) { $score = Get-WinToolHomeScore -Result $results }
             $verdict = Get-WinToolHomeVerdict -Score $score
             $fixable = @($results | Where-Object { $_.Fixable }).Count
             $busyRing.Visibility = "Collapsed"
@@ -757,6 +759,7 @@ function Start-WinToolHomeAnalysis {
     $hs.Phase = "analyzing"
     $hs.Results = @{}
     $hs.Pending = @{}
+    $hs.Score = $null
     $hs.Started = [DateTime]::Now
     $hs.AnimStart = [DateTime]::Now
     Sync-WinToolHomeHeader
@@ -775,6 +778,7 @@ function Complete-WinToolHomeAnalysis {
     $hs.Seconds = [int][Math]::Max(1, ([datetime]$hs.Finished - [datetime]$hs.Started).TotalSeconds)
     $results = @($hs.Results.Values)
     $score = Get-WinToolHomeScore -Result $results
+    $hs.Score = $score
     if (-not $script:WinToolHomeNoJobs) {
         Add-WinToolHomeHistory -Time $hs.Finished -Score $score -Seconds $hs.Seconds
     }
@@ -851,6 +855,8 @@ function Test-WinToolHomeFixDone {
     if ($hs.Phase -ne "fixing") { return }
     if ($hs.Pending.Count -gt 0 -or $hs.WaitTweaks -or $null -ne $script:WinToolState.HomeCleanJob) { return }
     $hs.Phase = "done"
+    $results = @($hs.Results.Values)
+    $hs.Score = Get-WinToolHomeScore -Result $results
     Sync-WinToolHomeHeader
     Update-WinToolHomeCard
     Start-WinToolHomeAnimation

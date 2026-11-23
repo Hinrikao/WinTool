@@ -656,7 +656,8 @@ function Stop-WinToolChildProcess {
 
 function Enter-WinToolSingleInstance {
     # One WinTool window per session. A second launch brings the first window
-    # to the front and leaves.
+    # to the front and leaves. If the existing window cannot be found or
+    # focused, this instance takes over.
     $created = $false
     try {
         $script:WinToolMutex = [System.Threading.Mutex]::new($true, "Local\WinTool.Hinrikao.Window", [ref]$created)
@@ -670,16 +671,35 @@ function Enter-WinToolSingleInstance {
         $script:WinToolMutex.Dispose()
         $script:WinToolMutex = $null
     }
+    $foundWindow = $false
     if (Initialize-WinToolConsoleApi) {
         try {
             $handle = [WinToolConsoleApi]::FindWindow($null, "WinTool")
             if ($handle -ne [IntPtr]::Zero) {
                 $null = [WinToolConsoleApi]::ShowWindow($handle, 9)
                 $null = [WinToolConsoleApi]::SetForegroundWindow($handle)
+                $foundWindow = $true
             }
         }
         catch {
             $null = $_.Exception.Message
+        }
+    }
+    if (-not $foundWindow) {
+        Start-Sleep -Milliseconds 500
+        try {
+            $script:WinToolMutex = [System.Threading.Mutex]::new($true, "Local\WinTool.Hinrikao.Window", [ref]$created)
+        }
+        catch {
+            $script:WinToolMutex = $null
+            $created = $false
+        }
+        if ($created) {
+            return $true
+        }
+        if ($null -ne $script:WinToolMutex) {
+            $script:WinToolMutex.Dispose()
+            $script:WinToolMutex = $null
         }
     }
     Write-Host "WinTool is already open. Its window was brought to the front."

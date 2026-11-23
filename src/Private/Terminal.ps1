@@ -129,6 +129,7 @@ function Get-WinToolPromptScript {
         # POSH_THEMES_PATH is not set by newer Oh My Posh builds, so WinTool
         # saves the theme under %LOCALAPPDATA%\WinTool\themes during setup and
         # also looks in the older theme folders.
+        # oh-my-posh init needs "pwsh" for PowerShell Core 6+ and "powershell" for Windows PowerShell 5.1.
         $lines.Add('try {')
         $lines.Add('    $wintoolPosh = $null')
         $lines.Add('    if ($wintoolInteractive) { $wintoolPosh = Get-Command -Name oh-my-posh -CommandType Application -ErrorAction Ignore | Select-Object -First 1 }')
@@ -138,20 +139,21 @@ function Get-WinToolPromptScript {
         $lines.Add('        }')
         $lines.Add('    }')
         $lines.Add('    if ($null -ne $wintoolPosh) {')
+        $lines.Add('        $wintoolShell = "pwsh"')
+        $lines.Add('        if ($PSVersionTable.PSEdition -ne "Core") { $wintoolShell = "powershell" }')
         $lines.Add('        $wintoolTheme = $null')
         $lines.Add('        foreach ($wintoolFolder in @([string]$env:POSH_THEMES_PATH, ([string]$env:LOCALAPPDATA + "\WinTool\themes"), ([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\themes"))) {')
         $lines.Add('            if ([string]::IsNullOrWhiteSpace($wintoolFolder)) { continue }')
         $lines.Add('            $wintoolCandidate = Join-Path $wintoolFolder "' + $themeFile + '"')
         $lines.Add('            if (Test-Path -LiteralPath $wintoolCandidate) { $wintoolTheme = $wintoolCandidate; break }')
         $lines.Add('        }')
+        $lines.Add('        $wintoolInit = $null')
         $lines.Add('        if ($null -ne $wintoolTheme) {')
-        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init pwsh --config $wintoolTheme | Out-String)')
+        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init $wintoolShell --config $wintoolTheme | Out-String)')
         $lines.Add('        }')
         $lines.Add('        else {')
-        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init pwsh | Out-String)')
+        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init $wintoolShell | Out-String)')
         $lines.Add('        }')
-        $lines.Add('        # Empty output (old host, TERM=dumb) would make Invoke-Expression')
-        $lines.Add('        # print a binding error that try/catch does not stop.')
         $lines.Add('        if (-not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
         $lines.Add('    }')
         $lines.Add('}')
