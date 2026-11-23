@@ -176,8 +176,11 @@ function Update-WinToolPromptSelection {
 
 function Update-WinToolPromptStyleList {
     $list = Get-WinToolUi -Name "TerminalStyleList"
-    $list.Items.Clear()
     $prompt = [string]$script:WinToolTerminalChoice.prompt
+    # The list remembers which prompt it was built for, so an old selection
+    # never overwrites the style of a newly picked prompt.
+    $list.Tag = $null
+    $list.Items.Clear()
     $query = [string](Get-WinToolUi -Name "TerminalThemeSearch").Text
     $note = Get-WinToolUi -Name "TerminalStyleNote"
     if ($prompt -eq "oh-my-posh") {
@@ -252,6 +255,10 @@ function Update-WinToolPromptStyleList {
     }
     else {
         $note.Visibility = "Collapsed"
+    }
+    $list.Tag = $prompt
+    if ($null -ne $list.SelectedItem) {
+        $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
     }
     Show-WinToolTerminalSelection
 }
@@ -631,7 +638,7 @@ function Read-WinToolExtraSelection {
 function Update-WinToolTerminalSummary {
     if ($script:WinToolTerminalMode -eq "advanced") {
         $list = Get-WinToolUi -Name "TerminalStyleList"
-        if ($null -ne $list.SelectedItem) {
+        if ($null -ne $list.SelectedItem -and [string]$list.Tag -eq [string]$script:WinToolTerminalChoice.prompt) {
             $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
         }
         $fonts = Get-WinToolUi -Name "TerminalFontList"
