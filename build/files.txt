@@ -11,11 +11,13 @@ src/Private/Config.ps1
 src/Private/Theme.ps1
 src/Private/Runner.ps1
 src/Private/Elevation.ps1
+src/Private/Fixes.ps1
 src/UI/Factory.ps1
 src/UI/InstallView.ps1
 src/UI/TweaksView.ps1
 src/UI/TerminalView.ps1
 src/UI/UpdatesView.ps1
+src/UI/FixesView.ps1
 src/UI/ConfigView.ps1
 src/UI/Shell.ps1
 src/Entry.ps1

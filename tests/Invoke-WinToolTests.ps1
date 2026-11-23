@@ -236,6 +236,34 @@ Something Else           Other.Package                 1.0       2.0       winge
     Test-WinToolExpectation -Condition (@($errors).Count -eq 0 -and $script.Contains("export")) -Message "The detection script parses and uses winget export."
 }
 
+Invoke-WinToolCase -Name "Fixes run known programs and named scripts" -Body {
+    $catalog = Get-WinToolFixCatalog
+    $fixes = @{}
+    foreach ($fix in @($catalog.fixes)) { $fixes[[string]$fix.id] = $fix }
+    foreach ($id in @("windows-update-reset", "network-reset", "system-file-repair", "winget-repair")) {
+        Test-WinToolExpectation -Condition ($fixes.ContainsKey($id)) -Message "Missing fix $id."
+    }
+    $network = @(Get-WinToolFixPlan -Fix $fixes["network-reset"])
+    Test-WinToolExpectation -Condition ($network.Count -eq 4 -and $network[1].FilePath.EndsWith("\System32\netsh.exe") -and (@($network[1].Arguments) -join " ") -eq "winsock reset") -Message "Network reset runs netsh winsock reset."
+    $repair = @(Get-WinToolFixPlan -Fix $fixes["system-file-repair"])
+    Test-WinToolExpectation -Condition ($repair[0].FilePath.EndsWith("Dism.exe") -and $repair[1].FilePath.EndsWith("sfc.exe")) -Message "System repair runs DISM before SFC."
+    foreach ($name in @(Get-WinToolFixScriptName)) {
+        $text = Get-WinToolFixScript -Name $name
+        $tokens = $null
+        $errors = $null
+        [void][System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$errors)
+        Test-WinToolExpectation -Condition (@($errors).Count -eq 0) -Message "Fix script $name does not parse."
+    }
+    $update = @(Get-WinToolFixPlan -Fix $fixes["windows-update-reset"])
+    $command = Get-WinToolPlanCommand -Step $update[0]
+    Test-WinToolExpectation -Condition ($command.FilePath.EndsWith("powershell.exe") -and (@($command.ArgumentList) -contains "-File")) -Message "A fix script runs in Windows PowerShell."
+    Remove-Item -LiteralPath @($command.ArgumentList)[-1] -Force -ErrorAction SilentlyContinue
+    $bad = New-Object System.Collections.Generic.List[string]
+    $badCatalog = [pscustomobject]@{ schemaVersion = 1; fixes = @([pscustomobject]@{ id = "x"; name = "X"; description = "d"; steps = @([pscustomobject]@{ type = "process"; file = "..\evil.exe" }, [pscustomobject]@{ type = "script"; script = "rm-rf" }) }) }
+    Test-WinToolFixCatalog -Catalog $badCatalog -Errors $bad
+    Test-WinToolExpectation -Condition ($bad.Count -ge 3) -Message "The fix catalog rejects outside programs and unknown scripts."
+}
+
 Invoke-WinToolCase -Name "App plan uses the catalog winget id" -Body {
     $catalog = Get-WinToolAppCatalog
     $firefox = $null

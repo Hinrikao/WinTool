@@ -14,11 +14,25 @@ function Request-WinToolConfirmation {
     return ($answer -eq [System.Windows.MessageBoxResult]::Yes)
 }
 
+function Get-WinToolViewName {
+    return @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Config")
+}
+
+function Add-WinToolBusyControl {
+    param(
+        [Parameter(Mandatory = $true)]$Control
+    )
+    if ($null -eq $script:WinToolState.BusyControls) {
+        $script:WinToolState.BusyControls = New-Object System.Collections.Generic.List[object]
+    }
+    $script:WinToolState.BusyControls.Add($Control)
+}
+
 function Switch-WinToolView {
     param(
         [Parameter(Mandatory = $true)][string]$Name
     )
-    foreach ($view in @("Install", "Tweaks", "Terminal", "Updates", "Config")) {
+    foreach ($view in @(Get-WinToolViewName)) {
         $element = Get-WinToolUi -Name ("View" + $view)
         if ($view -eq $Name) {
             $element.Visibility = "Visible"
@@ -124,6 +138,11 @@ function Sync-WinToolBusyState {
     )
     foreach ($name in $names) {
         (Get-WinToolUi -Name $name).IsEnabled = -not $Busy
+    }
+    if ($null -ne $script:WinToolState.BusyControls) {
+        foreach ($control in $script:WinToolState.BusyControls.ToArray()) {
+            $control.IsEnabled = -not $Busy
+        }
     }
     $installUpdates = Get-WinToolUi -Name "InstallScannedUpdates"
     if ($Busy) {
@@ -368,7 +387,8 @@ function Update-WinToolLogPump {
         $line = $null
         while ($run.Queue.TryDequeue([ref]$line)) {
             if (-not [string]::IsNullOrWhiteSpace($line)) {
-                $clean = $line.Trim()
+                # sfc.exe writes UTF-16, which arrives with NUL characters.
+                $clean = $line.Replace([string][char]0, "").Trim()
                 if ($null -ne $run.StepLog) {
                     $run.StepLog.Add($clean)
                 }
@@ -408,7 +428,7 @@ function Update-WinToolLogPump {
 
 function Initialize-WinToolShellEvent {
     (Get-WinToolUi -Name "VersionText").Text = "Version " + $script:WinToolVersion
-    foreach ($view in @("Install", "Tweaks", "Terminal", "Updates", "Config")) {
+    foreach ($view in @(Get-WinToolViewName)) {
         Register-WinToolUiEvent -Control (Get-WinToolUi -Name ("Nav" + $view)) -EventName "Checked" -Name ("Open the " + $view + " tab") -Data $view -Action {
             param($source, $eventData, $viewName)
             $null = $source, $eventData
@@ -496,6 +516,7 @@ function New-WinToolWindow {
         UpdateJob = $null
         InstallJob = $null
         DetectJob = $null
+        BusyControls = $null
         PendingTweaks = @()
         PendingDirection = "Apply"
         PendingRestart = $true
@@ -515,6 +536,7 @@ function New-WinToolWindow {
     Initialize-WinToolTweakView
     Initialize-WinToolTerminalView
     Initialize-WinToolUpdateView
+    Initialize-WinToolFixView
     Initialize-WinToolConfigView
     Initialize-WinToolShellEvent
     Sync-WinToolLogPanel

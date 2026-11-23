@@ -318,6 +318,12 @@
               <TextBlock Text="Updates" VerticalAlignment="Center"/>
             </StackPanel>
           </RadioButton>
+          <RadioButton x:Name="NavFixes" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Fixes">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE90F;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Fixes" VerticalAlignment="Center"/>
+            </StackPanel>
+          </RadioButton>
           <RadioButton x:Name="NavConfig" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Config">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -501,6 +507,14 @@
                 <ListBox x:Name="UpdateList" BorderThickness="0" Background="Transparent" MaxHeight="220" Margin="0,8,0,0"/>
               </StackPanel>
             </Border>
+          </StackPanel>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="ViewFixes" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+          <StackPanel Margin="24,22,24,12">
+            <TextBlock Text="Fixes" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock Text="Repairs for common Windows problems. Each one asks first and writes what it does to the log." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
+            <StackPanel x:Name="FixList"/>
           </StackPanel>
         </ScrollViewer>
 

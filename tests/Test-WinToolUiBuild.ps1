@@ -86,6 +86,10 @@ $promptHost = $window.FindName("TerminalPromptHost")
 if ($null -eq $promptHost -or $promptHost.Children.Count -lt 8) {
     throw "The Terminal tab did not list the prompt engines."
 }
+$fixList = $window.FindName("FixList")
+if ($null -eq $fixList -or $fixList.Children.Count -lt 4) {
+    throw "The Fixes tab did not list the repairs."
+}
 $logPanel = $window.FindName("LogPanel")
 if ($null -eq $logPanel -or $logPanel.Visibility -ne "Collapsed") {
     throw "The log should be collapsed until a task starts."
@@ -125,9 +129,20 @@ $skip = @(
     "Appearance: accent color",
     "Appearance: theme"
 )
+# Every handler whose name starts with one of these changes the system.
+$skipPrefix = @("Fixes: ")
 $raised = 0
 foreach ($entry in $script:WinToolUiHandlers.ToArray()) {
     if ($skip -contains [string]$entry.Name) {
+        continue
+    }
+    $prefixed = $false
+    foreach ($prefix in $skipPrefix) {
+        if (([string]$entry.Name).StartsWith($prefix)) {
+            $prefixed = $true
+        }
+    }
+    if ($prefixed) {
         continue
     }
     $control = $entry.Control

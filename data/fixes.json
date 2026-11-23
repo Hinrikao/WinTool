@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "fixes": [
+    {
+      "id": "windows-update-reset",
+      "name": "Reset Windows Update",
+      "description": "Stops the update services, renames the SoftwareDistribution and catroot2 folders so Windows builds fresh ones, then starts the services again. Use it when updates fail or stay stuck. The old folders are kept with a .wintool-<date> suffix and can be deleted later.",
+      "restart": true,
+      "steps": [
+        { "label": "Reset Windows Update components", "type": "script", "script": "windows-update-reset" }
+      ]
+    },
+    {
+      "id": "network-reset",
+      "name": "Reset network",
+      "description": "Clears the DNS cache and resets Winsock and the TCP/IP stack for IPv4 and IPv6. Use it when websites do not load while the connection looks fine. Static IP settings may need to be entered again.",
+      "restart": true,
+      "steps": [
+        { "label": "Clear the DNS cache", "type": "process", "file": "System32\\ipconfig.exe", "args": ["/flushdns"] },
+        { "label": "Reset Winsock", "type": "process", "file": "System32\\netsh.exe", "args": ["winsock", "reset"] },
+        { "label": "Reset TCP/IP for IPv4", "type": "process", "file": "System32\\netsh.exe", "args": ["int", "ipv4", "reset"] },
+        { "label": "Reset TCP/IP for IPv6", "type": "process", "file": "System32\\netsh.exe", "args": ["int", "ipv6", "reset"] }
+      ]
+    },
+    {
+      "id": "system-file-repair",
+      "name": "Repair system files",
+      "description": "Runs DISM RestoreHealth to repair the Windows component store, then System File Checker to fix protected system files. It can take 15 minutes or more and needs an internet connection for DISM.",
+      "restart": false,
+      "steps": [
+        { "label": "DISM: repair the component store", "type": "process", "file": "System32\\Dism.exe", "args": ["/Online", "/Cleanup-Image", "/RestoreHealth"] },
+        { "label": "SFC: scan and repair system files", "type": "process", "file": "System32\\sfc.exe", "args": ["/scannow"] }
+      ]
+    },
+    {
+      "id": "winget-repair",
+      "name": "Repair winget",
+      "description": "Installs Microsoft's WinGet PowerShell module and runs its repair command, which reinstalls App Installer and its dependencies. If that fails, WinTool registers App Installer again from the copy Windows already has.",
+      "restart": false,
+      "steps": [
+        { "label": "Repair winget (App Installer)", "type": "script", "script": "winget-repair" }
+      ]
+    }
+  ]
+}

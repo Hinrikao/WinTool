@@ -311,5 +311,7 @@ function Test-WinToolDataFile {
         }
     }
 
+    Test-WinToolFixCatalog -Catalog (Get-WinToolFixCatalog) -Errors $errors
+
     return $errors.ToArray()
 }

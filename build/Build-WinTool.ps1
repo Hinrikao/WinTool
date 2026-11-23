@@ -51,6 +51,7 @@ $payloads = [ordered]@{
     Fonts = "data/fonts.json"
     OmpThemes = "data/omp-themes.json"
     Updates = "data/updates.json"
+    Fixes = "data/fixes.json"
     Xaml = "assets/MainWindow.xaml"
     Wsl = "data/wsl-setup.sh"
 }
