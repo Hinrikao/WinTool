@@ -920,7 +920,7 @@
                       </DockPanel>
                     </Border>
                     <Border x:Name="TerminalFontPreview" Grid.Row="1" Background="#1B2230" Padding="14,10" ClipToBounds="True">
-                      <TextBlock x:Name="TerminalFontSample" Text="Font preview" FontSize="13" LineHeight="20" LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource BrushLogText}" TextWrapping="NoWrap" VerticalAlignment="Bottom"/>
+                      <TextBlock x:Name="TerminalFontSample" Text="Font preview" Typography.StandardLigatures="True" Typography.ContextualAlternates="True" FontSize="13" LineHeight="20" LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource BrushLogText}" TextWrapping="NoWrap" VerticalAlignment="Bottom"/>
                     </Border>
                     <Border Grid.Row="2" BorderBrush="{DynamicResource BrushLine}" BorderThickness="0,1,0,0" Padding="12,7">
                       <DockPanel>
@@ -954,6 +954,7 @@
                       </StackPanel>
                     </Grid>
                     <UniformGrid x:Name="TerminalSchemeHost" Columns="4" Rows="1" Margin="0,0,-6,0"/>
+                    <TextBlock x:Name="TerminalFontLigatureNote" Margin="0,8,0,0" FontSize="10.5" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="Font ligatures (calt, liga) are always turned on for every Windows Terminal profile. Your other font features are kept." ToolTip="Written to profiles.defaults.font.features in Windows Terminal settings.json."/>
                   </StackPanel>
                 </Border>
 

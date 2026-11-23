@@ -524,6 +524,26 @@ $summaryChips = @($window.FindName("TerminalSummaryHost").Children | ForEach-Obj
 if ($null -eq $advancedGrid -or $summaryChips.Count -lt 3) {
     throw "The Terminal action bar did not list the steps."
 }
+$ligatureChip = @($summaryChips | Where-Object { $_ -is [System.Windows.Controls.Border] -and $_.Child -is [System.Windows.Controls.TextBlock] -and [string]$_.Child.Text -like "*Font ligatures on*" })
+if ($ligatureChip.Count -ne 1) {
+    throw "The Terminal action bar should show one 'Font ligatures on' change."
+}
+$ligatureNote = $window.FindName("TerminalFontLigatureNote")
+if ($null -eq $ligatureNote -or [string]$ligatureNote.Text -notlike "*ligatures*" -or $ligatureNote.Visibility -ne "Visible") {
+    throw "The Font and colors card should note that ligatures are always on."
+}
+$previewSample = $window.FindName("TerminalFontSample")
+if (-not [System.Windows.Documents.Typography]::GetStandardLigatures($previewSample) -or -not [System.Windows.Documents.Typography]::GetContextualAlternates($previewSample)) {
+    throw "The live preview should draw font ligatures."
+}
+$themeLine = $null
+foreach ($themeItem in ($window.FindName("TerminalStyleList").Items | ForEach-Object { $_ })) {
+    $parts = @($themeItem.Content.Children | Where-Object { $_ -is [System.Windows.Controls.Border] })
+    if ($parts.Count -gt 0) { $themeLine = $parts[0].Child; break }
+}
+if ($null -ne $themeLine -and -not [System.Windows.Documents.Typography]::GetStandardLigatures($themeLine)) {
+    throw "Theme previews should draw font ligatures."
+}
 # The action bar stays in view: the Advanced page itself never scrolls at 1280 x 760.
 $rootVisual.Measure([System.Windows.Size]::new(1280, 760))
 $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, 1280, 760))

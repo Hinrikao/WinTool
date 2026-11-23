@@ -249,16 +249,15 @@ function Add-WinToolTerminalFont {
         $profiles | Add-Member -NotePropertyName "defaults" -NotePropertyValue ([pscustomobject]@{})
     }
     $defaults = $profiles.defaults
-    $font = [pscustomobject]@{
-        face = $Face
-        size = $Size
+    # Only face and size change; other font settings (features, weight,
+    # axes) the user already has are kept.
+    $font = Get-WinToolNote -Object $defaults -Name "font"
+    if ($null -eq $font -or $font -isnot [System.Management.Automation.PSCustomObject]) {
+        $font = [pscustomobject]@{}
+        $defaults | Add-Member -NotePropertyName "font" -NotePropertyValue $font -Force
     }
-    if ($null -eq $defaults.PSObject.Properties["font"]) {
-        $defaults | Add-Member -NotePropertyName "font" -NotePropertyValue $font
-    }
-    else {
-        $defaults.font = $font
-    }
+    $font | Add-Member -NotePropertyName "face" -NotePropertyValue $Face -Force
+    $font | Add-Member -NotePropertyName "size" -NotePropertyValue $Size -Force
     if ($null -eq $defaults.PSObject.Properties["fontFace"]) {
         $defaults | Add-Member -NotePropertyName "fontFace" -NotePropertyValue $Face
     }
@@ -266,6 +265,88 @@ function Add-WinToolTerminalFont {
         $defaults.fontFace = $Face
     }
     return $Settings
+}
+
+$script:WinToolLigatureFeatures = [ordered]@{ calt = 1; liga = 1 }
+
+function Set-WinToolFontFeatureObject {
+    param(
+        [Parameter(Mandatory = $true)]$Font
+    )
+    # Adds calt=1 and liga=1 to font.features and keeps every other feature.
+    $features = Get-WinToolNote -Object $Font -Name "features"
+    if ($null -eq $features -or $features -isnot [System.Management.Automation.PSCustomObject]) {
+        $features = [pscustomobject]@{}
+        $Font | Add-Member -NotePropertyName "features" -NotePropertyValue $features -Force
+    }
+    foreach ($key in $script:WinToolLigatureFeatures.Keys) {
+        $features | Add-Member -NotePropertyName $key -NotePropertyValue ([int]$script:WinToolLigatureFeatures[$key]) -Force
+    }
+}
+
+function Add-WinToolTerminalLigature {
+    param(
+        [Parameter(Mandatory = $true)]$Settings
+    )
+    # Turns on font ligatures for every Windows Terminal profile: the shared
+    # profiles.defaults.font.features gets calt and liga, and any profile
+    # with its own features list (which would hide the default) gets them too.
+    $profiles = $null
+    if ($null -ne $Settings.PSObject.Properties["profiles"]) { $profiles = $Settings.PSObject.Properties["profiles"].Value }
+    if ($null -ne $profiles -and $profiles -is [System.Array]) {
+        # Old settings files keep profiles as a plain list.
+        $profiles = [pscustomobject]@{ defaults = [pscustomobject]@{}; list = $profiles }
+        $Settings | Add-Member -NotePropertyName "profiles" -NotePropertyValue $profiles -Force
+    }
+    if ($null -eq $profiles) {
+        $profiles = [pscustomobject]@{}
+        $Settings | Add-Member -NotePropertyName "profiles" -NotePropertyValue $profiles -Force
+    }
+    $defaults = Get-WinToolNote -Object $profiles -Name "defaults"
+    if ($null -eq $defaults) {
+        $defaults = [pscustomobject]@{}
+        $profiles | Add-Member -NotePropertyName "defaults" -NotePropertyValue $defaults -Force
+    }
+    $font = Get-WinToolNote -Object $defaults -Name "font"
+    if ($null -eq $font -or $font -isnot [System.Management.Automation.PSCustomObject]) {
+        $font = [pscustomobject]@{}
+        $defaults | Add-Member -NotePropertyName "font" -NotePropertyValue $font -Force
+    }
+    Set-WinToolFontFeatureObject -Font $font
+    $count = 0
+    foreach ($item in @(Get-WinToolNote -Object $profiles -Name "list" -Default @())) {
+        if ($null -eq $item) { continue }
+        $own = Get-WinToolNote -Object $item -Name "font"
+        if ($null -eq $own -or $null -eq (Get-WinToolNote -Object $own -Name "features")) { continue }
+        Set-WinToolFontFeatureObject -Font $own
+        $count++
+    }
+    return $count
+}
+
+function Invoke-WinToolTerminalLigature {
+    $path = Get-WinToolTerminalSettingsPath
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        Write-WinToolLog -Message "Windows Terminal settings were not found. Open Terminal once, then run terminal setup again to turn on font ligatures." -Level "warn"
+        return
+    }
+    $settings = [pscustomobject]@{}
+    if (Test-Path -LiteralPath $path) {
+        $backup = $path + ".wintool-backup"
+        if (-not (Test-Path -LiteralPath $backup)) {
+            Copy-Item -LiteralPath $path -Destination $backup -Force
+            Write-WinToolLog -Message "Saved a backup of Terminal settings next to settings.json." -Level "info"
+        }
+        $raw = [System.IO.File]::ReadAllText($path)
+        if (-not [string]::IsNullOrWhiteSpace($raw)) {
+            $settings = ConvertFrom-WinToolJsonText -Text $raw
+        }
+    }
+    $own = Add-WinToolTerminalLigature -Settings $settings
+    Write-WinToolUtf8File -Path $path -Text ((ConvertTo-WinToolJsonText -Value $settings) + "`n")
+    $message = "Turned on font ligatures (calt, liga) for all Windows Terminal profiles."
+    if ($own -gt 0) { $message += " Also updated " + $own + " profile(s) with their own font features." }
+    Write-WinToolLog -Message $message -Level "ok"
 }
 
 $script:WinToolSchemeColorKeys = @("black", "red", "green", "yellow", "blue", "purple", "cyan", "white", "brightBlack", "brightRed", "brightGreen", "brightYellow", "brightBlue", "brightPurple", "brightCyan", "brightWhite")
@@ -836,6 +917,7 @@ function Get-WinToolTerminalPlan {
     $fontLabel = "Set the Windows Terminal font to " + [string]$font.name
     if ($fontSize -ne 12) { $fontLabel += " " + $fontSize + " pt" }
     [void]$steps.Add([pscustomobject]@{ Type = "font"; Label = $fontLabel; Face = [string]$font.face; Match = [string]$font.match; Size = $fontSize })
+    [void]$steps.Add([pscustomobject]@{ Type = "ligatures"; Label = "Turn on font ligatures in Windows Terminal for all profiles" })
     if ($null -ne $scheme) {
         [void]$steps.Add([pscustomobject]@{ Type = "scheme"; Label = ("Set the Windows Terminal color scheme to " + [string]$scheme.name); SchemeId = [string]$scheme.id })
     }
@@ -1407,6 +1489,7 @@ function Get-WinToolSummaryChip {
                 if ($null -ne $item.PSObject.Properties["Size"] -and [int]$item.Size -ne 12) { $text += " " + [int]$item.Size + " pt" }
                 & $add "change" $text
             }
+            "ligatures" { & $add "change" "Font ligatures on" }
             "scheme" { & $add "change" ($label -replace '^Set the Windows Terminal color scheme to ', 'Scheme ') }
             "starship-preset" { & $add "change" ("Starship preset " + [string]$item.Preset) }
             "profile" { & $add "change" "PowerShell `$PROFILE" }

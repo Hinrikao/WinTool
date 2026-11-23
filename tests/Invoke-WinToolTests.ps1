@@ -878,7 +878,7 @@ Invoke-WinToolCase -Name "Every plan step type has a runner" -Body {
                 Test-WinToolExpectation -Condition ($null -ne $command) -Message ("Step '" + $type + "' from " + $plan.Name + " has no command.")
             }
         }
-        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "profile", "scheme", "starship-preset", "wsl-profile")) {
+        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "ligatures", "profile", "scheme", "starship-preset", "wsl-profile")) {
             Test-WinToolExpectation -Condition ($seen.ContainsKey($type)) -Message ("No plan produced step type '" + $type + "', so the coverage check is incomplete.")
         }
         Test-WinToolExpectation -Condition (Test-WinToolLocalStepType -Type "scheme") -Message "The color scheme step runs inside WinTool."
@@ -1348,6 +1348,83 @@ Invoke-WinToolCase -Name "Advanced Terminal page: engines, theme rows, filters, 
     $font = 12
     $simple = Get-WinToolSimpleTerminalChoice
     Test-WinToolExpectation -Condition ([int]$simple.fontSize -eq $font) -Message "The recommended setup uses 12 pt."
+}
+
+Invoke-WinToolCase -Name "Terminal setup always turns on font ligatures for every profile" -Body {
+    $text = @'
+{
+  // user comment
+  "profiles": {
+    "defaults": { "font": { "face": "Fira Code", "weight": "light", "features": { "ss01": 1, "calt": 0, "zero": 1 } } },
+    "list": [
+      { "name": "PowerShell", "source": "Windows.Terminal.PowershellCore" },
+      { "name": "Windows PowerShell", "font": { "size": 11 } },
+      { "name": "Ubuntu", "source": "Windows.Terminal.Wsl", "font": { "face": "Hack", "features": { "ss02": 1, "liga": 0 } } },
+      { "name": "Command Prompt", "commandline": "cmd.exe" }
+    ]
+  }
+}
+'@
+    $settings = ConvertFrom-WinToolJsonText -Text $text
+    $own = Add-WinToolTerminalLigature -Settings $settings
+    $features = $settings.profiles.defaults.font.features
+    Test-WinToolExpectation -Condition ([int]$features.calt -eq 1 -and [int]$features.liga -eq 1) -Message "Defaults get calt=1 and liga=1."
+    Test-WinToolExpectation -Condition ([int]$features.ss01 -eq 1 -and [int]$features.zero -eq 1) -Message "Other default font features are kept."
+    Test-WinToolExpectation -Condition ($settings.profiles.defaults.font.face -eq "Fira Code" -and $settings.profiles.defaults.font.weight -eq "light") -Message "The default font face and weight are kept."
+    $ubuntu = @($settings.profiles.list | Where-Object { $_.name -eq "Ubuntu" })[0]
+    Test-WinToolExpectation -Condition ($own -eq 1 -and [int]$ubuntu.font.features.calt -eq 1 -and [int]$ubuntu.font.features.liga -eq 1 -and [int]$ubuntu.font.features.ss02 -eq 1) -Message "A profile with its own features list also gets ligatures and keeps its features."
+    $windowsPs = @($settings.profiles.list | Where-Object { $_.name -eq "Windows PowerShell" })[0]
+    Test-WinToolExpectation -Condition ($null -eq $windowsPs.font.PSObject.Properties["features"] -and [int]$windowsPs.font.size -eq 11) -Message "Profiles without their own features inherit the defaults untouched."
+    $cmd = @($settings.profiles.list | Where-Object { $_.name -eq "Command Prompt" })[0]
+    Test-WinToolExpectation -Condition ($null -eq $cmd.PSObject.Properties["font"]) -Message "Command Prompt inherits the default ligatures."
+    $again = ConvertFrom-WinToolJsonText -Text (ConvertTo-WinToolJsonText -Value $settings)
+    Add-WinToolTerminalLigature -Settings $again | Out-Null
+    Test-WinToolExpectation -Condition (@($again.profiles.defaults.font.features.PSObject.Properties).Count -eq 4) -Message "Running it again does not add duplicate features."
+
+    Add-WinToolTerminalFont -Settings $settings -Face "JetBrainsMono Nerd Font" -Size 14 | Out-Null
+    $font = $settings.profiles.defaults.font
+    Test-WinToolExpectation -Condition ($font.face -eq "JetBrainsMono Nerd Font" -and [int]$font.size -eq 14 -and [int]$font.features.liga -eq 1 -and [int]$font.features.ss01 -eq 1) -Message "Setting the font keeps the font features."
+
+    $empty = [pscustomobject]@{}
+    Add-WinToolTerminalLigature -Settings $empty | Out-Null
+    Test-WinToolExpectation -Condition ([int]$empty.profiles.defaults.font.features.calt -eq 1 -and [int]$empty.profiles.defaults.font.features.liga -eq 1) -Message "Ligatures are added to empty settings."
+    $legacy = ConvertFrom-WinToolJsonText -Text '{ "profiles": [ { "name": "cmd" } ] }'
+    Add-WinToolTerminalLigature -Settings $legacy | Out-Null
+    Test-WinToolExpectation -Condition ([int]$legacy.profiles.defaults.font.features.liga -eq 1 -and @($legacy.profiles.list).Count -eq 1) -Message "Old list-style profiles move under profiles.list."
+
+    $choices = @((Get-WinToolSimpleTerminalChoice))
+    $wslChoice = Get-WinToolSimpleTerminalChoice
+    $wslChoice.prompt = "powerlevel10k"
+    $wslChoice.promptStyle = "rainbow"
+    $choices += $wslChoice
+    foreach ($item in $choices) {
+        $plan = @(Get-WinToolTerminalPlan -Selection $item)
+        $steps = @($plan | Where-Object { $_.Type -eq "ligatures" })
+        Test-WinToolExpectation -Condition ($steps.Count -eq 1) -Message ("The " + [string]$item.prompt + " plan turns on ligatures once.")
+        $chips = @(Get-WinToolSummaryChip -Step $plan | Where-Object { $_.Kind -eq "change" -and $_.Text -eq "Font ligatures on" })
+        Test-WinToolExpectation -Condition ($chips.Count -eq 1) -Message ("The " + [string]$item.prompt + " plan shows a Font ligatures on chip.")
+        Test-WinToolExpectation -Condition ($null -eq (Get-WinToolPlanCommand -Step $steps[0])) -Message "The ligature step runs inside WinTool."
+    }
+    Test-WinToolExpectation -Condition (Test-WinToolLocalStepType -Type "ligatures") -Message "The ligature step has a local handler."
+
+    $oldLocal = $env:LOCALAPPDATA
+    $root = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-wt-" + [guid]::NewGuid().ToString())
+    try {
+        $folder = Join-Path $root "Microsoft/Windows Terminal"
+        New-Item -ItemType Directory -Path $folder -Force | Out-Null
+        $path = Join-Path $folder "settings.json"
+        [System.IO.File]::WriteAllText($path, $text)
+        $env:LOCALAPPDATA = $root
+        Invoke-WinToolLocalStep -Step ([pscustomobject]@{ Type = "ligatures"; Label = "Turn on font ligatures" })
+        $written = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($path))
+        $saved = $written.profiles.defaults.font.features
+        Test-WinToolExpectation -Condition ([int]$saved.calt -eq 1 -and [int]$saved.liga -eq 1 -and [int]$saved.ss01 -eq 1 -and @($written.profiles.list).Count -eq 4) -Message "The ligature step writes settings.json and keeps the profiles."
+        Test-WinToolExpectation -Condition (Test-Path -LiteralPath ($path + ".wintool-backup")) -Message "The ligature step backs up settings.json first."
+    }
+    finally {
+        $env:LOCALAPPDATA = $oldLocal
+        Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
 
 if ($script:WinToolFailures.Count -gt 0) {

@@ -645,6 +645,7 @@ function New-WinToolThemeItem {
         $line.FontSize = 10.5
         $line.TextWrapping = "NoWrap"
         $line.SetResourceReference([System.Windows.Controls.TextBlock]::FontFamilyProperty, "TerminalPreviewFont")
+        Set-WinToolLigatureTypography -Element $line
         $line.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushLogText")
         foreach ($segment in $segments) {
             [void]$line.Inlines.Add((New-WinToolPreviewRun -Segment $segment))
@@ -654,6 +655,14 @@ function New-WinToolThemeItem {
     }
     $item.Content = $stack
     return $item
+}
+
+function Set-WinToolLigatureTypography {
+    param($Element)
+    # Windows Terminal setup always turns ligatures on, so previews draw them too.
+    if ($null -eq $Element) { return }
+    [System.Windows.Documents.Typography]::SetStandardLigatures($Element, $true)
+    [System.Windows.Documents.Typography]::SetContextualAlternates($Element, $true)
 }
 
 function New-WinToolPreviewRun {
@@ -981,6 +990,7 @@ function Update-WinToolTerminalPreview {
         if (-not [string]::IsNullOrWhiteSpace($face)) { $families = $face + ", " + $families }
         $family = [System.Windows.Media.FontFamily]::new($families)
         $sample.FontFamily = $family
+        Set-WinToolLigatureTypography -Element $sample
         $styleList = Get-WinToolUi -Name "TerminalStyleList"
         if ($null -ne $styleList) { $styleList.Resources["TerminalPreviewFont"] = $family }
         $size = 12
@@ -1021,9 +1031,11 @@ function Update-WinToolTerminalPreview {
         & $addLine @((& $text " " ""))
         & $addLine (@($segments) + @((& $text " git status" "")))
         & $addLine @((& $text "On branch main" ""))
-        & $addLine @((& $text "Your branch is up to date with 'origin/main'." ""))
         & $addLine @((& $text "Changes not staged for commit:" ""))
         & $addLine @((& $text "        modified:   src/app.ts" $red))
+        & $addLine @((& $text " " ""))
+        & $addLine (@($segments) + @((& $text " head -1 src/app.ts" "")))
+        & $addLine @((& $text "const same = (a, b) => a === b || a >= b;" ""))
         & $addLine @((& $text " " ""))
         $jump = " cd wintool"
         if ([bool]$choice.zoxide) { $jump = " z wintool" }
