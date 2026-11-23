@@ -427,7 +427,19 @@ if ([string]::IsNullOrWhiteSpace($shotFolder)) {
 }
 New-Item -ItemType Directory -Path $shotFolder -Force | Out-Null
 $window.FindName("NavTerminal").IsChecked = $true
+$window.FindName("TerminalModeSimple").IsChecked = $true
 $window.FindName("TerminalModeAdvanced").IsChecked = $true
+# Back to the recommended choices (the event test above clicked others) and
+# the log folded, as a person opening the tab would see it.
+$script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
+Update-WinToolPromptSelection
+Update-WinToolSchemeSelection
+Update-WinToolPromptStyleList
+Update-WinToolFontList
+Update-WinToolTerminalSummary
+$script:WinToolState.LogExpanded = $false
+$script:WinToolState.Busy = $false
+Sync-WinToolLogPanel
 $rootVisual = $window.Content
 foreach ($size in @(@(1280, 900, "wide"), @(1000, 1300, "narrow"))) {
     $shotWidth = [double]$size[0]
@@ -437,6 +449,12 @@ foreach ($size in @(@(1280, 900, "wide"), @(1000, 1300, "narrow"))) {
     $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $shotWidth, $shotHeight))
     $rootVisual.UpdateLayout()
     $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]$shotWidth, [int]$shotHeight, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    # The window background is not part of its content, so paint it first.
+    $backdrop = New-Object System.Windows.Media.DrawingVisual
+    $context = $backdrop.RenderOpen()
+    $context.DrawRectangle($window.Background, $null, [System.Windows.Rect]::new(0, 0, $shotWidth, $shotHeight))
+    $context.Close()
+    $bitmap.Render($backdrop)
     $bitmap.Render($rootVisual)
     $encoder = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
     $encoder.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($bitmap))

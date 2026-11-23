@@ -212,6 +212,18 @@ function Update-WinToolPromptStyleList {
     if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
         $list.SelectedIndex = 0
     }
+    # The note only shows inside an empty list, so the card stays as in the
+    # approved layout; it is kept as a tooltip on the list otherwise.
+    $list.ToolTip = $note.Text
+    if ($list.Items.Count -eq 0) {
+        $note.Visibility = "Visible"
+        if ($prompt -eq "oh-my-posh" -or $prompt -eq "oh-my-zsh") {
+            $note.Text = "No themes match the search."
+        }
+    }
+    else {
+        $note.Visibility = "Collapsed"
+    }
 }
 
 function Build-WinToolExtraToggle {

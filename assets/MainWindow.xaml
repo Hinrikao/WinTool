@@ -475,14 +475,16 @@
                       <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Theme" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="TerminalStyleNote" Grid.Column="1" Text="Themes" FontSize="11" Foreground="{DynamicResource BrushMuted}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="10,0,8,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                     <Button x:Name="TerminalRefresh" Grid.Column="2" Content="Refresh from GitHub" Style="{StaticResource QuietButton}" FontSize="11" Padding="6,2" ToolTip="Refresh the Nerd Fonts and Oh My Posh lists from GitHub."/>
                   </Grid>
                   <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
                     <TextBox x:Name="TerminalThemeSearch" AutomationProperties.Name="Search prompt themes"/>
                     <TextBlock x:Name="TerminalThemeSearchHint" Text="Search themes..." IsHitTestVisible="False" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
                   </Grid>
-                  <ListBox x:Name="TerminalStyleList" Height="136" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                  <Grid>
+                    <ListBox x:Name="TerminalStyleList" Height="136" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                    <TextBlock x:Name="TerminalStyleNote" Text="Themes" FontSize="12" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24,0" IsHitTestVisible="False"/>
+                  </Grid>
                 </DockPanel>
               </Border>
 
@@ -501,7 +503,7 @@
                   <ListBox x:Name="TerminalFontList" DockPanel.Dock="Top" Height="150" ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
                   <TextBlock DockPanel.Dock="Top" Text="Preview" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}" Margin="0,0,0,6"/>
                   <Border x:Name="TerminalFontPreview" Background="{DynamicResource BrushLog}" CornerRadius="8" Padding="12,10" MinHeight="64">
-                    <TextBlock x:Name="TerminalFontSample" Text="Font preview" FontSize="14" Foreground="{DynamicResource BrushLogText}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TerminalFontSample" Text="Font preview" FontSize="14" Foreground="{DynamicResource BrushLogText}" TextWrapping="Wrap" VerticalAlignment="Top"/>
                   </Border>
                 </DockPanel>
               </Border>
