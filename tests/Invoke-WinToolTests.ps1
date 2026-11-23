@@ -289,6 +289,30 @@ Invoke-WinToolCase -Name "Windows features read state and plan DISM changes" -Bo
     Test-WinToolExpectation -Condition (@($errors).Count -eq 0) -Message "The feature state script parses."
 }
 
+Invoke-WinToolCase -Name "Catalogs are large enough and every tweak has an undo" -Body {
+    $apps = Get-WinToolAppCatalog
+    $appCount = 0
+    $wingetIds = @{}
+    foreach ($category in @($apps.categories)) {
+        foreach ($app in @($category.apps)) {
+            $appCount++
+            $key = ([string]$app.wingetId).ToLowerInvariant()
+            Test-WinToolExpectation -Condition (-not $wingetIds.ContainsKey($key)) -Message ("winget id listed twice: " + [string]$app.wingetId)
+            $wingetIds[$key] = $true
+        }
+    }
+    Test-WinToolExpectation -Condition ($appCount -ge 150) -Message "The app catalog should list at least 150 apps (has $appCount)."
+    $tweaks = @((Get-WinToolTweakCatalog).tweaks)
+    Test-WinToolExpectation -Condition ($tweaks.Count -ge 50) -Message ("The tweak catalog should list at least 50 tweaks (has " + $tweaks.Count + ").")
+    foreach ($tweak in $tweaks) {
+        Test-WinToolExpectation -Condition ($null -ne (Get-WinToolNote -Object $tweak -Name "undo")) -Message ("Tweak " + [string]$tweak.id + " has no undo.")
+        if ([string]$tweak.risk -eq "caution") {
+            $presets = @(Get-WinToolNote -Object $tweak -Name "presets" -Default @())
+            Test-WinToolExpectation -Condition (-not ($presets -contains "minimal")) -Message ("Caution tweak " + [string]$tweak.id + " is in the Minimal preset.")
+        }
+    }
+}
+
 Invoke-WinToolCase -Name "App plan uses the catalog winget id" -Body {
     $catalog = Get-WinToolAppCatalog
     $firefox = $null

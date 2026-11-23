@@ -884,6 +884,1451 @@
       "undo": {
         "type": "appx-restore"
       }
+    },
+    {
+      "id": "show-full-path-in-title",
+      "name": "Show the full path in the title bar",
+      "description": "File Explorer windows show the whole folder path, not only the folder name. Undo shows only the name again.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState",
+            "name": "FullPath",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CabinetState",
+            "name": "FullPath",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "explorer-compact-view",
+      "name": "Compact File Explorer view",
+      "description": "Less space between items in File Explorer, like Windows 10. Undo returns to the roomier layout.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "UseCompactMode",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "UseCompactMode",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "explorer-hide-recent-files",
+      "name": "Hide recent files and folders in Home",
+      "description": "File Explorer's Home stops listing recently used files and frequent folders. Undo shows them again.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",
+            "name": "ShowRecent",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",
+            "name": "ShowFrequent",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",
+            "name": "ShowRecent",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",
+            "name": "ShowFrequent",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "explorer-separate-process",
+      "name": "Open folders in a separate process",
+      "description": "Each File Explorer window runs on its own, so one stuck window does not freeze the taskbar. Uses a little more memory.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "SeparateProcess",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "SeparateProcess",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "show-this-pc-on-desktop",
+      "name": "Show This PC on the desktop",
+      "description": "Adds the This PC icon to the desktop. Undo removes it again.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel",
+            "name": "{20D04FE0-3AEA-1069-A2D8-08002B30309D}",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel",
+            "name": "{20D04FE0-3AEA-1069-A2D8-08002B30309D}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hide-gallery",
+      "name": "Hide Gallery in File Explorer",
+      "description": "Removes the Gallery entry from the File Explorer sidebar. Undo shows it again.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Classes\\CLSID\\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}",
+            "name": "System.IsPinnedToNameSpaceTree",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Classes\\CLSID\\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}",
+            "name": "System.IsPinnedToNameSpaceTree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-snap-flyout",
+      "name": "Turn off the Snap layouts pop-up",
+      "description": "Hovering over the maximize button no longer opens Snap layouts. Win+Z and dragging to the edges still work.",
+      "category": "Explorer",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "EnableSnapAssistFlyout",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "EnableSnapAssistFlyout",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "taskbar-align-left",
+      "name": "Align the taskbar to the left",
+      "description": "Moves the Start button and taskbar icons to the left, like Windows 10. Undo centers them again.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "TaskbarAl",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "TaskbarAl",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hide-task-view-button",
+      "name": "Hide the Task View button",
+      "description": "Removes the Task View button from the taskbar. Win+Tab still opens Task View.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "ShowTaskViewButton",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "ShowTaskViewButton",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "start-more-pins",
+      "name": "Show more pins in Start",
+      "description": "Start shows more pinned apps and fewer recommendations. Undo returns to the default layout.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Start_Layout",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Start_Layout",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "start-hide-recent-files",
+      "name": "Hide recent files in Start",
+      "description": "Start and jump lists stop showing recently opened files. Undo shows them again.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Start_TrackDocs",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Start_TrackDocs",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "start-hide-app-tracking",
+      "name": "Stop tracking app launches",
+      "description": "Windows stops tracking which apps you open to fill Start and search. Undo turns tracking back on.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Start_TrackProgs",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "Start_TrackProgs",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "taskbar-never-combine",
+      "name": "Never combine taskbar buttons",
+      "description": "Each window gets its own taskbar button with a label. Undo combines them again.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "TaskbarGlomLevel",
+            "value": 2,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "TaskbarGlomLevel",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "clock-show-seconds",
+      "name": "Show seconds in the taskbar clock",
+      "description": "Adds seconds to the clock. Uses slightly more power on laptops.",
+      "category": "Taskbar and Start",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "ShowSecondsInSystemClock",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "name": "ShowSecondsInSystemClock",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-transparency",
+      "name": "Turn off transparency effects",
+      "description": "Menus and the taskbar use solid colors instead of see-through effects. Can feel snappier on older PCs.",
+      "category": "Appearance",
+      "risk": "safe",
+      "refresh": "theme",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "name": "EnableTransparency",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "name": "EnableTransparency",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "accent-on-title-bars",
+      "name": "Accent color on title bars",
+      "description": "Window title bars and borders use your accent color. Undo returns to neutral title bars.",
+      "category": "Appearance",
+      "risk": "safe",
+      "refresh": "theme",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\DWM",
+            "name": "ColorPrevalence",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\DWM",
+            "name": "ColorPrevalence",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "faster-menus",
+      "name": "Open menus faster",
+      "description": "Shortens the delay before submenus open from 400 ms to 200 ms. Applies after signing in again.",
+      "category": "Appearance",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Desktop",
+            "name": "MenuShowDelay",
+            "value": "200",
+            "kind": "String"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Desktop",
+            "name": "MenuShowDelay",
+            "value": "400",
+            "kind": "String"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-minimize-animation",
+      "name": "Turn off minimize and maximize animations",
+      "description": "Windows snap open and closed without the zoom animation. Applies after signing in again.",
+      "category": "Appearance",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Desktop\\WindowMetrics",
+            "name": "MinAnimate",
+            "value": "0",
+            "kind": "String"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Desktop\\WindowMetrics",
+            "name": "MinAnimate",
+            "value": "1",
+            "kind": "String"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quiet-lock-screen",
+      "name": "Turn off lock screen tips and ads",
+      "description": "The lock screen stops showing fun facts, tips, and promotions. Undo turns them back on.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "RotatingLockScreenOverlayEnabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-338387Enabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "RotatingLockScreenOverlayEnabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-338387Enabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quiet-settings-suggestions",
+      "name": "Turn off suggestions in Settings",
+      "description": "Settings stops recommending content and apps. Undo turns them back on.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-338393Enabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+            "name": "SubscribedContent-338393Enabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-finish-setup-nag",
+      "name": "Stop \"finish setting up\" reminders",
+      "description": "Windows stops suggesting ways to finish setting up the device after updates. Undo turns the reminders back on.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement",
+            "name": "ScoobeSystemSettingEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement",
+            "name": "ScoobeSystemSettingEnabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-online-speech",
+      "name": "Turn off online speech recognition",
+      "description": "Voice typing and Cortana-style speech stay on the device instead of using Microsoft's cloud service.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy",
+            "name": "HasAccepted",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy",
+            "name": "HasAccepted",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-typing-personalization",
+      "name": "Turn off inking and typing personalization",
+      "description": "Windows stops building a personal dictionary from what you type and write. Undo turns it back on.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\InputPersonalization",
+            "name": "RestrictImplicitInkCollection",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\InputPersonalization",
+            "name": "RestrictImplicitTextCollection",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Personalization\\Settings",
+            "name": "AcceptedPrivacyPolicy",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\InputPersonalization",
+            "name": "RestrictImplicitInkCollection",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\InputPersonalization",
+            "name": "RestrictImplicitTextCollection",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Personalization\\Settings",
+            "name": "AcceptedPrivacyPolicy",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-feedback-prompts",
+      "name": "Stop feedback requests",
+      "description": "Windows stops asking how it is doing. Undo lets Windows decide again.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Siuf\\Rules",
+            "name": "NumberOfSIUFInPeriod",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Siuf\\Rules",
+            "name": "NumberOfSIUFInPeriod"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-language-list-access",
+      "name": "Hide your language list from websites",
+      "description": "Websites can no longer read your list of Windows languages to pick content. Undo allows it again.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\International\\User Profile",
+            "name": "HttpAcceptLanguageOptOut",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\International\\User Profile",
+            "name": "HttpAcceptLanguageOptOut"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-recall",
+      "name": "Turn off Recall snapshots",
+      "description": "Sets the policy that stops Recall from saving snapshots of your screen on Copilot+ PCs. Undo removes the policy.",
+      "category": "Privacy",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsAI",
+            "name": "DisableAIDataAnalysis",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsAI",
+            "name": "DisableAIDataAnalysis"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-copilot-policy",
+      "name": "Turn off Windows Copilot (policy)",
+      "description": "Sets the user policy that turns off Windows Copilot. The Copilot app from the Store is not removed. Undo removes the policy.",
+      "category": "Privacy",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+            "name": "TurnOffWindowsCopilot",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+            "name": "TurnOffWindowsCopilot"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-location-for-apps",
+      "name": "Block location access for apps",
+      "description": "Apps can no longer ask for your location. Maps and weather may need you to type a place. Undo allows apps to ask again.",
+      "category": "Privacy",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\location",
+            "name": "Value",
+            "value": "Deny",
+            "kind": "String"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\location",
+            "name": "Value",
+            "value": "Allow",
+            "kind": "String"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-search-highlights",
+      "name": "Turn off search highlights",
+      "description": "The search box stops showing daily highlights and trending content. Undo shows them again.",
+      "category": "Search",
+      "risk": "safe",
+      "refresh": "explorer",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+            "name": "IsDynamicSearchBoxEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+            "name": "IsDynamicSearchBoxEnabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-cloud-search",
+      "name": "Keep search on this PC",
+      "description": "Windows search stops including results from OneDrive, Outlook, and other Microsoft accounts. Undo includes them again.",
+      "category": "Search",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+            "name": "IsAADCloudSearchEnabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+            "name": "IsMSACloudSearchEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+            "name": "IsAADCloudSearchEnabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\SearchSettings",
+            "name": "IsMSACloudSearchEnabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "enable-clipboard-history",
+      "name": "Turn on clipboard history",
+      "description": "Win+V shows the last things you copied. Undo turns history off.",
+      "category": "System",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Clipboard",
+            "name": "EnableClipboardHistory",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Clipboard",
+            "name": "EnableClipboardHistory",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "enable-long-paths",
+      "name": "Allow long file paths",
+      "description": "Lets apps that support it use paths longer than 260 characters. Helpful for developers. Undo restores the old limit.",
+      "category": "System",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+            "name": "LongPathsEnabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+            "name": "LongPathsEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verbose-status-messages",
+      "name": "Show detailed startup and shutdown messages",
+      "description": "Windows says what it is doing during sign-in, sign-out, and shutdown, instead of only \"Please wait\".",
+      "category": "System",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+            "name": "VerboseStatus",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+            "name": "VerboseStatus"
+          }
+        ]
+      }
+    },
+    {
+      "id": "show-crash-details",
+      "name": "Show details on the blue screen",
+      "description": "A crash screen shows the technical error parameters, which helps when searching for a fix. Undo removes the setting.",
+      "category": "System",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\CrashControl",
+            "name": "DisplayParameters",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\CrashControl",
+            "name": "DisplayParameters"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-remote-assistance",
+      "name": "Turn off Remote Assistance invitations",
+      "description": "Nobody can be invited to see and control this PC with Remote Assistance. Remote Desktop is not affected.",
+      "category": "System",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Remote Assistance",
+            "name": "fAllowToGetHelp",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Remote Assistance",
+            "name": "fAllowToGetHelp",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "delivery-optimization-local",
+      "name": "Download updates only from Microsoft",
+      "description": "Windows Update stops sharing update pieces with other PCs on the internet or network. Undo removes the policy.",
+      "category": "System",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
+            "name": "DODownloadMode",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
+            "name": "DODownloadMode"
+          }
+        ]
+      }
+    },
+    {
+      "id": "legacy-default-printer",
+      "name": "Keep my default printer",
+      "description": "Windows stops changing the default printer to the last one you used. Undo lets Windows manage it again.",
+      "category": "System",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows",
+            "name": "LegacyDefaultPrinterMode",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows",
+            "name": "LegacyDefaultPrinterMode",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-error-reporting",
+      "name": "Turn off Windows Error Reporting",
+      "description": "Crashes are no longer reported to Microsoft. You lose possible fixes Microsoft finds from reports.",
+      "category": "System",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting",
+            "name": "Disabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting",
+            "name": "Disabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-ceip-task",
+      "name": "Disable the Customer Experience task",
+      "description": "Disables the scheduled task that sends Customer Experience Improvement data. Undo enables it again.",
+      "category": "Privacy",
+      "risk": "caution",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "scheduled-task",
+        "taskPath": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\",
+        "taskName": "Consolidator",
+        "state": "Disabled"
+      },
+      "undo": {
+        "type": "scheduled-task",
+        "taskPath": "\\Microsoft\\Windows\\Customer Experience Improvement Program\\",
+        "taskName": "Consolidator",
+        "state": "Enabled"
+      }
+    },
+    {
+      "id": "disable-sticky-keys-prompt",
+      "name": "Stop the Sticky Keys prompt",
+      "description": "Pressing Shift five times no longer asks to turn on Sticky Keys. Sticky Keys still works from Settings.",
+      "category": "Input",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": ["recommended"],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Accessibility\\StickyKeys",
+            "name": "Flags",
+            "value": "506",
+            "kind": "String"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Accessibility\\StickyKeys",
+            "name": "Flags",
+            "value": "510",
+            "kind": "String"
+          }
+        ]
+      }
+    },
+    {
+      "id": "num-lock-on-startup",
+      "name": "Num Lock on at sign-in",
+      "description": "Num Lock is on when you sign in. Undo leaves it off.",
+      "category": "Input",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Keyboard",
+            "name": "InitialKeyboardIndicators",
+            "value": "2",
+            "kind": "String"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Control Panel\\Keyboard",
+            "name": "InitialKeyboardIndicators",
+            "value": "0",
+            "kind": "String"
+          }
+        ]
+      }
+    },
+    {
+      "id": "disable-game-dvr",
+      "name": "Turn off background game recording",
+      "description": "Stops Game Bar from recording gameplay in the background, which can cost performance. Undo turns it back on.",
+      "category": "Gaming",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\System\\GameConfigStore",
+            "name": "GameDVR_Enabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+            "name": "AppCaptureEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\System\\GameConfigStore",
+            "name": "GameDVR_Enabled",
+            "value": 1,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+            "name": "AppCaptureEnabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "game-mode-on",
+      "name": "Turn on Game Mode",
+      "description": "Windows prioritizes the game you are playing and holds back updates during play. On by default. Undo turns it off.",
+      "category": "Gaming",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\GameBar",
+            "name": "AutoGameModeEnabled",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKCU:\\Software\\Microsoft\\GameBar",
+            "name": "AutoGameModeEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-no-background",
+      "name": "Stop Edge running in the background",
+      "description": "Sets Edge policies so it does not preload at sign-in or keep running after you close it. Undo removes the policies.",
+      "category": "Apps",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+            "name": "StartupBoostEnabled",
+            "value": 0,
+            "kind": "DWord"
+          },
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+            "name": "BackgroundModeEnabled",
+            "value": 0,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+            "name": "StartupBoostEnabled"
+          },
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+            "name": "BackgroundModeEnabled"
+          }
+        ]
+      }
+    },
+    {
+      "id": "edge-hide-first-run",
+      "name": "Skip Edge's first-run pages",
+      "description": "Edge opens without the welcome and import pages. Undo removes the policy.",
+      "category": "Apps",
+      "risk": "safe",
+      "refresh": "none",
+      "presets": [],
+      "apply": {
+        "type": "registry",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+            "name": "HideFirstRunExperience",
+            "value": 1,
+            "kind": "DWord"
+          }
+        ]
+      },
+      "undo": {
+        "type": "registry-remove",
+        "entries": [
+          {
+            "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+            "name": "HideFirstRunExperience"
+          }
+        ]
+      }
     }
   ]
 }

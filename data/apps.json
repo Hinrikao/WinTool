@@ -47,6 +47,48 @@
           "description": "A Chromium browser with a built-in VPN and sidebar.",
           "wingetId": "Opera.Opera",
           "tags": ["web"]
+        },
+        {
+          "id": "tor-browser",
+          "name": "Tor Browser",
+          "description": "Routes browsing through the Tor network for strong anonymity.",
+          "wingetId": "TorProject.TorBrowser",
+          "tags": ["web", "privacy"]
+        },
+        {
+          "id": "floorp",
+          "name": "Floorp",
+          "description": "A Firefox-based browser with vertical tabs and many layout options.",
+          "wingetId": "Ablaze.Floorp",
+          "tags": ["web"]
+        },
+        {
+          "id": "waterfox",
+          "name": "Waterfox",
+          "description": "A privacy-minded Firefox fork without telemetry.",
+          "wingetId": "Waterfox.Waterfox",
+          "tags": ["web", "privacy"]
+        },
+        {
+          "id": "zen-browser",
+          "name": "Zen Browser",
+          "description": "A calm Firefox-based browser with workspaces and a sidebar.",
+          "wingetId": "Zen-Team.Zen-Browser",
+          "tags": ["web"]
+        },
+        {
+          "id": "mullvad-browser",
+          "name": "Mullvad Browser",
+          "description": "The Tor Browser's privacy features without the Tor network.",
+          "wingetId": "MullvadVPN.MullvadBrowser",
+          "tags": ["web", "privacy"]
+        },
+        {
+          "id": "edge",
+          "name": "Microsoft Edge",
+          "description": "Windows' own browser. Useful to repair or reinstall it.",
+          "wingetId": "Microsoft.Edge",
+          "tags": ["web"]
         }
       ]
     },
@@ -77,17 +119,10 @@
           "tags": ["chat", "privacy"]
         },
         {
-          "id": "whatsapp",
-          "name": "WhatsApp",
-          "description": "The desktop companion for WhatsApp chats.",
-          "wingetId": "WhatsApp.WhatsApp",
-          "tags": ["chat"]
-        },
-        {
           "id": "slack",
           "name": "Slack",
           "description": "Work chat for teams that already use Slack.",
-          "wingetId": "Slack.Slack",
+          "wingetId": "SlackTechnologies.Slack",
           "tags": ["work", "chat"]
         },
         {
@@ -110,6 +145,111 @@
           "description": "A Matrix chat client you can use with your own homeserver.",
           "wingetId": "Element.Element",
           "tags": ["chat", "privacy"]
+        },
+        {
+          "id": "thunderbird",
+          "name": "Thunderbird",
+          "description": "Mozilla's free email, calendar, and contacts app.",
+          "wingetId": "Mozilla.Thunderbird",
+          "tags": ["email"]
+        },
+        {
+          "id": "viber",
+          "name": "Viber",
+          "description": "Messages and calls that sync with Viber on your phone.",
+          "wingetId": "Rakuten.Viber",
+          "tags": ["chat"]
+        },
+        {
+          "id": "ferdium",
+          "name": "Ferdium",
+          "description": "Many web chat services in one window.",
+          "wingetId": "Ferdium.Ferdium",
+          "tags": ["chat"]
+        },
+        {
+          "id": "teamspeak",
+          "name": "TeamSpeak",
+          "description": "Low-latency voice chat popular with gaming groups.",
+          "wingetId": "TeamSpeakSystems.TeamSpeakClient",
+          "tags": ["voice"]
+        },
+        {
+          "id": "mumble",
+          "name": "Mumble",
+          "description": "Open-source voice chat with low latency.",
+          "wingetId": "Mumble.Mumble.Client",
+          "tags": ["voice"]
+        },
+        {
+          "id": "vesktop",
+          "name": "Vesktop",
+          "description": "A Discord desktop client with screen-share audio on Linux and extra settings.",
+          "wingetId": "Vencord.Vesktop",
+          "tags": ["chat"]
+        }
+      ]
+    },
+    {
+      "id": "office",
+      "name": "Office and notes",
+      "description": "Documents, PDFs, notes, and study tools.",
+      "apps": [
+        {
+          "id": "onlyoffice",
+          "name": "ONLYOFFICE",
+          "description": "Documents, spreadsheets, and slides that work well with Office files.",
+          "wingetId": "ONLYOFFICE.DesktopEditors",
+          "tags": ["office"]
+        },
+        {
+          "id": "acrobat-reader",
+          "name": "Adobe Acrobat Reader",
+          "description": "Adobe's free PDF reader.",
+          "wingetId": "Adobe.Acrobat.Reader.64-bit",
+          "tags": ["pdf"]
+        },
+        {
+          "id": "joplin",
+          "name": "Joplin",
+          "description": "Notes and to-dos with sync and Markdown.",
+          "wingetId": "Joplin.Joplin",
+          "tags": ["notes"]
+        },
+        {
+          "id": "logseq",
+          "name": "Logseq",
+          "description": "An outliner for linked notes.",
+          "wingetId": "Logseq.Logseq",
+          "tags": ["notes"]
+        },
+        {
+          "id": "zotero",
+          "name": "Zotero",
+          "description": "Collect and cite research sources.",
+          "wingetId": "DigitalScholar.Zotero",
+          "tags": ["research"]
+        },
+        {
+          "id": "calibre",
+          "name": "calibre",
+          "description": "Manage and convert e-books.",
+          "wingetId": "calibre.calibre",
+          "tags": ["books"]
+        },
+        {
+          "id": "anki",
+          "name": "Anki",
+          "description": "Flashcards with spaced repetition.",
+          "wingetId": "Anki.Anki",
+          "tags": ["study"]
+        },
+        {
+          "id": "todoist",
+          "name": "Todoist",
+          "description": "A to-do list that syncs everywhere.",
+          "wingetId": "Doist.Todoist",
+          "tags": ["tasks"]
         }
       ]
     },
@@ -229,6 +369,223 @@
           "description": "A light editor that opens big text files quickly.",
           "wingetId": "Notepad++.Notepad++",
           "tags": ["editor"]
+        },
+        {
+          "id": "vscodium",
+          "name": "VSCodium",
+          "description": "Visual Studio Code built without Microsoft's telemetry and branding.",
+          "wingetId": "VSCodium.VSCodium",
+          "tags": ["editor"]
+        },
+        {
+          "id": "intellij-community",
+          "name": "IntelliJ IDEA Community",
+          "description": "JetBrains' free IDE for Java and Kotlin.",
+          "wingetId": "JetBrains.IntelliJIDEA.Community",
+          "tags": ["ide", "java"]
+        },
+        {
+          "id": "pycharm-community",
+          "name": "PyCharm Community",
+          "description": "JetBrains' free Python IDE.",
+          "wingetId": "JetBrains.PyCharm.Community",
+          "tags": ["ide", "python"]
+        },
+        {
+          "id": "sublime-text",
+          "name": "Sublime Text",
+          "description": "A fast text editor with multiple cursors.",
+          "wingetId": "SublimeHQ.SublimeText.4",
+          "tags": ["editor"]
+        },
+        {
+          "id": "neovim",
+          "name": "Neovim",
+          "description": "A modern, extensible Vim.",
+          "wingetId": "Neovim.Neovim",
+          "tags": ["editor", "terminal"]
+        },
+        {
+          "id": "vim",
+          "name": "Vim",
+          "description": "The classic modal text editor.",
+          "wingetId": "vim.vim",
+          "tags": ["editor", "terminal"]
+        },
+        {
+          "id": "zed",
+          "name": "Zed",
+          "description": "A fast, collaborative code editor.",
+          "wingetId": "ZedIndustries.Zed",
+          "tags": ["editor"]
+        },
+        {
+          "id": "dotnet-sdk",
+          "name": ".NET SDK 8",
+          "description": "Build and run .NET 8 apps.",
+          "wingetId": "Microsoft.DotNet.SDK.8",
+          "tags": ["dotnet"]
+        },
+        {
+          "id": "temurin-jdk",
+          "name": "Java JDK 21 (Temurin)",
+          "description": "A free OpenJDK build from Eclipse Adoptium.",
+          "wingetId": "EclipseAdoptium.Temurin.21.JDK",
+          "tags": ["java"]
+        },
+        {
+          "id": "nodejs-current",
+          "name": "Node.js (current)",
+          "description": "The latest Node.js release, newer than LTS.",
+          "wingetId": "OpenJS.NodeJS",
+          "tags": ["javascript"]
+        },
+        {
+          "id": "nvm-windows",
+          "name": "NVM for Windows",
+          "description": "Switch between several Node.js versions.",
+          "wingetId": "CoreyButler.NVMforWindows",
+          "tags": ["javascript"]
+        },
+        {
+          "id": "pnpm",
+          "name": "pnpm",
+          "description": "A fast, disk-friendly JavaScript package manager.",
+          "wingetId": "pnpm.pnpm",
+          "tags": ["javascript"]
+        },
+        {
+          "id": "miniconda",
+          "name": "Miniconda",
+          "description": "A small conda installer for Python environments.",
+          "wingetId": "Anaconda.Miniconda3",
+          "tags": ["python"]
+        },
+        {
+          "id": "uv",
+          "name": "uv",
+          "description": "A very fast Python package and project manager.",
+          "wingetId": "astral-sh.uv",
+          "tags": ["python"]
+        },
+        {
+          "id": "cmake",
+          "name": "CMake",
+          "description": "Cross-platform build system generator for C and C++.",
+          "wingetId": "Kitware.CMake",
+          "tags": ["cpp"]
+        },
+        {
+          "id": "terraform",
+          "name": "Terraform",
+          "description": "Infrastructure as code from HashiCorp.",
+          "wingetId": "Hashicorp.Terraform",
+          "tags": ["cloud"]
+        },
+        {
+          "id": "kubectl",
+          "name": "kubectl",
+          "description": "Command-line tool for Kubernetes clusters.",
+          "wingetId": "Kubernetes.kubectl",
+          "tags": ["cloud"]
+        },
+        {
+          "id": "aws-cli",
+          "name": "AWS CLI",
+          "description": "Amazon Web Services on the command line.",
+          "wingetId": "Amazon.AWSCLI",
+          "tags": ["cloud"]
+        },
+        {
+          "id": "google-cloud-sdk",
+          "name": "Google Cloud SDK",
+          "description": "The gcloud command-line tools.",
+          "wingetId": "Google.CloudSDK",
+          "tags": ["cloud"]
+        },
+        {
+          "id": "bruno",
+          "name": "Bruno",
+          "description": "An offline API client that stores collections as files.",
+          "wingetId": "Bruno.Bruno",
+          "tags": ["api"]
+        },
+        {
+          "id": "insomnia",
+          "name": "Insomnia",
+          "description": "An API client for REST, GraphQL, and gRPC.",
+          "wingetId": "Insomnia.Insomnia",
+          "tags": ["api"]
+        },
+        {
+          "id": "dbeaver",
+          "name": "DBeaver Community",
+          "description": "A universal database tool for SQL databases.",
+          "wingetId": "DBeaver.DBeaver.Community",
+          "tags": ["database"]
+        },
+        {
+          "id": "heidisql",
+          "name": "HeidiSQL",
+          "description": "A lightweight client for MySQL, MariaDB, PostgreSQL, and SQL Server.",
+          "wingetId": "HeidiSQL.HeidiSQL",
+          "tags": ["database"]
+        },
+        {
+          "id": "mongodb-compass",
+          "name": "MongoDB Compass",
+          "description": "A GUI for exploring MongoDB data.",
+          "wingetId": "MongoDB.Compass.Full",
+          "tags": ["database"]
+        },
+        {
+          "id": "winmerge",
+          "name": "WinMerge",
+          "description": "Compare and merge files and folders.",
+          "wingetId": "WinMerge.WinMerge",
+          "tags": ["diff"]
+        },
+        {
+          "id": "gitkraken",
+          "name": "GitKraken",
+          "description": "A visual Git client.",
+          "wingetId": "Axosoft.GitKraken",
+          "tags": ["git"]
+        },
+        {
+          "id": "fork",
+          "name": "Fork",
+          "description": "A fast and friendly Git client.",
+          "wingetId": "Fork.Fork",
+          "tags": ["git"]
+        },
+        {
+          "id": "tortoisegit",
+          "name": "TortoiseGit",
+          "description": "Git commands in the File Explorer right-click menu.",
+          "wingetId": "TortoiseGit.TortoiseGit",
+          "tags": ["git"]
+        },
+        {
+          "id": "lazygit",
+          "name": "lazygit",
+          "description": "A simple terminal UI for Git.",
+          "wingetId": "JesseDuffield.lazygit",
+          "tags": ["git", "terminal"]
+        },
+        {
+          "id": "ripgrep",
+          "name": "ripgrep",
+          "description": "Search file contents very quickly from the terminal.",
+          "wingetId": "BurntSushi.ripgrep.MSVC",
+          "tags": ["terminal"]
+        },
+        {
+          "id": "fzf",
+          "name": "fzf",
+          "description": "A fuzzy finder for the command line.",
+          "wingetId": "junegunn.fzf",
+          "tags": ["terminal"]
         }
       ]
     },
@@ -292,6 +649,69 @@
           "description": "One library window for games from several stores.",
           "wingetId": "Playnite.Playnite",
           "tags": ["games"]
+        },
+        {
+          "id": "ea-app",
+          "name": "EA app",
+          "description": "Electronic Arts' game launcher.",
+          "wingetId": "ElectronicArts.EADesktop",
+          "tags": ["store"]
+        },
+        {
+          "id": "battle-net",
+          "name": "Battle.net",
+          "description": "Blizzard's launcher for its games.",
+          "wingetId": "Blizzard.BattleNet",
+          "tags": ["store"]
+        },
+        {
+          "id": "amazon-games",
+          "name": "Amazon Games",
+          "description": "Launcher for Prime Gaming and Amazon games.",
+          "wingetId": "Amazon.Games",
+          "tags": ["store"]
+        },
+        {
+          "id": "itch",
+          "name": "itch",
+          "description": "The itch.io app for indie games.",
+          "wingetId": "ItchIo.Itch",
+          "tags": ["store"]
+        },
+        {
+          "id": "parsec",
+          "name": "Parsec",
+          "description": "Low-latency remote desktop for games.",
+          "wingetId": "Parsec.Parsec",
+          "tags": ["streaming"]
+        },
+        {
+          "id": "moonlight",
+          "name": "Moonlight",
+          "description": "Stream games from another PC on your network.",
+          "wingetId": "MoonlightGameStreamingProject.Moonlight",
+          "tags": ["streaming"]
+        },
+        {
+          "id": "retroarch",
+          "name": "RetroArch",
+          "description": "A front end for many game system emulators.",
+          "wingetId": "Libretro.RetroArch",
+          "tags": ["emulation"]
+        },
+        {
+          "id": "msi-afterburner",
+          "name": "MSI Afterburner",
+          "description": "Graphics card monitoring, fan curves, and overclocking.",
+          "wingetId": "Guru3D.Afterburner",
+          "tags": ["hardware"]
+        },
+        {
+          "id": "curseforge",
+          "name": "CurseForge",
+          "description": "Mod manager for Minecraft and other games.",
+          "wingetId": "Overwolf.CurseForge",
+          "tags": ["mods"]
         }
       ]
     },
@@ -360,8 +780,120 @@
           "id": "paint-net",
           "name": "Paint.NET",
           "description": "A straightforward image editor.",
-          "wingetId": "dotPDN.Paint.NET",
+          "wingetId": "dotPDN.PaintDotNet",
           "tags": ["image"]
+        },
+        {
+          "id": "inkscape",
+          "name": "Inkscape",
+          "description": "Vector graphics editor for logos and illustrations.",
+          "wingetId": "Inkscape.Inkscape",
+          "tags": ["design"]
+        },
+        {
+          "id": "blender",
+          "name": "Blender",
+          "description": "3D modeling, animation, and rendering.",
+          "wingetId": "BlenderFoundation.Blender",
+          "tags": ["3d"]
+        },
+        {
+          "id": "kdenlive",
+          "name": "Kdenlive",
+          "description": "A full video editor from KDE.",
+          "wingetId": "KDE.Kdenlive",
+          "tags": ["video"]
+        },
+        {
+          "id": "shotcut",
+          "name": "Shotcut",
+          "description": "A free, cross-platform video editor.",
+          "wingetId": "Meltytech.Shotcut",
+          "tags": ["video"]
+        },
+        {
+          "id": "mpc-hc",
+          "name": "MPC-HC",
+          "description": "A light video player with broad format support.",
+          "wingetId": "clsid2.mpc-hc",
+          "tags": ["video"]
+        },
+        {
+          "id": "potplayer",
+          "name": "PotPlayer",
+          "description": "A video player with many playback options.",
+          "wingetId": "Daum.PotPlayer",
+          "tags": ["video"]
+        },
+        {
+          "id": "mpv",
+          "name": "mpv",
+          "description": "A minimal, scriptable video player.",
+          "wingetId": "shinchiro.mpv",
+          "tags": ["video"]
+        },
+        {
+          "id": "k-lite",
+          "name": "K-Lite Codec Pack Standard",
+          "description": "Audio and video codecs for players that need them.",
+          "wingetId": "CodecGuide.K-LiteCodecPack.Standard",
+          "tags": ["codecs"]
+        },
+        {
+          "id": "irfanview",
+          "name": "IrfanView",
+          "description": "A fast image viewer with batch conversion.",
+          "wingetId": "IrfanSkiljan.IrfanView",
+          "tags": ["images"]
+        },
+        {
+          "id": "imageglass",
+          "name": "ImageGlass",
+          "description": "A modern image viewer.",
+          "wingetId": "DuongDieuPhap.ImageGlass",
+          "tags": ["images"]
+        },
+        {
+          "id": "greenshot",
+          "name": "Greenshot",
+          "description": "Screenshots with quick annotation.",
+          "wingetId": "Greenshot.Greenshot",
+          "tags": ["screenshots"]
+        },
+        {
+          "id": "aimp",
+          "name": "AIMP",
+          "description": "A music player with a good equalizer.",
+          "wingetId": "AIMP.AIMP",
+          "tags": ["music"]
+        },
+        {
+          "id": "jellyfin-player",
+          "name": "Jellyfin Media Player",
+          "description": "Desktop player for a Jellyfin media server.",
+          "wingetId": "Jellyfin.JellyfinMediaPlayer",
+          "tags": ["video", "server"]
+        },
+        {
+          "id": "stremio",
+          "name": "Stremio",
+          "description": "A media center for movies and shows from add-ons.",
+          "wingetId": "Stremio.Stremio",
+          "tags": ["video"]
+        },
+        {
+          "id": "ffmpeg",
+          "name": "FFmpeg",
+          "description": "Command-line tools to convert audio and video.",
+          "wingetId": "Gyan.FFmpeg",
+          "tags": ["video", "terminal"]
+        },
+        {
+          "id": "yt-dlp",
+          "name": "yt-dlp",
+          "description": "Download videos from many sites from the command line.",
+          "wingetId": "yt-dlp.yt-dlp",
+          "tags": ["video", "terminal"]
         }
       ]
     },
@@ -488,6 +1020,286 @@
           "description": "Flash an OS image to a USB drive or SD card.",
           "wingetId": "Balena.Etcher",
           "tags": ["usb"]
+        },
+        {
+          "id": "sysinternals",
+          "name": "Sysinternals Suite",
+          "description": "Microsoft's advanced Windows troubleshooting tools.",
+          "wingetId": "Microsoft.Sysinternals.Suite",
+          "tags": ["system"]
+        },
+        {
+          "id": "autohotkey",
+          "name": "AutoHotkey",
+          "description": "Automate keys, clicks, and windows with scripts.",
+          "wingetId": "AutoHotkey.AutoHotkey",
+          "tags": ["automation"]
+        },
+        {
+          "id": "flow-launcher",
+          "name": "Flow Launcher",
+          "description": "A quick launcher for apps, files, and web searches.",
+          "wingetId": "Flow-Launcher.Flow-Launcher",
+          "tags": ["launcher"]
+        },
+        {
+          "id": "eartrumpet",
+          "name": "EarTrumpet",
+          "description": "Per-app volume control from the taskbar.",
+          "wingetId": "File-New-Project.EarTrumpet",
+          "tags": ["audio"]
+        },
+        {
+          "id": "bcu",
+          "name": "Bulk Crap Uninstaller",
+          "description": "Remove many apps at once, including leftovers.",
+          "wingetId": "Klocman.BulkCrapUninstaller",
+          "tags": ["cleanup"]
+        },
+        {
+          "id": "revo",
+          "name": "Revo Uninstaller",
+          "description": "An uninstaller that also cleans leftovers.",
+          "wingetId": "RevoUninstaller.RevoUninstaller",
+          "tags": ["cleanup"]
+        },
+        {
+          "id": "crystaldiskinfo",
+          "name": "CrystalDiskInfo",
+          "description": "Check the health of drives with S.M.A.R.T. data.",
+          "wingetId": "CrystalDewWorld.CrystalDiskInfo",
+          "tags": ["hardware"]
+        },
+        {
+          "id": "crystaldiskmark",
+          "name": "CrystalDiskMark",
+          "description": "Measure drive read and write speed.",
+          "wingetId": "CrystalDewWorld.CrystalDiskMark",
+          "tags": ["hardware"]
+        },
+        {
+          "id": "cpu-z",
+          "name": "CPU-Z",
+          "description": "Details about the processor, memory, and motherboard.",
+          "wingetId": "CPUID.CPU-Z",
+          "tags": ["hardware"]
+        },
+        {
+          "id": "gpu-z",
+          "name": "GPU-Z",
+          "description": "Details about the graphics card.",
+          "wingetId": "TechPowerUp.GPU-Z",
+          "tags": ["hardware"]
+        },
+        {
+          "id": "windirstat",
+          "name": "WinDirStat",
+          "description": "See what is filling up a drive.",
+          "wingetId": "WinDirStat.WinDirStat",
+          "tags": ["disk"]
+        },
+        {
+          "id": "files-app",
+          "name": "Files",
+          "description": "A modern file manager with tabs.",
+          "wingetId": "FilesCommunity.Files",
+          "tags": ["files"]
+        },
+        {
+          "id": "ditto",
+          "name": "Ditto",
+          "description": "Clipboard history manager.",
+          "wingetId": "Ditto.Ditto",
+          "tags": ["clipboard"]
+        },
+        {
+          "id": "localsend",
+          "name": "LocalSend",
+          "description": "Send files to nearby devices without the cloud.",
+          "wingetId": "LocalSend.LocalSend",
+          "tags": ["files", "network"]
+        },
+        {
+          "id": "ventoy",
+          "name": "Ventoy",
+          "description": "Make one USB drive that boots many ISO files.",
+          "wingetId": "Ventoy.Ventoy",
+          "tags": ["usb"]
+        },
+        {
+          "id": "anydesk",
+          "name": "AnyDesk",
+          "description": "Remote desktop for support sessions.",
+          "wingetId": "AnyDesk.AnyDesk",
+          "tags": ["remote"]
+        },
+        {
+          "id": "teamviewer",
+          "name": "TeamViewer",
+          "description": "Remote desktop and support.",
+          "wingetId": "TeamViewer.TeamViewer",
+          "tags": ["remote"]
+        },
+        {
+          "id": "google-drive",
+          "name": "Google Drive",
+          "description": "Sync files with Google Drive.",
+          "wingetId": "Google.GoogleDrive",
+          "tags": ["cloud"]
+        },
+        {
+          "id": "dropbox",
+          "name": "Dropbox",
+          "description": "Sync files with Dropbox.",
+          "wingetId": "Dropbox.Dropbox",
+          "tags": ["cloud"]
+        },
+        {
+          "id": "nextcloud",
+          "name": "Nextcloud",
+          "description": "Sync files with a Nextcloud server.",
+          "wingetId": "Nextcloud.NextcloudDesktop",
+          "tags": ["cloud"]
+        },
+        {
+          "id": "nvda",
+          "name": "NVDA",
+          "description": "A free screen reader.",
+          "wingetId": "NVAccess.NVDA",
+          "tags": ["accessibility"]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "name": "Security and network",
+      "description": "VPNs, encryption, and network tools.",
+      "apps": [
+        {
+          "id": "malwarebytes",
+          "name": "Malwarebytes",
+          "description": "A second-opinion malware scanner.",
+          "wingetId": "Malwarebytes.Malwarebytes",
+          "tags": ["antivirus"]
+        },
+        {
+          "id": "wireguard",
+          "name": "WireGuard",
+          "description": "A fast, modern VPN client.",
+          "wingetId": "WireGuard.WireGuard",
+          "tags": ["vpn"]
+        },
+        {
+          "id": "tailscale",
+          "name": "Tailscale",
+          "description": "A private network between your devices, built on WireGuard.",
+          "wingetId": "Tailscale.Tailscale",
+          "tags": ["vpn", "network"]
+        },
+        {
+          "id": "proton-vpn",
+          "name": "Proton VPN",
+          "description": "A VPN from the makers of Proton Mail.",
+          "wingetId": "Proton.ProtonVPN",
+          "tags": ["vpn"]
+        },
+        {
+          "id": "mullvad-vpn",
+          "name": "Mullvad VPN",
+          "description": "A privacy-first VPN with anonymous accounts.",
+          "wingetId": "MullvadVPN.MullvadVPN",
+          "tags": ["vpn"]
+        },
+        {
+          "id": "openvpn",
+          "name": "OpenVPN Connect",
+          "description": "Client for OpenVPN servers.",
+          "wingetId": "OpenVPNTechnologies.OpenVPNConnect",
+          "tags": ["vpn"]
+        },
+        {
+          "id": "wireshark",
+          "name": "Wireshark",
+          "description": "Capture and inspect network traffic.",
+          "wingetId": "WiresharkFoundation.Wireshark",
+          "tags": ["network"]
+        },
+        {
+          "id": "nmap",
+          "name": "Nmap",
+          "description": "Scan networks and see which ports are open.",
+          "wingetId": "Insecure.Nmap",
+          "tags": ["network"]
+        },
+        {
+          "id": "veracrypt",
+          "name": "VeraCrypt",
+          "description": "Encrypted containers and drives.",
+          "wingetId": "IDRIX.VeraCrypt",
+          "tags": ["encryption"]
+        },
+        {
+          "id": "cryptomator",
+          "name": "Cryptomator",
+          "description": "Encrypt files before they reach the cloud.",
+          "wingetId": "Cryptomator.Cryptomator",
+          "tags": ["encryption"]
+        },
+        {
+          "id": "gpg4win",
+          "name": "Gpg4win",
+          "description": "OpenPGP encryption and signing for Windows.",
+          "wingetId": "GnuPG.Gpg4win",
+          "tags": ["encryption"]
+        }
+      ]
+    },
+    {
+      "id": "runtimes",
+      "name": "Runtimes",
+      "description": "Shared runtimes that apps and games ask for.",
+      "apps": [
+        {
+          "id": "vcredist-x64",
+          "name": "Visual C++ Redistributable (x64)",
+          "description": "Runtime many apps and games need.",
+          "wingetId": "Microsoft.VCRedist.2015+.x64",
+          "tags": ["runtime"]
+        },
+        {
+          "id": "vcredist-x86",
+          "name": "Visual C++ Redistributable (x86)",
+          "description": "32-bit runtime many older apps and games need.",
+          "wingetId": "Microsoft.VCRedist.2015+.x86",
+          "tags": ["runtime"]
+        },
+        {
+          "id": "dotnet-desktop-8",
+          "name": ".NET Desktop Runtime 8",
+          "description": "Runs desktop apps built with .NET 8.",
+          "wingetId": "Microsoft.DotNet.DesktopRuntime.8",
+          "tags": ["runtime", "dotnet"]
+        },
+        {
+          "id": "directx",
+          "name": "DirectX End-User Runtime",
+          "description": "Older DirectX parts some games still need.",
+          "wingetId": "Microsoft.DirectX",
+          "tags": ["runtime", "games"]
+        },
+        {
+          "id": "temurin-jre",
+          "name": "Java Runtime 21 (Temurin)",
+          "description": "Runs Java apps such as some game launchers.",
+          "wingetId": "EclipseAdoptium.Temurin.21.JRE",
+          "tags": ["runtime", "java"]
+        },
+        {
+          "id": "webview2",
+          "name": "WebView2 Runtime",
+          "description": "The web view many modern apps use.",
+          "wingetId": "Microsoft.EdgeWebView2Runtime",
+          "tags": ["runtime"]
         }
       ]
     }
