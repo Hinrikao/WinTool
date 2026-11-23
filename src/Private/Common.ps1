@@ -218,6 +218,12 @@ function Show-WinToolFailure {
     param(
         $ErrorRecord
     )
+    try {
+        Show-WinToolConsole
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
     $text = Format-WinToolErrorText -ErrorRecord $ErrorRecord
     $path = $null
     try {

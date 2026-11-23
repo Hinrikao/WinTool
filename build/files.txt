@@ -1,4 +1,5 @@
 src/Private/Common.ps1
+src/Private/Console.ps1
 src/Private/Json.ps1
 src/Private/Catalog.ps1
 src/Private/Winget.ps1

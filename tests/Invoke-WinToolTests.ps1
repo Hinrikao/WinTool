@@ -288,8 +288,39 @@ Invoke-WinToolCase -Name "Elevation relaunches the entry script" -Body {
     $hostArguments = @(Get-WinToolHostArgument -LauncherPath "C:\Users\Hinrikao\AppData\Local\Temp\WinTool\relaunch.ps1")
     $hostLine = ConvertTo-WinToolArgumentLine -ArgumentList $hostArguments
     Test-WinToolExpectation -Condition ($hostLine.StartsWith("-STA -NoProfile -ExecutionPolicy Bypass -File ")) -Message "The new PowerShell process is STA and bypasses execution policy."
+    $hiddenLine = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath "C:\Temp\relaunch.ps1" -Hidden $true)
+    Test-WinToolExpectation -Condition ($hiddenLine.StartsWith("-STA -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ")) -Message "A hidden relaunch asks PowerShell for a hidden window."
+    $hiddenScript = New-WinToolRelaunchScript -WorkingDirectory "C:\Temp" -EntryPath "C:\Temp\wintool.ps1" -ApplyProfile "" -Unattended $false -LaunchUrl "" -Hidden $true -ShowConsole $false
+    Test-WinToolExpectation -Condition ($hiddenScript.Contains('$env:WINTOOL_HIDDEN = "1"') -and $hiddenScript.Contains("ShowWindow")) -Message "A hidden relaunch marks itself and shows the console again on an error."
+    $hiddenTokens = $null
+    $hiddenErrors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseInput($hiddenScript, [ref]$hiddenTokens, [ref]$hiddenErrors)
+    Test-WinToolExpectation -Condition (@($hiddenErrors).Count -eq 0) -Message "The hidden relaunch script parses."
+    $debugScript = New-WinToolRelaunchScript -WorkingDirectory "C:\Temp" -EntryPath "C:\Temp\wintool.ps1" -ApplyProfile "" -Unattended $false -LaunchUrl "" -Hidden $false -ShowConsole $true
+    Test-WinToolExpectation -Condition ($debugScript.Contains("-ShowConsole") -and $debugScript.Contains('$env:WINTOOL_SHOW_CONSOLE = "1"') -and -not $debugScript.Contains('$env:WINTOOL_HIDDEN = "1"')) -Message "-ShowConsole survives the relaunch and keeps the console visible."
     $preferred = Resolve-WinToolEntryPath -EntryPath "C:\repo\src\Start-WinTool.ps1" -CommandPath "C:\repo\src\Private\Elevation.ps1"
     Test-WinToolExpectation -Condition ($preferred -eq "C:\repo\src\Start-WinTool.ps1") -Message "The saved entry path wins over the helper file path."
+}
+
+Invoke-WinToolCase -Name "The console hides unless asked to stay" -Body {
+    Test-WinToolExpectation -Condition ((Get-WinToolConsoleMode -ShowConsole $false -Unattended $false -TerminalSession "" -HiddenChild "") -eq "hide") -Message "A classic console is hidden behind the window."
+    Test-WinToolExpectation -Condition ((Get-WinToolConsoleMode -ShowConsole $true -Unattended $false -TerminalSession "" -HiddenChild "") -eq "show") -Message "-ShowConsole keeps the console."
+    Test-WinToolExpectation -Condition ((Get-WinToolConsoleMode -ShowConsole $false -Unattended $true -TerminalSession "abc" -HiddenChild "") -eq "show") -Message "Unattended mode keeps the console."
+    Test-WinToolExpectation -Condition ((Get-WinToolConsoleMode -ShowConsole $false -Unattended $false -TerminalSession "abc" -HiddenChild "") -eq "relaunch") -Message "Windows Terminal starts WinTool in its own hidden console."
+    Test-WinToolExpectation -Condition ((Get-WinToolConsoleMode -ShowConsole $false -Unattended $false -TerminalSession "abc" -HiddenChild "1") -eq "hide") -Message "The hidden relaunch does not relaunch again."
+    $script:WinToolShowConsole = $false
+    $saved = $env:WINTOOL_SHOW_CONSOLE
+    try {
+        $env:WINTOOL_SHOW_CONSOLE = "1"
+        Test-WinToolExpectation -Condition (Test-WinToolShowConsole) -Message "WINTOOL_SHOW_CONSOLE=1 keeps the console."
+    }
+    finally {
+        $env:WINTOOL_SHOW_CONSOLE = $saved
+    }
+    $source = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Start-WinTool.ps1"))
+    Test-WinToolExpectation -Condition ($source.Contains('[switch]$ShowConsole')) -Message "Start-WinTool.ps1 accepts -ShowConsole."
+    $launcher = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "wintool.ps1"))
+    Test-WinToolExpectation -Condition ($launcher.Contains('[switch]$ShowConsole')) -Message "wintool.ps1 accepts -ShowConsole."
 }
 
 Invoke-WinToolCase -Name "UI collection adds do not leak indexes" -Body {

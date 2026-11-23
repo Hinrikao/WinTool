@@ -11,11 +11,13 @@
 #>
 param(
     [string]$ApplyProfile,
-    [switch]$Unattended
+    [switch]$Unattended,
+    [switch]$ShowConsole
 )
 
 $script:WinToolApplyProfile = $ApplyProfile
 $script:WinToolUnattended = [bool]$Unattended
+$script:WinToolShowConsole = [bool]$ShowConsole
 # Save the entry script before dot-sourcing. Inside a dot-sourced file,
 # $PSCommandPath is that file, not Start-WinTool.ps1.
 $script:WinToolEntryPath = $PSCommandPath

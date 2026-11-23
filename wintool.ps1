@@ -11,12 +11,14 @@
 
 param(
     [string]$ApplyProfile,
-    [switch]$Unattended
+    [switch]$Unattended,
+    [switch]$ShowConsole
 )
 
 $script:WinToolVersion = "1.0.0"
 $script:WinToolApplyProfile = $ApplyProfile
 $script:WinToolUnattended = [bool]$Unattended
+$script:WinToolShowConsole = [bool]$ShowConsole
 $script:WinToolEntryPath = $PSCommandPath
 $script:WinToolRoot = $null
 $script:WinToolEmbedded = @{
@@ -2354,6 +2356,12 @@ function Show-WinToolFailure {
     param(
         $ErrorRecord
     )
+    try {
+        Show-WinToolConsole
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
     $text = Format-WinToolErrorText -ErrorRecord $ErrorRecord
     $path = $null
     try {
@@ -2397,6 +2405,119 @@ function Write-WinToolUtf8File {
     )
     $encoding = New-Object System.Text.UTF8Encoding $false
     [System.IO.File]::WriteAllText($Path, $Text, $encoding)
+}
+# endregion
+
+# region src/Private/Console.ps1
+# Copyright (c) 2026 Henrique
+# SPDX-License-Identifier: MIT
+
+# WinTool is a window app, so the PowerShell console that starts it is hidden
+# once the window is on screen. -ShowConsole (or WINTOOL_SHOW_CONSOLE=1) keeps
+# it visible for debugging. Startup errors always bring the console back.
+
+function Test-WinToolShowConsole {
+    if ($script:WinToolShowConsole) {
+        return $true
+    }
+    return ($env:WINTOOL_SHOW_CONSOLE -eq "1")
+}
+
+function Get-WinToolConsoleMode {
+    param(
+        [bool]$ShowConsole,
+        [bool]$Unattended,
+        [string]$TerminalSession,
+        [string]$HiddenChild
+    )
+    # show: leave the console alone.
+    # hide: hide this console while the window is open.
+    # relaunch: the console belongs to Windows Terminal, which cannot be hidden
+    #           from here, so WinTool starts again in its own hidden console.
+    if ($ShowConsole -or $Unattended) {
+        return "show"
+    }
+    if ($HiddenChild -eq "1") {
+        return "hide"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($TerminalSession)) {
+        return "relaunch"
+    }
+    return "hide"
+}
+
+function Get-WinToolCurrentConsoleMode {
+    return Get-WinToolConsoleMode -ShowConsole (Test-WinToolShowConsole) -Unattended ([bool]$script:WinToolUnattended) -TerminalSession ([string]$env:WT_SESSION) -HiddenChild ([string]$env:WINTOOL_HIDDEN)
+}
+
+function Initialize-WinToolConsoleApi {
+    if ($null -ne ("WinToolConsoleApi" -as [type])) {
+        return $true
+    }
+    if (-not (Test-WinToolWindows)) {
+        return $false
+    }
+    try {
+        Add-Type -TypeDefinition (Get-WinToolConsoleApiSource) -Language CSharp -ErrorAction Stop
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
+
+function Get-WinToolConsoleApiSource {
+    return @"
+using System;
+using System.Runtime.InteropServices;
+
+public static class WinToolConsoleApi
+{
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GetConsoleWindow();
+
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr handle, int command);
+}
+"@
+}
+
+function Set-WinToolConsoleVisible {
+    param(
+        [Parameter(Mandatory = $true)][bool]$Visible
+    )
+    if (-not (Initialize-WinToolConsoleApi)) {
+        return $false
+    }
+    try {
+        $handle = [WinToolConsoleApi]::GetConsoleWindow()
+        if ($handle -eq [IntPtr]::Zero) {
+            return $false
+        }
+        $command = 0
+        if ($Visible) {
+            $command = 5
+        }
+        $null = [WinToolConsoleApi]::ShowWindow($handle, $command)
+        $script:WinToolConsoleHidden = -not $Visible
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
+
+function Hide-WinToolConsole {
+    if ((Get-WinToolCurrentConsoleMode) -eq "show") {
+        return
+    }
+    $null = Set-WinToolConsoleVisible -Visible $false
+}
+
+function Show-WinToolConsole {
+    if ($script:WinToolConsoleHidden -or $env:WINTOOL_HIDDEN -eq "1") {
+        $null = Set-WinToolConsoleVisible -Visible $true
+    }
 }
 # endregion
 
@@ -5004,11 +5125,22 @@ function New-WinToolRelaunchScript {
         [string]$EntryPath,
         [string]$ApplyProfile,
         [bool]$Unattended,
-        [string]$LaunchUrl
+        [string]$LaunchUrl,
+        [bool]$Hidden,
+        [bool]$ShowConsole
     )
     $lines = New-Object System.Collections.Generic.List[string]
     [void]$lines.Add('$ErrorActionPreference = "Stop"')
     [void]$lines.Add('$env:WINTOOL_PAUSE_ON_ERROR = "1"')
+    if ($Hidden) {
+        [void]$lines.Add('$env:WINTOOL_HIDDEN = "1"')
+    }
+    else {
+        [void]$lines.Add('$env:WINTOOL_HIDDEN = $null')
+    }
+    if ($ShowConsole) {
+        [void]$lines.Add('$env:WINTOOL_SHOW_CONSOLE = "1"')
+    }
     if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
         [void]$lines.Add("Set-Location -LiteralPath " + (ConvertTo-WinToolLiteral -Text $WorkingDirectory))
     }
@@ -5020,6 +5152,9 @@ function New-WinToolRelaunchScript {
         }
         if ($Unattended) {
             $call += " -Unattended"
+        }
+        if ($ShowConsole) {
+            $call += " -ShowConsole"
         }
         [void]$lines.Add($call)
     }
@@ -5033,6 +5168,22 @@ function New-WinToolRelaunchScript {
     [void]$lines.Add("}")
     [void]$lines.Add("catch {")
     [void]$lines.Add('    $text = ($_ | Out-String)')
+    if ($Hidden) {
+        # Bring the hidden console back so the error and the Enter prompt are visible.
+        [void]$lines.Add('    try {')
+        [void]$lines.Add('        if ($null -eq ("WinToolConsoleApi" -as [type])) {')
+        [void]$lines.Add("            Add-Type -TypeDefinition @'")
+        foreach ($sourceLine in ((Get-WinToolConsoleApiSource) -split "`r?`n")) {
+            [void]$lines.Add($sourceLine)
+        }
+        [void]$lines.Add("'@")
+        [void]$lines.Add('        }')
+        [void]$lines.Add('        $null = [WinToolConsoleApi]::ShowWindow([WinToolConsoleApi]::GetConsoleWindow(), 5)')
+        [void]$lines.Add('    }')
+        [void]$lines.Add('    catch {')
+        [void]$lines.Add('        $null = $_.Exception.Message')
+        [void]$lines.Add('    }')
+    }
     [void]$lines.Add('    $logDir = Join-Path $env:TEMP "WinTool"')
     [void]$lines.Add('    if (-not (Test-Path -LiteralPath $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }')
     [void]$lines.Add('    $logPath = Join-Path $logDir "wintool.log"')
@@ -5056,16 +5207,14 @@ function New-WinToolRelaunchScript {
 
 function Get-WinToolHostArgument {
     param(
-        [Parameter(Mandatory = $true)][string]$LauncherPath
+        [Parameter(Mandatory = $true)][string]$LauncherPath,
+        [bool]$Hidden
     )
-    return @(
-        "-STA",
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        $LauncherPath
-    )
+    $arguments = @("-STA", "-NoProfile", "-ExecutionPolicy", "Bypass")
+    if ($Hidden) {
+        $arguments += @("-WindowStyle", "Hidden")
+    }
+    return $arguments + @("-File", $LauncherPath)
 }
 
 function Get-WinToolWorkingDirectory {
@@ -5095,7 +5244,9 @@ function Start-WinToolRelaunch {
         $entry = $null
     }
     $directory = Get-WinToolWorkingDirectory
-    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl)
+    $showConsole = Test-WinToolShowConsole
+    $hidden = -not ($showConsole -or [bool]$script:WinToolUnattended)
+    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl) -Hidden $hidden -ShowConsole $showConsole
     $launcherDirectory = Join-Path $env:TEMP "WinTool"
     if (-not (Test-Path -LiteralPath $launcherDirectory)) {
         New-Item -ItemType Directory -Path $launcherDirectory -Force | Out-Null
@@ -5103,19 +5254,23 @@ function Start-WinToolRelaunch {
     $launcherPath = Join-Path $launcherDirectory "relaunch.ps1"
     $encoding = New-Object System.Text.UTF8Encoding $true
     [System.IO.File]::WriteAllText($launcherPath, $scriptText, $encoding)
-    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath)
+    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden $hidden)
+    $style = "Normal"
+    if ($hidden) {
+        $style = "Hidden"
+    }
     if ($Elevate) {
         Write-Host "WinTool needs administrator approval. Accept the Windows prompt to continue."
         try {
-            Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs | Out-Null
+            Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs -WindowStyle $style | Out-Null
         }
         catch {
             Write-Host "WinTool was not started. Administrator approval was declined."
         }
         return
     }
-    Write-Host "WinTool is opening in Windows PowerShell so the window can run."
-    Start-Process -FilePath $executable -ArgumentList $line | Out-Null
+    Write-Host "WinTool is opening in its own window. You can close this terminal."
+    Start-Process -FilePath $executable -ArgumentList $line -WindowStyle $style | Out-Null
 }
 
 function Request-WinToolAdministrator {
@@ -7141,7 +7296,16 @@ function New-WinToolWindow {
 function Show-WinToolWindow {
     $window = New-WinToolWindow
     Enable-WinToolLogPump
-    $null = $window.ShowDialog()
+    Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Hide the console" -Action { Hide-WinToolConsole }
+    try {
+        $null = $window.ShowDialog()
+    }
+    finally {
+        # Give a console the user opened back to them. A hidden relaunch just exits.
+        if ($script:WinToolConsoleHidden -and $env:WINTOOL_HIDDEN -ne "1") {
+            $null = Set-WinToolConsoleVisible -Visible $true
+        }
+    }
 }
 # endregion
 
@@ -7206,6 +7370,13 @@ function Start-WinTool {
             }
             $env:WINTOOL_STA_RELAUNCHED = "1"
             Request-WinToolStaHost
+            return
+        }
+
+        if ((Get-WinToolCurrentConsoleMode) -eq "relaunch") {
+            # Windows Terminal owns this console and cannot hide it, so open
+            # WinTool in its own hidden console and give the terminal back.
+            Start-WinToolRelaunch
             return
         }
 

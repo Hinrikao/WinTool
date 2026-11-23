@@ -61,6 +61,13 @@ function Start-WinTool {
             return
         }
 
+        if ((Get-WinToolCurrentConsoleMode) -eq "relaunch") {
+            # Windows Terminal owns this console and cannot hide it, so open
+            # WinTool in its own hidden console and give the terminal back.
+            Start-WinToolRelaunch
+            return
+        }
+
         if ($script:WinToolUnattended) {
             if ([string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
                 throw "Unattended mode needs -ApplyProfile with a path to a WinTool JSON profile."

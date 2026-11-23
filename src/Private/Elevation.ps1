@@ -50,11 +50,22 @@ function New-WinToolRelaunchScript {
         [string]$EntryPath,
         [string]$ApplyProfile,
         [bool]$Unattended,
-        [string]$LaunchUrl
+        [string]$LaunchUrl,
+        [bool]$Hidden,
+        [bool]$ShowConsole
     )
     $lines = New-Object System.Collections.Generic.List[string]
     [void]$lines.Add('$ErrorActionPreference = "Stop"')
     [void]$lines.Add('$env:WINTOOL_PAUSE_ON_ERROR = "1"')
+    if ($Hidden) {
+        [void]$lines.Add('$env:WINTOOL_HIDDEN = "1"')
+    }
+    else {
+        [void]$lines.Add('$env:WINTOOL_HIDDEN = $null')
+    }
+    if ($ShowConsole) {
+        [void]$lines.Add('$env:WINTOOL_SHOW_CONSOLE = "1"')
+    }
     if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
         [void]$lines.Add("Set-Location -LiteralPath " + (ConvertTo-WinToolLiteral -Text $WorkingDirectory))
     }
@@ -66,6 +77,9 @@ function New-WinToolRelaunchScript {
         }
         if ($Unattended) {
             $call += " -Unattended"
+        }
+        if ($ShowConsole) {
+            $call += " -ShowConsole"
         }
         [void]$lines.Add($call)
     }
@@ -79,6 +93,22 @@ function New-WinToolRelaunchScript {
     [void]$lines.Add("}")
     [void]$lines.Add("catch {")
     [void]$lines.Add('    $text = ($_ | Out-String)')
+    if ($Hidden) {
+        # Bring the hidden console back so the error and the Enter prompt are visible.
+        [void]$lines.Add('    try {')
+        [void]$lines.Add('        if ($null -eq ("WinToolConsoleApi" -as [type])) {')
+        [void]$lines.Add("            Add-Type -TypeDefinition @'")
+        foreach ($sourceLine in ((Get-WinToolConsoleApiSource) -split "`r?`n")) {
+            [void]$lines.Add($sourceLine)
+        }
+        [void]$lines.Add("'@")
+        [void]$lines.Add('        }')
+        [void]$lines.Add('        $null = [WinToolConsoleApi]::ShowWindow([WinToolConsoleApi]::GetConsoleWindow(), 5)')
+        [void]$lines.Add('    }')
+        [void]$lines.Add('    catch {')
+        [void]$lines.Add('        $null = $_.Exception.Message')
+        [void]$lines.Add('    }')
+    }
     [void]$lines.Add('    $logDir = Join-Path $env:TEMP "WinTool"')
     [void]$lines.Add('    if (-not (Test-Path -LiteralPath $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }')
     [void]$lines.Add('    $logPath = Join-Path $logDir "wintool.log"')
@@ -102,16 +132,14 @@ function New-WinToolRelaunchScript {
 
 function Get-WinToolHostArgument {
     param(
-        [Parameter(Mandatory = $true)][string]$LauncherPath
+        [Parameter(Mandatory = $true)][string]$LauncherPath,
+        [bool]$Hidden
     )
-    return @(
-        "-STA",
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        $LauncherPath
-    )
+    $arguments = @("-STA", "-NoProfile", "-ExecutionPolicy", "Bypass")
+    if ($Hidden) {
+        $arguments += @("-WindowStyle", "Hidden")
+    }
+    return $arguments + @("-File", $LauncherPath)
 }
 
 function Get-WinToolWorkingDirectory {
@@ -141,7 +169,9 @@ function Start-WinToolRelaunch {
         $entry = $null
     }
     $directory = Get-WinToolWorkingDirectory
-    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl)
+    $showConsole = Test-WinToolShowConsole
+    $hidden = -not ($showConsole -or [bool]$script:WinToolUnattended)
+    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl) -Hidden $hidden -ShowConsole $showConsole
     $launcherDirectory = Join-Path $env:TEMP "WinTool"
     if (-not (Test-Path -LiteralPath $launcherDirectory)) {
         New-Item -ItemType Directory -Path $launcherDirectory -Force | Out-Null
@@ -149,19 +179,23 @@ function Start-WinToolRelaunch {
     $launcherPath = Join-Path $launcherDirectory "relaunch.ps1"
     $encoding = New-Object System.Text.UTF8Encoding $true
     [System.IO.File]::WriteAllText($launcherPath, $scriptText, $encoding)
-    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath)
+    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden $hidden)
+    $style = "Normal"
+    if ($hidden) {
+        $style = "Hidden"
+    }
     if ($Elevate) {
         Write-Host "WinTool needs administrator approval. Accept the Windows prompt to continue."
         try {
-            Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs | Out-Null
+            Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs -WindowStyle $style | Out-Null
         }
         catch {
             Write-Host "WinTool was not started. Administrator approval was declined."
         }
         return
     }
-    Write-Host "WinTool is opening in Windows PowerShell so the window can run."
-    Start-Process -FilePath $executable -ArgumentList $line | Out-Null
+    Write-Host "WinTool is opening in its own window. You can close this terminal."
+    Start-Process -FilePath $executable -ArgumentList $line -WindowStyle $style | Out-Null
 }
 
 function Request-WinToolAdministrator {

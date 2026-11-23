@@ -519,5 +519,14 @@ function New-WinToolWindow {
 function Show-WinToolWindow {
     $window = New-WinToolWindow
     Enable-WinToolLogPump
-    $null = $window.ShowDialog()
+    Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Hide the console" -Action { Hide-WinToolConsole }
+    try {
+        $null = $window.ShowDialog()
+    }
+    finally {
+        # Give a console the user opened back to them. A hidden relaunch just exits.
+        if ($script:WinToolConsoleHidden -and $env:WINTOOL_HIDDEN -ne "1") {
+            $null = Set-WinToolConsoleVisible -Visible $true
+        }
+    }
 }

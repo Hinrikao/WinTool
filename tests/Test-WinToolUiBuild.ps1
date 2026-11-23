@@ -175,6 +175,12 @@ if ($uiErrors.Count -gt 0) {
 }
 Write-Output "Raised $raised UI events without errors."
 
+if (-not (Initialize-WinToolConsoleApi)) {
+    throw "The console helper did not compile on Windows PowerShell."
+}
+$null = [WinToolConsoleApi]::GetConsoleWindow()
+Write-Output "Console helper compiled."
+
 try {
     $window.Close()
 }
