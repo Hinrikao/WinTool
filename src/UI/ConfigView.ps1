@@ -15,8 +15,11 @@ function Update-WinToolProfileSummary {
     $tweaks = @(Get-WinToolCheckedTweak)
     $terminal = Get-WinToolTerminalChoice
     $prompt = "Oh My Posh"
-    if ($terminal.prompt -eq "starship") {
-        $prompt = "Starship"
+    foreach ($entry in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "prompts" -Default @())) {
+        if ([string]$entry.id -eq [string]$terminal.prompt) {
+            $prompt = [string]$entry.name
+            break
+        }
     }
     $replay = "Terminal setup is saved with the profile."
     if (-not $terminal.enabled) {
@@ -27,6 +30,9 @@ function Update-WinToolProfileSummary {
 }
 
 function Get-WinToolProfileFromUi {
+    if (-not $script:WinToolState.TweakStateRead) {
+        Update-WinToolTweakState
+    }
     $apps = @(Get-WinToolCheckedApp)
     $tweaks = @(Get-WinToolCheckedTweak)
     $appIds = New-Object System.Collections.Generic.List[string]
@@ -68,6 +74,10 @@ function Import-WinToolProfileToUi {
 }
 
 function Invoke-WinToolSaveProfile {
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $dialog = New-Object Microsoft.Win32.SaveFileDialog
     $dialog.Filter = "WinTool profile (*.json)|*.json"
     $dialog.FileName = "wintool-profile.json"
@@ -76,12 +86,21 @@ function Invoke-WinToolSaveProfile {
     if ($accepted -ne $true) {
         return
     }
-    $toolProfile = Get-WinToolProfileFromUi
-    Write-WinToolProfile -Path $dialog.FileName -Profile $toolProfile
-    Write-WinToolLog -Message ("Saved profile to {0}" -f $dialog.FileName) -Level "ok"
+    try {
+        $toolProfile = Get-WinToolProfileFromUi
+        Write-WinToolProfile -Path $dialog.FileName -Profile $toolProfile
+        Write-WinToolLog -Message ("Saved profile to {0}" -f $dialog.FileName) -Level "ok"
+    }
+    catch {
+        Write-WinToolLog -Message ("Could not save that profile. {0}" -f $_.Exception.Message) -Level "error"
+    }
 }
 
 function Invoke-WinToolLoadProfile {
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $dialog = New-Object Microsoft.Win32.OpenFileDialog
     $dialog.Filter = "WinTool profile (*.json)|*.json"
     $dialog.Title = "Load WinTool profile"
@@ -98,6 +117,10 @@ function Invoke-WinToolLoadProfile {
 }
 
 function Invoke-WinToolExportWinget {
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $winget = Get-WinToolWingetPath
     if ([string]::IsNullOrWhiteSpace($winget)) {
         Write-WinToolLog -Message "winget was not found. Install App Installer from the Microsoft Store, then try again." -Level "warn"
@@ -121,6 +144,10 @@ function Invoke-WinToolExportWinget {
 }
 
 function Invoke-WinToolImportWinget {
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $winget = Get-WinToolWingetPath
     if ([string]::IsNullOrWhiteSpace($winget)) {
         Write-WinToolLog -Message "winget was not found. Install App Installer from the Microsoft Store, then try again." -Level "warn"
@@ -143,7 +170,7 @@ function Invoke-WinToolImportWinget {
         FilePath = $winget
         Arguments = @("import", "-i", $dialog.FileName, "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity")
     }
-    Invoke-WinToolPlanAsync -Step @($step) -DoneMessage "winget import finished."
+    Invoke-WinToolPlanAsync -Step @($step) -DoneMessage "winget import finished." -AfterDone "Start-WinToolAppDetection"
 }
 
 function Initialize-WinToolSystemView {
@@ -228,22 +255,28 @@ function Sync-WinToolDnsSummary {
 
 function Sync-WinToolPowerPlanStatus {
     $text = "Power plans are only on Windows."
+    $script:WinToolState.UltimatePlanAdded = $false
     if (Test-WinToolWindows) {
         try {
             $schemes = ConvertFrom-WinToolPowerList -Text ((& powercfg.exe /list) | Out-String)
             $catalog = Get-WinToolSystemCatalog
             $state = Get-WinToolPowerPlanState -Scheme $schemes -Catalog $catalog
             $text = Format-WinToolPowerPlanStatus -State $state -Name ([string]$catalog.powerPlan.name)
-            (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = [bool]$state.Added
+            $script:WinToolState.UltimatePlanAdded = [bool]$state.Added
         }
         catch {
             $text = "Could not read power plans. " + $_.Exception.Message
         }
     }
+    (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = (-not $script:WinToolState.Busy -and [bool]$script:WinToolState.UltimatePlanAdded)
     (Get-WinToolUi -Name "PowerPlanStatus").Text = $text
 }
 
 function Invoke-WinToolDnsClick {
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $adapters = @(Get-WinToolSelectedDnsAdapter)
     if ($adapters.Count -eq 0) {
         Write-WinToolLog -Message "Pick a network adapter first." -Level "warn"
@@ -274,6 +307,10 @@ function Invoke-WinToolPowerPlanClick {
     param(
         [Parameter(Mandatory = $true)][ValidateSet("add", "remove")][string]$Action
     )
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $message = "Add the Ultimate Performance power plan and switch to it?"
     if ($Action -eq "remove") {
         $message = "Remove the Ultimate Performance plan WinTool added? If it is active, Windows goes back to Balanced."

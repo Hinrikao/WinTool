@@ -159,25 +159,48 @@ function Get-WinToolWorkingDirectory {
     return [string]$env:SystemRoot
 }
 
+function Remove-WinToolStaleTempLauncher {
+    param(
+        [Parameter(Mandatory = $true)][string]$Directory
+    )
+    if (-not (Test-Path -LiteralPath $Directory)) {
+        return
+    }
+    $cutoff = [DateTime]::UtcNow.AddHours(-2)
+    foreach ($pattern in @("relaunch-*.ps1", "wintool-self-*.ps1")) {
+        foreach ($item in @(Get-ChildItem -Path (Join-Path $Directory $pattern) -File -ErrorAction SilentlyContinue)) {
+            if ($item.LastWriteTimeUtc -lt $cutoff) {
+                Remove-Item -LiteralPath $item.FullName -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+}
+
 function Start-WinToolRelaunch {
     param(
         [switch]$Elevate
     )
     $executable = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+    $launcherDirectory = Join-Path $env:TEMP "WinTool"
+    if (-not (Test-Path -LiteralPath $launcherDirectory)) {
+        New-Item -ItemType Directory -Path $launcherDirectory -Force | Out-Null
+    }
+    Remove-WinToolStaleTempLauncher -Directory $launcherDirectory
+    $encoding = New-Object System.Text.UTF8Encoding $true
     $entry = Resolve-WinToolEntryPath -EntryPath $script:WinToolEntryPath -CommandPath ""
     if (-not [string]::IsNullOrWhiteSpace($entry) -and -not (Test-Path -LiteralPath $entry)) {
         $entry = $null
+    }
+    if ([string]::IsNullOrWhiteSpace($entry) -and -not [string]::IsNullOrWhiteSpace($script:WinToolSelfText)) {
+        $selfPath = Join-Path $launcherDirectory ("wintool-self-" + [guid]::NewGuid().ToString("N") + ".ps1")
+        [System.IO.File]::WriteAllText($selfPath, $script:WinToolSelfText, $encoding)
+        $entry = $selfPath
     }
     $directory = Get-WinToolWorkingDirectory
     $showConsole = Test-WinToolShowConsole
     $hidden = -not ($showConsole -or [bool]$script:WinToolUnattended)
     $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl) -Hidden $hidden -ShowConsole $showConsole
-    $launcherDirectory = Join-Path $env:TEMP "WinTool"
-    if (-not (Test-Path -LiteralPath $launcherDirectory)) {
-        New-Item -ItemType Directory -Path $launcherDirectory -Force | Out-Null
-    }
-    $launcherPath = Join-Path $launcherDirectory "relaunch.ps1"
-    $encoding = New-Object System.Text.UTF8Encoding $true
+    $launcherPath = Join-Path $launcherDirectory ("relaunch-" + [guid]::NewGuid().ToString("N") + ".ps1")
     [System.IO.File]::WriteAllText($launcherPath, $scriptText, $encoding)
     $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden $hidden)
     $style = "Normal"

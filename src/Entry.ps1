@@ -46,6 +46,11 @@ function Start-WinTool {
         if (-not (Test-WinToolWindows)) {
             throw "WinTool only runs on Windows 11."
         }
+        if (-not $script:WinToolUnattended -and (Test-WinToolAlreadyRunning)) {
+            Write-Host "WinTool is already open. Its window was brought to the front."
+            Exit-WinToolOwnedHost
+            return
+        }
         if (-not (Test-WinToolAdministrator)) {
             Request-WinToolAdministrator
             return

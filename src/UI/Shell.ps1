@@ -42,6 +42,9 @@ function Switch-WinToolView {
         }
     }
     if ($Name -eq "Config") {
+        if (-not $script:WinToolState.TweakStateRead) {
+            Update-WinToolTweakState
+        }
         Update-WinToolProfileSummary
         if (-not $script:WinToolState.SystemChecked) {
             $script:WinToolState.SystemChecked = $true
@@ -100,6 +103,21 @@ function Sync-WinToolLogPanel {
         $toggle.Content = "Show log"
         $clear.Visibility = "Collapsed"
     }
+    $homeBottom = 16
+    $listBottom = 0
+    $pageBottom = 12
+    if ($expanded) {
+        $homeBottom = 196
+        $listBottom = 188
+        $pageBottom = 196
+    }
+    (Get-WinToolUi -Name "HomeBody").Margin = [System.Windows.Thickness]::new(20, 0, 10, $homeBottom)
+    foreach ($listName in @("AppCategories", "TweakCategories", "TerminalSimpleHost")) {
+        (Get-WinToolUi -Name $listName).Margin = [System.Windows.Thickness]::new(0, 0, 0, $listBottom)
+    }
+    foreach ($pageName in @("UpdatesBody", "FixesBody", "FeaturesBody", "ConfigBody")) {
+        (Get-WinToolUi -Name $pageName).Margin = [System.Windows.Thickness]::new(24, 22, 24, $pageBottom)
+    }
     if ($busy) {
         $bar.Visibility = "Visible"
     }
@@ -143,10 +161,23 @@ function Sync-WinToolBusyState {
         "AppRefreshInstalled", "AppUpdate", "AppUninstall", "AppUpgradeAll",
         "FeatureApply",
         "TerminalSetup", "ScanDrivers",
+        "ApplyUpdateMode", "RevertUpdateMode",
+        "ApplyDns", "RefreshDns", "AddUltimatePlan",
         "SaveProfile", "LoadProfile", "ExportWinget", "ImportWinget"
     )
     foreach ($name in $names) {
         (Get-WinToolUi -Name $name).IsEnabled = -not $Busy
+    }
+    (Get-WinToolUi -Name "TerminalRefresh").IsEnabled = (-not $Busy -and $null -eq $script:WinToolState.CatalogJob)
+    (Get-WinToolUi -Name "FeatureRefresh").IsEnabled = (-not $Busy -and $null -eq $script:WinToolState.FeatureJob)
+    (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = (-not $Busy -and [bool]$script:WinToolState.UltimatePlanAdded)
+    foreach ($featureRow in @($script:WinToolState.FeatureRows)) {
+        if ($Busy) {
+            $featureRow.Checkbox.IsEnabled = $false
+        }
+        else {
+            $featureRow.Checkbox.IsEnabled = ($featureRow.Status -ne "Unavailable" -and $featureRow.Status -ne "Unknown")
+        }
     }
     if ($null -ne $script:WinToolState.BusyControls) {
         foreach ($control in $script:WinToolState.BusyControls.ToArray()) {
@@ -365,6 +396,7 @@ function Stop-WinToolRun {
         $run.Cancel = $true
         if ($null -ne $run.Process) {
             try {
+                Stop-WinToolChildProcess -ParentId ([int]$run.Process.Id)
                 if (-not $run.Process.HasExited) {
                     $run.Process.Kill()
                 }
@@ -385,12 +417,46 @@ function Stop-WinToolRun {
             $script:WinToolState[$name] = $null
         }
     }
+    $queuedTweaks = $script:WinToolState.TweakQueue
+    $script:WinToolState.TweakQueue = $null
+    if ($null -ne $queuedTweaks) {
+        $script:WinToolState.TweakRequestStarted = $true
+        try {
+            foreach ($entry in @($queuedTweaks.ToArray())) {
+                $entry.Row.Checkbox.IsChecked = [bool]$entry.Previous
+                $entry.Row.Checkbox.IsEnabled = $true
+                Sync-WinToolTweakToggleTip -Row $entry.Row
+            }
+        }
+        finally {
+            $script:WinToolState.TweakRequestStarted = $false
+        }
+        Update-WinToolTweakCount
+        Sync-WinToolHomeTweakRow
+    }
     Sync-WinToolBusyState -Busy $false
     Sync-WinToolProgress -Value 0 -Text "Cancelled" -Indeterminate $false
     Write-WinToolLog -Message "Cancelled." -Level "warn"
 }
 
 function Update-WinToolLogPump {
+    if ($null -ne $script:WinToolActivateEvent) {
+        try {
+            if ($script:WinToolActivateEvent.WaitOne(0) -and $null -ne $script:WinToolWindow) {
+                if ($script:WinToolWindow.WindowState -eq "Minimized") {
+                    $script:WinToolWindow.WindowState = "Normal"
+                }
+                $null = $script:WinToolWindow.Activate()
+                $script:WinToolWindow.Topmost = $true
+                $script:WinToolWindow.Topmost = $false
+                $null = $script:WinToolWindow.Focus()
+            }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+    }
+
     $run = $script:WinToolState.Run
     if ($null -ne $run -and $null -ne $run.Queue) {
         $line = $null
@@ -428,6 +494,9 @@ function Update-WinToolLogPump {
     if ($null -ne $featureJob -and $featureJob.Sync.Done) {
         Complete-WinToolFeatureDetection
     }
+    else {
+        Test-WinToolFeatureDetectionTimeout
+    }
 
     $detect = $script:WinToolState.DetectJob
     if ($null -ne $detect -and $detect.Sync.Done) {
@@ -447,8 +516,24 @@ function Update-WinToolLogPump {
     }
 
     $preview = $script:WinToolState.PreviewJob
-    if ($null -ne $preview -and $preview.Job.Sync.Done) {
-        Complete-WinToolPreviewThemeDownload
+    if ($null -ne $preview) {
+        if ($preview.Job.Sync.Done) {
+            Complete-WinToolPreviewThemeDownload
+        }
+        elseif (([DateTime]::UtcNow - $preview.Started).TotalSeconds -gt 15) {
+            Complete-WinToolPreviewThemeDownload
+        }
+    }
+
+    $catalogJob = $script:WinToolState.CatalogJob
+    if ($null -ne $catalogJob) {
+        if ($catalogJob.Job.Sync.Done) {
+            Complete-WinToolTerminalCatalogOnline
+        }
+        elseif (([DateTime]::UtcNow - $catalogJob.Started).TotalSeconds -gt 25) {
+            $catalogJob.Job.Sync.Error = "Request timed out."
+            Complete-WinToolTerminalCatalogOnline
+        }
     }
 }
 
@@ -537,10 +622,12 @@ function New-WinToolWindow {
         TweakRows = @()
         TweakGroups = @()
         Updates = @()
+        UpdateCriteria = ""
         UpdateMode = ""
         UpdateModeCurrent = ""
         UpdateModeRadios = @()
         DnsAdapters = @()
+        UltimatePlanAdded = $false
         SystemChecked = $false
         Run = $null
         Pump = $null
@@ -549,6 +636,7 @@ function New-WinToolWindow {
         InstallJob = $null
         DetectJob = $null
         PreviewJob = $null
+        CatalogJob = $null
         BusyControls = $null
         FeatureJob = $null
         FeatureRows = @()
@@ -562,6 +650,7 @@ function New-WinToolWindow {
         AppFilter = "all"
         AppStartApps = @()
         AppCardAction = $null
+        AppsDetected = $false
         LogExpanded = $false
         LogPinned = $false
         Home = $null
@@ -629,88 +718,204 @@ function Stop-WinToolBackgroundWork {
     $script:WinToolState.Run = $null
     foreach ($key in @($script:WinToolState.Keys)) {
         $value = $script:WinToolState[$key]
-        if ($null -ne $value -and $null -ne $value.PSObject -and $null -ne $value.PSObject.Properties["Runspace"]) {
+        if ($null -eq $value -or $null -eq $value.PSObject) { continue }
+        $target = $value
+        if ($null -ne $value.PSObject.Properties["Job"] -and $null -ne $value.Job) {
+            $target = $value.Job
+        }
+        if ($null -ne $target -and $null -ne $target.PSObject -and $null -ne $target.PSObject.Properties["Runspace"]) {
             # Asynchronous stop: a runspace still waiting on winget must not
             # hold the window open while it closes.
-            try { $null = $value.PowerShell.BeginStop($null, $null) } catch { $null = $_.Exception.Message }
-            try { $value.Runspace.CloseAsync() } catch { $null = $_.Exception.Message }
+            try { $null = $target.PowerShell.BeginStop($null, $null) } catch { $null = $_.Exception.Message }
+            try { $null = $target.Runspace.CloseAsync() } catch { $null = $_.Exception.Message }
             $script:WinToolState[$key] = $null
         }
     }
     try { Get-Job | Remove-Job -Force -ErrorAction SilentlyContinue } catch { $null = $_.Exception.Message }
 }
 
+$script:WinToolKeepProcesses = @("conhost.exe", "openconsole.exe", "explorer.exe", "taskmgr.exe", "mmc.exe", "systemsettings.exe", "applicationframehost.exe")
+
 function Stop-WinToolChildProcess {
     # Ends what this process started (winget, installers, helpers), children
-    # first. conhost.exe is the console itself and is left alone.
+    # first. Console hosts and desktop tools opened for the user stay open.
     param([int]$ParentId = $PID)
     $children = @()
     try { $children = @(Get-CimInstance -ClassName Win32_Process -Filter ("ParentProcessId = {0}" -f $ParentId) -ErrorAction Stop) }
     catch { return }
     foreach ($child in $children) {
-        if ([string]$child.Name -eq "conhost.exe") { continue }
+        $childName = ([string]$child.Name).ToLowerInvariant()
+        if ($script:WinToolKeepProcesses -contains $childName) { continue }
         Stop-WinToolChildProcess -ParentId ([int]$child.ProcessId)
         try { Stop-Process -Id ([int]$child.ProcessId) -Force -ErrorAction Stop } catch { $null = $_.Exception.Message }
     }
 }
 
-function Enter-WinToolSingleInstance {
-    # One WinTool window per session. A second launch brings the first window
-    # to the front and leaves. If the existing window cannot be found or
-    # focused, this instance takes over.
-    $created = $false
-    try {
-        $script:WinToolMutex = [System.Threading.Mutex]::new($true, "Local\WinTool.Hinrikao.Window", [ref]$created)
-    }
-    catch {
-        $script:WinToolMutex = $null
-        $created = $false
-    }
-    if ($created) { return $true }
-    if ($null -ne $script:WinToolMutex) {
-        $script:WinToolMutex.Dispose()
-        $script:WinToolMutex = $null
-    }
-    $foundWindow = $false
-    if (Initialize-WinToolConsoleApi) {
+$script:WinToolMutexName = "Local\WinTool.Hinrikao.Window"
+$script:WinToolActivateEventName = "Local\WinTool.Hinrikao.Activate"
+
+function New-WinToolSingleInstanceMutex {
+    if (Test-WinToolWindows) {
         try {
-            $handle = [WinToolConsoleApi]::FindWindow($null, "WinTool")
-            if ($handle -ne [IntPtr]::Zero) {
-                $null = [WinToolConsoleApi]::ShowWindow($handle, 9)
-                $null = [WinToolConsoleApi]::SetForegroundWindow($handle)
-                $foundWindow = $true
-            }
+            $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+            $security = New-Object System.Security.AccessControl.MutexSecurity
+            $rule = New-Object System.Security.AccessControl.MutexAccessRule($sid, [System.Security.AccessControl.MutexRights]::FullControl, [System.Security.AccessControl.AccessControlType]::Allow)
+            $security.AddAccessRule($rule)
+            $createdNew = $false
+            return New-Object System.Threading.Mutex($false, $script:WinToolMutexName, [ref]$createdNew, $security)
         }
         catch {
             $null = $_.Exception.Message
         }
     }
-    if (-not $foundWindow) {
-        Start-Sleep -Milliseconds 500
+    return [System.Threading.Mutex]::new($false, $script:WinToolMutexName)
+}
+
+function New-WinToolActivateEvent {
+    if (Test-WinToolWindows) {
         try {
-            $script:WinToolMutex = [System.Threading.Mutex]::new($true, "Local\WinTool.Hinrikao.Window", [ref]$created)
+            $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+            $security = New-Object System.Security.AccessControl.EventWaitHandleSecurity
+            $rule = New-Object System.Security.AccessControl.EventWaitHandleAccessRule($sid, [System.Security.AccessControl.EventWaitHandleRights]::FullControl, [System.Security.AccessControl.AccessControlType]::Allow)
+            $security.AddAccessRule($rule)
+            $createdNew = $false
+            return New-Object System.Threading.EventWaitHandle($false, [System.Threading.EventResetMode]::AutoReset, $script:WinToolActivateEventName, [ref]$createdNew, $security)
         }
         catch {
-            $script:WinToolMutex = $null
-            $created = $false
-        }
-        if ($created) {
-            return $true
-        }
-        if ($null -ne $script:WinToolMutex) {
-            $script:WinToolMutex.Dispose()
-            $script:WinToolMutex = $null
+            $null = $_.Exception.Message
         }
     }
-    Write-Host "WinTool is already open. Its window was brought to the front."
-    return $false
+    return New-Object System.Threading.EventWaitHandle($false, [System.Threading.EventResetMode]::AutoReset, $script:WinToolActivateEventName)
+}
+
+function Send-WinToolActivateSignal {
+    $focused = $false
+    if (Initialize-WinToolConsoleApi) {
+        try { $null = [WinToolConsoleApi]::AllowSetForegroundWindow(-1) } catch { $null = $_.Exception.Message }
+    }
+    try {
+        $signal = [System.Threading.EventWaitHandle]::OpenExisting($script:WinToolActivateEventName)
+        try {
+            $null = $signal.Set()
+        }
+        finally {
+            $signal.Dispose()
+        }
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    if (Initialize-WinToolConsoleApi) {
+        try {
+            $focused = [WinToolConsoleApi]::FocusWinToolWindow()
+        }
+        catch {
+            $focused = $false
+        }
+    }
+    return $focused
+}
+
+function Test-WinToolAlreadyRunning {
+    $existing = $null
+    try {
+        $existing = [System.Threading.Mutex]::OpenExisting($script:WinToolMutexName)
+    }
+    catch [System.Threading.WaitHandleCannotBeOpenedException] {
+        return $false
+    }
+    catch [System.UnauthorizedAccessException] {
+        $null = Send-WinToolActivateSignal
+        return $true
+    }
+    catch {
+        return $false
+    }
+    try {
+        $free = $false
+        try {
+            $free = $existing.WaitOne(0)
+        }
+        catch [System.Threading.AbandonedMutexException] {
+            $free = $true
+        }
+        if ($free) {
+            try { $existing.ReleaseMutex() } catch { $null = $_.Exception.Message }
+            return $false
+        }
+        $null = Send-WinToolActivateSignal
+        return $true
+    }
+    finally {
+        $existing.Dispose()
+    }
+}
+
+function Enter-WinToolSingleInstance {
+    # One WinTool window per session. A second launch signals the open window
+    # to bring itself to the front and leaves. If the first copy is closing,
+    # this instance waits briefly to take over instead of leaving zero windows.
+    $mutex = $null
+    try {
+        $mutex = New-WinToolSingleInstanceMutex
+    }
+    catch [System.UnauthorizedAccessException] {
+        $null = Send-WinToolActivateSignal
+        Write-Host "WinTool is already open. Its window was brought to the front."
+        return $false
+    }
+    catch {
+        $script:WinToolMutex = $null
+        $script:WinToolMutexOwned = $false
+        return $true
+    }
+    $acquired = $false
+    try {
+        $acquired = $mutex.WaitOne(0)
+    }
+    catch [System.Threading.AbandonedMutexException] {
+        $acquired = $true
+    }
+    if (-not $acquired) {
+        $focused = Send-WinToolActivateSignal
+        if (-not $focused) {
+            try {
+                $acquired = $mutex.WaitOne(2000)
+            }
+            catch [System.Threading.AbandonedMutexException] {
+                $acquired = $true
+            }
+        }
+        if (-not $acquired) {
+            $null = Send-WinToolActivateSignal
+            try { $mutex.Dispose() } catch { $null = $_.Exception.Message }
+            Write-Host "WinTool is already open. Its window was brought to the front."
+            return $false
+        }
+    }
+    $script:WinToolMutex = $mutex
+    $script:WinToolMutexOwned = $true
+    try {
+        $script:WinToolActivateEvent = New-WinToolActivateEvent
+    }
+    catch {
+        $script:WinToolActivateEvent = $null
+    }
+    return $true
 }
 
 function Exit-WinToolSingleInstance {
+    if ($null -ne $script:WinToolActivateEvent) {
+        try { $script:WinToolActivateEvent.Dispose() } catch { $null = $_.Exception.Message }
+        $script:WinToolActivateEvent = $null
+    }
     if ($null -eq $script:WinToolMutex) { return }
-    try { $script:WinToolMutex.ReleaseMutex() } catch { $null = $_.Exception.Message }
+    if ($script:WinToolMutexOwned) {
+        try { $script:WinToolMutex.ReleaseMutex() } catch { $null = $_.Exception.Message }
+    }
     try { $script:WinToolMutex.Dispose() } catch { $null = $_.Exception.Message }
     $script:WinToolMutex = $null
+    $script:WinToolMutexOwned = $false
 }
 
 function Show-WinToolWindow {

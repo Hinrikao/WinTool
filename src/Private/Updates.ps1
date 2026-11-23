@@ -131,5 +131,14 @@ function Open-WinToolUri {
     param(
         [Parameter(Mandatory = $true)][string]$Uri
     )
-    Start-Process -FilePath $Uri | Out-Null
+    if ($Uri -notmatch '^(https://|ms-settings:)') {
+        Write-WinToolLog -Message ("Blocked unexpected link: " + $Uri) -Level "warn"
+        return
+    }
+    try {
+        Start-Process -FilePath $Uri | Out-Null
+    }
+    catch {
+        Write-WinToolLog -Message ("Could not open " + $Uri + ". " + $_.Exception.Message) -Level "warn"
+    }
 }

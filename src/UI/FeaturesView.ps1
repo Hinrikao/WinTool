@@ -47,13 +47,16 @@ function Initialize-WinToolFeatureView {
     }
 }
 
+$script:WinToolFeatureTimeoutSeconds = 120
+
 function Start-WinToolFeatureDetection {
-    if ($null -ne $script:WinToolState.FeatureJob) {
+    if ($null -ne $script:WinToolState.FeatureJob -or $script:WinToolState.Busy) {
         return
     }
     if (-not (Test-WinToolWindows)) {
         return
     }
+    (Get-WinToolUi -Name "FeatureRefresh").IsEnabled = $false
     $names = New-Object System.Collections.Generic.List[string]
     foreach ($row in @($script:WinToolState.FeatureRows)) {
         $row.StateText.Text = "Checking..."
@@ -63,7 +66,24 @@ function Start-WinToolFeatureDetection {
         }
     }
     (Get-WinToolUi -Name "FeatureStatus").Text = "Reading the current state..."
-    $script:WinToolState.FeatureJob = Start-WinToolScriptJob -ScriptText (Get-WinToolFeatureStateScript) -Argument @(, $names.ToArray())
+    $job = Start-WinToolScriptJob -ScriptText (Get-WinToolFeatureStateScript) -Argument @(, $names.ToArray())
+    $job | Add-Member -NotePropertyName Started -NotePropertyValue ([DateTime]::UtcNow)
+    $script:WinToolState.FeatureJob = $job
+}
+
+function Test-WinToolFeatureDetectionTimeout {
+    $job = $script:WinToolState.FeatureJob
+    if ($null -eq $job -or $job.Sync.Done) {
+        return
+    }
+    if (([DateTime]::UtcNow - $job.Started).TotalSeconds -lt $script:WinToolFeatureTimeoutSeconds) {
+        return
+    }
+    Stop-WinToolThread -Job $job
+    $script:WinToolState.FeatureJob = $null
+    (Get-WinToolUi -Name "FeatureRefresh").IsEnabled = (-not $script:WinToolState.Busy)
+    (Get-WinToolUi -Name "FeatureStatus").Text = "Reading Windows features took too long. Press Refresh to try again."
+    Write-WinToolLog -Message "Windows features check timed out. Press Refresh to try again." -Level "warn"
 }
 
 function Complete-WinToolFeatureDetection {
@@ -76,6 +96,7 @@ function Complete-WinToolFeatureDetection {
     $states = $job.Sync.States
     Stop-WinToolThread -Job $job
     $script:WinToolState.FeatureJob = $null
+    (Get-WinToolUi -Name "FeatureRefresh").IsEnabled = (-not $script:WinToolState.Busy)
     if (-not $ok) {
         (Get-WinToolUi -Name "FeatureStatus").Text = "Could not read the Windows features."
         Write-WinToolLog -Message ("Could not read the Windows features. {0}" -f $errorMessage) -Level "warn"
@@ -124,6 +145,10 @@ function Get-WinToolFeatureChange {
 }
 
 function Invoke-WinToolFeatureApplyClick {
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $change = Get-WinToolFeatureChange
     $total = @($change.Enable).Count + @($change.Disable).Count
     if ($total -eq 0) {

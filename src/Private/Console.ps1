@@ -59,9 +59,12 @@ function Get-WinToolConsoleApiSource {
     return @"
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 public static class WinToolConsoleApi
 {
+    public delegate bool EnumWindowsProc(IntPtr handle, IntPtr param);
+
     [DllImport("kernel32.dll")]
     public static extern IntPtr GetConsoleWindow();
 
@@ -73,6 +76,52 @@ public static class WinToolConsoleApi
 
     [DllImport("user32.dll")]
     public static extern bool SetForegroundWindow(IntPtr handle);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsIconic(IntPtr handle);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindowVisible(IntPtr handle);
+
+    [DllImport("user32.dll")]
+    public static extern bool AllowSetForegroundWindow(int processId);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumWindows(EnumWindowsProc callback, IntPtr param);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int GetWindowText(IntPtr handle, StringBuilder buffer, int maxCount);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern int GetClassName(IntPtr handle, StringBuilder buffer, int maxCount);
+
+    public static IntPtr FindWinToolWindow()
+    {
+        IntPtr found = IntPtr.Zero;
+        EnumWindows(delegate(IntPtr handle, IntPtr param)
+        {
+            if (!IsWindowVisible(handle)) { return true; }
+            StringBuilder title = new StringBuilder(64);
+            if (GetWindowText(handle, title, title.Capacity) <= 0) { return true; }
+            if (!string.Equals(title.ToString(), "WinTool", StringComparison.Ordinal)) { return true; }
+            StringBuilder cls = new StringBuilder(128);
+            if (GetClassName(handle, cls, cls.Capacity) <= 0) { return true; }
+            if (!cls.ToString().StartsWith("HwndWrapper[", StringComparison.Ordinal)) { return true; }
+            found = handle;
+            return false;
+        }, IntPtr.Zero);
+        return found;
+    }
+
+    public static bool FocusWinToolWindow()
+    {
+        IntPtr handle = FindWinToolWindow();
+        if (handle == IntPtr.Zero) { return false; }
+        if (IsIconic(handle)) { ShowWindow(handle, 9); }
+        else { ShowWindow(handle, 5); }
+        SetForegroundWindow(handle);
+        return true;
+    }
 }
 "@
 }

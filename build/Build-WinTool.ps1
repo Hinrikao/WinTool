@@ -81,6 +81,7 @@ $builder = New-Object System.Text.StringBuilder
 [void]$builder.AppendLine('$script:WinToolUnattended = [bool]$Unattended')
 [void]$builder.AppendLine('$script:WinToolShowConsole = [bool]$ShowConsole')
 [void]$builder.AppendLine('$script:WinToolEntryPath = $PSCommandPath')
+[void]$builder.AppendLine('$script:WinToolSelfText = [string]$MyInvocation.MyCommand.ScriptBlock')
 [void]$builder.AppendLine('$script:WinToolRoot = $null')
 [void]$builder.AppendLine('$script:WinToolEmbedded = @{')
 foreach ($name in $payloads.Keys) {

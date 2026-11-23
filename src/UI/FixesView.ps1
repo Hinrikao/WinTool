@@ -41,6 +41,10 @@ function Invoke-WinToolFixClick {
     param(
         [Parameter(Mandatory = $true)]$Fix
     )
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $message = ([string]$Fix.name) + "?`n`n" + ([string]$Fix.description)
     $restart = [bool](Get-WinToolNote -Object $Fix -Name "restart" -Default $false)
     if ($restart) {

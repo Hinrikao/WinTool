@@ -71,15 +71,24 @@ Write-Output "Windows Update components were reset. Restart the PC, then check f
         "winget-repair" {
             return @'
 $ErrorActionPreference = "Stop"
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 try {
     $nuget = Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue
     if ($null -eq $nuget) {
         Write-Output "Installing the NuGet package provider."
         Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null
     }
+    $gallery = Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue
+    if ($null -eq $gallery) {
+        Register-PSRepository -Default
+    }
+    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
     Write-Output "Installing the Microsoft.WinGet.Client module."
-    Install-Module -Name Microsoft.WinGet.Client -Force -AllowClobber -Scope AllUsers -Repository PSGallery
+    $options = @{ Name = "Microsoft.WinGet.Client"; Scope = "AllUsers"; Repository = "PSGallery"; Force = $true }
+    $installer = Get-Command -Name Install-Module
+    if ($installer.Parameters.ContainsKey("AllowClobber")) { $options["AllowClobber"] = $true }
+    if ($installer.Parameters.ContainsKey("SkipPublisherCheck")) { $options["SkipPublisherCheck"] = $true }
+    Install-Module @options
     Import-Module Microsoft.WinGet.Client
     Write-Output "Repairing winget. This downloads App Installer and its dependencies."
     Repair-WinGetPackageManager -AllUsers -Force -Latest

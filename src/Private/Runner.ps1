@@ -83,9 +83,21 @@ function Get-WinToolPlanCommand {
         $hostPath = $null
         if ([string]$Step.Host -eq "pwsh") {
             Sync-WinToolProcessPath
-            $command = Get-Command -Name "pwsh.exe" -ErrorAction SilentlyContinue
+            $command = Get-Command -Name "pwsh.exe" -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
             if ($null -ne $command) {
                 $hostPath = [string]$command.Source
+            }
+            else {
+                foreach ($candidate in @(
+                        ([string]$env:ProgramFiles + "\PowerShell\7\pwsh.exe"),
+                        ([string]$env:LOCALAPPDATA + "\Programs\PowerShell\7\pwsh.exe"),
+                        ([string]$env:LOCALAPPDATA + "\Microsoft\WindowsApps\pwsh.exe")
+                    )) {
+                    if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $candidate)) {
+                        $hostPath = $candidate
+                        break
+                    }
+                }
             }
         }
         else {

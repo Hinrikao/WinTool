@@ -10,6 +10,7 @@ function Initialize-WinToolInstallView {
     $script:WinToolState.AppFilter = "all"
     $script:WinToolState.AppStartApps = @()
     $script:WinToolState.AppCardAction = $null
+    $script:WinToolState.AppsDetected = $false
 
     $filters = Get-WinToolUi -Name "AppFilters"
     $filters.Children.Clear()
@@ -86,10 +87,26 @@ function Initialize-WinToolInstallView {
         Start-WinToolAppDetection
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppUpdate") -EventName "Click" -Name "Install: update selected" -Action {
-        Invoke-WinToolAppAction -App @(Get-WinToolCheckedApp) -Action "upgrade"
+        $checked = @(Get-WinToolCheckedApp)
+        if ($script:WinToolState.AppsDetected -and $checked.Count -gt 0) {
+            $checked = @($checked | Where-Object { $_.Installed })
+            if ($checked.Count -eq 0) {
+                Write-WinToolLog -Message "None of the selected apps are marked as installed." -Level "warn"
+                return
+            }
+        }
+        Invoke-WinToolAppAction -App $checked -Action "upgrade"
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppUninstall") -EventName "Click" -Name "Install: uninstall selected" -Action {
-        Invoke-WinToolAppAction -App @(Get-WinToolCheckedApp) -Action "uninstall"
+        $checked = @(Get-WinToolCheckedApp)
+        if ($script:WinToolState.AppsDetected -and $checked.Count -gt 0) {
+            $checked = @($checked | Where-Object { $_.Installed })
+            if ($checked.Count -eq 0) {
+                Write-WinToolLog -Message "None of the selected apps are marked as installed." -Level "warn"
+                return
+            }
+        }
+        Invoke-WinToolAppAction -App $checked -Action "uninstall"
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppUpgradeAll") -EventName "Click" -Name "Install: update all" -Action {
         Invoke-WinToolUpgradeAllClick
@@ -342,6 +359,7 @@ function New-WinToolAppRow {
 
     # The old right-click menu stays as a shortcut.
     $menu = New-Object System.Windows.Controls.ContextMenu
+    $menuItems = New-Object System.Collections.Generic.List[object]
     foreach ($choice in @(
             [pscustomobject]@{ Header = "Update this app"; Action = "upgrade"; Name = "Install: update one app" },
             [pscustomobject]@{ Header = "Uninstall this app"; Action = "uninstall"; Name = "Install: uninstall one app" }
@@ -354,6 +372,15 @@ function New-WinToolAppRow {
             Invoke-WinToolAppAction -App @($target.Row) -Action $target.Action
         }
         [void]$menu.Items.Add($item)
+        $menuItems.Add($item)
+    }
+    Register-WinToolUiEvent -Control $menu -EventName "Opened" -Name "Install: open app menu" -Data ([pscustomobject]@{ Row = $row; Items = $menuItems.ToArray() }) -Action {
+        param($source, $eventData, $target)
+        $null = $source, $eventData
+        $canAct = (-not $script:WinToolState.Busy) -and ([bool]$target.Row.Installed -or -not $script:WinToolState.AppsDetected)
+        foreach ($entry in @($target.Items)) {
+            $entry.IsEnabled = $canAct
+        }
     }
     $panel.ContextMenu = $menu
     Sync-WinToolAppBadge -Row $row
@@ -638,6 +665,7 @@ function Set-WinToolAppState {
         if ($row.UpdateAvailable) { $updateCount++; $updateIds.Add([string]$row.WingetId) }
         Sync-WinToolAppBadge -Row $row
     }
+    $script:WinToolState.AppsDetected = $true
     Set-WinToolAppStatus -Text ("{0} installed, {1} with an update." -f $installedCount, $updateCount) -Show $false
     Clear-WinToolAppCardAction
     Update-WinToolAppChip
@@ -663,6 +691,10 @@ function Invoke-WinToolAppAction {
         $App,
         [Parameter(Mandatory = $true)][ValidateSet("upgrade", "uninstall")][string]$Action
     )
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $apps = @($App)
     if ($apps.Count -eq 0) {
         Write-WinToolLog -Message "Select at least one app first." -Level "warn"
@@ -685,6 +717,10 @@ function Invoke-WinToolAppAction {
 }
 
 function Invoke-WinToolUpgradeAllClick {
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $ok = Request-WinToolConfirmation -Message "Update every app that winget can update, including apps that are not in this list?" -Title "Update all apps"
     if (-not $ok) {
         return
@@ -784,6 +820,10 @@ function Sync-WinToolAppCheck {
 }
 
 function Invoke-WinToolInstallClick {
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
     $apps = @(Get-WinToolCheckedApp)
     if ($apps.Count -eq 0) {
         Write-WinToolLog -Message "Select at least one app first." -Level "warn"
