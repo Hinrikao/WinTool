@@ -149,17 +149,56 @@ function ConvertTo-WinToolHomeStartupResult {
     return (New-WinToolHomeResult -Id "startup" -Status $status -Text $text -Action "review" -Penalty $penalty -Detail $enabled.ToArray() -Amount $count)
 }
 
+function Get-WinToolDriverProblemText {
+    param([int]$Code)
+    switch ($Code) {
+        1 { return "not configured" }
+        10 { return "cannot start" }
+        12 { return "not enough resources" }
+        14 { return "restart required" }
+        18 { return "reinstall driver" }
+        19 { return "registry entry damaged" }
+        24 { return "missing or not working" }
+        28 { return "driver not installed" }
+        31 { return "driver could not load" }
+        32 { return "driver service disabled" }
+        37 { return "driver failed to initialize" }
+        39 { return "driver missing or corrupted" }
+        43 { return "reported a problem" }
+        48 { return "driver blocked" }
+        52 { return "driver signature invalid" }
+    }
+    if ($Code -gt 0) { return ("code " + $Code) }
+    return ""
+}
+
 function ConvertTo-WinToolHomeDriverResult {
-    # Data: devices that report a problem, with Name, Class and Status.
+    # Data: devices that report a problem, with Name, Class, Status and optional Problem code.
+    # Devices manually disabled by the user (Problem 22) or disconnected (Problem 45) are ignored.
     param([object[]]$Data)
-    $bad = @(@($Data) | Where-Object { $null -ne $_ -and [string]$_.Status -ne "OK" })
+    $bad = @(@($Data) | Where-Object {
+            if ($null -eq $_ -or [string]$_.Status -eq "OK") { return $false }
+            $code = -1
+            if ($null -ne $_.PSObject.Properties["Problem"] -and $null -ne $_.Problem) { $code = [int]$_.Problem }
+            return ($code -ne 22 -and $code -ne 45)
+        })
     if ($bad.Count -eq 0) {
         return (New-WinToolHomeResult -Id "drivers" -Status "ok" -Text "No device with problems")
     }
     $detail = @($bad | ForEach-Object {
             $label = [string]$_.Name
+            if ([string]::IsNullOrWhiteSpace($label) -and $null -ne $_.PSObject.Properties["InstanceId"]) {
+                $label = [string]$_.InstanceId
+            }
             if ([string]::IsNullOrWhiteSpace($label)) { $label = "Unknown device" }
             if (-not [string]::IsNullOrWhiteSpace([string]$_.Class)) { $label += " (" + [string]$_.Class + ")" }
+            $code = -1
+            if ($null -ne $_.PSObject.Properties["Problem"] -and $null -ne $_.Problem) { $code = [int]$_.Problem }
+            $reason = Get-WinToolDriverProblemText -Code $code
+            if (-not [string]::IsNullOrWhiteSpace($reason)) {
+                if ($reason.StartsWith("code ")) { $label += " - " + $reason }
+                else { $label += " - {0} (code {1})" -f $reason, $code }
+            }
             $label
         })
     $text = "{0} devices have problems" -f $bad.Count
@@ -323,18 +362,12 @@ function Read-WinToolHomeHistory {
     }
 }
 
-function Add-WinToolHomeHistory {
-    # Keeps the last 20 analyses next to the WinTool settings.
+function Write-WinToolHomeHistoryList {
     param(
-        [Parameter(Mandatory = $true)][datetime]$Time,
-        [Parameter(Mandatory = $true)][int]$Score,
-        [int]$Seconds,
+        [object[]]$Item,
         [string]$Path = (Get-WinToolHomeHistoryPath)
     )
-    $items = New-Object System.Collections.Generic.List[object]
-    foreach ($item in @(Read-WinToolHomeHistory -Path $Path)) { $items.Add($item) }
-    $items.Add([pscustomobject]@{ Time = $Time; Score = $Score; Seconds = $Seconds })
-    $keep = @($items | Select-Object -Last 20 | ForEach-Object {
+    $keep = @(@($Item) | Select-Object -Last 20 | ForEach-Object {
             [pscustomobject]@{ Time = ([datetime]$_.Time).ToString("o"); Score = [int]$_.Score; Seconds = [int]$_.Seconds }
         })
     try {
@@ -345,6 +378,33 @@ function Add-WinToolHomeHistory {
     catch {
         $null = $_.Exception.Message
     }
+}
+
+function Add-WinToolHomeHistory {
+    # Keeps the last 20 analyses in %LOCALAPPDATA%\WinTool\home-history.json.
+    param(
+        [Parameter(Mandatory = $true)][datetime]$Time,
+        [Parameter(Mandatory = $true)][int]$Score,
+        [int]$Seconds,
+        [string]$Path = (Get-WinToolHomeHistoryPath)
+    )
+    $items = New-Object System.Collections.Generic.List[object]
+    foreach ($item in @(Read-WinToolHomeHistory -Path $Path)) { $items.Add($item) }
+    $items.Add([pscustomobject]@{ Time = $Time; Score = $Score; Seconds = $Seconds })
+    Write-WinToolHomeHistoryList -Item $items.ToArray() -Path $Path
+}
+
+function Set-WinToolHomeLatestHistory {
+    # Updates the latest saved analysis score after a Home fix completes, so
+    # the ring, the meta line and the history dialog stay consistent.
+    param(
+        [Parameter(Mandatory = $true)][int]$Score,
+        [string]$Path = (Get-WinToolHomeHistoryPath)
+    )
+    $items = @(Read-WinToolHomeHistory -Path $Path)
+    if ($items.Count -eq 0) { return }
+    $items[-1].Score = $Score
+    Write-WinToolHomeHistoryList -Item $items -Path $Path
 }
 
 function Get-WinToolHomeJunkLocation {
@@ -370,13 +430,46 @@ function Get-WinToolHomeCheckScript {
     # hashtable first, sets Data or Error, and always sets Done.
     param([Parameter(Mandatory = $true)][string]$Id)
     $common = @'
+function Test-HomeReparsePoint {
+    param($Item)
+    if ($null -eq $Item) { return $false }
+    try { return (($Item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) } catch { return $true }
+}
+
+function Test-HomeFileDeletable {
+    param($File)
+    if ($null -eq $File) { return $false }
+    if (Test-HomeReparsePoint -Item $File) { return $false }
+    try {
+        $access = [System.IO.FileAccess]::ReadWrite
+        if (($File.Attributes -band [System.IO.FileAttributes]::ReadOnly) -ne 0) {
+            $access = [System.IO.FileAccess]::Read
+        }
+        $stream = [System.IO.File]::Open($File.FullName, [System.IO.FileMode]::Open, $access, [System.IO.FileShare]::None)
+        $stream.Dispose()
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
+
 function Get-HomeJunkFile {
     param($Location)
     $roots = @()
     if ($Location.Id -eq "recycle") {
+        $sid = $null
+        try { $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value } catch { $sid = $null }
         foreach ($drive in [System.IO.DriveInfo]::GetDrives()) {
             if ($drive.DriveType -eq "Fixed" -and $drive.IsReady) {
-                $roots += (Join-Path $drive.RootDirectory.FullName '$Recycle.Bin')
+                $bin = Join-Path $drive.RootDirectory.FullName '$Recycle.Bin'
+                if (-not [string]::IsNullOrWhiteSpace($sid)) {
+                    $userBin = Join-Path $bin $sid
+                    if (Test-Path -LiteralPath $userBin) { $roots += $userBin }
+                }
+                elseif (Test-Path -LiteralPath $bin) {
+                    $roots += $bin
+                }
             }
         }
     }
@@ -384,19 +477,27 @@ function Get-HomeJunkFile {
         $roots += [string]$Location.Path
     }
     $cutoff = (Get-Date).AddHours(-1 * [double]$Location.MinAgeHours)
+    $filter = [string]$Location.Filter
+    if ([string]::IsNullOrWhiteSpace($filter)) { $filter = "*" }
     foreach ($root in $roots) {
         if (-not (Test-Path -LiteralPath $root)) { continue }
-        $files = @()
-        if ($Location.Recurse) {
-            $files = @(Get-ChildItem -LiteralPath $root -Recurse -Force -File -ErrorAction SilentlyContinue)
-        }
-        else {
-            $files = @(Get-ChildItem -LiteralPath $root -Filter ([string]$Location.Filter) -Force -File -ErrorAction SilentlyContinue)
-        }
-        foreach ($file in $files) {
-            if ($Location.MinAgeHours -gt 0 -and $file.LastWriteTime -gt $cutoff) { continue }
-            if ($file.Name -eq "desktop.ini") { continue }
-            $file
+        $stack = New-Object System.Collections.Generic.Stack[string]
+        $stack.Push($root)
+        while ($stack.Count -gt 0) {
+            $current = $stack.Pop()
+            foreach ($file in @(Get-ChildItem -LiteralPath $current -Filter $filter -Force -File -ErrorAction SilentlyContinue)) {
+                if (Test-HomeReparsePoint -Item $file) { continue }
+                if ($file.Name -eq "desktop.ini") { continue }
+                if ($Location.MinAgeHours -gt 0 -and $file.LastWriteTime -gt $cutoff) { continue }
+                if (-not (Test-HomeFileDeletable -File $file)) { continue }
+                $file
+            }
+            if ($Location.Recurse) {
+                foreach ($dir in @(Get-ChildItem -LiteralPath $current -Force -Directory -ErrorAction SilentlyContinue)) {
+                    if (Test-HomeReparsePoint -Item $dir) { continue }
+                    $stack.Push($dir.FullName)
+                }
+            }
         }
     }
 }
@@ -426,26 +527,59 @@ try {
     foreach ($location in @($locations)) {
         if ($location.Id -eq "recycle") {
             $before = [double]0
-            foreach ($file in @(Get-HomeJunkFile -Location $location)) { $before += [double]$file.Length }
-            try { Clear-RecycleBin -Force -ErrorAction Stop; $freed += $before } catch { $null = $_ }
+            $files = @(Get-HomeJunkFile -Location $location)
+            foreach ($file in $files) { $before += [double]$file.Length }
+            try { Clear-RecycleBin -Force -ErrorAction Stop } catch { $null = $_ }
+            foreach ($file in @(Get-HomeJunkFile -Location $location)) {
+                try { Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop } catch { $null = $_ }
+            }
+            $after = [double]0
+            foreach ($file in @(Get-HomeJunkFile -Location $location)) { $after += [double]$file.Length }
+            if ($before -gt $after) { $freed += ($before - $after) }
             continue
         }
-        if ($location.Id -eq "delivery" -and $null -ne (Get-Command -Name Delete-DeliveryOptimizationCache -ErrorAction SilentlyContinue)) {
+        if ($location.Id -eq "delivery") {
             $before = [double]0
             foreach ($file in @(Get-HomeJunkFile -Location $location)) { $before += [double]$file.Length }
-            try { Delete-DeliveryOptimizationCache -Force -ErrorAction Stop; $freed += $before; continue } catch { $null = $_ }
+            if ($null -ne (Get-Command -Name Delete-DeliveryOptimizationCache -ErrorAction SilentlyContinue)) {
+                try { Delete-DeliveryOptimizationCache -Force -ErrorAction Stop } catch { $null = $_ }
+            }
+            foreach ($file in @(Get-HomeJunkFile -Location $location)) {
+                try { Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop } catch { $null = $_ }
+            }
+            $after = [double]0
+            foreach ($file in @(Get-HomeJunkFile -Location $location)) { $after += [double]$file.Length }
+            if ($before -gt $after) { $freed += ($before - $after) }
+            continue
         }
         foreach ($file in @(Get-HomeJunkFile -Location $location)) {
             $size = [double]$file.Length
-            try { Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop; $freed += $size } catch { $null = $_ }
+            try {
+                Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop
+                if (-not (Test-Path -LiteralPath $file.FullName)) { $freed += $size }
+            }
+            catch { $null = $_ }
         }
         if ($location.Recurse -and $location.MinAgeHours -gt 0 -and (Test-Path -LiteralPath $location.Path)) {
-            # Empty folders left behind in the temp folders.
-            $folders = @(Get-ChildItem -LiteralPath $location.Path -Recurse -Force -Directory -ErrorAction SilentlyContinue | Sort-Object { $_.FullName.Length } -Descending)
-            foreach ($folder in $folders) {
+            # Empty non-reparse folders left behind in the temp folders.
+            $visited = New-Object System.Collections.Generic.List[System.IO.DirectoryInfo]
+            $dirStack = New-Object System.Collections.Generic.Stack[string]
+            $dirStack.Push([string]$location.Path)
+            while ($dirStack.Count -gt 0) {
+                $currentDir = $dirStack.Pop()
+                foreach ($sub in @(Get-ChildItem -LiteralPath $currentDir -Force -Directory -ErrorAction SilentlyContinue)) {
+                    if (Test-HomeReparsePoint -Item $sub) { continue }
+                    $visited.Add($sub)
+                    $dirStack.Push($sub.FullName)
+                }
+            }
+            foreach ($folder in @($visited.ToArray() | Sort-Object { $_.FullName.Length } -Descending)) {
                 try {
-                    if (@(Get-ChildItem -LiteralPath $folder.FullName -Force -ErrorAction Stop).Count -eq 0) { Remove-Item -LiteralPath $folder.FullName -Force -ErrorAction Stop }
-                } catch { $null = $_ }
+                    if (@(Get-ChildItem -LiteralPath $folder.FullName -Force -ErrorAction Stop).Count -eq 0) {
+                        Remove-Item -LiteralPath $folder.FullName -Force -ErrorAction Stop
+                    }
+                }
+                catch { $null = $_ }
             }
         }
     }
@@ -524,15 +658,41 @@ finally { $sync.Done = $true }
 param($sync)
 try {
     $list = @()
-    if ($null -ne (Get-Command -Name Get-PnpDevice -ErrorAction SilentlyContinue)) {
-        $list = @(Get-PnpDevice -PresentOnly -ErrorAction Stop | Where-Object { [string]$_.Status -eq "Error" -or [string]$_.Status -eq "Degraded" } | ForEach-Object {
-                [pscustomobject]@{ Name = [string]$_.FriendlyName; Class = [string]$_.Class; Status = [string]$_.Status }
+    $queried = $false
+    try {
+        $entities = @(Get-CimInstance -ClassName Win32_PnPEntity -Filter "ConfigManagerErrorCode <> 0 AND ConfigManagerErrorCode <> 22 AND ConfigManagerErrorCode <> 45" -ErrorAction Stop)
+        $queried = $true
+        $list = @($entities | ForEach-Object {
+                $devName = [string]$_.Name
+                if ([string]::IsNullOrWhiteSpace($devName)) { $devName = [string]$_.Caption }
+                if ([string]::IsNullOrWhiteSpace($devName)) { $devName = [string]$_.DeviceID }
+                [pscustomobject]@{
+                    Name = $devName
+                    Class = [string]$_.PNPClass
+                    Status = "Error"
+                    Problem = [int]$_.ConfigManagerErrorCode
+                    InstanceId = [string]$_.DeviceID
+                }
             })
     }
-    else {
-        $list = @(Get-CimInstance -ClassName Win32_PnPEntity -Filter "ConfigManagerErrorCode <> 0" -ErrorAction Stop | ForEach-Object {
-                [pscustomobject]@{ Name = [string]$_.Name; Class = [string]$_.PNPClass; Status = "Error" }
-            })
+    catch {
+        $queried = $false
+    }
+    if (-not $queried -and $null -ne (Get-Command -Name Get-PnpDevice -ErrorAction SilentlyContinue)) {
+        $list = @(Get-PnpDevice -PresentOnly -ErrorAction Stop | Where-Object { [string]$_.Status -eq "Error" -or [string]$_.Status -eq "Degraded" } | ForEach-Object {
+                $devName = [string]$_.FriendlyName
+                if ([string]::IsNullOrWhiteSpace($devName)) { $devName = [string]$_.Name }
+                if ([string]::IsNullOrWhiteSpace($devName)) { $devName = [string]$_.InstanceId }
+                $prob = -1
+                if ($null -ne $_.PSObject.Properties["Problem"] -and $null -ne $_.Problem) { $prob = [int]$_.Problem }
+                [pscustomobject]@{
+                    Name = $devName
+                    Class = [string]$_.Class
+                    Status = [string]$_.Status
+                    Problem = $prob
+                    InstanceId = [string]$_.InstanceId
+                }
+            } | Where-Object { $_.Problem -ne 22 -and $_.Problem -ne 45 })
     }
     $sync.Data = @($list)
     $sync.Ok = $true

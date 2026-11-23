@@ -180,6 +180,7 @@ function Set-WinToolHomeRow {
     $Row.Result.Text = $Text
     $rotate = $Row.Spinner.RenderTransform
     if ($Status -eq "busy") {
+        $Row.Border.ToolTip = $null
         $Row.Disc.Fill = [System.Windows.Media.Brushes]::Transparent
         $Row.Glyph.Visibility = "Hidden"
         $Row.Spinner.Visibility = "Visible"
@@ -255,11 +256,11 @@ function New-WinToolHomeMini {
     [System.Windows.Controls.Grid]::SetColumn($card, $Column)
     $grid = New-Object System.Windows.Controls.Grid
     $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::Auto }))
-    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }))
+    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new(58) }))
     $card.Child = $grid
 
     $top = New-Object System.Windows.Controls.Grid
-    $top.Height = 56
+    $top.Height = 64
     foreach ($width in @(56, 14, -1)) {
         $colDef = New-Object System.Windows.Controls.ColumnDefinition
         if ($width -lt 0) { $colDef.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }
@@ -271,6 +272,7 @@ function New-WinToolHomeMini {
     $ring = New-Object System.Windows.Controls.Canvas
     $ring.Width = 56
     $ring.Height = 56
+    $ring.VerticalAlignment = "Center"
     $track = New-Object System.Windows.Shapes.Ellipse
     $track.Width = 49
     $track.Height = 49
@@ -308,9 +310,9 @@ function New-WinToolHomeMini {
     $null = $titleRow.Children.Add($titleText)
     $tag = New-Object System.Windows.Controls.Border
     $tag.Height = 22
-    $tag.MinWidth = 88
+    $tag.Width = 96
     $tag.CornerRadius = [System.Windows.CornerRadius]::new(11)
-    $tag.Padding = [System.Windows.Thickness]::new(8, 0, 8, 0)
+    $tag.Padding = [System.Windows.Thickness]::new(6, 0, 6, 0)
     $tag.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
     $tag.VerticalAlignment = "Center"
     [System.Windows.Controls.Grid]::SetColumn($tag, 1)
@@ -318,6 +320,7 @@ function New-WinToolHomeMini {
     $tagText.FontWeight = "SemiBold"
     $tagText.HorizontalAlignment = "Center"
     $tagText.VerticalAlignment = "Center"
+    $tagText.TextTrimming = "CharacterEllipsis"
     $tagText.Text = "Reading"
     $tag.Child = $tagText
     $null = $titleRow.Children.Add($tag)
@@ -335,10 +338,9 @@ function New-WinToolHomeMini {
     [System.Windows.Controls.Grid]::SetRow($detail, 2)
     $null = $info.Children.Add($detail)
 
-    # The chart takes the rest of the card, so taller windows get a taller chart.
     $spark = New-Object System.Windows.Controls.Grid
-    $spark.MinHeight = 40
-    $spark.Margin = [System.Windows.Thickness]::new(0, 14, 0, 0)
+    $spark.Height = 46
+    $spark.Margin = [System.Windows.Thickness]::new(0, 12, 0, 0)
     $spark.VerticalAlignment = "Stretch"
     $spark.ClipToBounds = $true
     [System.Windows.Controls.Grid]::SetRow($spark, 1)
@@ -412,7 +414,7 @@ function Update-WinToolHomeSpark {
     $width = [double]$Mini.Spark.ActualWidth
     $height = [double]$Mini.Spark.ActualHeight
     $count = $Mini.Points.Count
-    if ($width -le 0 -or $height -le 0 -or $count -lt 2) {
+    if ($width -le 0 -or $height -le 0 -or $count -lt 1) {
         $Mini.SparkLine.Data = $null
         $Mini.SparkFill.Data = $null
         return
@@ -421,11 +423,19 @@ function Update-WinToolHomeSpark {
     $step = $width / 23
     $points = New-Object System.Collections.Generic.List[string]
     $firstX = 0
-    for ($i = 0; $i -lt $count; $i++) {
-        $x = $width - ($count - 1 - $i) * $step
-        if ($i -eq 0) { $firstX = $x }
-        $y = ($height - 2) - ($Mini.Points[$i] / 100) * ($height - 8)
-        $points.Add([string]::Format($culture, "{0:0.##},{1:0.##}", $x, $y))
+    if ($count -eq 1) {
+        $firstX = [Math]::Max(0, $width - $step)
+        $y = ($height - 2) - ($Mini.Points[0] / 100) * ($height - 8)
+        $points.Add([string]::Format($culture, "{0:0.##},{1:0.##}", $firstX, $y))
+        $points.Add([string]::Format($culture, "{0:0.##},{1:0.##}", $width, $y))
+    }
+    else {
+        for ($i = 0; $i -lt $count; $i++) {
+            $x = $width - ($count - 1 - $i) * $step
+            if ($i -eq 0) { $firstX = $x }
+            $y = ($height - 2) - ($Mini.Points[$i] / 100) * ($height - 8)
+            $points.Add([string]::Format($culture, "{0:0.##},{1:0.##}", $x, $y))
+        }
     }
     $line = "M " + ($points -join " L ")
     $Mini.SparkLine.Data = [System.Windows.Media.Geometry]::Parse($line)
@@ -469,6 +479,7 @@ function Update-WinToolHomeCard {
         $text = (Format-WinToolHomeSize -Bytes $total) + " total"
         if (-not [string]::IsNullOrWhiteSpace($kind)) { $text += $dot + $kind }
         $memory.Detail.Text = $text
+        $memory.Card.ToolTip = ("Memory: {0} ({1})" -f $memory.Value.Text, $memory.Detail.Text)
     }
     if ($null -ne $sample -and [double]$sample.DiskTotal -gt 0) {
         $free = [double]$sample.DiskFree / [double]$sample.DiskTotal
@@ -484,6 +495,7 @@ function Update-WinToolHomeCard {
         $letter = ([string]$env:SystemDrive)
         if ([string]::IsNullOrWhiteSpace($letter)) { $letter = "C:" }
         $disk.Detail.Text = (Format-WinToolHomeSize -Bytes $size -Decimal) + $media + $dot + "Drive " + $letter
+        $disk.Card.ToolTip = ("Windows disk: {0} ({1})" -f $disk.Value.Text, $disk.Detail.Text)
     }
     if ($null -ne $info) {
         Set-WinToolHomeMiniRing -Mini $pc -Fraction 1
@@ -498,12 +510,27 @@ function Update-WinToolHomeCard {
     $diskHealth = $hs.Results["disk"]
     if ($hs.Phase -eq "analyzing" -or $null -eq $driver -or $null -eq $diskHealth) {
         Set-WinToolHomeMiniTag -Mini $pc -Text "Checking" -Tone "neutral"
+        $pc.Card.ToolTip = "Checking device drivers and drive health."
     }
-    elseif ($driver.Status -eq "bad" -or $diskHealth.Status -eq "bad") {
-        Set-WinToolHomeMiniTag -Mini $pc -Text "Attention" -Tone "warn"
+    elseif ($driver.Status -eq "bad" -and $diskHealth.Status -eq "bad") {
+        Set-WinToolHomeMiniTag -Mini $pc -Text "2 issues" -Tone "warn"
+        $pc.Card.ToolTip = ("Drivers: {0}`nDisk health: {1}" -f $driver.Text, $diskHealth.Text)
+    }
+    elseif ($driver.Status -eq "bad") {
+        Set-WinToolHomeMiniTag -Mini $pc -Text "Driver issue" -Tone "warn"
+        $tip = "Drivers: " + $driver.Text
+        if (@($driver.Detail).Count -gt 0) { $tip += "`n" + ((@($driver.Detail | Select-Object -First 5)) -join "`n") }
+        $pc.Card.ToolTip = $tip
+    }
+    elseif ($diskHealth.Status -eq "bad") {
+        Set-WinToolHomeMiniTag -Mini $pc -Text "Disk issue" -Tone "bad"
+        $tip = "Disk health: " + $diskHealth.Text
+        if (@($diskHealth.Detail).Count -gt 0) { $tip += "`n" + ((@($diskHealth.Detail | Select-Object -First 5)) -join "`n") }
+        $pc.Card.ToolTip = $tip
     }
     else {
         Set-WinToolHomeMiniTag -Mini $pc -Text "Healthy" -Tone "ok"
+        $pc.Card.ToolTip = "Device drivers and drive health report no problems."
     }
 }
 
@@ -569,21 +596,11 @@ function Initialize-WinToolHomeView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeHistoryLink") -EventName "Click" -Name "View history" -Action {
         Show-WinToolHomeHistory
     }
-    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeScroll") -EventName "SizeChanged" -Name "Home height" -Action {
-        Update-WinToolHomeLayout
-    }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Start the Home analysis" -Action {
         Start-WinToolHomeTimer
         Start-WinToolHomeSampler
         Start-WinToolHomeAnalysis
     }
-}
-
-function Update-WinToolHomeLayout {
-    # The cards row fills the rest of the page; a short window scrolls.
-    $scroll = Get-WinToolUi -Name "HomeScroll"
-    $body = Get-WinToolUi -Name "HomeBody"
-    $body.MinHeight = [Math]::Max(0, [double]$scroll.ActualHeight - 16)
 }
 
 function Sync-WinToolHomeHeader {
@@ -729,6 +746,48 @@ function Start-WinToolHomeCheck {
     }
 }
 
+function Sync-WinToolHomeCurrentScore {
+    $hs = $script:WinToolState.Home
+    if ($null -eq $hs -or $hs.Phase -ne "done") { return }
+    $results = @($hs.Results.Values)
+    if ($results.Count -lt @(Get-WinToolHomeCheckList).Count) { return }
+    $score = Get-WinToolHomeScore -Result $results
+    $hs.Score = $score
+    if ($null -ne $hs.Finished) {
+        $hs.Previous = [pscustomobject]@{ Time = $hs.Finished; Score = $score; Seconds = $hs.Seconds }
+        (Get-WinToolUi -Name "HomeMetaText").Text = Format-WinToolHomeMeta -Last $hs.Previous
+        if (-not $script:WinToolHomeNoJobs) {
+            Set-WinToolHomeLatestHistory -Score $score
+        }
+    }
+    Sync-WinToolHomeHeader
+    Update-WinToolHomeCard
+    Start-WinToolHomeAnimation
+}
+
+function Sync-WinToolHomeTweakRow {
+    # Updates the Home tweaks check from the Tweaks page rows when the analysis
+    # has already finished, so toggling switches keeps Home's score in sync.
+    $hs = $script:WinToolState.Home
+    if ($null -eq $hs -or $hs.Phase -ne "done" -or $hs.WaitTweaks) { return }
+    if (-not $script:WinToolState.TweakStateRead) { return }
+    $byId = @{}
+    foreach ($row in @($script:WinToolState.TweakRows)) {
+        $byId[[string]$row.Id] = $row
+    }
+    $data = foreach ($tweak in @(Get-WinToolPresetTweak -Catalog (Get-WinToolTweakCatalog) -PresetId "recommended")) {
+        $id = [string]$tweak.id
+        $state = "unknown"
+        if ($byId.ContainsKey($id)) {
+            $tweakRow = $byId[$id]
+            if ($tweakRow.Checkbox.IsChecked -eq $true) { $state = "on" }
+            elseif ($tweakRow.State -eq "off" -or $tweakRow.Checkbox.IsChecked -eq $false) { $state = "off" }
+        }
+        [pscustomobject]@{ Id = $id; Name = [string]$tweak.name; State = $state }
+    }
+    Complete-WinToolHomeCheck -Id "tweaks" -Data @($data)
+}
+
 function Complete-WinToolHomeCheck {
     param(
         [Parameter(Mandatory = $true)][string]$Id,
@@ -740,7 +799,14 @@ function Complete-WinToolHomeCheck {
     $hs.Results[$Id] = $result
     $hs.Pending.Remove($Id)
     $action = [string]$result.Action
-    Set-WinToolHomeRow -Row $hs.Rows[$Id] -Status $result.Status -Text $result.Text -Action $action -Fade
+    $row = $hs.Rows[$Id]
+    Set-WinToolHomeRow -Row $row -Status $result.Status -Text $result.Text -Action $action -Fade
+    $tipLines = @($result.Name + ": " + $result.Text)
+    if (@($result.Detail).Count -gt 0) {
+        $tipLines += @($result.Detail | Select-Object -First 10 | ForEach-Object { "- " + $_ })
+        if (@($result.Detail).Count -gt 10) { $tipLines += "- ..." }
+    }
+    $row.Border.ToolTip = ($tipLines -join "`n")
     if ($result.Status -eq "unknown" -and @($result.Detail).Count -gt 0) {
         Write-WinToolLog -Message ("Home: {0} could not be checked. {1}" -f $result.Name, (@($result.Detail) -join " ")) -Level "warn" -Diagnostic
     }
@@ -750,7 +816,11 @@ function Complete-WinToolHomeCheck {
         elseif (Test-WinToolHomeReduceMotion) { Start-WinToolHomeAnimation }
         return
     }
-    Test-WinToolHomeFixDone
+    if ($hs.Phase -eq "fixing") {
+        Test-WinToolHomeFixDone
+        return
+    }
+    Sync-WinToolHomeCurrentScore
 }
 
 function Start-WinToolHomeAnalysis {
@@ -855,11 +925,7 @@ function Test-WinToolHomeFixDone {
     if ($hs.Phase -ne "fixing") { return }
     if ($hs.Pending.Count -gt 0 -or $hs.WaitTweaks -or $null -ne $script:WinToolState.HomeCleanJob) { return }
     $hs.Phase = "done"
-    $results = @($hs.Results.Values)
-    $hs.Score = Get-WinToolHomeScore -Result $results
-    Sync-WinToolHomeHeader
-    Update-WinToolHomeCard
-    Start-WinToolHomeAnimation
+    Sync-WinToolHomeCurrentScore
 }
 
 function Start-WinToolHomeClean {
@@ -883,6 +949,12 @@ function Start-WinToolHomeTweakFix {
     $script:WinToolState.TweakRequestStarted = $false
     Request-WinToolTweakOn -Id $ids -Label "the Recommended preset" -NoConfirm:$NoConfirm
     if (-not $script:WinToolState.TweakRequestStarted) {
+        $wanted = @{}
+        foreach ($id in $ids) { $wanted[$id] = $true }
+        $remaining = @($script:WinToolState.TweakRows | Where-Object { $wanted.ContainsKey([string]$_.Id) -and $_.Checkbox.IsChecked -ne $true })
+        if ($remaining.Count -eq 0) {
+            Sync-WinToolHomeTweakRow
+        }
         return $false
     }
     $hs.Phase = "fixing"

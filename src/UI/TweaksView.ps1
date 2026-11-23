@@ -369,11 +369,11 @@ function Sync-WinToolTweakToggleTip {
     }
     elseif ($Row.Checkbox.IsChecked -eq $true) {
         $Row.Checkbox.ToolTip = "On. Turn off to undo."
-        $Row.Checkbox.Opacity = 1
+        $Row.Checkbox.ClearValue([System.Windows.UIElement]::OpacityProperty)
     }
     else {
         $Row.Checkbox.ToolTip = "Off. Turn on to apply."
-        $Row.Checkbox.Opacity = 1
+        $Row.Checkbox.ClearValue([System.Windows.UIElement]::OpacityProperty)
     }
 }
 
@@ -498,6 +498,7 @@ function Complete-WinToolTweakQueue {
         Sync-WinToolTweakToggleTip -Row $entry.Row
     }
     Update-WinToolTweakCount
+    Sync-WinToolHomeTweakRow
 }
 
 function Get-WinToolCheckedTweak {
