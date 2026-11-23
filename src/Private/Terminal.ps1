@@ -962,23 +962,29 @@ function Get-WinToolOmpPreviewSegment {
         if ($parts.Count -gt 0) { break }
     }
     $result = New-Object System.Collections.Generic.List[object]
+    $parentBackground = $null
+    $parentForeground = $null
     for ($index = 0; $index -lt $parts.Count; $index++) {
         $part = $parts[$index]
+        $markup = @{ Palette = $palette; SegmentForeground = $part.Foreground; SegmentBackground = $part.Background; ParentForeground = $parentForeground; ParentBackground = $parentBackground }
+        if ($index + 1 -lt $parts.Count) { $markup.ChildBackground = $parts[$index + 1].Background }
+        if ($null -ne $part.Background) { $parentBackground = $part.Background }
+        $parentForeground = $part.Foreground
         $nextBackground = $null
         if ($index + 1 -lt $parts.Count) { $nextBackground = $parts[$index + 1].Background }
         if ($null -eq $part.Background) {
-            $result.Add((New-WinToolPreviewSegment -Text ($part.Text + " ") -Foreground $part.Foreground))
+            foreach ($piece in @(Split-WinToolOmpMarkup -Text ($part.Text + " ") -Foreground $part.Foreground @markup)) { $result.Add($piece) }
             continue
         }
         if ($part.Style -eq "diamond" -and -not [string]::IsNullOrEmpty($part.Leading)) {
-            $result.Add((New-WinToolPreviewSegment -Text $part.Leading -Foreground $part.Background))
+            foreach ($piece in @(Split-WinToolOmpMarkup -Text $part.Leading -Foreground $part.Background @markup)) { $result.Add($piece) }
         }
-        $result.Add((New-WinToolPreviewSegment -Text (" " + $part.Text + " ") -Foreground $part.Foreground -Background $part.Background))
+        foreach ($piece in @(Split-WinToolOmpMarkup -Text (" " + $part.Text + " ") -Foreground $part.Foreground -Background $part.Background @markup)) { $result.Add($piece) }
         if ($part.Style -eq "powerline") {
-            $result.Add((New-WinToolPreviewSegment -Text $part.Symbol -Foreground $part.Background -Background $nextBackground))
+            foreach ($piece in @(Split-WinToolOmpMarkup -Text $part.Symbol -Foreground $part.Background -Background $nextBackground @markup)) { $result.Add($piece) }
         }
         elseif ($part.Style -eq "diamond" -and -not [string]::IsNullOrEmpty($part.Trailing)) {
-            $result.Add((New-WinToolPreviewSegment -Text $part.Trailing -Foreground $part.Background))
+            foreach ($piece in @(Split-WinToolOmpMarkup -Text $part.Trailing -Foreground $part.Background @markup)) { $result.Add($piece) }
         }
     }
     return $result.ToArray()
@@ -1430,4 +1436,86 @@ function ConvertTo-WinToolPreviewSegmentList {
         $out.Add((New-WinToolPreviewSegment -Text ([string]$entry.text) -Foreground $fg -Background ([string](Get-WinToolNote -Object $entry -Name "bg" -Default ""))))
     }
     return $out.ToArray()
+}
+
+$script:WinToolPreviewTransparent = "#121826"
+
+function Resolve-WinToolOmpMarkupColor {
+    param(
+        [AllowEmptyString()][string]$Value,
+        $Palette,
+        [string]$SegmentForeground,
+        [string]$SegmentBackground,
+        [string]$ParentForeground,
+        [string]$ParentBackground,
+        [string]$ChildBackground,
+        [switch]$IsForeground
+    )
+    # Color names inside Oh My Posh markup: hex, palette, named colors, and
+    # the keywords that point at the segment, its parent, or its child.
+    $text = ([string]$Value).Trim()
+    switch -Regex ($text) {
+        '^$' { return $null }
+        '^transparent$' { if ($IsForeground) { return $script:WinToolPreviewTransparent } return $null }
+        '^foreground$' { return $SegmentForeground }
+        '^background$' { return $SegmentBackground }
+        '^parentForeground$' { return $ParentForeground }
+        '^parentBackground$' { if ([string]::IsNullOrWhiteSpace($ParentBackground) -and $IsForeground) { return $script:WinToolPreviewTransparent } return $ParentBackground }
+        '^childBackground$' { if ([string]::IsNullOrWhiteSpace($ChildBackground) -and $IsForeground) { return $script:WinToolPreviewTransparent } return $ChildBackground }
+        '^childForeground$' { return $null }
+    }
+    return (ConvertTo-WinToolPreviewColor -Value $text -Palette $Palette)
+}
+
+function Split-WinToolOmpMarkup {
+    param(
+        [AllowEmptyString()][string]$Text,
+        [string]$Foreground,
+        [string]$Background,
+        $Palette,
+        [string]$SegmentForeground,
+        [string]$SegmentBackground,
+        [string]$ParentForeground,
+        [string]$ParentBackground,
+        [string]$ChildBackground
+    )
+    # Turns "<fg,bg>text</>" color tags into separate preview segments and
+    # drops other tags such as <b> or <i>. Text outside tags keeps the
+    # given colors.
+    $out = New-Object System.Collections.Generic.List[object]
+    $source = [string]$Text
+    if (-not $source.Contains("<")) {
+        $out.Add((New-WinToolPreviewSegment -Text $source -Foreground $Foreground -Background $Background))
+        return $out.ToArray()
+    }
+    $colors = @{ Palette = $Palette; SegmentForeground = $SegmentForeground; SegmentBackground = $SegmentBackground; ParentForeground = $ParentForeground; ParentBackground = $ParentBackground; ChildBackground = $ChildBackground }
+    $pattern = '<([^<>/]*)>(.*?)</[^<>]*>'
+    $position = 0
+    foreach ($match in [regex]::Matches($source, $pattern)) {
+        if ($match.Index -gt $position) {
+            $out.Add((New-WinToolPreviewSegment -Text $source.Substring($position, $match.Index - $position) -Foreground $Foreground -Background $Background))
+        }
+        $spec = $match.Groups[1].Value
+        $inner = $match.Groups[2].Value
+        $fg = $Foreground
+        $bg = $Background
+        if ($spec -notmatch '^(b|i|u|s|d|f|r|blink|reverse|dimmed)$') {
+            $pair = $spec.Split(",")
+            if ($pair.Count -ge 1 -and -not [string]::IsNullOrWhiteSpace($pair[0])) { $fg = Resolve-WinToolOmpMarkupColor -Value $pair[0] @colors -IsForeground }
+            if ($pair.Count -ge 2) { $bg = Resolve-WinToolOmpMarkupColor -Value $pair[1] @colors }
+        }
+        $out.Add((New-WinToolPreviewSegment -Text $inner -Foreground $fg -Background $bg))
+        $position = $match.Index + $match.Length
+    }
+    if ($position -lt $source.Length) {
+        $out.Add((New-WinToolPreviewSegment -Text $source.Substring($position) -Foreground $Foreground -Background $Background))
+    }
+    # Anything left that still looks like a tag (an unclosed one) is dropped.
+    $clean = New-Object System.Collections.Generic.List[object]
+    foreach ($piece in $out.ToArray()) {
+        $piece.Text = [regex]::Replace([string]$piece.Text, '</?[A-Za-z#][^<>]*>|</>', '')
+        if ([string]::IsNullOrEmpty($piece.Text)) { continue }
+        $clean.Add($piece)
+    }
+    return $clean.ToArray()
 }

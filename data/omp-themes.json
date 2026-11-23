@@ -35,7 +35,7 @@
       "id": "aliens",
       "file": "aliens.omp.json",
       "name": "aliens",
-      "preview": [{"text": "\ue0b6", "fg": "#61AFEF"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#61AFEF"}, {"text": "\ue0b0", "fg": "#61AFEF"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#FF6471"}, {"text": "<transparent,background>\ue0b0</>", "fg": "#FF6471"}, {"text": " 3.12 ", "fg": "#FFFFFF", "bg": "#FF6471"}, {"text": "\ue0b4", "fg": "#FF6471"}]
+      "preview": [{"text": "\ue0b6", "fg": "#61AFEF"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#61AFEF"}, {"text": "\ue0b0", "fg": "#61AFEF"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#FF6471"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#FF6471"}, {"text": " 3.12 ", "fg": "#FFFFFF", "bg": "#FF6471"}, {"text": "\ue0b4", "fg": "#FF6471"}]
     },
     {
       "id": "amro",
@@ -65,7 +65,7 @@
       "id": "blue-owl",
       "file": "blue-owl.omp.json",
       "name": "blue owl",
-      "preview": [{"text": "<transparent,#01579B>\ue0b0</>", "fg": "#01579B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#01579B"}, {"text": "\ue0b0", "fg": "#01579B"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#49404F"}, {"text": "<transparent,#49404f>\ue0b0</>", "fg": "#49404F"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#49404F"}, {"text": "\ue0b0", "fg": "#49404F"}]
+      "preview": [{"text": "\ue0b0", "fg": "#121826", "bg": "#01579B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#01579B"}, {"text": "\ue0b0", "fg": "#01579B"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#49404F"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#49404F"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#49404F"}, {"text": "\ue0b0", "fg": "#49404F"}]
     },
     {
       "id": "blueish",
@@ -149,7 +149,7 @@
       "id": "clean-detailed",
       "file": "clean-detailed.omp.json",
       "name": "clean detailed",
-      "preview": [{"text": "\ue0b2", "fg": "#FEF5ED"}, {"text": " pwsh ", "fg": "#011627", "bg": "#FEF5ED"}, {"text": "<transparent,#FEF5ED>\ue0b2</>", "fg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#575656"}, {"text": " 12ms ", "fg": "#D6DEEB", "bg": "#575656"}, {"text": "\ue0b0", "fg": "#575656"}]
+      "preview": [{"text": "\ue0b2", "fg": "#FEF5ED"}, {"text": " pwsh ", "fg": "#011627", "bg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#121826", "bg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#575656"}, {"text": " 12ms ", "fg": "#D6DEEB", "bg": "#575656"}, {"text": "\ue0b0", "fg": "#575656"}]
     },
     {
       "id": "cloud-context",
@@ -167,7 +167,7 @@
       "id": "cobalt2",
       "file": "cobalt2.omp.json",
       "name": "cobalt2",
-      "preview": [{"text": "\ue0b6", "fg": "#1478DB"}, {"text": " ~/src ", "fg": "#000000", "bg": "#1478DB"}, {"text": "\ue0b0", "fg": "#1478DB"}, {"text": "<transparent,background>\ue0b0</>", "fg": "#3AD900"}, {"text": " main ", "fg": "#000000", "bg": "#3AD900"}, {"text": "\ue0b4", "fg": "#3AD900"}]
+      "preview": [{"text": "\ue0b6", "fg": "#1478DB"}, {"text": " ~/src ", "fg": "#000000", "bg": "#1478DB"}, {"text": "\ue0b0", "fg": "#1478DB"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#3AD900"}, {"text": " main ", "fg": "#000000", "bg": "#3AD900"}, {"text": "\ue0b4", "fg": "#3AD900"}]
     },
     {
       "id": "craver",
@@ -227,7 +227,7 @@
       "id": "froczh",
       "file": "froczh.omp.json",
       "name": "froczh",
-      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#40189C"}, {"text": "\ue0b0", "fg": "#40189C"}, {"text": "<transparent,#01579B>\ue0b0</>", "fg": "#01579B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#01579B"}, {"text": "\ue0b0", "fg": "#01579B"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#00FFFF"}, {"text": " 8.0 ", "fg": "#000000", "bg": "#00FFFF"}, {"text": "\ue0b0", "fg": "#00FFFF"}]
+      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#40189C"}, {"text": "\ue0b0", "fg": "#40189C"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#01579B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#01579B"}, {"text": "\ue0b0", "fg": "#01579B"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#00FFFF"}, {"text": " 8.0 ", "fg": "#000000", "bg": "#00FFFF"}, {"text": "\ue0b0", "fg": "#00FFFF"}]
     },
     {
       "id": "gmay",
@@ -239,7 +239,7 @@
       "id": "grandpa-style",
       "file": "grandpa-style.omp.json",
       "name": "grandpa style",
-      "preview": [{"text": "~/src ", "fg": "#43CCEA"}, {"text": "<parentBackground,background>\ue0b0</>", "fg": "#00C853"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "<parentBackground,background>\ue0b0</>", "fg": "#2BA1BB"}, {"text": " 12ms ", "fg": "#5A3D29", "bg": "#2BA1BB"}]
+      "preview": [{"text": "~/src ", "fg": "#43CCEA"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#00C853"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#2BA1BB"}, {"text": " 12ms ", "fg": "#5A3D29", "bg": "#2BA1BB"}]
     },
     {
       "id": "gruvbox",
@@ -317,7 +317,7 @@
       "id": "jblab_2021",
       "file": "jblab_2021.omp.json",
       "name": "jblab 2021",
-      "preview": [{"text": "<transparent,#26BDBB>\ue0b0</>", "fg": "#26BDBB"}, {"text": " ~/src ", "fg": "#0C212F", "bg": "#26BDBB"}, {"text": "\ue0b0", "fg": "#26BDBB"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#280C2E"}, {"text": "\ue0b0", "fg": "#280C2E", "bg": "#0C212F"}, {"text": "<transparent,#0C212F>\ue0b0</>", "fg": "#0C212F"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#0C212F"}, {"text": "\ue0b0", "fg": "#0C212F"}, {"text": "<transparent,#26BDBB>\ue0b0</>", "fg": "#26BDBB"}, {"text": " 12ms ", "fg": "#0C212F", "bg": "#26BDBB"}, {"text": "\ue0b0", "fg": "#26BDBB"}]
+      "preview": [{"text": "\ue0b0", "fg": "#121826", "bg": "#26BDBB"}, {"text": " ~/src ", "fg": "#0C212F", "bg": "#26BDBB"}, {"text": "\ue0b0", "fg": "#26BDBB"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#280C2E"}, {"text": "\ue0b0", "fg": "#280C2E", "bg": "#0C212F"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#0C212F"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#0C212F"}, {"text": "\ue0b0", "fg": "#0C212F"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#26BDBB"}, {"text": " 12ms ", "fg": "#0C212F", "bg": "#26BDBB"}, {"text": "\ue0b0", "fg": "#26BDBB"}]
     },
     {
       "id": "jonnychipz",
@@ -329,7 +329,7 @@
       "id": "json",
       "file": "json.omp.json",
       "name": "json",
-      "preview": [{"text": "~/src ", "fg": "#F1FA8C"}, {"text": "main ", "fg": "#43CCEA"}, {"text": "<#ff0000> \u25c9</> ", "fg": "#FF0000"}]
+      "preview": [{"text": "~/src ", "fg": "#F1FA8C"}, {"text": "main ", "fg": "#43CCEA"}, {"text": " \u25c9", "fg": "#FF0000"}, {"text": " ", "fg": "#FF0000"}]
     },
     {
       "id": "jtracey93",
@@ -395,7 +395,7 @@
       "id": "material",
       "file": "material.omp.json",
       "name": "material",
-      "preview": [{"text": "<#C591E8>\u276f</><#69FF94>\u276f</> ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D0666F"}, {"text": "23:14 ", "fg": "#66F68F"}]
+      "preview": [{"text": "\u276f", "fg": "#C591E8"}, {"text": "\u276f", "fg": "#69FF94"}, {"text": " ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D0666F"}, {"text": "23:14 ", "fg": "#66F68F"}]
     },
     {
       "id": "microverse-power",
@@ -437,7 +437,7 @@
       "id": "neko",
       "file": "neko.omp.json",
       "name": "neko",
-      "preview": [{"text": "\ud83d\ude00\ud83d\udcac<#FF8000> ~ </> ", "fg": "#FF8000"}]
+      "preview": [{"text": "\ud83d\ude00\ud83d\udcac", "fg": "#FF8000"}, {"text": " ~ ", "fg": "#FF8000"}, {"text": " ", "fg": "#FF8000"}]
     },
     {
       "id": "night-owl",
@@ -473,7 +473,7 @@
       "id": "pararussel",
       "file": "pararussel.omp.json",
       "name": "pararussel",
-      "preview": [{"text": "<#C591E8>\u276f</><#69FF94>\u276f</> ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D0666F"}]
+      "preview": [{"text": "\u276f", "fg": "#C591E8"}, {"text": "\u276f", "fg": "#69FF94"}, {"text": " ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D0666F"}]
     },
     {
       "id": "patriksvensson",
@@ -551,7 +551,7 @@
       "id": "quick-term",
       "file": "quick-term.omp.json",
       "name": "quick term",
-      "preview": [{"text": " henrique ", "fg": "#4E4E4E", "bg": "#E4E4E4"}, {"text": "\ue0b0", "fg": "#E4E4E4", "bg": "#0087AF"}, {"text": " ~/src ", "fg": "#F2F3F8", "bg": "#0087AF"}, {"text": "\ue0b0", "fg": "#0087AF", "bg": "#378504"}, {"text": "<transparent,background>\ue0b0</>", "fg": "#378504"}, {"text": " main ", "fg": "#F2F3F8", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#378504"}]
+      "preview": [{"text": " henrique ", "fg": "#4E4E4E", "bg": "#E4E4E4"}, {"text": "\ue0b0", "fg": "#E4E4E4", "bg": "#0087AF"}, {"text": " ~/src ", "fg": "#F2F3F8", "bg": "#0087AF"}, {"text": "\ue0b0", "fg": "#0087AF", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#378504"}, {"text": " main ", "fg": "#F2F3F8", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#378504"}]
     },
     {
       "id": "remk",
@@ -713,7 +713,7 @@
       "id": "wholespace",
       "file": "wholespace.omp.json",
       "name": "wholespace",
-      "preview": [{"text": "\ue0b2", "fg": "#FEF5ED"}, {"text": " 23:14 ", "fg": "#011627", "bg": "#FEF5ED"}, {"text": "<transparent,#FEF5ED>\ue0b2</>", "fg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#575656"}, {"text": " 12ms ", "fg": "#D6DEEB", "bg": "#575656"}, {"text": "\ue0b0", "fg": "#575656"}]
+      "preview": [{"text": "\ue0b2", "fg": "#FEF5ED"}, {"text": " 23:14 ", "fg": "#011627", "bg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#121826", "bg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#575656"}, {"text": " 12ms ", "fg": "#D6DEEB", "bg": "#575656"}, {"text": "\ue0b0", "fg": "#575656"}]
     },
     {
       "id": "wopian",

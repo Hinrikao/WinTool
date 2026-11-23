@@ -1302,6 +1302,17 @@ Invoke-WinToolCase -Name "Advanced Terminal page: engines, theme rows, filters, 
     # preview show colors before any theme file is downloaded.
     $omp = @(Get-WinToolThemeRow -PromptId "oh-my-posh")
     Test-WinToolExpectation -Condition (@($omp | Where-Object { @($_.Preview).Count -eq 0 }).Count -eq 0) -Message "Every Oh My Posh theme row has a sample."
+    foreach ($row in $omp) {
+        foreach ($segment in @($row.Preview)) {
+            $sampleText = [string]$segment.Text
+            $raw = ($sampleText.Contains("<#") -or $sampleText.Contains("</>") -or $sampleText.Contains("<transparent") -or $sampleText.Contains("{{"))
+            Test-WinToolExpectation -Condition (-not $raw) -Message ("The Oh My Posh sample for " + [string]$row.Id + " shows raw markup: " + $sampleText)
+        }
+    }
+    $split = @(Split-WinToolOmpMarkup -Text "a<#FF0000> b</><transparent,#26BDBB>c</>" -Foreground "#FFFFFF" -Background "")
+    Test-WinToolExpectation -Condition ($split.Count -eq 3 -and $split[1].Foreground -eq "#FF0000" -and $split[1].Text -eq " b" -and $split[2].Background -eq "#26BDBB" -and $split[2].Text -eq "c") -Message "Oh My Posh color tags become separate colored segments."
+    $themed = @(Get-WinToolOmpPreviewSegment -Theme (ConvertFrom-WinToolJsonText -Text '{"blocks":[{"type":"prompt","alignment":"left","segments":[{"type":"path","style":"diamond","leading_diamond":"<transparent,background>\ue0b0</>","trailing_diamond":"\ue0b4","foreground":"#ffffff","background":"#ff479c"},{"type":"text","style":"plain","template":"<#ff0000> x</> ","foreground":"#ffffff"}]}]}'))
+    Test-WinToolExpectation -Condition (@($themed | Where-Object { ([string]$_.Text).Contains("<") }).Count -eq 0 -and @($themed | Where-Object { $_.Background -eq "#FF479C" }).Count -ge 2) -Message "Diamonds with markup use the segment background."
     $plain = @(Get-WinToolPromptPreview -PromptId "oh-my-posh" -PromptStyle "jandedobbeleer" -Theme $null)
     Test-WinToolExpectation -Condition (@($plain | Where-Object { $null -ne $_.Background }).Count -ge 2) -Message "The Oh My Posh preview uses the catalog sample without the theme file."
 
