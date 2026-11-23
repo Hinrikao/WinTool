@@ -141,12 +141,15 @@ function Get-WinToolPromptScript {
         $lines.Add('catch { $null = $_ }')
     }
     elseif ($PromptId -eq "powerline-go") {
+        $styleArgs = @(Get-WinToolPromptVariantArgument -Variant (Get-WinToolPromptVariant -PromptId $PromptId -PromptStyle $PromptStyle))
+        $argText = ""
+        foreach ($arg in $styleArgs) { $argText += " '" + $arg + "'" }
         $lines.Add('function global:prompt {')
         $lines.Add('    $wintoolExit = $LASTEXITCODE')
         $lines.Add('    try {')
         $lines.Add('        $tool = [string]$env:LOCALAPPDATA + "\WinTool\bin\powerline-go.exe"')
         $lines.Add('        if (Test-Path -LiteralPath $tool) {')
-        $lines.Add('            return ((& $tool -error $wintoolExit -shell bare) -join "")')
+        $lines.Add('            return ((& $tool -error $wintoolExit -shell bare' + $argText + ') -join "")')
         $lines.Add('        }')
         $lines.Add('    }')
         $lines.Add('    catch { $null = $_ }')
@@ -992,11 +995,23 @@ function Get-WinToolPromptPreview {
             if ([string]$preset.id -ne $PromptStyle) { continue }
             $list = New-Object System.Collections.Generic.List[object]
             foreach ($item in @(Get-WinToolNote -Object $preset -Name "preview" -Default @())) {
-                $list.Add((New-WinToolPreviewSegment -Text ([string]$item.text) -Foreground ([string](Get-WinToolNote -Object $item -Name "color" -Default ""))))
+                $fg = [string](Get-WinToolNote -Object $item -Name "fg" -Default "")
+                if ([string]::IsNullOrWhiteSpace($fg)) { $fg = [string](Get-WinToolNote -Object $item -Name "color" -Default "") }
+                $list.Add((New-WinToolPreviewSegment -Text ([string]$item.text) -Foreground $fg -Background ([string](Get-WinToolNote -Object $item -Name "bg" -Default ""))))
             }
             if ($list.Count -gt 0) {
-                return $list.ToArray()
+                return (Add-WinToolPreviewSeparator -Segments $list.ToArray())
             }
+        }
+    }
+    $variant = Get-WinToolPromptVariant -PromptId $PromptId -PromptStyle $PromptStyle
+    if ($null -ne $variant) {
+        $list = New-Object System.Collections.Generic.List[object]
+        foreach ($item in @(Get-WinToolNote -Object $variant -Name "preview" -Default @())) {
+            $list.Add((New-WinToolPreviewSegment -Text ([string]$item.text) -Foreground ([string](Get-WinToolNote -Object $item -Name "fg" -Default "")) -Background ([string](Get-WinToolNote -Object $item -Name "bg" -Default ""))))
+        }
+        if ($list.Count -gt 0) {
+            return (Add-WinToolPreviewSeparator -Segments $list.ToArray())
         }
     }
     $key = $PromptId
@@ -1010,6 +1025,93 @@ function Get-WinToolPromptPreview {
     $out = New-Object System.Collections.Generic.List[object]
     foreach ($item in $sample) {
         $out.Add((New-WinToolPreviewSegment -Text ([string]$item.text) -Foreground ([string](Get-WinToolNote -Object $item -Name "fg" -Default "")) -Background ([string](Get-WinToolNote -Object $item -Name "bg" -Default ""))))
+    }
+    return (Add-WinToolPreviewSeparator -Segments $out.ToArray())
+}
+
+function Get-WinToolPromptVariantList {
+    param(
+        [AllowEmptyString()][string]$PromptId
+    )
+    # The styles a prompt offers (data/terminal.json "promptVariants").
+    if ([string]::IsNullOrWhiteSpace($PromptId)) { return @() }
+    $variants = Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "promptVariants"
+    if ($null -eq $variants -or $null -eq $variants.PSObject.Properties[$PromptId]) { return @() }
+    return @($variants.PSObject.Properties[$PromptId].Value | Where-Object { $null -ne $_ })
+}
+
+function Get-WinToolPromptVariant {
+    param(
+        [AllowEmptyString()][string]$PromptId,
+        [AllowEmptyString()][string]$PromptStyle
+    )
+    # The chosen style, or the prompt's first style when the id is unknown.
+    $rows = @(Get-WinToolPromptVariantList -PromptId $PromptId)
+    if ($rows.Count -eq 0) { return $null }
+    foreach ($row in $rows) {
+        if ([string]$row.id -eq $PromptStyle) { return $row }
+    }
+    return $rows[0]
+}
+
+function Get-WinToolPromptVariantSetting {
+    param(
+        $Variant
+    )
+    # Lines that go into ~/.zshrc for Spaceship and Pure. Only plain words,
+    # spaces, and = : . _ - are allowed so nothing can break out into a shell.
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($line in @(Get-WinToolNote -Object $Variant -Name "settings" -Default @())) {
+        $text = [string]$line
+        if ($text -match '^[A-Za-z0-9_:=. -]+$') { $out.Add($text) }
+    }
+    return $out.ToArray()
+}
+
+function Get-WinToolPromptVariantArgument {
+    param(
+        $Variant
+    )
+    # powerline-go flags such as "-theme gruvbox" or "-mode flat".
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($arg in @(Get-WinToolNote -Object $Variant -Name "args" -Default @())) {
+        $text = [string]$arg
+        if ($text -match '^-?[A-Za-z0-9._-]+$') { $out.Add($text) }
+    }
+    return $out.ToArray()
+}
+
+function Test-WinToolPreviewSeparator {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    $trim = ([string]$Text).Trim()
+    if ($trim.Length -ne 1) { return $false }
+    $code = [int][char]$trim
+    return (($code -ge 0xE0B0 -and $code -le 0xE0D4) -or $code -eq 0x25B6 -or $code -eq 0x25C0)
+}
+
+function Add-WinToolPreviewSeparator {
+    param(
+        [object[]]$Segments
+    )
+    # Where a colored block ends and the next part has another background (or
+    # none), put a Powerline arrow between them unless the data already has one.
+    $list = @($Segments | Where-Object { $null -ne $_ })
+    $out = New-Object System.Collections.Generic.List[object]
+    for ($i = 0; $i -lt $list.Count; $i++) {
+        $item = $list[$i]
+        $out.Add($item)
+        $bg = [string]$item.Background
+        if ([string]::IsNullOrWhiteSpace($bg) -or (Test-WinToolPreviewSeparator -Text ([string]$item.Text))) { continue }
+        $nextBg = ""
+        if ($i + 1 -lt $list.Count) {
+            $next = $list[$i + 1]
+            if (Test-WinToolPreviewSeparator -Text ([string]$next.Text)) { continue }
+            $nextBg = [string]$next.Background
+        }
+        if ($nextBg -eq $bg) { continue }
+        $out.Add((New-WinToolPreviewSegment -Text ([string][char]0xE0B0) -Foreground $bg -Background $nextBg))
     }
     return $out.ToArray()
 }

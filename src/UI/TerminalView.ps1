@@ -197,6 +197,7 @@ function Update-WinToolPromptStyleList {
     elseif ($prompt -eq "starship") {
         $note.Text = "Starship presets."
         foreach ($preset in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "starshipPresets" -Default @())) {
+            if (-not (Test-WinToolTextMatch -Haystack ([string]$preset.name + " " + [string]$preset.id) -Query $query)) { continue }
             $item = New-Object System.Windows.Controls.ListBoxItem
             $item.Content = [string]$preset.name
             $item.Tag = [string]$preset.id
@@ -219,6 +220,21 @@ function Update-WinToolPromptStyleList {
             }
         }
     }
+    elseif (@(Get-WinToolPromptVariantList -PromptId $prompt).Count -gt 0) {
+        $note.Text = "Styles for this prompt. The preview shows the one you pick."
+        foreach ($variant in @(Get-WinToolPromptVariantList -PromptId $prompt)) {
+            $about = [string](Get-WinToolNote -Object $variant -Name "description" -Default "")
+            if (-not (Test-WinToolTextMatch -Haystack ([string]$variant.name + " " + $about) -Query $query)) { continue }
+            $item = New-Object System.Windows.Controls.ListBoxItem
+            $item.Content = [string]$variant.name
+            $item.Tag = [string]$variant.id
+            if (-not [string]::IsNullOrWhiteSpace($about)) { $item.ToolTip = $about }
+            [void]$list.Items.Add($item)
+            if ([string]$variant.id -eq [string]$script:WinToolTerminalChoice.promptStyle) {
+                $list.SelectedItem = $item
+            }
+        }
+    }
     else {
         $note.Text = "This prompt has its own default look. The font and extras below still apply."
     }
@@ -230,7 +246,7 @@ function Update-WinToolPromptStyleList {
     $list.ToolTip = $note.Text
     if ($list.Items.Count -eq 0) {
         $note.Visibility = "Visible"
-        if ($prompt -eq "oh-my-posh" -or $prompt -eq "oh-my-zsh") {
+        if ($prompt -eq "oh-my-posh" -or $prompt -eq "oh-my-zsh" -or $prompt -eq "starship" -or @(Get-WinToolPromptVariantList -PromptId $prompt).Count -gt 0) {
             $note.Text = "No themes match the search."
         }
     }

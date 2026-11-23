@@ -11,6 +11,18 @@ style="${WINTOOL_PROMPT_STYLE:-}"
 omz_theme="${WINTOOL_OMZ_THEME:-robbyrussell}"
 case "${omz_theme}" in *[!A-Za-z0-9._/-]*|"") omz_theme="robbyrussell" ;; esac
 case "${style}" in *[!A-Za-z0-9._-]*) style="" ;; esac
+# The chosen prompt style: a config file from the Powerlevel10k repository,
+# or setting lines for Spaceship and Pure. Tide styles come from the id.
+style_file="${WINTOOL_STYLE_FILE:-}"
+case "${style_file}" in *..*|*[!A-Za-z0-9._/-]*) style_file="" ;; esac
+style_settings=""
+while IFS= read -r line; do
+  case "${line}" in ""|*[!A-Za-z0-9_:=.\ -]*) continue ;; esac
+  style_settings="${style_settings}${line}
+"
+done <<EOF
+${WINTOOL_STYLE_SETTINGS:-}
+EOF
 
 if [ "$(id -u)" -ne 0 ]; then
   say "this script needs root. Run: wsl -d <distro> -u root -- bash $0"
@@ -101,6 +113,20 @@ fi"
     say "installing Powerlevel10k"
     as_user 'd="$HOME/.oh-my-zsh/custom/themes/powerlevel10k"; [ -d "$d" ] || git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$d"' || say "Powerlevel10k did not install"
     zsh_theme="powerlevel10k/powerlevel10k"
+    [ -n "${style_file}" ] || style_file="config/p10k-${style:-lean}.zsh"
+    p10k_source="${home}/.oh-my-zsh/custom/themes/powerlevel10k/${style_file}"
+    if [ -f "${p10k_source}" ]; then
+      if [ -f "${home}/.p10k.zsh" ] && ! cmp -s "${p10k_source}" "${home}/.p10k.zsh"; then
+        cp -p "${home}/.p10k.zsh" "${home}/.p10k.zsh.wintool-$(date +%Y%m%d-%H%M%S).bak"
+      fi
+      cp "${p10k_source}" "${home}/.p10k.zsh"
+      chown "${user}:" "${home}/.p10k.zsh" 2>/dev/null || chown "${user}" "${home}/.p10k.zsh"
+      say "Powerlevel10k style: ${style_file}"
+    else
+      say "the Powerlevel10k style ${style_file} was not found, the setup wizard will ask on first start"
+    fi
+    block="POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
+[[ ! -f \"\$HOME/.p10k.zsh\" ]] || source \"\$HOME/.p10k.zsh\""
     ;;
   pure)
     say "installing Pure"
@@ -108,7 +134,7 @@ fi"
     zsh_theme=""
     block="if [ -d \"\$HOME/.zsh/pure\" ]; then
   fpath+=(\"\$HOME/.zsh/pure\")
-  autoload -U promptinit; promptinit
+${style_settings}  autoload -U promptinit; promptinit
   prompt pure
 fi"
     ;;
@@ -116,10 +142,28 @@ fi"
     say "installing Spaceship"
     as_user 'd="$HOME/.oh-my-zsh/custom/themes/spaceship-prompt"; [ -d "$d" ] || git clone --depth=1 https://github.com/spaceship-prompt/spaceship-prompt.git "$d"; ln -sfn "$d/spaceship.zsh-theme" "$HOME/.oh-my-zsh/custom/themes/spaceship.zsh-theme"' || say "Spaceship did not install"
     zsh_theme="spaceship"
+    block="${style_settings%
+}"
     ;;
   tide)
     say "installing Tide for Fish"
     as_user "fish -lc 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source; fisher install jorgebucaran/fisher; fisher install IlanCosman/tide@v6'" || say "Tide still needs a Fish login to finish"
+    # Apply the chosen style the official way: "tide configure --auto" with
+    # every answer given, so no question is asked.
+    tide_base="${style:-lean}"
+    tide_colors="True color"
+    case "${tide_base}" in *-16color) tide_base="${tide_base%-16color}"; tide_colors="16 colors" ;; esac
+    case "${tide_base}" in
+      classic) tide_style="Classic" ;;
+      rainbow) tide_style="Rainbow" ;;
+      *) tide_style="Lean" ;;
+    esac
+    tide_args="--auto --style=${tide_style} --prompt_colors='${tide_colors}' --classic_prompt_color=Dark --show_time=No --lean_prompt_height='One line' --classic_prompt_separators=Angled --rainbow_prompt_separators=Angled --powerline_prompt_heads=Sharp --powerline_prompt_tails=Flat --powerline_prompt_style='One line' --prompt_connection=Disconnected --prompt_connection_andor_frame_color=Dark --powerline_right_prompt_frame=No --prompt_spacing=Compact --icons='Few icons' --transient=No"
+    if as_user "fish -c \"tide configure ${tide_args}\" </dev/null"; then
+      say "Tide style: ${tide_style}, ${tide_colors}"
+    else
+      say "the Tide style did not apply. Run: tide configure"
+    fi
     ;;
   *)
     zsh_theme="${omz_theme}"

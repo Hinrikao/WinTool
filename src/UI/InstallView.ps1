@@ -24,15 +24,15 @@ function Initialize-WinToolInstallView {
         $chips.Add([pscustomobject]@{ Tag = ("category:" + [string]$category.id); Text = $chipText })
 
         $section = New-Object System.Windows.Controls.StackPanel
-        $headerMargin = [System.Windows.Thickness]::new(0, 10, 0, 7)
-        if ($first) { $headerMargin = [System.Windows.Thickness]::new(0, 6, 0, 7) }
+        $headerMargin = [System.Windows.Thickness]::new(0, 6, 0, 6)
+        if ($first) { $headerMargin = [System.Windows.Thickness]::new(0, 0, 0, 6) }
         $first = $false
-        $header = New-WinToolText -Text ([string]$category.name) -Size 14 -Weight "Bold" -Margin $headerMargin
+        $header = New-WinToolText -Text ([string]$category.name) -Size 13 -Weight "Bold" -Margin $headerMargin
         $header.ToolTip = [string](Get-WinToolNote -Object $category -Name "description" -Default "")
         [void]$section.Children.Add($header)
         $grid = New-Object System.Windows.Controls.Primitives.UniformGrid
-        $grid.Columns = 3
-        $grid.Margin = [System.Windows.Thickness]::new(0, 0, -12, 0)
+        $grid.Columns = 5
+        $grid.Margin = [System.Windows.Thickness]::new(0, 0, -10, 0)
         $appRows = @()
         foreach ($app in @(Get-WinToolNote -Object $category -Name "apps" -Default @())) {
             $row = New-WinToolAppRow -App $app -CategoryName ([string]$category.name)
@@ -95,23 +95,57 @@ function Initialize-WinToolInstallView {
         Invoke-WinToolUpgradeAllClick
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ViewInstall") -EventName "SizeChanged" -Name "Install: layout" -Action {
-        Update-WinToolInstallLayout -Width ((Get-WinToolUi -Name "ViewInstall").ActualWidth - 40)
+        Update-WinToolInstallLayout -Width (Get-WinToolInstallWidth)
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppScroll") -EventName "SizeChanged" -Name "Install: layout (list)" -Action {
+        Update-WinToolInstallLayout -Width (Get-WinToolInstallWidth)
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppFilterScroll") -EventName "PreviewMouseWheel" -Name "Install: scroll the chips" -Action {
+        param($source, $eventData)
+        # The chip row never wraps; the mouse wheel moves it sideways.
+        if ($null -ne $eventData -and $source.ScrollableWidth -gt 0) {
+            $source.ScrollToHorizontalOffset($source.HorizontalOffset - $eventData.Delta / 2)
+            $eventData.Handled = $true
+        }
     }
     Update-WinToolAppChip
     Sync-WinToolAppCount
+}
+
+function Get-WinToolInstallWidth {
+    # The width the cards can use: the list's viewport (which leaves out a
+    # visible scroll bar), or the page minus its margins before layout.
+    $scroll = Get-WinToolUi -Name "AppScroll"
+    if ($null -ne $scroll -and $scroll.ViewportWidth -gt 0) {
+        return [double]$scroll.ViewportWidth
+    }
+    return ((Get-WinToolUi -Name "ViewInstall").ActualWidth - 40)
+}
+
+function Get-WinToolColumnCount {
+    param(
+        [double]$Width,
+        [double]$MinWidth,
+        [double]$Gap
+    )
+    # As many columns as fit at the minimum card width; the cards then
+    # stretch to fill the row, so a wider window never leaves empty space.
+    if ($Width -le 0 -or $MinWidth -le 0) { return 1 }
+    $count = [int][Math]::Floor(($Width + $Gap) / ($MinWidth + $Gap))
+    if ($count -lt 1) { $count = 1 }
+    return $count
 }
 
 function Update-WinToolInstallLayout {
     param(
         [double]$Width
     )
-    # Three cards per row; two under about 1100 px window width, one under 760.
+    # Compact cards at least 185 px wide: 5 per row at 1280, more when wider.
     if ($Width -le 0) {
         return
     }
-    $columns = 3
-    if ($Width -lt 812) { $columns = 2 }
-    if ($Width -lt 472) { $columns = 1 }
+    $columns = Get-WinToolColumnCount -Width $Width -MinWidth 185 -Gap 10
+    $script:WinToolState.AppColumns = $columns
     foreach ($category in @($script:WinToolState.CategoryRows)) {
         if ($category.Grid.Columns -ne $columns) {
             $category.Grid.Columns = $columns
@@ -127,6 +161,11 @@ function New-WinToolCardButton {
     )
     $button = New-Object System.Windows.Controls.Button
     $button.Style = $script:WinToolWindow.FindResource("CardButton")
+    $button.Width = [double]::NaN
+    $button.Height = 22
+    $button.FontSize = 10.5
+    $button.Padding = [System.Windows.Thickness]::new(4, 0, 4, 0)
+    $button.Margin = [System.Windows.Thickness]::new(2, 0, 2, 0)
     switch ($Kind) {
         "primary" {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushAccent")
@@ -166,9 +205,9 @@ function Set-WinToolCardButtonText {
     $icon = New-Object System.Windows.Controls.TextBlock
     $icon.Text = $Glyph
     $icon.FontFamily = [System.Windows.Media.FontFamily]::new("Segoe MDL2 Assets")
-    $icon.FontSize = 11
+    $icon.FontSize = 10
     $icon.VerticalAlignment = "Center"
-    $icon.Margin = [System.Windows.Thickness]::new(0, 1, 6, 0)
+    $icon.Margin = [System.Windows.Thickness]::new(0, 1, 5, 0)
     $label = New-Object System.Windows.Controls.TextBlock
     $label.Text = $Text
     $label.VerticalAlignment = "Center"
@@ -177,32 +216,26 @@ function Set-WinToolCardButtonText {
     $Button.Content = $line
 }
 
-function New-WinToolStatusPill {
+function New-WinToolStatusDot {
     param(
         [Parameter(Mandatory = $true)][string]$Text,
         [Parameter(Mandatory = $true)][ValidateSet("ok", "warn")][string]$Kind
     )
-    $pill = New-Object System.Windows.Controls.Border
-    $pill.CornerRadius = [System.Windows.CornerRadius]::new(9)
-    $pill.Height = 18
-    $pill.Padding = [System.Windows.Thickness]::new(10, 0, 10, 0)
-    $pill.VerticalAlignment = "Top"
-    $pill.HorizontalAlignment = "Right"
-    $label = New-Object System.Windows.Controls.TextBlock
-    $label.Text = $Text
-    $label.FontSize = 10
-    $label.VerticalAlignment = "Center"
+    # A small dot at the top right of a card: green installed, amber update.
+    $dot = New-Object System.Windows.Shapes.Ellipse
+    $dot.Width = 8
+    $dot.Height = 8
+    $dot.VerticalAlignment = "Top"
+    $dot.HorizontalAlignment = "Right"
+    $dot.ToolTip = $Text
     if ($Kind -eq "warn") {
-        $pill.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushWarnSoft")
-        $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushWarn")
+        $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushWarn")
     }
     else {
-        $pill.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushOkSoft")
-        $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushOk")
+        $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushOk")
     }
-    $pill.Child = $label
-    $pill.Visibility = "Collapsed"
-    return $pill
+    $dot.Visibility = "Collapsed"
+    return $dot
 }
 
 function New-WinToolAppRow {
@@ -211,21 +244,22 @@ function New-WinToolAppRow {
         [string]$CategoryName
     )
     $tags = @(Get-WinToolNote -Object $App -Name "tags" -Default @()) -join " "
-    # A card: icon, name, winget id, status pill, one line of description,
-    # the action buttons, and a checkbox for picking several apps at once.
+    # A compact card: icon, name, winget id, status dot, two lines of
+    # description, the action buttons, and a checkbox for picking several.
     $panel = New-Object System.Windows.Controls.Border
     $panel.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushCard")
     $panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
     $panel.BorderThickness = [System.Windows.Thickness]::new(1)
-    $panel.CornerRadius = [System.Windows.CornerRadius]::new(10)
-    $panel.Padding = [System.Windows.Thickness]::new(13, 13, 11, 9)
-    $panel.Margin = [System.Windows.Thickness]::new(0, 0, 12, 10)
-    $panel.Height = 124
+    $panel.CornerRadius = [System.Windows.CornerRadius]::new(8)
+    $panel.Padding = [System.Windows.Thickness]::new(9, 9, 9, 7)
+    $panel.Margin = [System.Windows.Thickness]::new(0, 0, 10, 10)
+    $panel.Height = 112
 
     $layout = New-Object System.Windows.Controls.Grid
-    foreach ($height in @(40, 24, 34)) {
+    foreach ($height in @(28, 0, 22)) {
         $rowDefinition = New-Object System.Windows.Controls.RowDefinition
-        $rowDefinition.Height = [System.Windows.GridLength]::new($height)
+        if ($height -gt 0) { $rowDefinition.Height = [System.Windows.GridLength]::new($height) }
+        else { $rowDefinition.Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }
         $layout.RowDefinitions.Add($rowDefinition)
     }
 
@@ -234,14 +268,14 @@ function New-WinToolAppRow {
     $head.ColumnDefinitions.Add((New-WinToolColumn))
     $head.ColumnDefinitions.Add((New-WinToolColumn -Auto))
     $icon = New-Object System.Windows.Controls.Border
-    $icon.Width = 40
-    $icon.Height = 40
-    $icon.CornerRadius = [System.Windows.CornerRadius]::new(9)
+    $icon.Width = 28
+    $icon.Height = 28
+    $icon.CornerRadius = [System.Windows.CornerRadius]::new(7)
     $iconColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString((Get-WinToolAppIconColor -Id ([string]$App.id))))
     $icon.Background = [System.Windows.Media.SolidColorBrush]::new($iconColor)
     $initial = New-Object System.Windows.Controls.TextBlock
     $initial.Text = Get-WinToolAppInitial -Name ([string]$App.name)
-    $initial.FontSize = 16
+    $initial.FontSize = 13
     $initial.FontWeight = [System.Windows.FontWeights]::Bold
     $initial.Foreground = [System.Windows.Media.Brushes]::White
     $initial.HorizontalAlignment = "Center"
@@ -250,28 +284,35 @@ function New-WinToolAppRow {
     [void]$head.Children.Add($icon)
 
     $names = New-Object System.Windows.Controls.StackPanel
-    $names.Margin = [System.Windows.Thickness]::new(12, 3, 8, 0)
-    $title = New-WinToolText -Text ([string]$App.name) -Size 13 -Weight "Bold"
+    $names.Margin = [System.Windows.Thickness]::new(8, 0, 6, 0)
+    $names.VerticalAlignment = "Center"
+    $title = New-WinToolText -Text ([string]$App.name) -Size 12 -Weight "Bold"
     $title.TextTrimming = "CharacterEllipsis"
+    $title.ToolTip = [string]$App.name
     [void]$names.Children.Add($title)
-    $idText = New-WinToolText -Text ("winget: " + [string]$App.wingetId) -Size 10 -Brush "BrushHint" -Margin ([System.Windows.Thickness]::new(0, 3, 0, 0))
+    $idText = New-WinToolText -Text ([string]$App.wingetId) -Size 9 -Brush "BrushHint" -Margin ([System.Windows.Thickness]::new(0, 0, 0, 0))
     $idText.TextTrimming = "CharacterEllipsis"
+    $idText.ToolTip = "winget: " + [string]$App.wingetId
     [void]$names.Children.Add($idText)
     [System.Windows.Controls.Grid]::SetColumn($names, 1)
     [void]$head.Children.Add($names)
 
-    $pills = New-Object System.Windows.Controls.Grid
-    $pills.Margin = [System.Windows.Thickness]::new(0, 2, 2, 0)
-    $installedBadge = New-WinToolStatusPill -Text "Installed" -Kind "ok"
-    $updateBadge = New-WinToolStatusPill -Text "Update ready" -Kind "warn"
-    [void]$pills.Children.Add($installedBadge)
-    [void]$pills.Children.Add($updateBadge)
-    [System.Windows.Controls.Grid]::SetColumn($pills, 2)
-    [void]$head.Children.Add($pills)
+    $dots = New-Object System.Windows.Controls.Grid
+    $dots.Margin = [System.Windows.Thickness]::new(0, 0, 1, 0)
+    $installedBadge = New-WinToolStatusDot -Text "Installed" -Kind "ok"
+    $updateBadge = New-WinToolStatusDot -Text "Update ready" -Kind "warn"
+    [void]$dots.Children.Add($installedBadge)
+    [void]$dots.Children.Add($updateBadge)
+    [System.Windows.Controls.Grid]::SetColumn($dots, 2)
+    [void]$head.Children.Add($dots)
     [void]$layout.Children.Add($head)
 
-    $description = New-WinToolText -Text ([string]$App.description) -Size 11 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 8, 2, 0))
+    $description = New-WinToolText -Text ([string]$App.description) -Size 10 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 7, 0, 0))
+    $description.TextWrapping = "Wrap"
     $description.TextTrimming = "CharacterEllipsis"
+    $description.MaxHeight = 28
+    $description.LineHeight = 13
+    $description.LineStackingStrategy = "BlockLineHeight"
     $description.ToolTip = [string]$App.description
     [System.Windows.Controls.Grid]::SetRow($description, 1)
     [void]$layout.Children.Add($description)
@@ -279,9 +320,10 @@ function New-WinToolAppRow {
     $actions = New-Object System.Windows.Controls.Grid
     $actions.ColumnDefinitions.Add((New-WinToolColumn))
     $actions.ColumnDefinitions.Add((New-WinToolColumn -Auto))
-    $buttons = New-Object System.Windows.Controls.StackPanel
-    $buttons.Orientation = "Horizontal"
-    $buttons.VerticalAlignment = "Bottom"
+    # The visible buttons share the row evenly (collapsed ones take no room).
+    $buttons = New-Object System.Windows.Controls.Primitives.UniformGrid
+    $buttons.Rows = 1
+    $buttons.Margin = [System.Windows.Thickness]::new(-2, 0, 8, 0)
     $installButton = New-WinToolCardButton -Text "Install" -Glyph ([string][char]0xE896) -Kind "primary"
     $updateButton = New-WinToolCardButton -Text "Update" -Glyph ([string][char]0xE72C) -Kind "warn"
     $openButton = New-WinToolCardButton -Text "Open" -Kind "neutral"
@@ -292,8 +334,8 @@ function New-WinToolAppRow {
     }
     [void]$actions.Children.Add($buttons)
     $checkbox = New-Object System.Windows.Controls.CheckBox
-    $checkbox.VerticalAlignment = "Bottom"
-    $checkbox.Margin = [System.Windows.Thickness]::new(0, 0, -6, 4)
+    $checkbox.VerticalAlignment = "Center"
+    $checkbox.Margin = [System.Windows.Thickness]::new(0, 0, -4, 0)
     $checkbox.ToolTip = "Pick several apps and install, update, or uninstall them together."
     [System.Windows.Controls.Grid]::SetColumn($checkbox, 1)
     [void]$actions.Children.Add($checkbox)
@@ -357,7 +399,7 @@ function New-WinToolAppRow {
 
 function Sync-WinToolAppBadge {
     param($Row)
-    # Pill, border tint, and buttons follow the detected state.
+    # Status dot, border tint, and buttons follow the detected state.
     $Row.InstalledBadge.Visibility = "Collapsed"
     $Row.UpdateBadge.Visibility = "Collapsed"
     $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")

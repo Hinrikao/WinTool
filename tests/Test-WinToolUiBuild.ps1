@@ -497,6 +497,75 @@ if ($null -eq $advancedGrid -or $window.FindName("TerminalSummaryHost").Children
     throw "The Terminal summary did not list the steps."
 }
 
+function Save-WinToolTerminalShot {
+    param([string]$Name, [double]$Width, [double]$Height)
+    Update-WinToolTerminalLayout -Width ($Width - 248 - 40)
+    $rootVisual.Measure([System.Windows.Size]::new($Width, $Height))
+    $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
+    $rootVisual.UpdateLayout()
+    Show-WinToolTerminalSelection
+    $rootVisual.UpdateLayout()
+    $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]$Width, [int]$Height, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    $backdrop = New-Object System.Windows.Media.DrawingVisual
+    $context = $backdrop.RenderOpen()
+    $context.DrawRectangle($window.Background, $null, [System.Windows.Rect]::new(0, 0, $Width, $Height))
+    $context.Close()
+    $bitmap.Render($backdrop)
+    $bitmap.Render($rootVisual)
+    $encoder = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
+    $encoder.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($bitmap))
+    $path = Join-Path $shotFolder ($Name + ".png")
+    $stream = [System.IO.File]::Create($path)
+    try { $encoder.Save($stream) } finally { $stream.Dispose() }
+    Write-Output ("Saved " + $path)
+}
+
+# Prompt styles: Powerlevel10k shows its styles in the theme list, and the
+# preview draws the chosen style's colored blocks. Long lists scroll inside
+# their fixed-height card.
+$styleList = $window.FindName("TerminalStyleList")
+$listHeight = $styleList.ActualHeight
+$script:WinToolTerminalChoice.prompt = "powerlevel10k"
+$script:WinToolTerminalChoice.promptStyle = "rainbow"
+Update-WinToolPromptStyleList
+Update-WinToolTerminalSummary
+Update-WinToolTerminalPreview
+if ([string]$styleList.SelectedItem.Tag -ne "rainbow" -or $styleList.Items.Count -lt 4) {
+    throw "Powerlevel10k should list its styles with Rainbow selected."
+}
+$blocks = @($window.FindName("TerminalFontSample").Inlines | Where-Object { $_ -is [System.Windows.Documents.Run] -and $null -ne $_.Background })
+if ($blocks.Count -lt 2) { throw "The Rainbow preview should draw colored blocks." }
+$planText = (@(Get-WinToolTerminalPlan -Selection $script:WinToolTerminalChoice | ForEach-Object { [string]$_.Label }) -join " | ")
+Write-Output ("Powerlevel10k plan: " + $planText)
+$styleList.SelectedIndex = 0
+if ([string]$script:WinToolTerminalChoice.promptStyle -ne [string]$styleList.Items[0].Tag) {
+    throw "Picking another style should change the Terminal choice."
+}
+$styleList.SelectedIndex = 2
+Save-WinToolTerminalShot -Name "terminal-p10k" -Width 1280 -Height 760
+$script:WinToolTerminalChoice.prompt = "starship"
+$script:WinToolTerminalChoice.promptStyle = "pastel-powerline"
+Update-WinToolPromptStyleList
+Update-WinToolTerminalSummary
+Update-WinToolTerminalPreview
+$blocks = @($window.FindName("TerminalFontSample").Inlines | Where-Object { $_ -is [System.Windows.Documents.Run] -and $null -ne $_.Background })
+if ($blocks.Count -lt 2) { throw "The Starship Pastel powerline preview should draw colored blocks." }
+Save-WinToolTerminalShot -Name "terminal-starship" -Width 1280 -Height 760
+$script:WinToolTerminalChoice.prompt = "oh-my-zsh"
+$script:WinToolTerminalChoice.promptStyle = "agnoster"
+Update-WinToolPromptStyleList
+Update-WinToolTerminalSummary
+Update-WinToolTerminalPreview
+Save-WinToolTerminalShot -Name "terminal-omz" -Width 1280 -Height 760
+if ($styleList.Items.Count -lt 100 -or [math]::Abs($styleList.ActualHeight - $listHeight) -gt 1) {
+    throw ("The Oh My Zsh list should scroll inside its card: " + $styleList.Items.Count + " themes, height " + $styleList.ActualHeight + " vs " + $listHeight)
+}
+if ([string]$styleList.SelectedItem.Tag -ne "agnoster") { throw "agnoster should stay selected in the long list." }
+$script:WinToolTerminalChoice.prompt = "oh-my-posh"
+$script:WinToolTerminalChoice.promptStyle = "jandedobbeleer"
+Update-WinToolPromptStyleList
+Update-WinToolTerminalSummary
+
 # Install and Tweaks tabs at 1280x760 (the approved mockups) and narrower.
 function Save-WinToolViewShot {
     param([string]$Name, [double]$Width, [double]$Height)
@@ -564,16 +633,22 @@ if ($window.FindName("AppBulkBar").Visibility -ne "Collapsed") {
 $window.FindName("NavInstall").IsChecked = $true
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
-foreach ($size in @(@(1280, 760, "install-mockup"), @(1000, 760, "install-narrow"))) {
+foreach ($size in @(@(1280, 760, "install-mockup"), @(1920, 1080, "install-1920"), @(1000, 760, "install-narrow"))) {
     Update-WinToolInstallLayout -Width ([double]$size[0] - 248 - 40)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
+    # After layout the real list width decides the columns, like SizeChanged does.
+    Update-WinToolInstallLayout -Width (Get-WinToolInstallWidth)
+    Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
+    Write-Output ($size[2] + ": " + $script:WinToolState.CategoryRows[0].Grid.Columns + " cards per row, card width " + [int]$appRows[0].Panel.ActualWidth)
 }
-Update-WinToolInstallLayout -Width 1000
-if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne 3) { throw "Install cards should use three columns on a wide window." }
-Update-WinToolInstallLayout -Width 700
-if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne 2) { throw "Install cards should use two columns under about 1100 px." }
-Update-WinToolInstallLayout -Width 400
-if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne 1) { throw "Install cards should use one column under about 760 px." }
+# Responsive columns: as many 185 px cards as fit, stretched to fill the row.
+foreach ($case in @(@(992, 5), @(1632, 8), @(700, 3), @(380, 2), @(150, 1))) {
+    Update-WinToolInstallLayout -Width ([double]$case[0])
+    if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne [int]$case[1]) {
+        throw ("Install at " + $case[0] + " px should have " + $case[1] + " columns, got " + $script:WinToolState.CategoryRows[0].Grid.Columns)
+    }
+}
+Update-WinToolInstallLayout -Width 992
 
 # Tweak switches follow the real state of this PC; registry tweaks must be readable.
 $window.FindName("TweakSearch").Text = ""
@@ -610,14 +685,33 @@ $script:WinToolTweakRunnerOverride = $null
 $script:WinToolTweakProbeOverride = $null
 Update-WinToolTweakState
 $window.FindName("NavTweaks").IsChecked = $true
-foreach ($size in @(@(1280, 760, "tweaks-mockup"), @(980, 760, "tweaks-narrow"))) {
+foreach ($size in @(@(1280, 760, "tweaks-mockup"), @(1920, 1080, "tweaks-1920"), @(980, 760, "tweaks-narrow"))) {
     Update-WinToolTweakLayout -Width ([double]$size[0] - 248 - 40)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
+    Update-WinToolTweakLayout -Width (Get-WinToolTweakWidth)
+    Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
+    Write-Output ($size[2] + ": " + $script:WinToolState.TweakColumns + " tweak columns")
 }
-Update-WinToolTweakLayout -Width 1000
-if ([System.Windows.Controls.Grid]::GetColumn($script:WinToolState.TweakGroups[1].Card) -ne 2) { throw "Tweak cards should sit in two columns on a wide window." }
-Update-WinToolTweakLayout -Width 600
-if ([System.Windows.Controls.Grid]::GetRow($script:WinToolState.TweakGroups[1].Card) -ne 1) { throw "Tweak cards should stack under about 1000 px." }
+foreach ($case in @(@(992, 3), @(1632, 5), @(640, 2), @(500, 1))) {
+    Update-WinToolTweakLayout -Width ([double]$case[0])
+    if ($script:WinToolState.TweakColumns -ne [int]$case[1]) {
+        throw ("Tweaks at " + $case[0] + " px should have " + $case[1] + " columns, got " + $script:WinToolState.TweakColumns)
+    }
+}
+Update-WinToolTweakLayout -Width 992
+$placed = @($script:WinToolState.TweakGroups | Where-Object { $_.Card.Visibility -eq "Visible" })
+if (@($placed | Where-Object { (Get-WinToolTweakCardColumn -Group $_) -lt 0 }).Count -gt 0) { throw "Every tweak card needs a column." }
+if ($placed.Count -ge 3 -and ((Get-WinToolTweakCardColumn -Group $placed[0]) -ne 0 -or (Get-WinToolTweakCardColumn -Group $placed[1]) -ne 1 -or (Get-WinToolTweakCardColumn -Group $placed[2]) -ne 2)) {
+    throw "The first three tweak cards should start the three columns."
+}
+if ($placed.Count -ge 4) {
+    # Masonry: the fourth card goes under the shortest of the first three.
+    $firstThree = @($placed[0], $placed[1], $placed[2])
+    $sizes = @($firstThree | ForEach-Object { @($_.Rows | Where-Object { $_.Panel.Visibility -eq "Visible" }).Count })
+    $shortest = 0
+    for ($i = 1; $i -lt 3; $i++) { if ($sizes[$i] -lt $sizes[$shortest]) { $shortest = $i } }
+    if ((Get-WinToolTweakCardColumn -Group $placed[3]) -ne $shortest) { throw "The fourth tweak card should go into the shortest column." }
+}
 
 $uiErrors = Get-WinToolUiError
 if ($uiErrors.Count -gt 0) {

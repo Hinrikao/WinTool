@@ -35,7 +35,17 @@ function Get-WinToolWslSetupText {
     $style = ConvertTo-WinToolShellWord -Text ([string](Get-WinToolNote -Object $Step -Name "PromptStyle" -Default ""))
     $omzTheme = ConvertTo-WinToolShellWord -Text ([string](Get-WinToolNote -Object $Step -Name "OmzTheme" -Default ""))
     if ([string]::IsNullOrWhiteSpace($omzTheme)) { $omzTheme = "robbyrussell" }
-    $header = "export WINTOOL_SHELL_PROMPT='" + $variant + "'`nexport WINTOOL_PROMPT_STYLE='" + $style + "'`nexport WINTOOL_OMZ_THEME='" + $omzTheme + "'`n"
+    $styleFile = ""
+    $styleSettings = ""
+    $chosen = Get-WinToolPromptVariant -PromptId $variant -PromptStyle $style
+    if ($null -ne $chosen) {
+        # The style id that reaches bash is always one from the catalog.
+        $style = ConvertTo-WinToolShellWord -Text ([string]$chosen.id)
+        $styleFile = ConvertTo-WinToolShellWord -Text ([string](Get-WinToolNote -Object $chosen -Name "configFile" -Default ""))
+        if ($styleFile.Contains("..")) { $styleFile = "" }
+        $styleSettings = (@(Get-WinToolPromptVariantSetting -Variant $chosen) -join "`n")
+    }
+    $header = "export WINTOOL_SHELL_PROMPT='" + $variant + "'`nexport WINTOOL_PROMPT_STYLE='" + $style + "'`nexport WINTOOL_OMZ_THEME='" + $omzTheme + "'`nexport WINTOOL_STYLE_FILE='" + $styleFile + "'`nexport WINTOOL_STYLE_SETTINGS='" + $styleSettings + "'`n"
     if ($bash.StartsWith("#!")) {
         $cut = $bash.IndexOf("`n")
         return $bash.Substring(0, $cut + 1) + $header + $bash.Substring($cut + 1)
@@ -222,6 +232,11 @@ function Get-WinToolWslStep {
         elseif ($PromptId -eq "oh-my-zsh") { $label = "Install the Oh My Zsh theme in $Distro" }
         elseif ($PromptId -eq "oh-my-posh") { $label = "Install zsh and Oh My Posh in $Distro" }
         elseif ($PromptId -eq "starship") { $label = "Install zsh and Starship in $Distro" }
+        $chosen = Get-WinToolPromptVariant -PromptId $PromptId -PromptStyle $PromptStyle
+        if ($null -ne $chosen) {
+            $label += " (" + [string]$chosen.name + " style)"
+            $PromptStyle = [string]$chosen.id
+        }
         [void]$steps.Add([pscustomobject]@{ Type = "wsl-shell"; Label = $label; Distro = $Distro; Variant = $PromptId; PromptStyle = $PromptStyle; OmzTheme = $PromptStyle })
     }
     if ($null -ne $Font) {

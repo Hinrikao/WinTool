@@ -1040,6 +1040,51 @@ Invoke-WinToolCase -Name "Prompt preview follows the theme colors" -Body {
     Test-WinToolExpectation -Condition ($segments[7].Foreground -eq "#AABBCC" -and $null -eq $segments[7].Background) -Message "Plain segments have no background."
 }
 
+Invoke-WinToolCase -Name "Prompt styles: preview, WSL setup, and powerline-go flags" -Body {
+    $catalog = Get-WinToolTerminalCatalog
+    foreach ($property in @((Get-WinToolNote -Object $catalog -Name "promptVariants").PSObject.Properties)) {
+        foreach ($row in @($property.Value)) {
+            $segments = @(Get-WinToolPromptPreview -PromptId $property.Name -PromptStyle ([string]$row.id) -Theme $null)
+            Test-WinToolExpectation -Condition ($segments.Count -gt 0 -and [string]$segments[0].Text -eq [string]$row.preview[0].text) -Message ("The preview for " + $property.Name + " " + [string]$row.id + " does not use its style.")
+        }
+    }
+    $rainbow = @(Get-WinToolPromptPreview -PromptId "powerlevel10k" -PromptStyle "rainbow" -Theme $null)
+    Test-WinToolExpectation -Condition ($rainbow[0].Background -eq "#0037DA") -Message "Rainbow keeps its colored blocks."
+    $first = Get-WinToolPromptVariant -PromptId "tide" -PromptStyle "no-such-style"
+    Test-WinToolExpectation -Condition ([string]$first.id -eq "lean") -Message "An unknown style falls back to the first one."
+    Test-WinToolExpectation -Condition ($null -eq (Get-WinToolPromptVariant -PromptId "oh-my-zsh" -PromptStyle "agnoster")) -Message "Prompts without styles have no variant."
+
+    $pastel = @(Get-WinToolPromptPreview -PromptId "starship" -PromptStyle "pastel-powerline" -Theme $null)
+    Test-WinToolExpectation -Condition (@($pastel | Where-Object { $null -ne $_.Background }).Count -ge 2) -Message "Starship powerline presets draw colored blocks."
+    $made = @(Add-WinToolPreviewSeparator -Segments @(
+        (New-WinToolPreviewSegment -Text " a " -Foreground "#FFFFFF" -Background "#112233"),
+        (New-WinToolPreviewSegment -Text " b " -Foreground "#FFFFFF" -Background "#445566"),
+        (New-WinToolPreviewSegment -Text " c" -Foreground "#AABBCC")))
+    Test-WinToolExpectation -Condition ($made.Count -eq 5 -and [int][char]$made[1].Text -eq 0xE0B0 -and $made[1].Foreground -eq "#112233" -and $made[1].Background -eq "#445566" -and $made[3].Foreground -eq "#445566" -and $null -eq $made[3].Background) -Message "A Powerline arrow goes between blocks of different colors."
+    $kept = @(Add-WinToolPreviewSeparator -Segments @(
+        (New-WinToolPreviewSegment -Text " a " -Foreground "#FFFFFF" -Background "#112233"),
+        (New-WinToolPreviewSegment -Text ([string][char]0xE0B0) -Foreground "#112233")))
+    Test-WinToolExpectation -Condition ($kept.Count -eq 2) -Message "Arrows already in the data are not doubled."
+
+    $p10k = Get-WinToolWslSetupText -Step ([pscustomobject]@{ Variant = "powerlevel10k"; PromptStyle = "rainbow"; OmzTheme = "rainbow" })
+    Test-WinToolExpectation -Condition ($p10k.Contains("export WINTOOL_PROMPT_STYLE='rainbow'") -and $p10k.Contains("export WINTOOL_STYLE_FILE='config/p10k-rainbow.zsh'")) -Message "The Powerlevel10k style reaches the WSL script."
+    $tide = Get-WinToolWslSetupText -Step ([pscustomobject]@{ Variant = "tide"; PromptStyle = "classic-16color"; OmzTheme = "" })
+    Test-WinToolExpectation -Condition ($tide.Contains("export WINTOOL_PROMPT_STYLE='classic-16color'")) -Message "The Tide style reaches the WSL script."
+    $pure = Get-WinToolWslSetupText -Step ([pscustomobject]@{ Variant = "pure"; PromptStyle = "git-stash"; OmzTheme = "" })
+    Test-WinToolExpectation -Condition ($pure.Contains("export WINTOOL_STYLE_SETTINGS='zstyle :prompt:pure:git:stash show yes'")) -Message "Pure settings reach the WSL script."
+    $odd = Get-WinToolPromptVariantSetting -Variant ([pscustomobject]@{ settings = @("A=1", "x'; rm -rf /", "zstyle :a:b show yes") })
+    Test-WinToolExpectation -Condition (@($odd).Count -eq 2 -and -not (($odd -join " ").Contains("rm"))) -Message "Unsafe setting lines are dropped."
+    $label = @(Get-WinToolWslStep -Distro "Ubuntu" -PromptId "tide" -PromptStyle "rainbow" -Install $false -Shell $true)[0].Label
+    Test-WinToolExpectation -Condition ($label -eq "Install Fish and Tide in Ubuntu (Rainbow style)") -Message ("Step label: " + $label)
+
+    $goScript = Get-WinToolPromptScript -PromptId "powerline-go" -PromptStyle "gruvbox"
+    Test-WinToolExpectation -Condition ($goScript.Contains("-shell bare '-theme' 'gruvbox')")) -Message "powerline-go gets the style flags."
+    $tokens = $null
+    $errors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseInput($goScript, [ref]$tokens, [ref]$errors)
+    Test-WinToolExpectation -Condition (@($errors).Count -eq 0) -Message "The powerline-go profile parses."
+}
+
 Invoke-WinToolCase -Name "Every prompt has a preview" -Body {
     $catalog = Get-WinToolTerminalCatalog
     foreach ($prompt in @(Get-WinToolNote -Object $catalog -Name "prompts" -Default @())) {

@@ -20,8 +20,9 @@ function Initialize-WinToolTweakView {
     }
 
     $hostPanel = Get-WinToolUi -Name "TweakCategories"
+    foreach ($column in @($hostPanel.Children)) { $column.Children.Clear() }
     $hostPanel.Children.Clear()
-    $hostPanel.RowDefinitions.Clear()
+    $hostPanel.ColumnDefinitions.Clear()
     $script:WinToolState.TweakRows = @()
     $script:WinToolState.TweakGroups = @()
     $script:WinToolState.TweakStateRead = $false
@@ -47,19 +48,19 @@ function Initialize-WinToolTweakView {
         $card.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushCard")
         $card.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
         $card.BorderThickness = [System.Windows.Thickness]::new(1)
-        $card.CornerRadius = [System.Windows.CornerRadius]::new(10)
-        $card.Padding = [System.Windows.Thickness]::new(14, 10, 14, 12)
+        $card.CornerRadius = [System.Windows.CornerRadius]::new(8)
+        $card.Padding = [System.Windows.Thickness]::new(10, 0, 10, 12)
         $card.Margin = [System.Windows.Thickness]::new(0, 0, 0, 12)
         $stack = New-Object System.Windows.Controls.StackPanel
         $header = New-Object System.Windows.Controls.Grid
-        $header.Height = 28
+        $header.Height = 36
         $header.ColumnDefinitions.Add((New-WinToolColumn))
         $header.ColumnDefinitions.Add((New-WinToolColumn -Auto))
-        $title = New-WinToolText -Text $categoryName -Size 14 -Weight "Bold"
+        $title = New-WinToolText -Text $categoryName -Size 12.5 -Weight "Bold"
         $title.VerticalAlignment = "Center"
         $title.Margin = [System.Windows.Thickness]::new(2, 0, 0, 0)
         [void]$header.Children.Add($title)
-        $count = New-WinToolText -Text " " -Size 11 -Brush "BrushMuted"
+        $count = New-WinToolText -Text " " -Size 9.5 -Brush "BrushMuted"
         $count.VerticalAlignment = "Center"
         $count.Margin = [System.Windows.Thickness]::new(0, 0, 2, 0)
         [System.Windows.Controls.Grid]::SetColumn($count, 1)
@@ -73,7 +74,6 @@ function Initialize-WinToolTweakView {
             $script:WinToolState.TweakRows += $row
         }
         $card.Child = $stack
-        [void]$hostPanel.Children.Add($card)
         $script:WinToolState.TweakGroups += [pscustomobject]@{
             Name = $categoryName
             Card = $card
@@ -82,14 +82,17 @@ function Initialize-WinToolTweakView {
         }
     }
     Update-WinToolTweakCount
-    Update-WinToolTweakLayout -Width 1000
+    Update-WinToolTweakLayout -Width 992
 
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakSearch") -EventName "TextChanged" -Name "Tweaks: search" -Action {
         Sync-WinToolSearchHint -BoxName "TweakSearch" -HintName "TweakSearchHint"
         Update-WinToolTweakFilter
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ViewTweaks") -EventName "SizeChanged" -Name "Tweaks: layout" -Action {
-        Update-WinToolTweakLayout -Width ((Get-WinToolUi -Name "ViewTweaks").ActualWidth - 40)
+        Update-WinToolTweakLayout -Width (Get-WinToolTweakWidth)
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakScroll") -EventName "SizeChanged" -Name "Tweaks: layout (list)" -Action {
+        Update-WinToolTweakLayout -Width (Get-WinToolTweakWidth)
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "NavTweaks") -EventName "Checked" -Name "Tweaks: read current state" -Action {
         if (-not $script:WinToolState.TweakStateRead) {
@@ -103,73 +106,65 @@ function New-WinToolTweakRow {
         $Tweak,
         [string]$CategoryName
     )
-    # One line: name, Safe or Caution pill, an info mark with the details,
-    # and an on/off switch that changes Windows right away.
+    # One 24 px line: a green (Safe) or amber (Caution) dot, the name, an
+    # info mark with the details, and an on/off switch that changes Windows
+    # right away.
     $panel = New-Object System.Windows.Controls.Border
     $panel.BorderThickness = [System.Windows.Thickness]::new(0, 1, 0, 0)
     $panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
-    $panel.Height = 40
+    $panel.Height = 24
     $panel.Background = [System.Windows.Media.Brushes]::Transparent
     $grid = New-Object System.Windows.Controls.Grid
+    $grid.ColumnDefinitions.Add((New-WinToolColumn -Auto))
     $grid.ColumnDefinitions.Add((New-WinToolColumn))
-    $infoColumn = New-Object System.Windows.Controls.ColumnDefinition
-    $infoColumn.Width = [System.Windows.GridLength]::new(70)
-    $grid.ColumnDefinitions.Add($infoColumn)
+    $grid.ColumnDefinitions.Add((New-WinToolColumn -Auto))
     $grid.ColumnDefinitions.Add((New-WinToolColumn -Auto))
 
-    $title = New-Object System.Windows.Controls.StackPanel
-    $title.Orientation = "Horizontal"
-    $title.VerticalAlignment = "Center"
-    $title.Margin = [System.Windows.Thickness]::new(2, 0, 8, 0)
-    $name = New-WinToolText -Text ([string]$Tweak.name) -Size 12
-    $name.TextTrimming = "CharacterEllipsis"
-    $name.VerticalAlignment = "Center"
-    [void]$title.Children.Add($name)
     $risk = [string](Get-WinToolNote -Object $Tweak -Name "risk" -Default "safe")
-    $pill = New-Object System.Windows.Controls.Border
-    $pill.CornerRadius = [System.Windows.CornerRadius]::new(8)
-    $pill.Height = 16
-    $pill.Padding = [System.Windows.Thickness]::new(7, 0, 7, 0)
-    $pill.Margin = [System.Windows.Thickness]::new(12, 0, 0, 0)
-    $pill.VerticalAlignment = "Center"
-    $pillText = New-Object System.Windows.Controls.TextBlock
-    $pillText.FontSize = 9
-    $pillText.VerticalAlignment = "Center"
+    $dot = New-Object System.Windows.Shapes.Ellipse
+    $dot.Width = 6
+    $dot.Height = 6
+    $dot.VerticalAlignment = "Center"
+    $dot.Margin = [System.Windows.Thickness]::new(3, 0, 7, 0)
     if ($risk -eq "caution") {
-        $pillText.Text = "Caution"
-        $pill.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushWarnSoft")
-        $pillText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushWarn")
+        $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushWarn")
+        $dot.ToolTip = "Caution: read the details before turning this on."
     }
     else {
-        $pillText.Text = "Safe"
-        $pill.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushOkSoft")
-        $pillText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushOk")
+        $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushOk")
+        $dot.ToolTip = "Safe"
     }
-    $pill.Child = $pillText
-    [void]$title.Children.Add($pill)
-    [void]$grid.Children.Add($title)
+    [void]$grid.Children.Add($dot)
+
+    $name = New-WinToolText -Text ([string]$Tweak.name) -Size 10.5
+    $name.TextTrimming = "CharacterEllipsis"
+    $name.VerticalAlignment = "Center"
+    $name.Margin = [System.Windows.Thickness]::new(0, 0, 6, 0)
+    $name.ToolTip = [string]$Tweak.name
+    [System.Windows.Controls.Grid]::SetColumn($name, 1)
+    [void]$grid.Children.Add($name)
 
     $info = New-Object System.Windows.Controls.TextBlock
     $info.Text = [string][char]0xE946
     $info.FontFamily = [System.Windows.Media.FontFamily]::new("Segoe MDL2 Assets")
-    $info.FontSize = 11
+    $info.FontSize = 10
     $info.VerticalAlignment = "Center"
-    $info.HorizontalAlignment = "Left"
+    $info.Margin = [System.Windows.Thickness]::new(0, 0, 8, 0)
     $info.Cursor = [System.Windows.Input.Cursors]::Help
     $info.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushHint")
     $info.ToolTip = [string]$Tweak.description
     [System.Windows.Controls.ToolTipService]::SetInitialShowDelay($info, 150)
-    [System.Windows.Controls.Grid]::SetColumn($info, 1)
+    [System.Windows.Controls.Grid]::SetColumn($info, 2)
     [void]$grid.Children.Add($info)
 
     $toggle = New-Object System.Windows.Controls.CheckBox
-    $toggle.Style = $script:WinToolWindow.FindResource("SwitchToggle")
+    $toggle.Style = $script:WinToolWindow.FindResource("SwitchToggleSmall")
     $toggle.VerticalAlignment = "Center"
-    $toggle.Margin = [System.Windows.Thickness]::new(0, 0, 4, 0)
+    $toggle.Margin = [System.Windows.Thickness]::new(0, 0, 2, 0)
     $toggle.IsChecked = $false
     $toggle.ToolTip = "Off"
     [System.Windows.Automation.AutomationProperties]::SetName($toggle, [string]$Tweak.name)
-    [System.Windows.Controls.Grid]::SetColumn($toggle, 2)
+    [System.Windows.Controls.Grid]::SetColumn($toggle, 3)
     [void]$grid.Children.Add($toggle)
     $panel.Child = $grid
 
@@ -191,49 +186,64 @@ function New-WinToolTweakRow {
     return $row
 }
 
+function Get-WinToolTweakWidth {
+    $scroll = Get-WinToolUi -Name "TweakScroll"
+    if ($null -ne $scroll -and $scroll.ViewportWidth -gt 0) {
+        return [double]$scroll.ViewportWidth
+    }
+    return ((Get-WinToolUi -Name "ViewTweaks").ActualWidth - 40)
+}
+
 function Update-WinToolTweakLayout {
     param(
         [double]$Width
     )
-    # Two columns of cards side by side; one column under about 1000 px.
+    # Masonry: as many columns as fit at 300 px (3 at 1280, more when wider),
+    # each card goes into the shortest column so no column runs far longer.
     if ($Width -le 0) {
         return
     }
+    $columns = Get-WinToolColumnCount -Width $Width -MinWidth 300 -Gap 12
+    $script:WinToolState.TweakWidth = $Width
+    $script:WinToolState.TweakColumns = $columns
+    $script:WinToolState.TweakTwoColumns = ($columns -gt 1)
     $grid = Get-WinToolUi -Name "TweakCategories"
-    $two = ($Width -ge 712)
-    $script:WinToolState.TweakTwoColumns = $two
-    $visible = @($script:WinToolState.TweakGroups | Where-Object { $_.Card.Visibility -eq "Visible" })
-    $perRow = 1
-    if ($two) { $perRow = 2 }
-    $rowCount = [int][Math]::Ceiling($visible.Count / [double]$perRow)
-    while ($grid.RowDefinitions.Count -lt [Math]::Max(1, $rowCount)) {
-        $definition = New-Object System.Windows.Controls.RowDefinition
-        $definition.Height = [System.Windows.GridLength]::Auto
-        $grid.RowDefinitions.Add($definition)
-    }
-    for ($index = 0; $index -lt $visible.Count; $index++) {
-        $card = $visible[$index].Card
-        if ($two) {
-            [System.Windows.Controls.Grid]::SetRow($card, [int][Math]::Floor($index / 2))
-            [System.Windows.Controls.Grid]::SetColumn($card, ($index % 2) * 2)
-            [System.Windows.Controls.Grid]::SetColumnSpan($card, 1)
+    foreach ($column in @($grid.Children)) { $column.Children.Clear() }
+    $grid.Children.Clear()
+    $grid.ColumnDefinitions.Clear()
+    $panels = New-Object System.Collections.Generic.List[object]
+    $heights = New-Object System.Collections.Generic.List[double]
+    for ($index = 0; $index -lt $columns; $index++) {
+        if ($index -gt 0) {
+            $gap = New-Object System.Windows.Controls.ColumnDefinition
+            $gap.Width = [System.Windows.GridLength]::new(12)
+            $grid.ColumnDefinitions.Add($gap)
         }
-        else {
-            [System.Windows.Controls.Grid]::SetRow($card, $index)
-            [System.Windows.Controls.Grid]::SetColumn($card, 0)
-            [System.Windows.Controls.Grid]::SetColumnSpan($card, 3)
+        $grid.ColumnDefinitions.Add((New-WinToolColumn))
+        $panel = New-Object System.Windows.Controls.StackPanel
+        [System.Windows.Controls.Grid]::SetColumn($panel, $grid.ColumnDefinitions.Count - 1)
+        [void]$grid.Children.Add($panel)
+        $panels.Add($panel)
+        $heights.Add(0)
+    }
+    foreach ($group in @($script:WinToolState.TweakGroups)) {
+        if ($group.Card.Visibility -ne "Visible") { continue }
+        $shortest = 0
+        for ($index = 1; $index -lt $heights.Count; $index++) {
+            if ($heights[$index] -lt $heights[$shortest]) { $shortest = $index }
         }
+        [void]$panels[$shortest].Children.Add($group.Card)
+        $rows = @($group.Rows | Where-Object { $_.Panel.Visibility -eq "Visible" }).Count
+        $heights[$shortest] = $heights[$shortest] + 36 + 24 * $rows + 12 + 12
     }
-    $right = Get-WinToolUi -Name "TweakColumnRight"
-    $gap = Get-WinToolUi -Name "TweakColumnGap"
-    if ($two) {
-        $right.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
-        $gap.Width = [System.Windows.GridLength]::new(15)
-    }
-    else {
-        $right.Width = [System.Windows.GridLength]::new(0)
-        $gap.Width = [System.Windows.GridLength]::new(0)
-    }
+}
+
+function Get-WinToolTweakCardColumn {
+    param($Group)
+    # Which masonry column (0, 1, 2...) holds a category card.
+    $parent = $Group.Card.Parent
+    if ($null -eq $parent) { return -1 }
+    return [int]([System.Windows.Controls.Grid]::GetColumn($parent) / 2)
 }
 
 function Update-WinToolTweakCount {
@@ -472,8 +482,9 @@ function Update-WinToolTweakFilter {
             $group.Card.Visibility = "Visible"
         }
     }
-    $width = 1000
-    if ($script:WinToolState.TweakTwoColumns -eq $false) { $width = 600 }
+    $width = [double]$script:WinToolState.TweakWidth
+    if ($width -le 0) { $width = Get-WinToolTweakWidth }
+    if ($width -le 0) { $width = 992 }
     Update-WinToolTweakLayout -Width $width
     $empty = Get-WinToolUi -Name "TweakEmpty"
     if ($any) {

@@ -79,15 +79,15 @@
     <!-- Pill chips: filters on Install (radio) and presets on Tweaks (button). -->
     <Style x:Key="ChipRadio" TargetType="RadioButton">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-      <Setter Property="FontSize" Value="11"/>
-      <Setter Property="Height" Value="24"/>
-      <Setter Property="Margin" Value="0,2,6,2"/>
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="Height" Value="22"/>
+      <Setter Property="Margin" Value="0,0,4,0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="12" Padding="11,0">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="11" Padding="8,0">
               <ContentPresenter VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -105,14 +105,14 @@
     </Style>
     <Style x:Key="ChipButton" TargetType="Button">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-      <Setter Property="FontSize" Value="11"/>
-      <Setter Property="Height" Value="24"/>
-      <Setter Property="Margin" Value="0,0,6,0"/>
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="Height" Value="22"/>
+      <Setter Property="Margin" Value="0,0,4,0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="12" Padding="11,0">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="11" Padding="8,0">
               <ContentPresenter VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -177,7 +177,31 @@
         </Setter.Value>
       </Setter>
     </Style>
-
+    <!-- The compact 30 x 15 switch used on each tweak row. -->
+    <Style x:Key="SwitchToggleSmall" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Grid Width="30" Height="15" Background="Transparent">
+              <Border x:Name="Track" CornerRadius="7.5" Background="{DynamicResource BrushInputBorder}"/>
+              <Ellipse x:Name="Knob" Width="11" Height="11" Fill="White" HorizontalAlignment="Left" Margin="2,0,0,0"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+                <Setter TargetName="Knob" Property="Margin" Value="0,0,2,0"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
 
     <Style x:Key="NavButton" TargetType="RadioButton">
       <Setter Property="Foreground" Value="{DynamicResource BrushSidebarText}"/>
@@ -495,24 +519,27 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
-          <TextBlock Grid.Row="0" Margin="20,19,20,0" Text="Install" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-          <Grid Grid.Row="1" Margin="20,9,20,0">
+          <TextBlock Grid.Row="0" Margin="20,15,20,0" Text="Install" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+          <Grid Grid.Row="1" Margin="20,7,20,0">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="300"/>
+              <ColumnDefinition Width="220"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" VerticalAlignment="Top">
-              <TextBox x:Name="AppSearch" Style="{StaticResource PageSearch}" AutomationProperties.Name="Search apps"/>
-              <TextBlock x:Name="AppSearchHint" Text="Search apps&#x2026;" FontSize="12" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
+            <Grid Grid.Column="0" Height="26" VerticalAlignment="Top">
+              <TextBox x:Name="AppSearch" Style="{StaticResource PageSearch}" Height="26" FontSize="11" AutomationProperties.Name="Search apps"/>
+              <TextBlock x:Name="AppSearchHint" Text="Search apps&#x2026;" FontSize="11" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
             </Grid>
-            <WrapPanel x:Name="AppFilters" Grid.Column="1" Margin="15,0,8,0" VerticalAlignment="Top"/>
+            <!-- One row of chips that never wraps: it scrolls sideways (mouse wheel) when the window is narrow. -->
+            <ScrollViewer x:Name="AppFilterScroll" Grid.Column="1" Margin="12,0,8,0" Height="26" VerticalAlignment="Top" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+              <StackPanel x:Name="AppFilters" Orientation="Horizontal" VerticalAlignment="Center"/>
+            </ScrollViewer>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-              <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="28" Padding="0" Margin="0,0,6,0" FontFamily="Segoe MDL2 Assets" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
-              <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Content="Update all" ToolTip="Runs winget upgrade --all" MinWidth="100"/>
+              <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Height="26" Padding="10,0" FontSize="10" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
+              <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="26" Height="26" Padding="0" FontFamily="Segoe MDL2 Assets" FontSize="11" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
             </StackPanel>
           </Grid>
-          <StackPanel Grid.Row="2" Margin="20,8,20,0">
+          <StackPanel Grid.Row="2" Margin="20,6,20,0">
             <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." FontSize="11" Foreground="{DynamicResource BrushMuted}" Visibility="Collapsed" Margin="0,0,0,4"/>
             <Border x:Name="AppBulkBar" Visibility="Collapsed" Background="{DynamicResource BrushAccentSoft}" CornerRadius="8" Padding="12,6" Margin="0,0,0,4">
               <DockPanel LastChildFill="False">
@@ -537,36 +564,38 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
-          <TextBlock Grid.Row="0" Margin="20,19,20,0" Text="Tweaks" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-          <Grid Grid.Row="1" Margin="20,9,20,0">
+          <TextBlock Grid.Row="0" Margin="20,15,20,0" Text="Tweaks" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+          <Grid Grid.Row="1" Margin="20,7,20,0">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="300"/>
+              <ColumnDefinition Width="220"/>
               <ColumnDefinition Width="Auto"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0">
-              <TextBox x:Name="TweakSearch" Style="{StaticResource PageSearch}" AutomationProperties.Name="Search tweaks"/>
-              <TextBlock x:Name="TweakSearchHint" Text="Search tweaks&#x2026;" FontSize="12" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
+            <Grid Grid.Column="0" Height="26">
+              <TextBox x:Name="TweakSearch" Style="{StaticResource PageSearch}" Height="26" FontSize="11" AutomationProperties.Name="Search tweaks"/>
+              <TextBlock x:Name="TweakSearchHint" Text="Search tweaks&#x2026;" FontSize="11" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
             </Grid>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,12,0">
-              <TextBlock Text="Presets:" FontSize="11" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,9,0"/>
-              <WrapPanel x:Name="TweakPresets" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,12,0">
+              <TextBlock Text="Presets:" FontSize="10" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <StackPanel x:Name="TweakPresets" Orientation="Horizontal" VerticalAlignment="Center"/>
             </StackPanel>
-            <TextBlock x:Name="TweakRestoreNote" Grid.Column="2" Text="Restore point is created before the first change" FontSize="11" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            <TextBlock x:Name="TweakRestoreNote" Grid.Column="2" Text="Restore point is created before the first change" FontSize="10" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
           </Grid>
-          <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,14,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,10,20,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
               <TextBlock x:Name="TweakEmpty" Text="No tweaks match that search." Foreground="{DynamicResource BrushMuted}" Margin="0,8,0,0" Visibility="Collapsed"/>
-              <Grid x:Name="TweakCategories">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition x:Name="TweakColumnLeft" Width="*"/>
-                  <ColumnDefinition x:Name="TweakColumnGap" Width="15"/>
-                  <ColumnDefinition x:Name="TweakColumnRight" Width="*"/>
-                </Grid.ColumnDefinitions>
-              </Grid>
+              <!-- Masonry columns, built in code from the available width. -->
+              <Grid x:Name="TweakCategories"/>
             </StackPanel>
           </ScrollViewer>
+          <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,2,20,4">
+            <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushOk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBlock Text="Safe" FontSize="9.5" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushWarn}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBlock Text="Caution" FontSize="9.5" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
+          </StackPanel>
         </Grid>
 
         <ScrollViewer x:Name="ViewTerminal" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">

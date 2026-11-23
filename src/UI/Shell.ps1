@@ -553,6 +553,9 @@ function New-WinToolWindow {
         TweakQueue = $null
         TweakStateRead = $false
         TweakTwoColumns = $true
+        TweakColumns = 3
+        TweakWidth = 0
+        AppColumns = 5
         RestorePointDone = $false
         AppFilter = "all"
         AppStartApps = @()
