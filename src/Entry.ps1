@@ -48,6 +48,11 @@ function Start-WinTool {
         }
         if (-not $script:WinToolUnattended -and (Test-WinToolAlreadyRunning)) {
             Write-Host "WinTool is already open. Its window was brought to the front."
+            # A hidden second launch must not leave its console to appear as
+            # this process exits. A console the user can see stays as it is.
+            if ((Get-WinToolCurrentConsoleMode) -eq "hide" -and -not (Test-WinToolConsoleIsVisible)) {
+                Remove-WinToolHiddenConsole
+            }
             Exit-WinToolOwnedHost
             return
         }

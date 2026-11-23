@@ -4,6 +4,12 @@
 # WinTool is a window app, so the PowerShell console that starts it is hidden
 # once the window is on screen. -ShowConsole (or WINTOOL_SHOW_CONSOLE=1) keeps
 # it visible for debugging. Startup errors always bring the console back.
+# A console that was already hidden (powershell -WindowStyle Hidden -File, or
+# the hidden relaunch) is detached on close. Showing it and then exiting paints
+# a taskbar button for a moment. A console the user could already see, such as
+# irm | iex, is shown again and left open.
+$script:WinToolConsoleHidden = $false
+$script:WinToolConsoleRestore = $false
 
 function Test-WinToolShowConsole {
     if ($script:WinToolShowConsole) {
@@ -95,6 +101,70 @@ public static class WinToolConsoleApi
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int GetClassName(IntPtr handle, StringBuilder buffer, int maxCount);
 
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongW", SetLastError = true)]
+    private static extern int GetWindowLongW(IntPtr handle, int index);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongW", SetLastError = true)]
+    private static extern int SetWindowLongW(IntPtr handle, int index, int value);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetWindowPos(IntPtr handle, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool FreeConsole();
+
+    const int ExStyleIndex = -20;
+    const int ToolWindowStyle = 0x80;
+    const int AppWindowStyle = 0x40000;
+    const uint FrameChanged = 0x0037;
+    static int savedExStyle;
+    static bool savedExStyleReady;
+
+    static void ApplyExStyle(IntPtr handle, int value)
+    {
+        SetWindowLongW(handle, ExStyleIndex, value);
+        SetWindowPos(handle, IntPtr.Zero, 0, 0, 0, 0, FrameChanged);
+    }
+
+    public static void KeepOffTaskbar(IntPtr handle)
+    {
+        if (handle == IntPtr.Zero) { return; }
+        int ex = GetWindowLongW(handle, ExStyleIndex);
+        if (!savedExStyleReady)
+        {
+            savedExStyle = ex;
+            savedExStyleReady = true;
+        }
+        int updated = (ex | ToolWindowStyle) & ~AppWindowStyle;
+        if (updated != ex) { ApplyExStyle(handle, updated); }
+    }
+
+    public static void RestoreTaskbarStyle(IntPtr handle)
+    {
+        if (handle == IntPtr.Zero) { return; }
+        int ex;
+        if (savedExStyleReady) { ex = savedExStyle; }
+        else
+        {
+            ex = GetWindowLongW(handle, ExStyleIndex);
+            ex = (ex & ~ToolWindowStyle) | AppWindowStyle;
+        }
+        ApplyExStyle(handle, ex);
+    }
+
+    public static void DetachHiddenConsole()
+    {
+        FreeConsole();
+        try
+        {
+            Console.SetOut(System.IO.TextWriter.Null);
+            Console.SetError(System.IO.TextWriter.Null);
+        }
+        catch
+        {
+        }
+    }
+
     public static IntPtr FindWinToolWindow()
     {
         IntPtr found = IntPtr.Zero;
@@ -126,9 +196,38 @@ public static class WinToolConsoleApi
 "@
 }
 
+function Test-WinToolConsoleIsVisible {
+    if (-not (Initialize-WinToolConsoleApi)) {
+        return $false
+    }
+    try {
+        $handle = [WinToolConsoleApi]::GetConsoleWindow()
+        if ($handle -eq [IntPtr]::Zero) {
+            return $false
+        }
+        return [bool][WinToolConsoleApi]::IsWindowVisible($handle)
+    }
+    catch {
+        return $false
+    }
+}
+
+function Test-WinToolConsoleShouldRestore {
+    # Only a console the user was already looking at comes back. WinTool's own
+    # hidden process exits instead, so restoring it would flash the taskbar.
+    if ((Get-WinToolCurrentConsoleMode) -eq "show") {
+        return $false
+    }
+    if (Test-WinToolOwnedHost) {
+        return $false
+    }
+    return [bool]$script:WinToolConsoleRestore
+}
+
 function Set-WinToolConsoleVisible {
     param(
-        [Parameter(Mandatory = $true)][bool]$Visible
+        [Parameter(Mandatory = $true)][bool]$Visible,
+        [switch]$Force
     )
     if (-not (Initialize-WinToolConsoleApi)) {
         return $false
@@ -138,12 +237,23 @@ function Set-WinToolConsoleVisible {
         if ($handle -eq [IntPtr]::Zero) {
             return $false
         }
-        $command = 0
         if ($Visible) {
-            $command = 5
+            if (-not $Force -and -not (Test-WinToolConsoleShouldRestore)) {
+                return $true
+            }
+            [WinToolConsoleApi]::RestoreTaskbarStyle($handle)
+            $null = [WinToolConsoleApi]::ShowWindow($handle, 5)
+            $script:WinToolConsoleHidden = $false
+            return $true
         }
-        $null = [WinToolConsoleApi]::ShowWindow($handle, $command)
-        $script:WinToolConsoleHidden = -not $Visible
+        # Remember a console that was actually on screen. A later hide, after
+        # it is already hidden, must not clear that.
+        if ([WinToolConsoleApi]::IsWindowVisible($handle)) {
+            $script:WinToolConsoleRestore = $true
+        }
+        [WinToolConsoleApi]::KeepOffTaskbar($handle)
+        $null = [WinToolConsoleApi]::ShowWindow($handle, 0)
+        $script:WinToolConsoleHidden = $true
         return $true
     }
     catch {
@@ -159,7 +269,32 @@ function Hide-WinToolConsole {
 }
 
 function Show-WinToolConsole {
-    if ($script:WinToolConsoleHidden -or $env:WINTOOL_HIDDEN -eq "1") {
-        $null = Set-WinToolConsoleVisible -Visible $true
+    # Errors must be readable even when the console started hidden.
+    $null = Set-WinToolConsoleVisible -Visible $true -Force
+}
+
+function Remove-WinToolHiddenConsole {
+    # Drop a console this process is about to destroy, while the WinTool
+    # window is still up, so Windows cannot put it on the taskbar.
+    if (Test-WinToolConsoleShouldRestore) {
+        return
     }
+    if ((Get-WinToolCurrentConsoleMode) -eq "show") {
+        return
+    }
+    if (-not (Initialize-WinToolConsoleApi)) {
+        return
+    }
+    try {
+        $handle = [WinToolConsoleApi]::GetConsoleWindow()
+        if ($handle -ne [IntPtr]::Zero) {
+            [WinToolConsoleApi]::KeepOffTaskbar($handle)
+            $null = [WinToolConsoleApi]::ShowWindow($handle, 0)
+        }
+        [WinToolConsoleApi]::DetachHiddenConsole()
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    $script:WinToolConsoleHidden = $false
 }

@@ -219,6 +219,7 @@ function Complete-WinToolNavTiming {
         [Parameter(Mandatory = $true)][string]$Name,
         [Parameter(Mandatory = $true)][long]$Stamp
     )
+    if ($script:WinToolShuttingDown) { return }
     if ([int64]$script:WinToolState.NavStamp -ne [int64]$Stamp) { return }
     Update-WinToolNavPill -Animate $true
     if ($Name -eq "Config") {
@@ -239,6 +240,7 @@ function Complete-WinToolNavFollowUp {
     param(
         [Parameter(Mandatory = $true)][string]$Name
     )
+    if ($script:WinToolShuttingDown) { return }
     if ([string]$script:WinToolState.ActiveView -ne $Name) { return }
     if ($Name -eq "Tweaks" -or $Name -eq "Config") {
         Start-WinToolTweakStateRead
@@ -264,6 +266,7 @@ function Start-WinToolNavWarmup {
 }
 
 function Invoke-WinToolNavWarmupStep {
+    if ($script:WinToolShuttingDown) { return }
     $pending = @($script:WinToolState.WarmViews)
     if ($pending.Count -eq 0) { return }
     $name = [string]$pending[0]
@@ -290,6 +293,7 @@ function Switch-WinToolView {
     param(
         [Parameter(Mandatory = $true)][string]$Name
     )
+    if ($script:WinToolShuttingDown) { return }
     # The click only changes which page is on top. A page that has been shown
     # stays Visible at opacity 0, because collapsing it throws its layout away
     # and the next visit measures the whole tree inside the click.
@@ -722,6 +726,8 @@ function Stop-WinToolRun {
 }
 
 function Update-WinToolLogPump {
+    # A tick already queued when the window closes must not activate it again.
+    if ($script:WinToolShuttingDown) { return }
     if ($null -ne $script:WinToolActivateEvent) {
         try {
             if ($script:WinToolActivateEvent.WaitOne(0) -and $null -ne $script:WinToolWindow) {
@@ -878,13 +884,35 @@ function Initialize-WinToolShellEvent {
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Closing" -Name "Close WinTool" -Action {
         $uiEvent = $args[1]
-        if ($script:WinToolState.Busy) {
-            $ok = Request-WinToolConfirmation -Message "A task is still running. Stop it and close WinTool?" -Title "WinTool is busy"
-            if (-not $ok) {
-                $uiEvent.Cancel = $true
-                return
+        try {
+            if ($script:WinToolState.Busy) {
+                $ok = Request-WinToolConfirmation -Message "A task is still running. Stop it and close WinTool?" -Title "WinTool is busy"
+                if (-not $ok) {
+                    $uiEvent.Cancel = $true
+                    return
+                }
+                Stop-WinToolRun
             }
-            Stop-WinToolRun
+            $script:WinToolShuttingDown = $true
+            Stop-WinToolBackgroundWork
+            # The window test closes a window it built itself. Leave that
+            # process, and a console the user was using, alone.
+            if (-not $script:WinToolSessionExit) { return }
+            if (Test-WinToolConsoleShouldRestore) { return }
+            if ((Get-WinToolCurrentConsoleMode) -eq "show") { return }
+            # Kill tracked children and detach the hidden console before this
+            # window is destroyed. Otherwise Windows shows the console, then
+            # the process exits and the taskbar button disappears again.
+            Stop-WinToolChildProcess
+            Remove-WinToolHiddenConsole
+            Exit-WinToolSingleInstance
+            [Environment]::Exit(0)
+        }
+        catch {
+            $null = $_.Exception.Message
+            if ($script:WinToolSessionExit -and -not (Test-WinToolConsoleShouldRestore) -and (Get-WinToolCurrentConsoleMode) -ne "show") {
+                try { [Environment]::Exit(1) } catch { $null = $_.Exception.Message }
+            }
         }
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Closed" -Name "Window closed" -Action {
@@ -970,6 +998,8 @@ function New-WinToolWindow {
         HomeCleanJob = $null
         TweakRequestStarted = $false
     }
+    $script:WinToolShuttingDown = $false
+    $script:WinToolSessionExit = $false
 
     $xaml = Get-WinToolPayloadText -Name "Xaml"
     [xml]$document = $xaml
@@ -1229,13 +1259,25 @@ function Exit-WinToolSingleInstance {
 }
 
 function Show-WinToolWindow {
+    # Hide before the window exists, including when a test host calls this
+    # directly. A second hide later does not forget a console that was visible.
+    if ((Get-WinToolCurrentConsoleMode) -eq "hide") {
+        Hide-WinToolConsole
+    }
     if (-not (Enter-WinToolSingleInstance)) {
+        if (Test-WinToolConsoleShouldRestore) {
+            $null = Set-WinToolConsoleVisible -Visible $true
+        }
+        else {
+            Remove-WinToolHiddenConsole
+        }
         Exit-WinToolOwnedHost
         return
     }
     $closedNormally = $false
     try {
         $window = New-WinToolWindow
+        $script:WinToolSessionExit = $true
         Enable-WinToolLogPump
         Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Hide the console" -Action { Hide-WinToolConsole }
         $null = $window.ShowDialog()
@@ -1244,16 +1286,15 @@ function Show-WinToolWindow {
     finally {
         Stop-WinToolBackgroundWork
         Exit-WinToolSingleInstance
-        # Give a console the user opened back to them. A hidden relaunch is
-        # WinTool's own process: end it and everything it started, so no
-        # hidden powershell.exe is left behind.
-        # After a startup error the failure screen runs first and exits itself.
-        if ($closedNormally -and (Test-WinToolOwnedHost)) {
-            Stop-WinToolChildProcess
-            [Environment]::Exit(0)
-        }
-        if ($script:WinToolConsoleHidden) {
+        # Closing already detached a hidden console and ended that process.
+        # This runs when the console belongs to the user, or when Closing did
+        # not exit. Never show a console that was hidden before WinTool opened.
+        if ($closedNormally -and (Test-WinToolConsoleShouldRestore)) {
             $null = Set-WinToolConsoleVisible -Visible $true
+        }
+        elseif ($closedNormally -and (Get-WinToolCurrentConsoleMode) -ne "show") {
+            Remove-WinToolHiddenConsole
+            [Environment]::Exit(0)
         }
     }
 }

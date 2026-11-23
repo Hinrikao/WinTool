@@ -638,6 +638,39 @@ Invoke-WinToolCase -Name "The console hides unless asked to stay" -Body {
     $hideAt = $entry.IndexOf("Hide-WinToolConsole")
     $showAt = $entry.IndexOf("Show-WinToolWindow")
     Test-WinToolExpectation -Condition ($hideAt -gt 0 -and $hideAt -lt $showAt) -Message "The console hides before the window is built."
+    $savedShow = $script:WinToolShowConsole
+    $savedUnattended = $script:WinToolUnattended
+    $savedRestore = $script:WinToolConsoleRestore
+    $savedHiddenFlag = $env:WINTOOL_HIDDEN
+    $savedShowFlag = $env:WINTOOL_SHOW_CONSOLE
+    $savedTerminal = $env:WT_SESSION
+    try {
+        $script:WinToolShowConsole = $false
+        $script:WinToolUnattended = $false
+        $env:WINTOOL_SHOW_CONSOLE = $null
+        $env:WT_SESSION = $null
+        $env:WINTOOL_HIDDEN = $null
+        $script:WinToolConsoleRestore = $false
+        Test-WinToolExpectation -Condition (-not (Test-WinToolConsoleShouldRestore)) -Message "A console that started hidden is not shown on close."
+        $script:WinToolConsoleRestore = $true
+        Test-WinToolExpectation -Condition (Test-WinToolConsoleShouldRestore) -Message "A console the user could see is restored on close."
+        $env:WINTOOL_HIDDEN = "1"
+        Test-WinToolExpectation -Condition (-not (Test-WinToolConsoleShouldRestore)) -Message "A hidden relaunch does not show a console on close."
+        $script:WinToolShowConsole = $true
+        $env:WINTOOL_HIDDEN = $null
+        Test-WinToolExpectation -Condition (-not (Test-WinToolConsoleShouldRestore)) -Message "-ShowConsole is left alone on close."
+    }
+    finally {
+        $script:WinToolShowConsole = $savedShow
+        $script:WinToolUnattended = $savedUnattended
+        $script:WinToolConsoleRestore = $savedRestore
+        $env:WINTOOL_HIDDEN = $savedHiddenFlag
+        $env:WINTOOL_SHOW_CONSOLE = $savedShowFlag
+        $env:WT_SESSION = $savedTerminal
+    }
+    $shell = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/Shell.ps1"))
+    Test-WinToolExpectation -Condition ($shell.Contains("Remove-WinToolHiddenConsole") -and $shell.Contains("WinToolShuttingDown")) -Message "Close detaches a hidden console and ignores queued UI work."
+    Test-WinToolExpectation -Condition (-not $shell.Contains('if ($script:WinToolConsoleHidden)')) -Message "Close does not show the console just because it was hidden."
     $launcher = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "wintool.ps1"))
     Test-WinToolExpectation -Condition ($launcher.Contains('[switch]$ShowConsole')) -Message "wintool.ps1 accepts -ShowConsole."
 }

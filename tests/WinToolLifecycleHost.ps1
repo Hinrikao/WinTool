@@ -12,10 +12,24 @@
 #>
 param(
     [Parameter(Mandatory = $true)][string]$Marker,
-    [int]$CloseAfterSeconds = 8
+    [int]$CloseAfterSeconds = 8,
+    [string]$Log = "",
+    [switch]$OwnedHost,
+    [switch]$CloseAfterShown
 )
 $ErrorActionPreference = "Stop"
-$env:WINTOOL_HIDDEN = "1"
+# -OwnedHost is the hidden relaunch (WINTOOL_HIDDEN=1). Without it, this is
+# powershell -WindowStyle Hidden -File, the launch that flashed a taskbar button.
+if ($OwnedHost) {
+    $env:WINTOOL_HIDDEN = "1"
+}
+$script:LifecycleLog = $Log
+trap {
+    if (-not [string]::IsNullOrWhiteSpace($script:LifecycleLog)) {
+        try { [System.IO.File]::WriteAllText($script:LifecycleLog, ($_ | Out-String)) } catch { $null = $_.Exception.Message }
+    }
+    exit 1
+}
 
 $script:WinToolApplyProfile = $null
 $script:WinToolUnattended = $false
@@ -36,20 +50,31 @@ Add-Type -AssemblyName PresentationFramework
 $script:LifecycleStart = [DateTime]::UtcNow
 $script:LifecycleMarker = $Marker
 $script:LifecycleClose = $CloseAfterSeconds
+$script:LifecycleAfterShown = [bool]$CloseAfterShown
+$script:LifecycleShown = $null
 $timer = New-Object System.Windows.Threading.DispatcherTimer
 $timer.Interval = [TimeSpan]::FromMilliseconds(250)
 $timer.add_Tick({
         $window = $script:WinToolWindow
         if ($null -eq $window -or -not $window.IsVisible) { return }
         if (-not (Test-Path -LiteralPath $script:LifecycleMarker)) {
-            Set-Content -LiteralPath $script:LifecycleMarker -Value ([string]$PID)
+            [System.IO.File]::WriteAllText($script:LifecycleMarker, [string]$PID)
+            $script:LifecycleShown = [DateTime]::UtcNow
         }
-        if (([DateTime]::UtcNow - $script:LifecycleStart).TotalSeconds -ge $script:LifecycleClose) {
+        $started = $script:LifecycleStart
+        if ($script:LifecycleAfterShown) {
+            $started = $script:LifecycleShown
+            if ($null -eq $started) { return }
+        }
+        if (([DateTime]::UtcNow - $started).TotalSeconds -ge $script:LifecycleClose) {
             $window.Close()
         }
     })
 $timer.Start()
 Show-WinToolWindow
-# Show-WinToolWindow ends a hidden relaunch with Environment.Exit(0), so this
-# line only runs if that did not happen.
-exit 3
+# A hidden launch ends in Environment.Exit before this line. Reaching it means
+# the process kept running after the window closed.
+if ($env:WINTOOL_HIDDEN -eq "1") {
+    exit 3
+}
+exit 0
