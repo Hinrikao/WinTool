@@ -669,9 +669,18 @@ if (-not [System.Windows.Documents.Typography]::GetStandardLigatures($previewSam
     throw "The live preview should draw font ligatures."
 }
 $themeLine = $null
-foreach ($themeItem in ($window.FindName("TerminalStyleList").Items | ForEach-Object { $_ })) {
-    $parts = @($themeItem.Content.Children | Where-Object { $_ -is [System.Windows.Controls.Border] })
-    if ($parts.Count -gt 0) { $themeLine = $parts[0].Child; break }
+$styleForLigature = $window.FindName("TerminalStyleList")
+$styleGenerator = $styleForLigature.ItemContainerGenerator
+for ($styleIndex = 0; $styleIndex -lt $styleForLigature.Items.Count; $styleIndex++) {
+    $styleContainer = $styleGenerator.ContainerFromIndex($styleIndex)
+    if ($null -eq $styleContainer) { continue }
+    foreach ($styleNode in @(Get-WinToolVisualChild -Root $styleContainer)) {
+        if ($styleNode -is [System.Windows.Controls.TextBlock] -and $styleNode.Inlines.Count -gt 0) {
+            $themeLine = $styleNode
+            break
+        }
+    }
+    if ($null -ne $themeLine) { break }
 }
 if ($null -ne $themeLine -and -not [System.Windows.Documents.Typography]::GetStandardLigatures($themeLine)) {
     throw "Theme previews should draw font ligatures."
@@ -746,6 +755,7 @@ Update-WinToolPromptSelection
 
 function Save-WinToolTerminalShot {
     param([string]$Name, [double]$Width, [double]$Height)
+    Update-WinToolTerminalPreview
     Complete-WinToolMotion
     Invoke-WinToolTerminalShotLayout -Width $Width -Height $Height
     Show-WinToolTerminalSelection

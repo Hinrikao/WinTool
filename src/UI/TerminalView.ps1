@@ -262,7 +262,7 @@ function Update-WinToolFontSample {
     if ($null -ne $list.SelectedItem) {
         $script:WinToolTerminalChoice.fontId = [string]$list.SelectedItem.Tag
     }
-    Update-WinToolTerminalPreview
+    Request-WinToolTerminalPreview
 }
 
 function Find-WinToolChildScrollViewer {
@@ -535,20 +535,30 @@ function Initialize-WinToolTerminalView {
         Start-WinToolSurfaceTiming -Name "Terminal Advanced"
         $script:WinToolTerminalMode = "advanced"
         Set-WinToolTerminalModeView
-        # Lists are built at startup. Rebuilding them is skipped when this
-        # engine, filter, and search are already showing.
+        # The lists and the preview are built at startup. When they already
+        # match the choice, the click only brings that page forward.
         $styleList = Get-WinToolUi -Name "TerminalStyleList"
+        $promptList = Get-WinToolUi -Name "TerminalPromptList"
         $promptNow = [string]$script:WinToolTerminalChoice.prompt
-        $listMismatch = ([string]$styleList.Tag -ne $promptNow -or [string]$script:WinToolThemeListKey -ne (Get-WinToolThemeListKey))
-        Update-WinToolPromptStyleList
-        if ($listMismatch) { Update-WinToolPromptSelection }
-        Update-WinToolExtraToggle
-        Update-WinToolFontSizeSelection
-        Sync-WinToolFontSelection
-        Update-WinToolSchemeSelection
-        Update-WinToolTerminalSummary
-        if ([string]$script:WinToolPreviewKey -ne (Get-WinToolPreviewKey)) {
-            Update-WinToolTerminalPreview
+        $styleNow = [string]$script:WinToolTerminalChoice.promptStyle
+        $listReady = (
+            [string]$styleList.Tag -eq $promptNow -and
+            [string]$script:WinToolThemeListKey -eq (Get-WinToolThemeListKey) -and
+            $null -ne $styleList.SelectedItem -and
+            [string]$styleList.SelectedItem.Tag -eq $styleNow -and
+            $null -ne $promptList.SelectedItem -and
+            [string]$promptList.SelectedItem.Tag -eq $promptNow -and
+            [string]$script:WinToolPreviewKey -eq (Get-WinToolPreviewKey)
+        )
+        if (-not $listReady) {
+            Update-WinToolPromptStyleList
+            Update-WinToolPromptSelection
+            Update-WinToolExtraToggle
+            Update-WinToolFontSizeSelection
+            Sync-WinToolFontSelection
+            Update-WinToolSchemeSelection
+            Update-WinToolTerminalSummary
+            Request-WinToolTerminalPreview
         }
         $script:WinToolTerminalScrollPending = $true
     }
@@ -559,10 +569,11 @@ function Initialize-WinToolTerminalView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalThemeSearch") -EventName "TextChanged" -Name "Terminal: theme search" -Action {
         Start-WinToolSurfaceTiming -Name "Terminal search"
         Sync-WinToolSearchHint -BoxName "TerminalThemeSearch" -HintName "TerminalThemeSearchHint"
+        $beforeStyle = [string]$script:WinToolTerminalChoice.promptStyle
         Update-WinToolPromptStyleList
-        Update-WinToolTerminalSummary
-        if ([string]$script:WinToolPreviewKey -ne (Get-WinToolPreviewKey)) {
-            Update-WinToolTerminalPreview
+        if ($beforeStyle -ne [string]$script:WinToolTerminalChoice.promptStyle) {
+            Update-WinToolTerminalSummary
+            Request-WinToolTerminalPreview
         }
     }
     foreach ($filterName in @("TerminalFilterAll", "TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd")) {
@@ -571,10 +582,11 @@ function Initialize-WinToolTerminalView {
             $null = $eventData
             Start-WinToolSurfaceTiming -Name ("Terminal " + [string]$source.Tag)
             $script:WinToolTerminalFilter = [string]$source.Tag
+            $beforeStyle = [string]$script:WinToolTerminalChoice.promptStyle
             Update-WinToolPromptStyleList
-            Update-WinToolTerminalSummary
-            if ([string]$script:WinToolPreviewKey -ne (Get-WinToolPreviewKey)) {
-                Update-WinToolTerminalPreview
+            if ($beforeStyle -ne [string]$script:WinToolTerminalChoice.promptStyle) {
+                Update-WinToolTerminalSummary
+                Request-WinToolTerminalPreview
             }
         }
     }
@@ -590,7 +602,7 @@ function Initialize-WinToolTerminalView {
         if ($null -ne $sizeBox.SelectedItem -and -not $script:WinToolTerminalSyncing) {
             Set-WinToolTerminalChoiceValue -Name "fontSize" -Value ([int]$sizeBox.SelectedItem.Tag)
             Update-WinToolTerminalSummary
-            Update-WinToolTerminalPreview
+            Request-WinToolTerminalPreview
         }
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalStyleList") -EventName "SelectionChanged" -Name "Terminal: choose prompt style" -Action {
@@ -598,7 +610,7 @@ function Initialize-WinToolTerminalView {
         # are not clicks: they must not copy other controls into the choice.
         if ($script:WinToolTerminalSyncing) { return }
         Update-WinToolTerminalSummary
-        Update-WinToolTerminalPreview
+        Request-WinToolTerminalPreview
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalPromptList") -EventName "SelectionChanged" -Name "Terminal: choose prompt" -Action {
         $list = Get-WinToolUi -Name "TerminalPromptList"
@@ -659,25 +671,24 @@ function Set-WinToolTerminalModeView {
         }
         return
     }
-    # Both stay laid out. The click only changes which one is on top.
+    # Both stay drawn at full opacity. The one underneath is covered by the
+    # opaque page on top, so showing it does not paint the tree again.
     $body.Visibility = "Visible"
     $simple.Visibility = "Visible"
+    $body.Opacity = 1
+    $simple.Opacity = 1
     if ($advanced) {
-        $body.Opacity = 1
         $body.IsHitTestVisible = $true
         $body.Focusable = $true
         [System.Windows.Controls.Panel]::SetZIndex($body, 2)
-        $simple.Opacity = 0
         $simple.IsHitTestVisible = $false
         $simple.Focusable = $false
         [System.Windows.Controls.Panel]::SetZIndex($simple, 0)
     }
     else {
-        $simple.Opacity = 1
         $simple.IsHitTestVisible = $true
         $simple.Focusable = $true
         [System.Windows.Controls.Panel]::SetZIndex($simple, 2)
-        $body.Opacity = 0
         $body.IsHitTestVisible = $false
         $body.Focusable = $false
         [System.Windows.Controls.Panel]::SetZIndex($body, 0)
@@ -884,6 +895,8 @@ function Reset-WinToolThemeListCache {
     $script:WinToolThemeRowCache = @{}
     $script:WinToolThemeItemCache = @{}
     $script:WinToolThemeListKey = ""
+    $script:WinToolThemeEntryPrompt = ""
+    $script:WinToolThemeView = $null
 }
 
 function Get-WinToolCachedThemeRow {
@@ -900,25 +913,100 @@ function Get-WinToolCachedThemeRow {
 }
 
 function Initialize-WinToolThemeEntryType {
-    # Plain objects, not ListBoxItems. The list virtualizes them, so a filter
-    # does not build a visual for every theme before the first frame.
+    # Plain objects, not ListBoxItems. A C# predicate filters them, so the
+    # click does not walk the catalog in PowerShell or build a row visual.
     if ($null -ne ("WinToolThemeEntry" -as [type])) { return }
     Add-Type -TypeDefinition @"
-using System.Collections.Generic;
-public class WinToolPreviewPiece {
-    public string Text { get; set; }
-    public string Brush { get; set; }
-    public string Fill { get; set; }
-}
+using System;
 public class WinToolThemeEntry {
     public string Tag { get; set; }
     public string Name { get; set; }
     public string Tip { get; set; }
     public string Nerd { get; set; }
     public string SampleVisible { get; set; }
-    public List<WinToolPreviewPiece> Preview { get; set; }
+    public string Hay { get; set; }
+    public int Powerline { get; set; }
+    public int NerdFont { get; set; }
+    public object PreviewImage { get; set; }
+}
+public class WinToolThemeFilter {
+    public string Mode;
+    public string Query;
+    private Predicate<object> match;
+    public WinToolThemeFilter() {
+        match = AllowObject;
+    }
+    public Predicate<object> GetMatch() {
+        return match;
+    }
+    private bool AllowObject(object item) {
+        return Allow(item as WinToolThemeEntry);
+    }
+    public bool Allow(WinToolThemeEntry entry) {
+        if (entry == null) return false;
+        if (Mode == "powerline" && entry.Powerline != 1) return false;
+        if (Mode == "minimal" && entry.Powerline != 2) return false;
+        if (Mode == "no-nerd" && entry.NerdFont != 2) return false;
+        if (string.IsNullOrWhiteSpace(Query)) return true;
+        if (string.IsNullOrEmpty(entry.Hay)) return false;
+        return entry.Hay.IndexOf(Query.Trim(), StringComparison.OrdinalIgnoreCase) >= 0;
+    }
 }
 "@
+}
+
+function New-WinToolPreviewImage {
+    param([object[]]$Segment)
+    # One frozen drawing per theme, built when the catalog is first read.
+    # The list then shows an Image instead of a text block per color.
+    $segments = @($Segment | Where-Object { $null -ne $_ -and -not [string]::IsNullOrEmpty([string]$_.Text) })
+    if ($segments.Count -eq 0) { return $null }
+    if ($null -eq $script:WinToolPreviewTypeface) {
+        $family = New-Object System.Windows.Media.FontFamily "Cascadia Mono, Consolas"
+        $script:WinToolPreviewTypeface = New-Object System.Windows.Media.Typeface(
+            $family,
+            [System.Windows.FontStyles]::Normal,
+            [System.Windows.FontWeights]::Normal,
+            [System.Windows.FontStretches]::Normal)
+    }
+    $group = New-Object System.Windows.Media.DrawingGroup
+    $x = 0.0
+    $emSize = 14.0
+    $culture = [System.Globalization.CultureInfo]::CurrentUICulture
+    foreach ($segment in $segments) {
+        $text = [string]$segment.Text
+        $color = [string]$segment.Foreground
+        if ([string]::IsNullOrWhiteSpace($color)) { $color = "#E8EDF7" }
+        $fg = ConvertTo-WinToolPreviewBrush -Color $color
+        if ($null -eq $fg) { continue }
+        $formatted = New-Object System.Windows.Media.FormattedText $text, $culture, ([System.Windows.FlowDirection]::LeftToRight), $script:WinToolPreviewTypeface, $emSize, $fg
+        $width = [Math]::Max(0.0, $formatted.WidthIncludingTrailingWhitespace)
+        $height = [Math]::Max(1.0, $formatted.Height)
+        $fillName = [string]$segment.Background
+        if (-not [string]::IsNullOrWhiteSpace($fillName)) {
+            $fill = ConvertTo-WinToolPreviewBrush -Color $fillName
+            if ($null -ne $fill) {
+                $rect = New-Object System.Windows.Media.RectangleGeometry ([System.Windows.Rect]::new($x, 0.0, $width, $height))
+                if ($rect.CanFreeze) { $rect.Freeze() }
+                $back = New-Object System.Windows.Media.GeometryDrawing $fill, $null, $rect
+                if ($back.CanFreeze) { $back.Freeze() }
+                [void]$group.Children.Add($back)
+            }
+        }
+        $geo = $formatted.BuildGeometry([System.Windows.Point]::new($x, 0.0))
+        if ($null -ne $geo) {
+            if ($geo.CanFreeze) { $geo.Freeze() }
+            $glyph = New-Object System.Windows.Media.GeometryDrawing $fg, $null, $geo
+            if ($glyph.CanFreeze) { $glyph.Freeze() }
+            [void]$group.Children.Add($glyph)
+        }
+        $x += $width
+    }
+    if ($group.Children.Count -eq 0) { return $null }
+    if ($group.CanFreeze) { $group.Freeze() }
+    $image = New-Object System.Windows.Media.DrawingImage $group
+    if ($image.CanFreeze) { $image.Freeze() }
+    return $image
 }
 
 function Get-WinToolCachedThemeEntry {
@@ -932,29 +1020,24 @@ function Get-WinToolCachedThemeEntry {
     if ($script:WinToolThemeItemCache.ContainsKey($id)) {
         return $script:WinToolThemeItemCache[$id]
     }
-    $pieces = New-Object System.Collections.Generic.List[WinToolPreviewPiece]
-    foreach ($segment in @($Row.Preview)) {
-        $piece = New-Object WinToolPreviewPiece
-        $piece.Text = [string]$segment.Text
-        $brush = [string]$segment.Foreground
-        if ([string]::IsNullOrWhiteSpace($brush)) { $brush = "#E8EDF7" }
-        $piece.Brush = $brush
-        $fill = [string]$segment.Background
-        if ([string]::IsNullOrWhiteSpace($fill)) { $fill = "Transparent" }
-        $piece.Fill = $fill
-        [void]$pieces.Add($piece)
-    }
     $entry = New-Object WinToolThemeEntry
     $entry.Tag = [string]$Row.Id
     $entry.Name = [string]$Row.Name
     $tip = [string]$Row.Id
     if (-not [string]::IsNullOrWhiteSpace([string]$Row.Description)) { $tip = ([string]$Row.Description + "`n" + $tip) }
     $entry.Tip = $tip
+    $entry.Hay = ([string]$Row.Name + " " + [string]$Row.Id + " " + [string]$Row.Description)
     $entry.Nerd = "Collapsed"
     if ($Row.NerdFont -eq $true) { $entry.Nerd = "Visible" }
+    $entry.Powerline = 0
+    if ($Row.Powerline -eq $true) { $entry.Powerline = 1 }
+    elseif ($Row.Powerline -eq $false) { $entry.Powerline = 2 }
+    $entry.NerdFont = 0
+    if ($Row.NerdFont -eq $true) { $entry.NerdFont = 1 }
+    elseif ($Row.NerdFont -eq $false) { $entry.NerdFont = 2 }
+    $entry.PreviewImage = New-WinToolPreviewImage -Segment @($Row.Preview)
     $entry.SampleVisible = "Collapsed"
-    if ($pieces.Count -gt 0) { $entry.SampleVisible = "Visible" }
-    $entry.Preview = $pieces
+    if ($null -ne $entry.PreviewImage) { $entry.SampleVisible = "Visible" }
     $script:WinToolThemeItemCache[$id] = $entry
     return $entry
 }
@@ -982,12 +1065,9 @@ function Update-WinToolPromptStyleList {
         }
         return
     }
-    $script:WinToolTerminalBodyKey = 0
     $wasSyncing = [bool]$script:WinToolTerminalSyncing
     $script:WinToolTerminalSyncing = $true
     try {
-        $list.Tag = $null
-        $list.ItemsSource = $null
         $query = [string](Get-WinToolUi -Name "TerminalThemeSearch").Text
         $note = Get-WinToolUi -Name "TerminalStyleNote"
         $filter = [string]$script:WinToolTerminalFilter
@@ -997,20 +1077,32 @@ function Update-WinToolPromptStyleList {
         (Get-WinToolUi -Name "TerminalThemeSearchHint").Text = ([string]$titles.Hint + [string][char]0x2026)
         $rows = @(Get-WinToolCachedThemeRow -PromptId $prompt)
         $script:WinToolTerminalRows = $rows
-        $shown = @(Select-WinToolThemeRow -Row $rows -Query $query -Filter $filter)
-        $entries = New-Object System.Collections.Generic.List[object]
+        if ([string]$script:WinToolThemeEntryPrompt -ne $prompt -or $null -eq $script:WinToolThemeView) {
+            Initialize-WinToolThemeEntryType
+            $entries = New-Object System.Collections.Generic.List[object]
+            foreach ($row in $rows) {
+                [void]$entries.Add((Get-WinToolCachedThemeEntry -Row $row -PromptId $prompt))
+            }
+            $script:WinToolThemeEntries = $entries
+            $script:WinToolThemeFilter = New-Object WinToolThemeFilter
+            $view = New-Object System.Windows.Data.ListCollectionView -ArgumentList $entries
+            $view.Filter = $script:WinToolThemeFilter.GetMatch()
+            $script:WinToolThemeView = $view
+            $script:WinToolThemeEntryPrompt = $prompt
+            $list.ItemsSource = $view
+        }
+        $script:WinToolThemeFilter.Mode = $filter
+        $script:WinToolThemeFilter.Query = $query
+        $script:WinToolThemeView.Refresh()
+        $wanted = [string]$script:WinToolTerminalChoice.promptStyle
         $chosen = $null
-        foreach ($row in $shown) {
-            $entry = Get-WinToolCachedThemeEntry -Row $row -PromptId $prompt
-            [void]$entries.Add($entry)
-            if ([string]$row.Id -eq [string]$script:WinToolTerminalChoice.promptStyle) { $chosen = $entry }
+        foreach ($entry in @($script:WinToolThemeEntries)) {
+            if ([string]$entry.Tag -eq $wanted -and $script:WinToolThemeFilter.Allow($entry)) { $chosen = $entry; break }
         }
-        $list.ItemsSource = $entries
         if ($null -ne $chosen) { $list.SelectedItem = $chosen }
-        (Get-WinToolUi -Name "TerminalThemeCount").Text = ([string]$shown.Count + " of " + [string]$rows.Count)
-        if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
-            $list.SelectedIndex = 0
-        }
+        elseif ($list.Items.Count -gt 0) { $list.SelectedIndex = 0 }
+        else { $list.SelectedIndex = -1 }
+        (Get-WinToolUi -Name "TerminalThemeCount").Text = ([string]$list.Items.Count + " of " + [string]$rows.Count)
         if ($list.Items.Count -eq 0) {
             $note.Visibility = "Visible"
             if ($rows.Count -eq 0) { $note.Text = "This prompt has its own default look. The font and extras still apply." }
@@ -1087,7 +1179,7 @@ function Build-WinToolExtraToggle {
         [void]$grid.Children.Add($text)
         Register-WinToolUiEvent -Control $box -EventName "Click" -Name "Terminal: extras" -Action {
             Update-WinToolTerminalSummary
-            Update-WinToolTerminalPreview
+            Request-WinToolTerminalPreview
         }
         $cell.Child = $grid
         [void]$hostPanel.Children.Add($cell)
@@ -1147,7 +1239,7 @@ function Build-WinToolSchemeCard {
             Set-WinToolTerminalChoiceValue -Name "schemeId" -Value $schemeId
             Update-WinToolTerminalSummary
             Update-WinToolSchemeSelection
-            Update-WinToolTerminalPreview
+            Request-WinToolTerminalPreview
         }
         [void]$hostPanel.Children.Add($card)
     }
@@ -1365,9 +1457,7 @@ function Update-WinToolFontList {
     }
     $script:WinToolFontListKey = $fontKey
     Update-WinToolFontSizeSelection
-    if ([string]$script:WinToolPreviewKey -ne (Get-WinToolPreviewKey)) {
-        Update-WinToolTerminalPreview
-    }
+    Request-WinToolTerminalPreview
 }
 
 function Show-WinToolTerminalSelection {
@@ -1412,6 +1502,29 @@ function Get-WinToolTerminalScheme {
         if ([string]$scheme.id -eq [string]$script:WinToolTerminalChoice.schemeId) { return $scheme }
     }
     return $fallback
+}
+
+function Request-WinToolTerminalPreview {
+    # The click returns as soon as the choice is stored. The sample is drawn
+    # on the background queue, after the first frame.
+    $wanted = Get-WinToolPreviewKey
+    if ([string]$script:WinToolPreviewKey -eq $wanted) { return }
+    $script:WinToolPreviewWanted = $wanted
+    if ($script:WinToolPreviewQueued) { return }
+    $script:WinToolPreviewQueued = $true
+    if ($null -eq $script:WinToolWindow) {
+        $script:WinToolPreviewQueued = $false
+        Update-WinToolTerminalPreview
+        return
+    }
+    $callback = [scriptblock]::Create("Complete-WinToolQueuedPreview")
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$callback)
+}
+
+function Complete-WinToolQueuedPreview {
+    $script:WinToolPreviewQueued = $false
+    if ([string]$script:WinToolPreviewKey -eq (Get-WinToolPreviewKey)) { return }
+    Update-WinToolTerminalPreview
 }
 
 function Update-WinToolTerminalPreview {

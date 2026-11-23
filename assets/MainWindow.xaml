@@ -1164,7 +1164,7 @@
           </DockPanel>
           <TextBlock x:Name="TerminalSubtitle" Grid.Row="1" Margin="20,6,20,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="A recommended setup in one click. Switch to Advanced to choose each part."/>
 
-          <ScrollViewer x:Name="TerminalSimpleScroll" Grid.Row="2" Margin="20,12,20,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ScrollViewer x:Name="TerminalSimpleScroll" Grid.Row="2" Margin="20,12,20,10" Background="{DynamicResource BrushCanvas}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid x:Name="TerminalSimpleHost">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -1207,7 +1207,7 @@
 
           <!-- Advanced: prompt engines | themes | preview with font and colors; extras under the last two.
                When the window is short the body scrolls instead of squeezing the cards. -->
-          <ScrollViewer x:Name="TerminalBodyScroll" Grid.Row="2" Margin="20,12,20,10" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+          <ScrollViewer x:Name="TerminalBodyScroll" Grid.Row="2" Margin="20,12,20,10" Background="{DynamicResource BrushCanvas}" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
             <Grid x:Name="TerminalAdvancedHost">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="TerminalColumnLeft" Width="230"/>
@@ -1280,7 +1280,7 @@
                   </WrapPanel>
                   <Border Grid.Row="3" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="6" Background="{DynamicResource BrushInput}" ClipToBounds="True">
                     <Grid>
-                      <ListBox x:Name="TerminalStyleList" Style="{StaticResource TerminalList}" AutomationProperties.Name="Prompt theme">
+                      <ListBox x:Name="TerminalStyleList" Style="{StaticResource TerminalList}" VirtualizingPanel.CacheLength="1,1" VirtualizingPanel.ScrollUnit="Item" AutomationProperties.Name="Prompt theme">
                         <ListBox.ItemContainerStyle>
                           <Style TargetType="ListBoxItem" BasedOn="{StaticResource TerminalRow}">
                             <Setter Property="BorderThickness" Value="3,0,0,0"/>
@@ -1298,18 +1298,7 @@
                                 <TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushInk}"/>
                               </DockPanel>
                               <Border Background="{DynamicResource BrushLog}" CornerRadius="4" Padding="6,3,6,3" Margin="0,4,0,0" ClipToBounds="True" Visibility="{Binding SampleVisible}">
-                                <ItemsControl ItemsSource="{Binding Preview}">
-                                  <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                      <StackPanel Orientation="Horizontal"/>
-                                    </ItemsPanelTemplate>
-                                  </ItemsControl.ItemsPanel>
-                                  <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                      <TextBlock Text="{Binding Text}" Foreground="{Binding Brush}" Background="{Binding Fill}" FontSize="{DynamicResource FontSizeBody}" FontFamily="Cascadia Mono, Consolas"/>
-                                    </DataTemplate>
-                                  </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <Image Source="{Binding PreviewImage}" Height="18" HorizontalAlignment="Left" Stretch="None" SnapsToDevicePixels="True"/>
                               </Border>
                             </StackPanel>
                           </DataTemplate>
