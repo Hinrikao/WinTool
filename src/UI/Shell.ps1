@@ -117,6 +117,7 @@ function Sync-WinToolBusyState {
     Sync-WinToolLogPanel
     $names = @(
         "AppInstall", "AppSelectVisible", "AppClear",
+        "AppSelectInstalled", "AppRefreshInstalled", "AppUpdate", "AppUninstall", "AppUpgradeAll",
         "TweakApply", "TweakUndo", "TweakClear",
         "TerminalSetup", "ScanDrivers",
         "SaveProfile", "LoadProfile", "ExportWinget", "ImportWinget"
@@ -154,7 +155,8 @@ function Enable-WinToolLogPump {
 function Invoke-WinToolPlanAsync {
     param(
         $Step,
-        [Parameter(Mandatory = $true)][string]$DoneMessage
+        [Parameter(Mandatory = $true)][string]$DoneMessage,
+        [string]$AfterDone
     )
     if ($script:WinToolState.Busy) {
         Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
@@ -170,6 +172,7 @@ function Invoke-WinToolPlanAsync {
         ExitHandled = $false
         Cancel = $false
         DoneMessage = $DoneMessage
+        AfterDone = $AfterDone
         SkipZsh = $false
     }
     Sync-WinToolBusyState -Busy $true
@@ -270,7 +273,7 @@ function Complete-WinToolPlanStep {
             Write-WinToolLog -Message ("{0} failed (exit {1})." -f [string]$step.Label, $code) -Level "error"
         }
         elseif ($result.Status -eq "AlreadyInstalled") {
-            Write-WinToolLog -Message ("{0}: already installed." -f [string]$step.Label) -Level "ok"
+            Write-WinToolLog -Message ("{0}: {1}." -f [string]$step.Label, (Get-WinToolWingetOutcomeText -Action (Get-WinToolWingetStepAction -Step $step) -Status $result.Status)) -Level "ok"
         }
         else {
             Write-WinToolLog -Message ("{0}: done." -f [string]$step.Label) -Level "ok"
@@ -304,6 +307,10 @@ function Complete-WinToolPlan {
             $null = $_.Exception.Message
         }
     }
+    $afterDone = $null
+    if ($null -ne $run) {
+        $afterDone = [string]$run.AfterDone
+    }
     $script:WinToolState.Run = $null
     Sync-WinToolBusyState -Busy $false
     if ($Message -eq "Cancelled.") {
@@ -313,6 +320,14 @@ function Complete-WinToolPlan {
     else {
         Sync-WinToolProgress -Value 100 -Text "Ready" -Indeterminate $false
         Write-WinToolLog -Message $Message -Level "ok"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($afterDone)) {
+        try {
+            & $afterDone
+        }
+        catch {
+            Write-WinToolLog -Message ("Follow-up step failed. {0}" -f $_.Exception.Message) -Level "warn"
+        }
     }
 }
 
@@ -378,6 +393,11 @@ function Update-WinToolLogPump {
     $update = $script:WinToolState.UpdateJob
     if ($null -ne $update -and $update.Sync.Done) {
         Complete-WinToolUpdateScan
+    }
+
+    $detect = $script:WinToolState.DetectJob
+    if ($null -ne $detect -and $detect.Sync.Done) {
+        Complete-WinToolAppDetection
     }
 
     $install = $script:WinToolState.InstallJob
@@ -453,6 +473,9 @@ function Initialize-WinToolShellEvent {
             Sync-WinToolStatus -Text "Ready"
         }
     }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Check installed apps" -Action {
+        Start-WinToolAppDetection
+    }
 }
 
 function New-WinToolWindow {
@@ -472,6 +495,7 @@ function New-WinToolWindow {
         RestoreJob = $null
         UpdateJob = $null
         InstallJob = $null
+        DetectJob = $null
         PendingTweaks = @()
         PendingDirection = "Apply"
         PendingRestart = $true

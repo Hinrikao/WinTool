@@ -20,6 +20,15 @@ Write-Output "Terminal-Icons installed."
     return $scriptText
 }
 
+function Get-WinToolWingetStepAction {
+    param($Step)
+    $action = [string](Get-WinToolNote -Object $Step -Name "Action" -Default "install")
+    if ([string]::IsNullOrWhiteSpace($action)) {
+        $action = "install"
+    }
+    return $action
+}
+
 function Get-WinToolPlanCommand {
     param(
         [Parameter(Mandatory = $true)]$Step
@@ -31,7 +40,7 @@ function Get-WinToolPlanCommand {
     if ($type -eq "winget") {
         return [pscustomobject]@{
             FilePath = Get-WinToolWingetPath
-            ArgumentList = @(Get-WinToolWingetArgument -Id ([string]$Step.WingetId) -Scope ([string]$Step.Scope))
+            ArgumentList = @(Get-WinToolWingetArgument -Id ([string]$Step.WingetId) -Scope ([string]$Step.Scope) -Action (Get-WinToolWingetStepAction -Step $Step))
         }
     }
     if ($type -eq "process") {
@@ -181,7 +190,7 @@ function Invoke-WinToolPlan {
                 Write-WinToolLog -Message ("{0} failed (exit {1})." -f [string]$item.Label, $result.ExitCode) -Level "error"
             }
             elseif ($outcome.Status -eq "AlreadyInstalled") {
-                Write-WinToolLog -Message ("{0}: already installed." -f [string]$item.Label) -Level "ok"
+                Write-WinToolLog -Message ("{0}: {1}." -f [string]$item.Label, (Get-WinToolWingetOutcomeText -Action (Get-WinToolWingetStepAction -Step $item) -Status $outcome.Status)) -Level "ok"
             }
             else {
                 Write-WinToolLog -Message ("{0}: done." -f [string]$item.Label) -Level "ok"

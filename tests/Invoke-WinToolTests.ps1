@@ -199,6 +199,43 @@ Invoke-WinToolCase -Name "Search and GPU vendor matching" -Body {
     Test-WinToolExpectation -Condition ($nvidia.id -eq "nvidia" -and $amd.id -eq "amd" -and $intel.id -eq "intel") -Message "GPU names map to the official vendor pages."
 }
 
+Invoke-WinToolCase -Name "winget update, uninstall, and installed detection" -Body {
+    $upgrade = @(Get-WinToolWingetArgument -Id "Mozilla.Firefox" -Action "upgrade")
+    Test-WinToolExpectation -Condition ($upgrade[0] -eq "upgrade" -and $upgrade -contains "--exact" -and $upgrade -contains "--accept-package-agreements") -Message "Update uses winget upgrade for one exact id."
+    $remove = @(Get-WinToolWingetArgument -Id "Mozilla.Firefox" -Action "uninstall" -Scope "user")
+    Test-WinToolExpectation -Condition ($remove[0] -eq "uninstall" -and -not ($remove -contains "--accept-package-agreements") -and -not ($remove -contains "--scope")) -Message "Uninstall uses only arguments winget uninstall accepts."
+    $all = @(Get-WinToolWingetArgument -Action "upgrade-all")
+    Test-WinToolExpectation -Condition ($all[0] -eq "upgrade" -and $all -contains "--all") -Message "Update all runs winget upgrade --all."
+    $threw = $false
+    try { $null = Get-WinToolWingetArgument -Id "" -Action "uninstall" } catch { $threw = $true }
+    Test-WinToolExpectation -Condition $threw -Message "Uninstall without an id is refused."
+
+    $known = @("Mozilla.Firefox", "Microsoft.VisualStudioCode", "Git.Git", "Valve.Steam")
+    $table = @"
+Name                     Id                            Version   Available Source
+----------------------------------------------------------------------------------
+Mozilla Firefox (x64 en) Mozilla.Firefox               120.0     121.0     winget
+Visual Studio Code       Microsoft.VisualStudio$([char]0x2026) 1.84.0    1.85.0    winget
+Something Else           Other.Package                 1.0       2.0       winget
+2 upgrades available.
+"@
+    $found = @(Find-WinToolWingetIdInText -Text $table -KnownId $known)
+    Test-WinToolExpectation -Condition ($found.Count -eq 2 -and $found -contains "Mozilla.Firefox" -and $found -contains "Microsoft.VisualStudioCode") -Message ("Update ids found in the winget table: " + ($found -join ", "))
+    $state = Resolve-WinToolAppState -CatalogId $known -InstalledId @("git.git", "Unknown.App") -UpgradeText $table
+    Test-WinToolExpectation -Condition ($state.Installed.ContainsKey("Git.Git") -and $state.Installed.ContainsKey("Mozilla.Firefox") -and -not $state.Installed.ContainsKey("Valve.Steam")) -Message "Installed apps come from the export and the update list, case-insensitively."
+    Test-WinToolExpectation -Condition ($state.Updates.ContainsKey("Mozilla.Firefox") -and -not $state.Updates.ContainsKey("Git.Git")) -Message "Only listed apps show an update."
+    $plan = @(Get-WinToolAppPlan -App @([pscustomobject]@{ name = "Git"; wingetId = "Git.Git" }) -Action "uninstall")
+    Test-WinToolExpectation -Condition ($plan[0].Action -eq "uninstall" -and $plan[0].Label -eq "Uninstall Git") -Message "An uninstall plan is labelled for the log."
+    $command = Get-WinToolPlanCommand -Step $plan[0]
+    Test-WinToolExpectation -Condition (@($command.ArgumentList)[0] -eq "uninstall") -Message "The runner passes the uninstall action to winget."
+    Test-WinToolExpectation -Condition ((Get-WinToolWingetOutcomeText -Action "upgrade" -Status "AlreadyInstalled") -eq "already up to date") -Message "An update with nothing new says up to date."
+    $script = Get-WinToolAppDetectionScript
+    $tokens = $null
+    $errors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseInput($script, [ref]$tokens, [ref]$errors)
+    Test-WinToolExpectation -Condition (@($errors).Count -eq 0 -and $script.Contains("export")) -Message "The detection script parses and uses winget export."
+}
+
 Invoke-WinToolCase -Name "App plan uses the catalog winget id" -Body {
     $catalog = Get-WinToolAppCatalog
     $firefox = $null

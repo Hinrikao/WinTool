@@ -39,24 +39,179 @@ function Get-WinToolWingetPath {
 
 function Get-WinToolWingetArgument {
     param(
-        [Parameter(Mandatory = $true)][string]$Id,
-        [string]$Scope
+        [string]$Id,
+        [string]$Scope,
+        [ValidateSet("install", "upgrade", "uninstall", "upgrade-all")][string]$Action = "install"
     )
     $arguments = New-Object System.Collections.Generic.List[string]
-    $arguments.Add("install")
+    if ($Action -eq "upgrade-all") {
+        $arguments.Add("upgrade")
+        $arguments.Add("--all")
+        $arguments.Add("--source")
+        $arguments.Add("winget")
+        $arguments.Add("--accept-package-agreements")
+        $arguments.Add("--accept-source-agreements")
+        $arguments.Add("--disable-interactivity")
+        return $arguments.ToArray()
+    }
+    if ([string]::IsNullOrWhiteSpace($Id)) {
+        throw "A winget id is needed for $Action."
+    }
+    $arguments.Add($Action)
     $arguments.Add("--id")
     $arguments.Add($Id)
     $arguments.Add("--exact")
     $arguments.Add("--source")
     $arguments.Add("winget")
-    $arguments.Add("--accept-package-agreements")
+    if ($Action -ne "uninstall") {
+        $arguments.Add("--accept-package-agreements")
+    }
     $arguments.Add("--accept-source-agreements")
     $arguments.Add("--disable-interactivity")
-    if (-not [string]::IsNullOrWhiteSpace($Scope)) {
+    if ($Action -eq "install" -and -not [string]::IsNullOrWhiteSpace($Scope)) {
         $arguments.Add("--scope")
         $arguments.Add($Scope)
     }
     return $arguments.ToArray()
+}
+
+function Get-WinToolWingetActionLabel {
+    param(
+        [string]$Action,
+        [string]$Name
+    )
+    switch ($Action) {
+        "upgrade" { return "Update $Name" }
+        "uninstall" { return "Uninstall $Name" }
+        "upgrade-all" { return "Update every app winget can update" }
+        default { return "Install $Name" }
+    }
+}
+
+function Get-WinToolWingetOutcomeText {
+    param(
+        [string]$Action,
+        [string]$Status
+    )
+    if ($Status -eq "AlreadyInstalled") {
+        if ($Action -eq "upgrade" -or $Action -eq "upgrade-all") {
+            return "already up to date"
+        }
+        return "already installed"
+    }
+    return "done"
+}
+
+# Detecting installed apps runs in a background runspace so the window stays
+# responsive. "winget export" gives exact package ids. The upgrade table is
+# read by matching known catalog ids, because its column widths vary.
+function Get-WinToolAppDetectionScript {
+    $scriptText = @'
+param($Sync, $Winget, $ExportPath)
+$ErrorActionPreference = "Stop"
+try {
+    if (Test-Path -LiteralPath $ExportPath) {
+        Remove-Item -LiteralPath $ExportPath -Force
+    }
+    $null = & $Winget export --output $ExportPath --source winget --accept-source-agreements --disable-interactivity 2>&1
+    $ids = New-Object System.Collections.Generic.List[string]
+    if (Test-Path -LiteralPath $ExportPath) {
+        $data = [System.IO.File]::ReadAllText($ExportPath) | ConvertFrom-Json
+        foreach ($source in @($data.Sources)) {
+            foreach ($package in @($source.Packages)) {
+                $ids.Add([string]$package.PackageIdentifier)
+            }
+        }
+        Remove-Item -LiteralPath $ExportPath -Force -ErrorAction SilentlyContinue
+    }
+    $Sync.Installed = $ids.ToArray()
+    $Sync.UpgradeText = (& $Winget upgrade --source winget --accept-source-agreements --disable-interactivity 2>&1 | Out-String)
+    $Sync.Ok = $true
+}
+catch {
+    $Sync.Error = $_.Exception.Message
+}
+finally {
+    $Sync.Done = $true
+}
+'@
+    return $scriptText
+}
+
+function Find-WinToolWingetIdInText {
+    param(
+        [AllowEmptyString()][string]$Text,
+        [string[]]$KnownId
+    )
+    $found = New-Object System.Collections.Generic.List[string]
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $found.ToArray()
+    }
+    $lookup = @{}
+    foreach ($id in @($KnownId)) {
+        if (-not [string]::IsNullOrWhiteSpace($id)) {
+            $lookup[$id.ToLowerInvariant()] = $id
+        }
+    }
+    $seen = @{}
+    foreach ($line in ($Text -split '\r?\n')) {
+        foreach ($token in ($line -split '\s+')) {
+            if ([string]::IsNullOrWhiteSpace($token)) {
+                continue
+            }
+            $key = $token.ToLowerInvariant()
+            $match = $null
+            if ($lookup.ContainsKey($key)) {
+                $match = $lookup[$key]
+            }
+            elseif ($key.EndsWith([string][char]0x2026) -and $key.Length -gt 4) {
+                # winget shortens long ids with an ellipsis. Accept a unique prefix.
+                $prefix = $key.Substring(0, $key.Length - 1)
+                $candidates = @($lookup.Keys | Where-Object { $_.StartsWith($prefix) })
+                if ($candidates.Count -eq 1) {
+                    $match = $lookup[$candidates[0]]
+                }
+            }
+            if ($null -ne $match -and -not $seen.ContainsKey($match)) {
+                $seen[$match] = $true
+                $found.Add($match)
+            }
+        }
+    }
+    return $found.ToArray()
+}
+
+function Resolve-WinToolAppState {
+    param(
+        [string[]]$CatalogId,
+        [string[]]$InstalledId,
+        [AllowEmptyString()][string]$UpgradeText
+    )
+    $installed = @{}
+    $known = @{}
+    foreach ($id in @($CatalogId)) {
+        if (-not [string]::IsNullOrWhiteSpace($id)) {
+            $known[$id.ToLowerInvariant()] = $id
+        }
+    }
+    foreach ($id in @($InstalledId)) {
+        if ([string]::IsNullOrWhiteSpace($id)) {
+            continue
+        }
+        $key = $id.ToLowerInvariant()
+        if ($known.ContainsKey($key)) {
+            $installed[$known[$key]] = $true
+        }
+    }
+    $updates = @{}
+    foreach ($id in @(Find-WinToolWingetIdInText -Text $UpgradeText -KnownId $CatalogId)) {
+        $updates[$id] = $true
+        $installed[$id] = $true
+    }
+    return [pscustomobject]@{
+        Installed = $installed
+        Updates = $updates
+    }
 }
 
 function ConvertTo-WinToolWingetResult {
@@ -87,7 +242,8 @@ function ConvertTo-WinToolWingetResult {
 
 function Get-WinToolAppPlan {
     param(
-        $App
+        $App,
+        [ValidateSet("install", "upgrade", "uninstall")][string]$Action = "install"
     )
     $steps = New-Object System.Collections.Generic.List[object]
     foreach ($item in @($App)) {
@@ -105,10 +261,21 @@ function Get-WinToolAppPlan {
         }
         $steps.Add([pscustomobject]@{
             Type = "winget"
-            Label = "Install $name"
+            Action = $Action
+            Label = (Get-WinToolWingetActionLabel -Action $Action -Name ([string]$name))
             WingetId = [string]$wingetId
             Scope = [string]$scope
         })
     }
     return $steps.ToArray()
+}
+
+function Get-WinToolUpgradeAllPlan {
+    return @([pscustomobject]@{
+            Type = "winget"
+            Action = "upgrade-all"
+            Label = (Get-WinToolWingetActionLabel -Action "upgrade-all" -Name "")
+            WingetId = ""
+            Scope = ""
+        })
 }

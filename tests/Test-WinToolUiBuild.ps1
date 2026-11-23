@@ -97,6 +97,13 @@ $script:WinToolUiQuiet = $true
 $script:WinToolUiErrors = $null
 $skip = @(
     "Install: install selected",
+    "Install: update selected",
+    "Install: uninstall selected",
+    "Install: update all",
+    "Install: update one app",
+    "Install: uninstall one app",
+    "Install: check installed",
+    "Check installed apps",
     "Tweaks: apply selected",
     "Tweaks: undo selected",
     "Terminal: apply setup",
@@ -126,7 +133,11 @@ foreach ($entry in $script:WinToolUiHandlers.ToArray()) {
     $control = $entry.Control
     switch ([string]$entry.EventName) {
         "Click" {
-            $control.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent))
+            $clickEvent = [System.Windows.Controls.Primitives.ButtonBase]::ClickEvent
+            if ($control -is [System.Windows.Controls.MenuItem]) {
+                $clickEvent = [System.Windows.Controls.MenuItem]::ClickEvent
+            }
+            $control.RaiseEvent([System.Windows.RoutedEventArgs]::new($clickEvent))
         }
         "Checked" {
             $control.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Primitives.ToggleButton]::CheckedEvent))
@@ -164,6 +175,21 @@ foreach ($card in @($promptHost.Children)) {
     if ([string]$script:WinToolTerminalChoice.prompt -ne [string]$card.Tag) {
         throw ("Clicking the prompt card '" + [string]$card.Tag + "' did not select it.")
     }
+}
+
+# Installed and update badges follow the detected state.
+$firstApp = $appRows[0]
+$secondApp = $appRows[1]
+Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
+if ($firstApp.InstalledBadge.Visibility -ne "Visible" -or $firstApp.UpdateBadge.Visibility -ne "Collapsed") {
+    throw "The Installed badge did not follow the detected state."
+}
+if ($secondApp.UpdateBadge.Visibility -ne "Visible" -or -not $secondApp.Installed) {
+    throw "The Update available badge did not follow the upgrade list."
+}
+Select-WinToolInstalledApp
+if ($firstApp.Checkbox.IsChecked -ne $true -or $secondApp.Checkbox.IsChecked -ne $true -or $appRows[2].Checkbox.IsChecked -eq $true) {
+    throw "Select installed did not tick exactly the installed apps."
 }
 
 $uiErrors = Get-WinToolUiError

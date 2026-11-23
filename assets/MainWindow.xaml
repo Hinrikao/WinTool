@@ -343,14 +343,26 @@
           </Grid.RowDefinitions>
           <StackPanel Grid.Row="0" Margin="24,22,24,0">
             <TextBlock Text="Install" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
-            <TextBlock Text="Choose the apps you want. WinTool installs them with winget, one at a time, and writes a log below." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <TextBlock Text="Choose the apps you want. WinTool installs them with winget, one at a time, and writes a log below. Right-click an app to update or uninstall just that one." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
           </StackPanel>
           <Grid Grid.Row="1" Margin="24,16,24,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="280"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
+            <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,12,0,0">
+              <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+              <Button x:Name="AppRefreshInstalled" Content="Check installed" Style="{StaticResource SecondaryButton}" Margin="0"/>
+              <Button x:Name="AppSelectInstalled" Content="Select installed" Style="{StaticResource SecondaryButton}"/>
+              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource SecondaryButton}"/>
+              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource SecondaryButton}"/>
+              <Button x:Name="AppUpgradeAll" Content="Update all" Style="{StaticResource SecondaryButton}" ToolTip="Runs winget upgrade --all"/>
+            </StackPanel>
             <Grid Grid.Column="0">
               <TextBox x:Name="AppSearch" AutomationProperties.Name="Search apps"/>
               <TextBlock x:Name="AppSearchHint" Text="Search apps" IsHitTestVisible="False" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
