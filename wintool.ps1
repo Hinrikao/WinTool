@@ -17408,9 +17408,11 @@ function New-WinToolSimpleIncludedRow {
     [void]$text.Children.Add($detailBlock)
     [System.Windows.Controls.Grid]::SetColumn($text, 1)
     [void]$row.Children.Add($text)
-    $badge = New-WinToolBadge -Text $Badge -Kind "ok"
-    [System.Windows.Controls.Grid]::SetColumn($badge, 2)
-    [void]$row.Children.Add($badge)
+    # $Badge is the [string] parameter. PowerShell names are case-insensitive,
+    # so the pill cannot be stored in $badge or the Border becomes that string.
+    $pill = New-WinToolBadge -Text $Badge -Kind "ok"
+    [System.Windows.Controls.Grid]::SetColumn($pill, 2)
+    [void]$row.Children.Add($pill)
     return $row
 }
 
