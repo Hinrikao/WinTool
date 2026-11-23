@@ -18686,24 +18686,27 @@ function Update-WinToolFontList {
 }
 
 function Show-WinToolTerminalSelection {
-    # Brings the chosen engine and theme into view. UpdateLayout is not called
-    # here: doing it from a click measured the whole list before the frame.
+    # Brings the chosen engine and theme into view in their lists. When a list
+    # is not laid out yet, the log pump calls this again a moment later.
+    # The Simple / Advanced click does not call this. The list's own
+    # UpdateLayout is only the list, and it runs after that first frame.
     $script:WinToolTerminalScrollPending = $false
     foreach ($name in @("TerminalPromptList", "TerminalStyleList")) {
         $list = Get-WinToolUi -Name $name
         if ($null -eq $list -or $null -eq $list.SelectedItem) { continue }
         try {
-            if ($list.ActualHeight -le 0) {
-                if ($script:WinToolTerminalMode -eq "advanced") { $script:WinToolTerminalScrollPending = $true }
-                continue
-            }
+            $list.UpdateLayout()
             $list.ScrollIntoView($list.SelectedItem)
             $viewer = Find-WinToolChildScrollViewer -Element $list
             if ($null -ne $viewer -and $list.SelectedIndex -ge 0 -and $viewer.ViewportHeight -gt 0) {
                 $target = [Math]::Max(0, $list.SelectedIndex - 1)
                 if ($list.SelectedIndex -lt $viewer.VerticalOffset -or $list.SelectedIndex -ge ($viewer.VerticalOffset + $viewer.ViewportHeight)) {
                     $viewer.ScrollToVerticalOffset($target)
+                    $list.UpdateLayout()
                 }
+            }
+            if ($list.ActualHeight -le 0 -and $script:WinToolTerminalMode -eq "advanced") {
+                $script:WinToolTerminalScrollPending = $true
             }
         }
         catch {
