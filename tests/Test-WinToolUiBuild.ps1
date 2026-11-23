@@ -644,7 +644,9 @@ $after = $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootV
 if ([math]::Abs($after.Y - $before.Y) -gt 0.5) { throw ("Ticking an app moved the cards from " + $before.Y + " to " + $after.Y) }
 if ([string]$window.FindName("AppCount").Text -ne "2 selected") { throw "The selection count should read 2 selected." }
 $count = $window.FindName("AppCount")
-if ($count.ActualWidth + 0.5 -lt $count.DesiredSize.Width -or $count.ActualWidth -lt 40) { throw ("The selection count is clipped: " + $count.ActualWidth + " of " + $count.DesiredSize.Width) }
+# DesiredSize includes the margin, ActualWidth does not.
+$countRoom = $count.ActualWidth + $count.Margin.Left + $count.Margin.Right
+if ($countRoom + 0.5 -lt $count.DesiredSize.Width -or $count.ActualWidth -lt 40) { throw ("The selection count is clipped: " + $count.ActualWidth + " of " + $count.DesiredSize.Width) }
 $bar = $window.FindName("AppBulkBar")
 $barTop = $bar.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
 $searchTop = $window.FindName("AppSearch").TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
