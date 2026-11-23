@@ -487,6 +487,9 @@ function Initialize-WinToolShellEvent {
             elseif ((Get-WinToolUi -Name "ViewTweaks").Visibility -eq "Visible") {
                 (Get-WinToolUi -Name "TweakSearch").Focus() | Out-Null
             }
+            elseif ((Get-WinToolUi -Name "ViewTerminal").Visibility -eq "Visible" -and $script:WinToolTerminalMode -eq "advanced") {
+                (Get-WinToolUi -Name "TerminalThemeSearch").Focus() | Out-Null
+            }
             $uiEvent.Handled = $true
         }
     }

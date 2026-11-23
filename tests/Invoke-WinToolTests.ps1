@@ -1283,6 +1283,62 @@ Invoke-WinToolCase -Name "WSL shell setup for an existing distro" -Body {
     Test-WinToolExpectation -Condition ($null -eq $settings.profiles.list[0].PSObject.Properties["font"] -and $null -eq $settings.profiles.list[2].PSObject.Properties["font"]) -Message "Other profiles are left alone."
 }
 
+Invoke-WinToolCase -Name "Advanced Terminal page: engines, theme rows, filters, and action chips" -Body {
+    $catalog = Get-WinToolTerminalCatalog
+    $groups = @{}
+    foreach ($prompt in @($catalog.prompts)) {
+        $info = Get-WinToolPromptEngineInfo -Prompt $prompt
+        $groups[[string]$prompt.id] = [string]$info.Group
+        Test-WinToolExpectation -Condition (-not [string]::IsNullOrWhiteSpace([string]$info.Sub) -and [string]$info.Color -match '^#[0-9A-F]{6}$') -Message ("Engine " + [string]$prompt.id + " needs a sub line and a color.")
+        $rows = @(Get-WinToolThemeRow -PromptId ([string]$prompt.id))
+        Test-WinToolExpectation -Condition ($rows.Count -gt 0) -Message ("Engine " + [string]$prompt.id + " has no themes or styles.")
+        $title = Get-WinToolThemeTitle -PromptId ([string]$prompt.id)
+        Test-WinToolExpectation -Condition (-not [string]::IsNullOrWhiteSpace([string]$title.Title)) -Message ("Engine " + [string]$prompt.id + " has no theme column title.")
+    }
+    Test-WinToolExpectation -Condition ($groups["oh-my-posh"] -eq "PowerShell" -and $groups["starship"] -eq "PowerShell" -and $groups["powerline-go"] -eq "PowerShell") -Message "PowerShell engines are grouped together."
+    Test-WinToolExpectation -Condition ($groups["powerlevel10k"] -eq "WSL Ubuntu" -and $groups["tide"] -eq "WSL Ubuntu" -and $groups["oh-my-zsh"] -eq "WSL Ubuntu") -Message "WSL engines are grouped together."
+
+    # Every Oh My Posh theme has a sample in the catalog, so the list and the
+    # preview show colors before any theme file is downloaded.
+    $omp = @(Get-WinToolThemeRow -PromptId "oh-my-posh")
+    Test-WinToolExpectation -Condition (@($omp | Where-Object { @($_.Preview).Count -eq 0 }).Count -eq 0) -Message "Every Oh My Posh theme row has a sample."
+    $plain = @(Get-WinToolPromptPreview -PromptId "oh-my-posh" -PromptStyle "jandedobbeleer" -Theme $null)
+    Test-WinToolExpectation -Condition (@($plain | Where-Object { $null -ne $_.Background }).Count -ge 2) -Message "The Oh My Posh preview uses the catalog sample without the theme file."
+
+    $starship = @(Get-WinToolThemeRow -PromptId "starship")
+    $power = @(Select-WinToolThemeRow -Row $starship -Filter "powerline")
+    $minimal = @(Select-WinToolThemeRow -Row $starship -Filter "minimal")
+    $noNerd = @(Select-WinToolThemeRow -Row $starship -Filter "no-nerd")
+    Test-WinToolExpectation -Condition ($power.Count -ge 2 -and ($power.Count + $minimal.Count) -eq $starship.Count) -Message "Powerline and Minimal split the Starship presets."
+    Test-WinToolExpectation -Condition (@($power | Where-Object { $_.Id -eq "tokyo-night" }).Count -eq 1) -Message "Tokyo Night is a Powerline preset."
+    Test-WinToolExpectation -Condition (@($noNerd | Where-Object { $_.Id -eq "no-nerd-font" }).Count -eq 1 -and @($noNerd | Where-Object { $_.Id -eq "nerd-font-symbols" }).Count -eq 0) -Message "No Nerd Font needed follows the preset flag."
+    Test-WinToolExpectation -Condition (@(Select-WinToolThemeRow -Row $starship -Query "tokyo").Count -eq 1) -Message "Search narrows the theme rows."
+    $tokyo = @($starship | Where-Object { $_.Id -eq "tokyo-night" })[0]
+    Test-WinToolExpectation -Condition (@($tokyo.Preview | Where-Object { $null -ne $_.Background }).Count -ge 2) -Message "The Tokyo Night row draws colored blocks."
+    Test-WinToolExpectation -Condition ((Test-WinToolNerdGlyph -Text ([string][char]0xE0B0)) -and -not (Test-WinToolNerdGlyph -Text "~/src main >")) -Message "Nerd Font glyphs are detected."
+
+    $choice = Get-WinToolSimpleTerminalChoice
+    $choice.prompt = "starship"
+    $choice.promptStyle = "tokyo-night"
+    $choice.zoxide = $true
+    $choice.fontSize = 13
+    $steps = @(Get-WinToolTerminalPlan -Selection $choice)
+    $fontStep = @($steps | Where-Object { $_.Type -eq "font" })[0]
+    Test-WinToolExpectation -Condition ([int]$fontStep.Size -eq 13 -and [string]$fontStep.Label -like "*13 pt") -Message "The font size goes into the font step."
+    $chips = @(Get-WinToolSummaryChip -Step $steps)
+    $adds = @($chips | Where-Object { $_.Kind -eq "add" } | ForEach-Object { [string]$_.Text })
+    $changes = @($chips | Where-Object { $_.Kind -eq "change" } | ForEach-Object { [string]$_.Text })
+    Test-WinToolExpectation -Condition ($adds -contains "Windows Terminal" -and $adds -contains "Starship" -and $adds -contains "zoxide" -and $adds -contains "Terminal-Icons") -Message ("Install chips: " + ($adds -join ", "))
+    Test-WinToolExpectation -Condition (@($adds | Where-Object { $_ -eq "Terminal-Icons" }).Count -eq 1) -Message "Terminal-Icons shows once."
+    Test-WinToolExpectation -Condition ($changes -contains "Starship preset tokyo-night" -and $changes -contains "Scheme Night" -and $changes -contains "Terminal font 13 pt") -Message ("Change chips: " + ($changes -join ", "))
+    $wslChips = @(Get-WinToolSummaryChip -Step @(Get-WinToolTerminalPlan -Selection ([pscustomobject]@{ prompt = "powerlevel10k"; promptStyle = "rainbow"; fontId = $choice.fontId; schemeId = $choice.schemeId })))
+    Test-WinToolExpectation -Condition (@($wslChips | Where-Object { $_.Text -eq "Rainbow style" -and $_.Kind -eq "change" }).Count -eq 1) -Message "The chosen WSL style shows as a change."
+
+    $font = 12
+    $simple = Get-WinToolSimpleTerminalChoice
+    Test-WinToolExpectation -Condition ([int]$simple.fontSize -eq $font) -Message "The recommended setup uses 12 pt."
+}
+
 if ($script:WinToolFailures.Count -gt 0) {
     Write-Output ""
     Write-Output ("{0} test(s) failed." -f $script:WinToolFailures.Count)

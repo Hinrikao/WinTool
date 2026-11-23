@@ -141,8 +141,9 @@ finally {
     $env:PATH = $savedPath
     Remove-Item -LiteralPath $fakeBin -Recurse -Force -ErrorAction SilentlyContinue
 }
-$promptHost = $window.FindName("TerminalPromptHost")
-if ($null -eq $promptHost -or $promptHost.Children.Count -lt 8) {
+$promptList = $window.FindName("TerminalPromptList")
+$promptItems = @($promptList.Items | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Tag) })
+if ($null -eq $promptList -or $promptItems.Count -lt 8) {
     throw "The Terminal tab did not list the prompt engines."
 }
 $fixList = $window.FindName("FixList")
@@ -275,13 +276,28 @@ foreach ($entry in $script:WinToolUiHandlers.ToArray()) {
     $raised++
 }
 
-# Clicking each prompt card must update the Terminal choice.
-foreach ($card in @($promptHost.Children)) {
+# Picking each prompt engine must update the Terminal choice, the theme
+# column title, and the theme list.
+foreach ($engine in $promptItems) {
+    $promptList.SelectedItem = $engine
+    if ([string]$script:WinToolTerminalChoice.prompt -ne [string]$engine.Tag) {
+        throw ("Picking the prompt engine '" + [string]$engine.Tag + "' did not select it.")
+    }
+    if ([string]$window.FindName("TerminalStyleList").Tag -ne [string]$engine.Tag -or $window.FindName("TerminalStyleList").Items.Count -lt 1) {
+        throw ("The theme list did not follow the prompt engine '" + [string]$engine.Tag + "'.")
+    }
+}
+# The group headers in the engine list cannot be picked.
+if (@($promptList.Items | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.Tag) -and $_.IsEnabled }).Count -ne 0) {
+    throw "The engine group headers should not be selectable."
+}
+# Clicking a color scheme tile must update the choice.
+foreach ($tile in @($window.FindName("TerminalSchemeHost").Children)) {
     $mouseArgs = [System.Windows.Input.MouseButtonEventArgs]::new([System.Windows.Input.Mouse]::PrimaryDevice, 0, [System.Windows.Input.MouseButton]::Left)
     $mouseArgs.RoutedEvent = [System.Windows.UIElement]::MouseLeftButtonUpEvent
-    $card.RaiseEvent($mouseArgs)
-    if ([string]$script:WinToolTerminalChoice.prompt -ne [string]$card.Tag) {
-        throw ("Clicking the prompt card '" + [string]$card.Tag + "' did not select it.")
+    $tile.RaiseEvent($mouseArgs)
+    if ([string]$script:WinToolTerminalChoice.schemeId -ne [string]$tile.Tag) {
+        throw ("Clicking the color scheme '" + [string]$tile.Tag + "' did not select it.")
     }
 }
 
@@ -431,7 +447,6 @@ $window.FindName("TerminalModeAdvanced").IsChecked = $true
 # Back to the recommended choices (the event test above clicked others) and
 # the log folded, as a person opening the tab would see it.
 $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
-(Get-WinToolUi -Name "TerminalFontSearch").Text = ""
 (Get-WinToolUi -Name "TerminalThemeSearch").Text = ""
 $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
 Update-WinToolPromptSelection
@@ -485,17 +500,48 @@ foreach ($size in @(@(1280, 760, "mockup"), @(1280, 900, "wide"), @(1000, 1300, 
     Write-Output ("Saved " + $shotPath)
 }
 $advancedGrid = $window.FindName("TerminalAdvancedHost")
+$sideColumn = $window.FindName("TerminalSideColumn")
 Update-WinToolTerminalLayout -Width 1000
-if ([System.Windows.Controls.Grid]::GetColumn($window.FindName("TerminalCardFont")) -ne 2) {
-    throw "The Font card should sit in the right column on a wide window."
+if ([System.Windows.Controls.Grid]::GetColumn($sideColumn) -ne 4 -or [System.Windows.Controls.Grid]::GetRow($sideColumn) -ne 0) {
+    throw "The preview, font, and extras should sit in the right column on a wide window."
 }
 Update-WinToolTerminalLayout -Width 700
-if ([System.Windows.Controls.Grid]::GetRow($window.FindName("TerminalCardFont")) -ne 1 -or [System.Windows.Controls.Grid]::GetColumnSpan($window.FindName("TerminalCardFont")) -ne 3) {
-    throw "The Terminal cards should stack in one column on a narrow window."
+if ([System.Windows.Controls.Grid]::GetRow($sideColumn) -ne 1 -or [System.Windows.Controls.Grid]::GetColumnSpan($sideColumn) -ne 5) {
+    throw "The preview, font, and extras should move under the lists on a narrow window."
 }
-if ($null -eq $advancedGrid -or $window.FindName("TerminalSummaryHost").Children.Count -lt 3) {
-    throw "The Terminal summary did not list the steps."
+Update-WinToolTerminalLayout -Width 1000
+$summaryChips = @($window.FindName("TerminalSummaryHost").Children | ForEach-Object { @($_.Children) })
+if ($null -eq $advancedGrid -or $summaryChips.Count -lt 3) {
+    throw "The Terminal action bar did not list the steps."
 }
+# The action bar stays in view: the Advanced page itself never scrolls at 1280 x 760.
+$rootVisual.Measure([System.Windows.Size]::new(1280, 760))
+$rootVisual.Arrange([System.Windows.Rect]::new(0, 0, 1280, 760))
+$rootVisual.UpdateLayout()
+$bodyScroll = $window.FindName("TerminalBodyScroll")
+if ($bodyScroll.ExtentHeight -gt $bodyScroll.ViewportHeight + 1) {
+    throw ("The Advanced Terminal page should fit at 1280 x 760: " + $bodyScroll.ExtentHeight + " > " + $bodyScroll.ViewportHeight)
+}
+# Filters narrow the theme list, and the font size reaches the plan.
+$script:WinToolTerminalChoice.prompt = "starship"
+Update-WinToolPromptStyleList
+$allCount = $window.FindName("TerminalStyleList").Items.Count
+$window.FindName("TerminalFilterPowerline").IsChecked = $true
+$powerCount = $window.FindName("TerminalStyleList").Items.Count
+$window.FindName("TerminalFilterAll").IsChecked = $true
+if ($powerCount -lt 1 -or $powerCount -ge $allCount -or $window.FindName("TerminalStyleList").Items.Count -ne $allCount) {
+    throw ("The Powerline filter should narrow the Starship presets: " + $powerCount + " of " + $allCount)
+}
+$sizeBox = $window.FindName("TerminalFontSize")
+foreach ($sizeItem in @($sizeBox.Items)) { if ([int]$sizeItem.Tag -eq 14) { $sizeBox.SelectedItem = $sizeItem } }
+if ([int](Get-WinToolTerminalChoice).fontSize -ne 14 -or @(Get-WinToolTerminalPlan -Selection (Get-WinToolTerminalChoice) | Where-Object { $_.Type -eq "font" -and [int]$_.Size -eq 14 }).Count -ne 1) {
+    throw "The chosen font size should reach the terminal plan."
+}
+foreach ($sizeItem in @($sizeBox.Items)) { if ([int]$sizeItem.Tag -eq 12) { $sizeBox.SelectedItem = $sizeItem } }
+$script:WinToolTerminalChoice.prompt = "oh-my-posh"
+$script:WinToolTerminalChoice.promptStyle = "jandedobbeleer"
+Update-WinToolPromptStyleList
+Update-WinToolPromptSelection
 
 function Save-WinToolTerminalShot {
     param([string]$Name, [double]$Width, [double]$Height)

@@ -175,7 +175,9 @@ function Test-WinToolLocalStepType {
 
 function Invoke-WinToolFontStep {
     param($Step)
-    Invoke-WinToolTerminalFont -Face ([string]$Step.Face) -Match ([string]$Step.Match)
+    $size = 12
+    if ($null -ne $Step.PSObject.Properties["Size"] -and [int]$Step.Size -gt 0) { $size = [int]$Step.Size }
+    Invoke-WinToolTerminalFont -Face ([string]$Step.Face) -Match ([string]$Step.Match) -Size $size
 }
 
 function Invoke-WinToolProfileStep {

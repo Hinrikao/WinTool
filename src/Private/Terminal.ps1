@@ -516,8 +516,10 @@ function Resolve-WinToolInstalledFontFace {
 function Invoke-WinToolTerminalFont {
     param(
         [Parameter(Mandatory = $true)][string]$Face,
-        [string]$Match
+        [string]$Match,
+        [int]$Size = 12
     )
+    if ($Size -lt 6 -or $Size -gt 48) { $Size = 12 }
     $chosen = Resolve-WinToolInstalledFontFace -Face $Face -Match $Match
     if ($null -eq $chosen) {
         return
@@ -539,7 +541,7 @@ function Invoke-WinToolTerminalFont {
             $settings = ConvertFrom-WinToolJsonText -Text $raw
         }
     }
-    Add-WinToolTerminalFont -Settings $settings -Face $chosen -Size 12 | Out-Null
+    Add-WinToolTerminalFont -Settings $settings -Face $chosen -Size $Size | Out-Null
     $json = ConvertTo-WinToolJsonText -Value $settings
     Write-WinToolUtf8File -Path $path -Text ($json + "`n")
     Write-WinToolLog -Message "Set the Windows Terminal font to $chosen. Comments in settings.json are not kept." -Level "ok"
@@ -737,6 +739,7 @@ function Get-WinToolSimpleTerminalChoice {
         psReadLine = [bool](Get-WinToolNote -Object $simple -Name "psReadLine" -Default $true)
         zoxide = [bool](Get-WinToolNote -Object $simple -Name "zoxide" -Default $false)
         fzf = [bool](Get-WinToolNote -Object $simple -Name "fzf" -Default $false)
+        fontSize = [int](Get-WinToolNote -Object $simple -Name "fontSize" -Default 12)
     }
 }
 
@@ -827,7 +830,12 @@ function Get-WinToolTerminalPlan {
     foreach ($fontStep in @(Get-WinToolFontInstallStep -Font $font)) {
         [void]$steps.Add($fontStep)
     }
-    [void]$steps.Add([pscustomobject]@{ Type = "font"; Label = ("Set the Windows Terminal font to " + [string]$font.name); Face = [string]$font.face; Match = [string]$font.match })
+    $fontSize = 12
+    $sizeValue = Get-WinToolNote -Object $Selection -Name "fontSize"
+    if ($null -ne $sizeValue -and [int]$sizeValue -ge 6 -and [int]$sizeValue -le 48) { $fontSize = [int]$sizeValue }
+    $fontLabel = "Set the Windows Terminal font to " + [string]$font.name
+    if ($fontSize -ne 12) { $fontLabel += " " + $fontSize + " pt" }
+    [void]$steps.Add([pscustomobject]@{ Type = "font"; Label = $fontLabel; Face = [string]$font.face; Match = [string]$font.match; Size = $fontSize })
     if ($null -ne $scheme) {
         [void]$steps.Add([pscustomobject]@{ Type = "scheme"; Label = ("Set the Windows Terminal color scheme to " + [string]$scheme.name); SchemeId = [string]$scheme.id })
     }
@@ -988,6 +996,14 @@ function Get-WinToolPromptPreview {
         $segments = @(Get-WinToolOmpPreviewSegment -Theme $Theme)
         if ($segments.Count -gt 0) {
             return $segments
+        }
+    }
+    if ($PromptId -eq "oh-my-posh") {
+        # Without the theme file, use the sample stored in omp-themes.json.
+        foreach ($row in @(Get-WinToolNote -Object (Get-WinToolOhMyPoshDocument) -Name "themes" -Default @())) {
+            if ([string]$row.id -ne $PromptStyle) { continue }
+            $segments = @(ConvertTo-WinToolPreviewSegmentList -Item @(Get-WinToolNote -Object $row -Name "preview" -Default @()))
+            if ($segments.Count -gt 0) { return $segments }
         }
     }
     if ($PromptId -eq "starship") {
@@ -1181,4 +1197,237 @@ function Get-WinToolSummaryRow {
         $rows.Add((($items[$start..$end]) -join $separator))
     }
     return $rows.ToArray()
+}
+
+# Advanced Terminal page helpers. They only read the catalogs, so the tests
+# can check them without a window.
+
+$script:WinToolPromptEngineColor = @{
+    "oh-my-posh" = "#2F74C0"; "starship" = "#C2185B"; "powerline-go" = "#0E8FB0"
+    "powerlevel10k" = "#4B6584"; "pure" = "#9C27B0"; "spaceship" = "#6B4FBB"
+    "oh-my-zsh" = "#2E9E55"; "tide" = "#0E7490"
+}
+
+function Get-WinToolPromptEngineInfo {
+    param(
+        [Parameter(Mandatory = $true)]$Prompt,
+        [int]$OhMyPoshCount = -1
+    )
+    # Group, the short line under the name ("WSL - zsh - 6 styles"), and the
+    # icon color for one prompt engine.
+    $catalog = Get-WinToolTerminalCatalog
+    $id = [string]$Prompt.id
+    $shellKind = [string](Get-WinToolNote -Object $Prompt -Name "shell" -Default "powershell")
+    $group = "PowerShell"
+    $where = "PowerShell"
+    if ($shellKind -like "wsl-*") {
+        $group = "WSL Ubuntu"
+        $where = "WSL " + [string][char]0x00B7 + " " + $shellKind.Substring(4)
+    }
+    $count = ""
+    if ($id -eq "oh-my-posh") {
+        $total = $OhMyPoshCount
+        if ($total -lt 0) { $total = @(Get-WinToolNote -Object (Get-WinToolOhMyPoshDocument) -Name "themes" -Default @()).Count }
+        $count = [string]$total + " themes"
+    }
+    elseif ($id -eq "starship") {
+        $count = [string]@(Get-WinToolNote -Object $catalog -Name "starshipPresets" -Default @()).Count + " presets"
+    }
+    elseif ($id -eq "oh-my-zsh") {
+        $count = [string]@(Get-WinToolNote -Object $catalog -Name "omzThemes" -Default @()).Count + " themes"
+    }
+    else {
+        $variants = @(Get-WinToolPromptVariantList -PromptId $id)
+        if ($variants.Count -gt 0) { $count = [string]$variants.Count + " styles" }
+    }
+    $sub = $where
+    if (-not [string]::IsNullOrWhiteSpace($count)) { $sub += " " + [string][char]0x00B7 + " " + $count }
+    $color = "#5B6680"
+    if ($script:WinToolPromptEngineColor.ContainsKey($id)) { $color = $script:WinToolPromptEngineColor[$id] }
+    $runs = "Runs in PowerShell 7 and Windows PowerShell, no WSL needed."
+    if ($shellKind -eq "wsl-zsh") { $runs = "Runs in zsh inside WSL Ubuntu." }
+    elseif ($shellKind -eq "wsl-fish") { $runs = "Runs in Fish inside WSL Ubuntu." }
+    return [pscustomobject]@{ Id = $id; Group = $group; Sub = $sub; Color = $color; Runs = $runs; Wsl = ($shellKind -like "wsl-*") }
+}
+
+function Get-WinToolThemeTitle {
+    param(
+        [AllowEmptyString()][string]$PromptId
+    )
+    # Card title and search hint for the theme column of one engine.
+    if ($PromptId -eq "oh-my-posh") { return [pscustomobject]@{ Title = "Oh My Posh theme"; Hint = "Search themes"; Noun = "themes" } }
+    if ($PromptId -eq "starship") { return [pscustomobject]@{ Title = "Starship preset"; Hint = "Search presets"; Noun = "presets" } }
+    if ($PromptId -eq "oh-my-zsh") { return [pscustomobject]@{ Title = "Oh My Zsh theme"; Hint = "Search themes"; Noun = "themes" } }
+    $name = $PromptId
+    foreach ($prompt in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "prompts" -Default @())) {
+        if ([string]$prompt.id -eq $PromptId) { $name = [string]$prompt.name; break }
+    }
+    return [pscustomobject]@{ Title = ($name + " style"); Hint = "Search styles"; Noun = "styles" }
+}
+
+function Test-WinToolNerdGlyph {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    # True when the text uses a Private Use Area glyph, which only shows with
+    # a Nerd Font (or a Powerline-patched font).
+    foreach ($char in ([string]$Text).ToCharArray()) {
+        $code = [int]$char
+        if (($code -ge 0xE000 -and $code -le 0xF8FF) -or [char]::IsSurrogate($char)) { return $true }
+    }
+    return $false
+}
+
+function New-WinToolThemeRow {
+    param(
+        [string]$Id,
+        [string]$Name,
+        [object[]]$Preview,
+        $NerdFont,
+        [string]$Description = ""
+    )
+    $segments = @($Preview | Where-Object { $null -ne $_ })
+    $powerline = $null
+    $nerd = $NerdFont
+    if ($segments.Count -gt 0) {
+        $powerline = (@($segments | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Background) }).Count -gt 0)
+        if ($null -eq $nerd) {
+            $nerd = (Test-WinToolNerdGlyph -Text ((@($segments | ForEach-Object { [string]$_.Text })) -join ""))
+        }
+    }
+    return [pscustomobject]@{ Id = $Id; Name = $Name; Preview = $segments; Powerline = $powerline; NerdFont = $nerd; Description = $Description }
+}
+
+function Get-WinToolThemeRow {
+    param(
+        [AllowEmptyString()][string]$PromptId,
+        [object[]]$OhMyPoshTheme
+    )
+    # Every theme, preset, or style the engine offers, with a sample prompt
+    # line when one is known. Powerline and NerdFont stay $null when unknown.
+    $catalog = Get-WinToolTerminalCatalog
+    $rows = New-Object System.Collections.Generic.List[object]
+    if ($PromptId -eq "oh-my-posh") {
+        $themes = @($OhMyPoshTheme | Where-Object { $null -ne $_ })
+        if ($themes.Count -eq 0) { $themes = @(Get-WinToolNote -Object (Get-WinToolOhMyPoshDocument) -Name "themes" -Default @()) }
+        foreach ($theme in $themes) {
+            $preview = @()
+            $file = [string](Get-WinToolNote -Object $theme -Name "file" -Default "")
+            if (-not [string]::IsNullOrWhiteSpace($file)) {
+                $json = Read-WinToolCachedOmpTheme -File $file
+                if ($null -ne $json) { $preview = @(Get-WinToolOmpPreviewSegment -Theme $json) }
+            }
+            if ($preview.Count -eq 0) { $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @(Get-WinToolNote -Object $theme -Name "preview" -Default @())) }
+            $rows.Add((New-WinToolThemeRow -Id ([string]$theme.id) -Name ([string]$theme.name) -Preview $preview -NerdFont $null))
+        }
+    }
+    elseif ($PromptId -eq "starship") {
+        foreach ($preset in @(Get-WinToolNote -Object $catalog -Name "starshipPresets" -Default @())) {
+            $preview = @(Get-WinToolPromptPreview -PromptId "starship" -PromptStyle ([string]$preset.id))
+            $nerd = Get-WinToolNote -Object $preset -Name "nerdFont"
+            if ($null -ne $nerd) { $nerd = [bool]$nerd }
+            $rows.Add((New-WinToolThemeRow -Id ([string]$preset.id) -Name ([string]$preset.name) -Preview $preview -NerdFont $nerd))
+        }
+    }
+    elseif ($PromptId -eq "oh-my-zsh") {
+        $previews = Get-WinToolNote -Object $catalog -Name "previews"
+        foreach ($name in @(Get-WinToolNote -Object $catalog -Name "omzThemes" -Default @())) {
+            $preview = @()
+            if ($null -ne $previews -and $null -ne $previews.PSObject.Properties[("oh-my-zsh:" + [string]$name)]) {
+                $preview = @(Get-WinToolPromptPreview -PromptId "oh-my-zsh" -PromptStyle ([string]$name))
+            }
+            $rows.Add((New-WinToolThemeRow -Id ([string]$name) -Name ([string]$name) -Preview $preview -NerdFont $null))
+        }
+    }
+    else {
+        foreach ($variant in @(Get-WinToolPromptVariantList -PromptId $PromptId)) {
+            $preview = @(Get-WinToolPromptPreview -PromptId $PromptId -PromptStyle ([string]$variant.id))
+            $about = [string](Get-WinToolNote -Object $variant -Name "description" -Default "")
+            $rows.Add((New-WinToolThemeRow -Id ([string]$variant.id) -Name ([string]$variant.name) -Preview $preview -NerdFont $null -Description $about))
+        }
+    }
+    return $rows.ToArray()
+}
+
+function Select-WinToolThemeRow {
+    param(
+        [AllowEmptyCollection()][object[]]$Row,
+        [AllowEmptyString()][string]$Query = "",
+        [AllowEmptyString()][string]$Filter = "all"
+    )
+    # Search and the All / Powerline / Minimal / No Nerd Font needed chips.
+    $out = New-Object System.Collections.Generic.List[object]
+    foreach ($item in @($Row | Where-Object { $null -ne $_ })) {
+        $hay = [string]$item.Name + " " + [string]$item.Id + " " + [string]$item.Description
+        if (-not (Test-WinToolTextMatch -Haystack $hay -Query $Query)) { continue }
+        if ($Filter -eq "powerline" -and $item.Powerline -ne $true) { continue }
+        if ($Filter -eq "minimal" -and $item.Powerline -ne $false) { continue }
+        if ($Filter -eq "no-nerd" -and $item.NerdFont -ne $false) { continue }
+        $out.Add($item)
+    }
+    return $out.ToArray()
+}
+
+function Get-WinToolSummaryChip {
+    param(
+        [AllowEmptyCollection()][object[]]$Step
+    )
+    # Short "+ install" and "~ change" chips for the action bar, one per
+    # thing, in plan order.
+    $chips = New-Object System.Collections.Generic.List[object]
+    $seen = @{}
+    $add = {
+        param($kind, $text)
+        $key = $kind + "|" + $text
+        if ([string]::IsNullOrWhiteSpace($text) -or $seen.ContainsKey($key)) { return }
+        $seen[$key] = $true
+        $chips.Add([pscustomobject]@{ Kind = $kind; Text = $text })
+    }
+    foreach ($item in @($Step | Where-Object { $null -ne $_ })) {
+        $type = [string]$item.Type
+        $label = [string]$item.Label
+        switch ($type) {
+            "winget" { & $add "add" ($label -replace '^Install ', '') }
+            "font-download" { & $add "add" ($label -replace '^Download ', '') }
+            "tool-download" { & $add "add" ($label -replace '^Download ', '') }
+            "wsl-install" { & $add "add" ("WSL " + [string]$item.Distro) }
+            "module" {
+                if ($label -match '^Install (.+?) for ') { & $add "add" $Matches[1] }
+                elseif ($label -match '^Update (.+?) for ') { & $add "change" ($Matches[1] + " predictions") }
+                else { & $add "change" $label }
+            }
+            "font" {
+                $text = "Terminal font"
+                if ($null -ne $item.PSObject.Properties["Size"] -and [int]$item.Size -ne 12) { $text += " " + [int]$item.Size + " pt" }
+                & $add "change" $text
+            }
+            "scheme" { & $add "change" ($label -replace '^Set the Windows Terminal color scheme to ', 'Scheme ') }
+            "starship-preset" { & $add "change" ("Starship preset " + [string]$item.Preset) }
+            "profile" { & $add "change" "PowerShell `$PROFILE" }
+            "wsl-shell" {
+                $text = $label -replace '^Install ', ''
+                $style = ""
+                if ($text -match '^(.*) \((.+) style\)$') { $text = $Matches[1]; $style = $Matches[2] }
+                & $add "add" $text
+                if (-not [string]::IsNullOrWhiteSpace($style)) { & $add "change" ($style + " style") }
+            }
+            "wsl-profile" { & $add "change" ("Font in the " + [string]$item.Distro + " profile") }
+            default { & $add "change" $label }
+        }
+    }
+    return $chips.ToArray()
+}
+
+function ConvertTo-WinToolPreviewSegmentList {
+    param(
+        [AllowEmptyCollection()][object[]]$Item
+    )
+    # Catalog samples ({ text, fg or color, bg }) as preview segments.
+    $out = New-Object System.Collections.Generic.List[object]
+    foreach ($entry in @($Item | Where-Object { $null -ne $_ })) {
+        $fg = [string](Get-WinToolNote -Object $entry -Name "fg" -Default "")
+        if ([string]::IsNullOrWhiteSpace($fg)) { $fg = [string](Get-WinToolNote -Object $entry -Name "color" -Default "") }
+        $out.Add((New-WinToolPreviewSegment -Text ([string]$entry.text) -Foreground $fg -Background ([string](Get-WinToolNote -Object $entry -Name "bg" -Default ""))))
+    }
+    return $out.ToArray()
 }
