@@ -287,8 +287,23 @@ function Test-WinToolDataFile {
             Add-WinToolDataError -Errors $errors -Message "Terminal font '$id' has an unexpected winget id."
         }
         $asset = [string](Get-WinToolNote -Object $font -Name "asset" -Default "")
-        if ([string]::IsNullOrWhiteSpace($wingetId) -and [string]::IsNullOrWhiteSpace($asset) -and [string](Get-WinToolNote -Object $font -Name "source" -Default "") -eq "nerd-fonts") {
-            Add-WinToolDataError -Errors $errors -Message "Nerd Font '$id' needs a winget id or a release asset."
+        $github = Get-WinToolNote -Object $font -Name "github"
+        $sources = 0
+        if (-not [string]::IsNullOrWhiteSpace($wingetId)) { $sources++ }
+        if (-not [string]::IsNullOrWhiteSpace($asset)) { $sources++ }
+        if ($null -ne $github) { $sources++ }
+        if ($sources -ne 1) {
+            Add-WinToolDataError -Errors $errors -Message "Terminal font '$id' needs exactly one source: a Nerd Fonts asset, a GitHub release, or a checked winget id."
+        }
+        if ([string](Get-WinToolNote -Object $font -Name "source" -Default "") -eq "nerd-fonts" -and [string]::IsNullOrWhiteSpace($asset)) {
+            Add-WinToolDataError -Errors $errors -Message "Nerd Font '$id' must come from the Nerd Fonts release."
+        }
+        if ($null -ne $github) {
+            $repo = [string](Get-WinToolNote -Object $github -Name "repo" -Default "")
+            $pattern = [string](Get-WinToolNote -Object $github -Name "asset" -Default "")
+            if ($repo -notmatch '^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$' -or [string]::IsNullOrWhiteSpace($pattern) -or @(Get-WinToolNote -Object $github -Name "files" -Default @()).Count -eq 0) {
+                Add-WinToolDataError -Errors $errors -Message "Terminal font '$id' has an incomplete GitHub source."
+            }
         }
     }
     $themeDoc = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "OmpThemes")

@@ -82,6 +82,16 @@ $fontList = $window.FindName("TerminalFontList")
 if ($null -eq $fontList -or $fontList.Items.Count -lt 50) {
     throw "The Terminal tab did not list the font catalog."
 }
+$consolas = Find-WinToolInstalledFontFile -Token "Consolas"
+if ($null -eq $consolas) {
+    throw "The installed-font check did not find Consolas."
+}
+$family = Get-WinToolFontFamilyName -Path ([string]$consolas.Data)
+if ($family -ne "Consolas") {
+    throw "The font family name read from $($consolas.Data) was '$family'."
+}
+# A font that is not installed must be skipped with a warning, not set.
+Invoke-WinToolTerminalFont -Face "WinTool Missing Nerd Font" -Match "WinToolMissingNerdFont"
 $promptHost = $window.FindName("TerminalPromptHost")
 if ($null -eq $promptHost -or $promptHost.Children.Count -lt 8) {
     throw "The Terminal tab did not list the prompt engines."

@@ -175,34 +175,6 @@ function ConvertTo-WinToolFontFace {
     return $face.Trim()
 }
 
-function Get-WinToolInstalledFontFace {
-    param(
-        [Parameter(Mandatory = $true)][string]$Token
-    )
-    if (-not (Test-WinToolWindows)) {
-        return $null
-    }
-    $paths = @(
-        "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts",
-        "HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
-    )
-    foreach ($path in $paths) {
-        if (-not (Test-Path -LiteralPath $path)) {
-            continue
-        }
-        $item = Get-Item -LiteralPath $path
-        foreach ($name in @($item.GetValueNames())) {
-            if ([string]$name -eq "") {
-                continue
-            }
-            if ($name.IndexOf($Token, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
-                return (ConvertTo-WinToolFontFace -RegistryName $name)
-            }
-        }
-    }
-    return $null
-}
-
 function Add-WinToolTerminalFont {
     param(
         [Parameter(Mandatory = $true)]$Settings,
@@ -308,16 +280,125 @@ function Write-WinToolShellProfile {
     }
 }
 
+function ConvertTo-WinToolFontToken {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    return ([string]$Text).ToLowerInvariant().Replace(" ", "").Replace("-", "").Replace("_", "")
+}
+
+function Find-WinToolInstalledFontFile {
+    param(
+        [Parameter(Mandatory = $true)][string]$Token,
+        [object[]]$Entry
+    )
+    # Entries are registry font values: Name like "CaskaydiaCoveNerdFont-Regular
+    # (TrueType)", Data the file. The regular style is preferred, and the
+    # proportional Nerd Font variant is skipped when another one exists.
+    if ($null -eq $Entry) {
+        $Entry = @(Get-WinToolRegisteredFont)
+    }
+    $want = ConvertTo-WinToolFontToken -Text $Token
+    if ([string]::IsNullOrWhiteSpace($want)) {
+        return $null
+    }
+    $hits = New-Object System.Collections.Generic.List[object]
+    foreach ($item in @($Entry)) {
+        $name = ConvertTo-WinToolFontToken -Text ([string]$item.Name)
+        $file = ConvertTo-WinToolFontToken -Text ([System.IO.Path]::GetFileName([string]$item.Data))
+        if ($name.Contains($want) -or $file.Contains($want)) {
+            $hits.Add($item)
+        }
+    }
+    if ($hits.Count -eq 0) {
+        return $null
+    }
+    $best = $null
+    $bestScore = -1
+    foreach ($item in $hits) {
+        $text = ConvertTo-WinToolFontToken -Text ([string]$item.Name)
+        $score = 0
+        if ($text.Contains("regular")) { $score += 2 }
+        if (-not $text.Contains("propo")) { $score += 1 }
+        if ($score -gt $bestScore) {
+            $best = $item
+            $bestScore = $score
+        }
+    }
+    return $best
+}
+
+function Get-WinToolRegisteredFont {
+    if (-not (Test-WinToolWindows)) {
+        return @()
+    }
+    $list = New-Object System.Collections.Generic.List[object]
+    $sources = @(
+        @{ Key = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"; Folder = (Join-Path $env:windir "Fonts") },
+        @{ Key = "HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"; Folder = (Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Fonts") }
+    )
+    foreach ($source in $sources) {
+        if (-not (Test-Path -LiteralPath $source.Key)) {
+            continue
+        }
+        $item = Get-Item -LiteralPath $source.Key
+        foreach ($name in @($item.GetValueNames())) {
+            if ([string]::IsNullOrWhiteSpace([string]$name)) {
+                continue
+            }
+            $data = [string]$item.GetValue($name)
+            if (-not [string]::IsNullOrWhiteSpace($data) -and -not [System.IO.Path]::IsPathRooted($data)) {
+                $data = Join-Path $source.Folder $data
+            }
+            $list.Add([pscustomobject]@{ Name = [string]$name; Data = $data })
+        }
+    }
+    return $list.ToArray()
+}
+
+function Get-WinToolFontFamilyName {
+    param(
+        [string]$Path
+    )
+    # The family name inside the file is what Terminal needs in "face".
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) {
+        return $null
+    }
+    try {
+        Add-Type -AssemblyName PresentationCore
+        $glyph = New-Object System.Windows.Media.GlyphTypeface ([uri]$Path)
+        $names = $glyph.Win32FamilyNames
+        $english = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+        if ($names.ContainsKey($english)) {
+            return [string]$names[$english]
+        }
+        foreach ($value in $names.Values) {
+            return [string]$value
+        }
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    return $null
+}
+
 function Invoke-WinToolTerminalFont {
     param(
         [Parameter(Mandatory = $true)][string]$Face,
         [string]$Match
     )
     $chosen = $Face
-    if (-not [string]::IsNullOrWhiteSpace($Match)) {
-        $found = Get-WinToolInstalledFontFace -Token $Match
-        if (-not [string]::IsNullOrWhiteSpace($found)) {
-            $chosen = $found
+    if (-not [string]::IsNullOrWhiteSpace($Match) -and (Test-WinToolWindows)) {
+        $found = Find-WinToolInstalledFontFile -Token $Match
+        if ($null -eq $found) {
+            Write-WinToolLog -Message ("{0} is not installed, so the Windows Terminal font was left as it is. Run terminal setup again after the font installs." -f $Face) -Level "warn"
+            return
+        }
+        $family = Get-WinToolFontFamilyName -Path ([string]$found.Data)
+        if (-not [string]::IsNullOrWhiteSpace($family)) {
+            $chosen = $family
+        }
+        if ($chosen -ne $Face) {
             Write-WinToolLog -Message "Using the installed font name: $chosen" -Level "info"
         }
     }
@@ -395,36 +476,115 @@ function Invoke-WinToolStarshipPreset {
     Write-WinToolLog -Message "Wrote the Starship preset to $destination." -Level "ok"
 }
 
+function Get-WinToolFontInstallStep {
+    param(
+        [Parameter(Mandatory = $true)]$Font
+    )
+    # Nerd Fonts come from the official ryanoasis/nerd-fonts release. Plain
+    # fonts come from their own GitHub releases, or from winget only when the
+    # id was checked in winget-pkgs (fonts.json keeps just those).
+    $name = [string]$Font.name
+    $wingetId = [string](Get-WinToolNote -Object $Font -Name "wingetId" -Default "")
+    $asset = [string](Get-WinToolNote -Object $Font -Name "asset" -Default "")
+    $github = Get-WinToolNote -Object $Font -Name "github"
+    if (-not [string]::IsNullOrWhiteSpace($asset)) {
+        $release = [string](Get-WinToolNote -Object $Font -Name "release" -Default "")
+        if ([string]::IsNullOrWhiteSpace($release)) {
+            $release = [string](Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "nerdFontsRelease" -Default "v3.5.1")
+        }
+        return @([pscustomobject]@{ Type = "font-download"; Label = ("Download " + $name); Release = $release; Asset = $asset; Face = [string]$Font.face })
+    }
+    if ($null -ne $github) {
+        return @([pscustomobject]@{ Type = "font-download"; Label = ("Download " + $name); Repo = [string]$github.repo; AssetPattern = [string]$github.asset; Files = @($github.files); Face = [string]$Font.face })
+    }
+    if (-not [string]::IsNullOrWhiteSpace($wingetId)) {
+        return @([pscustomobject]@{ Type = "winget"; Label = ("Install " + $name); WingetId = $wingetId; Scope = "" })
+    }
+    return @()
+}
+
 function Get-WinToolFontDownloadScript {
     param(
-        [Parameter(Mandatory = $true)][string]$Release,
-        [Parameter(Mandatory = $true)][string]$Asset
+        [Parameter(Mandatory = $true)]$Step
     )
-    $text = @'
-$ErrorActionPreference = "Stop"
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-$release = "RELEASE"
-$asset = "ASSET"
-$url = "https://github.com/ryanoasis/nerd-fonts/releases/download/$release/$asset"
-$zip = Join-Path $env:TEMP $asset
-$folder = Join-Path $env:TEMP ("WinTool-" + [IO.Path]::GetFileNameWithoutExtension($asset))
+    # Two kinds of source: a Nerd Fonts release zip (fixed release and file
+    # name), or the latest release of a font's own GitHub repository, found
+    # by a file name pattern. Fonts go to the user's font folder and are
+    # registered for the user, then loaded so Terminal sees them right away.
+    $url = ""
+    $release = [string](Get-WinToolNote -Object $Step -Name "Release" -Default "")
+    $asset = [string](Get-WinToolNote -Object $Step -Name "Asset" -Default "")
+    if (-not [string]::IsNullOrWhiteSpace($asset)) {
+        $url = "https://github.com/ryanoasis/nerd-fonts/releases/download/" + $release + "/" + $asset
+    }
+    $repo = [string](Get-WinToolNote -Object $Step -Name "Repo" -Default "")
+    $pattern = [string](Get-WinToolNote -Object $Step -Name "AssetPattern" -Default "")
+    if ([string]::IsNullOrWhiteSpace($url) -and ([string]::IsNullOrWhiteSpace($repo) -or [string]::IsNullOrWhiteSpace($pattern))) {
+        throw "The font download needs a Nerd Fonts asset or a GitHub repository and file pattern."
+    }
+    $files = @(Get-WinToolNote -Object $Step -Name "Files" -Default @())
+    $fileText = (@($files | ForEach-Object { ConvertTo-WinToolSingleQuoted -Text ([string]$_) })) -join ", "
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add('$ErrorActionPreference = "Stop"')
+    $lines.Add('[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12')
+    $lines.Add('Add-Type -AssemblyName System.IO.Compression.FileSystem')
+    $lines.Add('$url = ' + (ConvertTo-WinToolSingleQuoted -Text $url))
+    $lines.Add('$repo = ' + (ConvertTo-WinToolSingleQuoted -Text $repo))
+    $lines.Add('$pattern = ' + (ConvertTo-WinToolSingleQuoted -Text $pattern))
+    $lines.Add('$wanted = @(' + $fileText + ')')
+    $body = @'
+if ([string]::IsNullOrWhiteSpace($url)) {
+    $latest = Invoke-RestMethod -Uri ("https://api.github.com/repos/" + $repo + "/releases/latest") -Headers @{ "User-Agent" = "WinTool" } -UseBasicParsing
+    $match = @($latest.assets | Where-Object { [string]$_.name -like $pattern })
+    if ($match.Count -eq 0) {
+        throw ("The latest " + $repo + " release has no file named like " + $pattern + ".")
+    }
+    $url = [string]$match[0].browser_download_url
+    Write-Output ("Downloading " + [string]$match[0].name + " from " + $repo + " " + [string]$latest.tag_name)
+}
+else {
+    Write-Output ("Downloading " + $url)
+}
+$name = [IO.Path]::GetFileName(([uri]$url).AbsolutePath)
+$zip = Join-Path $env:TEMP ("WinTool-" + $name)
+$folder = Join-Path $env:TEMP ("WinTool-" + [IO.Path]::GetFileNameWithoutExtension($name))
 Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
 if (Test-Path -LiteralPath $folder) { Remove-Item -LiteralPath $folder -Recurse -Force }
 [IO.Compression.ZipFile]::ExtractToDirectory($zip, $folder)
+$all = @(Get-ChildItem -LiteralPath $folder -Recurse -File | Where-Object { @(".ttf", ".otf", ".ttc") -contains $_.Extension.ToLowerInvariant() })
+$picked = @{}
+foreach ($file in $all) {
+    $take = ($wanted.Count -eq 0)
+    foreach ($want in $wanted) {
+        if ($file.Name -like $want) { $take = $true }
+    }
+    if ($take -and -not $picked.ContainsKey($file.Name.ToLowerInvariant())) {
+        $picked[$file.Name.ToLowerInvariant()] = $file
+    }
+}
+if ($picked.Count -eq 0) {
+    throw ("No font files were found in " + $name + ".")
+}
+if (-not ("WinToolFontLoader" -as [type])) {
+    Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class WinToolFontLoader { [DllImport("gdi32.dll", CharSet = CharSet.Unicode)] public static extern int AddFontResource(string file); }'
+}
 $dest = Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Fonts"
 if (-not (Test-Path -LiteralPath $dest)) { New-Item -ItemType Directory -Path $dest -Force | Out-Null }
 $key = "HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
 if (-not (Test-Path -LiteralPath $key)) { New-Item -Path $key -Force | Out-Null }
-$files = @(Get-ChildItem -LiteralPath $folder -Recurse -Include *.ttf, *.otf)
-foreach ($file in $files) {
+foreach ($file in $picked.Values) {
     $target = Join-Path $dest $file.Name
     Copy-Item -LiteralPath $file.FullName -Destination $target -Force
     $label = [IO.Path]::GetFileNameWithoutExtension($file.Name) + " (TrueType)"
     New-ItemProperty -LiteralPath $key -Name $label -Value $target -PropertyType String -Force | Out-Null
+    $null = [WinToolFontLoader]::AddFontResource($target)
 }
-Write-Output ("Installed " + $files.Count + " font files from " + $asset)
+Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
+Write-Output ("Installed " + $picked.Count + " font files from " + $name)
 '@
-    return $text.Replace("RELEASE", $Release).Replace("ASSET", $Asset)
+    $lines.Add($body)
+    return ($lines -join [Environment]::NewLine)
 }
 
 function Get-WinToolToolDownloadScript {
@@ -517,7 +677,9 @@ function Get-WinToolTerminalPlan {
     }
 
     $font = $null
-    foreach ($item in @(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @())) {
+    # Fonts added by the online refresh live in $script:WinToolExtraFont.
+    $fontRows = @(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @()) + @($script:WinToolExtraFont | Where-Object { $null -ne $_ })
+    foreach ($item in $fontRows) {
         if ([string]$item.id -eq $fontId) {
             $font = $item
             break
@@ -542,14 +704,8 @@ function Get-WinToolTerminalPlan {
     if (-not [string]::IsNullOrWhiteSpace($promptWinget)) {
         [void]$steps.Add([pscustomobject]@{ Type = "winget"; Label = ("Install " + [string]$prompt.name); WingetId = $promptWinget; Scope = "" })
     }
-    $fontWinget = [string](Get-WinToolNote -Object $font -Name "wingetId" -Default "")
-    $fontAsset = [string](Get-WinToolNote -Object $font -Name "asset" -Default "")
-    if (-not [string]::IsNullOrWhiteSpace($fontWinget)) {
-        [void]$steps.Add([pscustomobject]@{ Type = "winget"; Label = ("Install " + [string]$font.name); WingetId = $fontWinget; Scope = "" })
-    }
-    elseif (-not [string]::IsNullOrWhiteSpace($fontAsset)) {
-        $release = [string](Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "nerdFontsRelease" -Default "v3.5.1")
-        [void]$steps.Add([pscustomobject]@{ Type = "font-download"; Label = ("Download " + [string]$font.name); Release = $release; Asset = $fontAsset; Face = [string]$font.face })
+    foreach ($fontStep in @(Get-WinToolFontInstallStep -Font $font)) {
+        [void]$steps.Add($fontStep)
     }
     [void]$steps.Add([pscustomobject]@{ Type = "font"; Label = ("Set the Windows Terminal font to " + [string]$font.name); Face = [string]$font.face; Match = [string]$font.match })
     if ($null -ne $scheme) {

@@ -8,9 +8,13 @@
       "face": "Cascadia Code",
       "match": "Cascadia Code",
       "nerd": false,
-      "source": "winget",
-      "wingetId": "Microsoft.CascadiaCode",
-      "sample": "The quick brown fox jumps over 123."
+      "source": "github",
+      "sample": "The quick brown fox jumps over 123.",
+      "github": {
+        "repo": "microsoft/cascadia-code",
+        "asset": "CascadiaCode-*.zip",
+        "files": ["CascadiaCode.ttf", "CascadiaCodeItalic.ttf"]
+      }
     },
     {
       "id": "cascadia-mono",
@@ -18,9 +22,13 @@
       "face": "Cascadia Mono",
       "match": "Cascadia Mono",
       "nerd": false,
-      "source": "winget",
-      "wingetId": "Microsoft.CascadiaMono",
-      "sample": "The quick brown fox jumps over 123."
+      "source": "github",
+      "sample": "The quick brown fox jumps over 123.",
+      "github": {
+        "repo": "microsoft/cascadia-code",
+        "asset": "CascadiaCode-*.zip",
+        "files": ["CascadiaMono.ttf", "CascadiaMonoItalic.ttf"]
+      }
     },
     {
       "id": "jetbrains-mono-plain",
@@ -28,9 +36,13 @@
       "face": "JetBrains Mono",
       "match": "JetBrains Mono",
       "nerd": false,
-      "source": "winget",
-      "wingetId": "JetBrains.JetBrainsMono",
-      "sample": "The quick brown fox jumps over 123."
+      "source": "github",
+      "sample": "The quick brown fox jumps over 123.",
+      "github": {
+        "repo": "JetBrains/JetBrainsMono",
+        "asset": "JetBrainsMono-*.zip",
+        "files": ["JetBrainsMono-Regular.ttf", "JetBrainsMono-Bold.ttf", "JetBrainsMono-Italic.ttf", "JetBrainsMono-BoldItalic.ttf"]
+      }
     },
     {
       "id": "hack",
@@ -48,9 +60,13 @@
       "face": "Iosevka",
       "match": "Iosevka",
       "nerd": false,
-      "source": "winget",
-      "wingetId": "be5invis.Iosevka",
-      "sample": "The quick brown fox jumps over 123."
+      "source": "github",
+      "sample": "The quick brown fox jumps over 123.",
+      "github": {
+        "repo": "be5invis/Iosevka",
+        "asset": "PkgTTC-Iosevka-*.zip",
+        "files": ["Iosevka-Regular.ttc", "Iosevka-Bold.ttc"]
+      }
     },
     {
       "id": "source-code-pro",
@@ -58,9 +74,13 @@
       "face": "Source Code Pro",
       "match": "Source Code Pro",
       "nerd": false,
-      "source": "winget",
-      "wingetId": "Adobe.SourceCodePro",
-      "sample": "The quick brown fox jumps over 123."
+      "source": "github",
+      "sample": "The quick brown fox jumps over 123.",
+      "github": {
+        "repo": "adobe-fonts/source-code-pro",
+        "asset": "TTF-source-code-pro-*.zip",
+        "files": ["SourceCodePro-Regular.ttf", "SourceCodePro-Bold.ttf", "SourceCodePro-It.ttf", "SourceCodePro-BoldIt.ttf"]
+      }
     },
     {
       "id": "maple-mono",
@@ -70,7 +90,12 @@
       "nerd": false,
       "source": "github",
       "url": "https://github.com/subframe7536/maple-font",
-      "sample": "The quick brown fox jumps over 123."
+      "sample": "The quick brown fox jumps over 123.",
+      "github": {
+        "repo": "subframe7536/maple-font",
+        "asset": "MapleMono-TTF.zip",
+        "files": ["MapleMono-Regular.ttf", "MapleMono-Bold.ttf", "MapleMono-Italic.ttf", "MapleMono-BoldItalic.ttf"]
+      }
     },
     {
       "id": "0xproto-nf",
@@ -119,8 +144,8 @@
     {
       "id": "annotationmono-nf",
       "name": "Annotation Mono Nerd Font",
-      "face": "AnnotationMono Nerd Font",
-      "match": "AnnotationMono",
+      "face": "AnnotationM NF",
+      "match": "AnnotationM",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -130,8 +155,8 @@
     {
       "id": "anonymouspro-nf",
       "name": "Anonymous Pro Nerd Font",
-      "face": "AnonymousPro Nerd Font",
-      "match": "AnonymousPro",
+      "face": "AnonymicePro Nerd Font",
+      "match": "AnonymicePro",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -152,8 +177,8 @@
     {
       "id": "atkinsonhyperlegiblemono-nf",
       "name": "Atkinson Hyperlegible Mono Nerd Font",
-      "face": "AtkinsonHyperlegibleMono Nerd Font",
-      "match": "AtkinsonHyperlegibleMono",
+      "face": "AtkynsonMono NF",
+      "match": "AtkynsonMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -163,8 +188,8 @@
     {
       "id": "aurulentsansmono-nf",
       "name": "Aurulent Sans Mono Nerd Font",
-      "face": "AurulentSansMono Nerd Font",
-      "match": "AurulentSansMono",
+      "face": "AurulentSansM Nerd Font",
+      "match": "AurulentSansM",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -174,8 +199,8 @@
     {
       "id": "bigblueterminal-nf",
       "name": "Big Blue Terminal Nerd Font",
-      "face": "BigBlueTerminal Nerd Font",
-      "match": "BigBlueTerminal",
+      "face": "BigBlueTermPlus Nerd Font",
+      "match": "BigBlueTerm",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -185,8 +210,8 @@
     {
       "id": "bitstreamverasansmono-nf",
       "name": "Bitstream Vera Sans Mono Nerd Font",
-      "face": "BitstreamVeraSansMono Nerd Font",
-      "match": "BitstreamVeraSansMono",
+      "face": "BitstromWera Nerd Font",
+      "match": "BitstromWera",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -202,20 +227,18 @@
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "CascadiaCode.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.CaskaydiaCoveNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "cascadiamono-nf",
       "name": "Cascadia Mono Nerd Font",
-      "face": "CaskaydiaMono Nerd Font",
+      "face": "CaskaydiaMono NF",
       "match": "CaskaydiaMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "CascadiaMono.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.CaskaydiaMonoNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "codenewroman-nf",
@@ -264,8 +287,8 @@
     {
       "id": "d2coding-nf",
       "name": "D2Coding Nerd Font",
-      "face": "D2Coding Nerd Font",
-      "match": "D2Coding",
+      "face": "D2KodingLigature Nerd Font",
+      "match": "D2KodingLigature",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -286,8 +309,8 @@
     {
       "id": "dejavusansmono-nf",
       "name": "Deja Vu Sans Mono Nerd Font",
-      "face": "DejaVuSansMono Nerd Font",
-      "match": "DejaVuSansMono",
+      "face": "DejaVuSansM Nerd Font",
+      "match": "DejaVuSansM",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -308,8 +331,8 @@
     {
       "id": "droidsansmono-nf",
       "name": "Droid Sans Mono Nerd Font",
-      "face": "DroidSansMono Nerd Font",
-      "match": "DroidSansMono",
+      "face": "DroidSansM Nerd Font",
+      "match": "DroidSansM",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -330,8 +353,8 @@
     {
       "id": "fantasquesansmono-nf",
       "name": "Fantasque Sans Mono Nerd Font",
-      "face": "FantasqueSansMono Nerd Font",
-      "match": "FantasqueSansMono",
+      "face": "FantasqueSansM Nerd Font",
+      "match": "FantasqueSansM",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -347,8 +370,7 @@
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "FiraCode.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.FiraCodeNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "firamono-nf",
@@ -364,20 +386,19 @@
     {
       "id": "geistmono-nf",
       "name": "Geist Mono Nerd Font",
-      "face": "GeistMono Nerd Font",
+      "face": "GeistMono NF",
       "match": "GeistMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "GeistMono.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.GeistMonoNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "go-mono-nf",
       "name": "Go Mono Nerd Font",
-      "face": "Go-Mono Nerd Font",
-      "match": "Go-Mono",
+      "face": "GoMono Nerd Font",
+      "match": "GoMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -387,8 +408,8 @@
     {
       "id": "gohu-nf",
       "name": "Gohu Nerd Font",
-      "face": "Gohu Nerd Font",
-      "match": "Gohu",
+      "face": "GohuFont 14 Nerd Font",
+      "match": "GohuFont",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -398,7 +419,7 @@
     {
       "id": "googlesanscode-nf",
       "name": "Google Sans Code Nerd Font",
-      "face": "GoogleSansCode Nerd Font",
+      "face": "GoogleSansCode NF",
       "match": "GoogleSansCode",
       "nerd": true,
       "source": "nerd-fonts",
@@ -415,14 +436,13 @@
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "Hack.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.HackNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "hasklig-nf",
       "name": "Hasklig Nerd Font",
-      "face": "Hasklig Nerd Font",
-      "match": "Hasklig",
+      "face": "Hasklug Nerd Font",
+      "match": "Hasklug",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -443,8 +463,8 @@
     {
       "id": "hermit-nf",
       "name": "Hermit Nerd Font",
-      "face": "Hermit Nerd Font",
-      "match": "Hermit",
+      "face": "Hurmit Nerd Font",
+      "match": "Hurmit",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -454,8 +474,8 @@
     {
       "id": "ibmplexmono-nf",
       "name": "IBMPlex Mono Nerd Font",
-      "face": "IBMPlexMono Nerd Font",
-      "match": "IBMPlexMono",
+      "face": "BlexMono Nerd Font",
+      "match": "BlexMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -487,7 +507,7 @@
     {
       "id": "inconsolatalgc-nf",
       "name": "Inconsolata LGC Nerd Font",
-      "face": "InconsolataLGC Nerd Font",
+      "face": "Inconsolata LGC Nerd Font",
       "match": "InconsolataLGC",
       "nerd": true,
       "source": "nerd-fonts",
@@ -498,8 +518,8 @@
     {
       "id": "intelonemono-nf",
       "name": "Intel One Mono Nerd Font",
-      "face": "IntelOneMono Nerd Font",
-      "match": "IntelOneMono",
+      "face": "IntoneMono Nerd Font",
+      "match": "IntoneMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -515,8 +535,7 @@
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "Iosevka.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.IosevkaNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "iosevkaterm-nf",
@@ -532,7 +551,7 @@
     {
       "id": "iosevkatermslab-nf",
       "name": "Iosevka Term Slab Nerd Font",
-      "face": "IosevkaTermSlab Nerd Font",
+      "face": "IosevkaTermSlab NF",
       "match": "IosevkaTermSlab",
       "nerd": true,
       "source": "nerd-fonts",
@@ -549,8 +568,7 @@
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "JetBrainsMono.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.JetBrainsMonoNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "lekton-nf",
@@ -566,8 +584,8 @@
     {
       "id": "liberationmono-nf",
       "name": "Liberation Mono Nerd Font",
-      "face": "LiberationMono Nerd Font",
-      "match": "LiberationMono",
+      "face": "LiterationMono Nerd Font",
+      "match": "LiterationMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -588,8 +606,8 @@
     {
       "id": "mplus-nf",
       "name": "MPlus Nerd Font",
-      "face": "MPlus Nerd Font",
-      "match": "MPlus",
+      "face": "M+1Code Nerd Font",
+      "match": "M+",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -599,7 +617,7 @@
     {
       "id": "martianmono-nf",
       "name": "Martian Mono Nerd Font",
-      "face": "MartianMono Nerd Font",
+      "face": "MartianMono NF",
       "match": "MartianMono",
       "nerd": true,
       "source": "nerd-fonts",
@@ -610,26 +628,24 @@
     {
       "id": "meslo-nf",
       "name": "MesloLGS NF",
-      "face": "MesloLGS Nerd Font",
-      "match": "Meslo",
+      "face": "MesloLGM Nerd Font",
+      "match": "MesloLG",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "Meslo.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.MesloLGMNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "monaspace-nf",
       "name": "Monaspace Nerd Font",
-      "face": "Monaspace Nerd Font",
-      "match": "Monaspace",
+      "face": "MonaspiceNe NF",
+      "match": "Monaspice",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "Monaspace.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.MonaspaceNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "monofur-nf",
@@ -667,7 +683,7 @@
     {
       "id": "noto-nf",
       "name": "Noto Nerd Font",
-      "face": "Noto Nerd Font",
+      "face": "NotoSansM Nerd Font",
       "match": "Noto",
       "nerd": true,
       "source": "nerd-fonts",
@@ -689,7 +705,7 @@
     {
       "id": "overpass-nf",
       "name": "Overpass Nerd Font",
-      "face": "Overpass Nerd Font",
+      "face": "OverpassM Nerd Font",
       "match": "Overpass",
       "nerd": true,
       "source": "nerd-fonts",
@@ -700,7 +716,7 @@
     {
       "id": "profont-nf",
       "name": "Pro Font Nerd Font",
-      "face": "ProFont Nerd Font",
+      "face": "ProFont IIx Nerd Font",
       "match": "ProFont",
       "nerd": true,
       "source": "nerd-fonts",
@@ -722,8 +738,8 @@
     {
       "id": "recursive-nf",
       "name": "Recursive Nerd Font",
-      "face": "Recursive Nerd Font",
-      "match": "Recursive",
+      "face": "RecMonoSmCasual Nerd Font",
+      "match": "RecMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -744,8 +760,8 @@
     {
       "id": "sharetechmono-nf",
       "name": "Share Tech Mono Nerd Font",
-      "face": "ShareTechMono Nerd Font",
-      "match": "ShareTechMono",
+      "face": "ShureTechMono Nerd Font",
+      "match": "ShureTechMono",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -755,14 +771,13 @@
     {
       "id": "sourcecodepro-nf",
       "name": "Source Code Pro Nerd Font",
-      "face": "SourceCodePro Nerd Font",
-      "match": "SourceCodePro",
+      "face": "SauceCodePro Nerd Font",
+      "match": "SauceCodePro",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "SourceCodePro.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.SourceCodeProNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "spacemono-nf",
@@ -778,8 +793,8 @@
     {
       "id": "terminus-nf",
       "name": "Terminus Nerd Font",
-      "face": "Terminus Nerd Font",
-      "match": "Terminus",
+      "face": "Terminess Nerd Font",
+      "match": "Terminess",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",
@@ -822,7 +837,7 @@
     {
       "id": "ubuntusans-nf",
       "name": "Ubuntu Sans Nerd Font",
-      "face": "UbuntuSans Nerd Font",
+      "face": "UbuntuSansMono NF",
       "match": "UbuntuSans",
       "nerd": true,
       "source": "nerd-fonts",
@@ -839,13 +854,12 @@
       "source": "nerd-fonts",
       "release": "v3.5.1",
       "asset": "VictorMono.zip",
-      "sample": "agnoster ~/src main \u276f echo hello",
-      "wingetId": "DEVCOM.VictorMonoNerdFont"
+      "sample": "agnoster ~/src main \u276f echo hello"
     },
     {
       "id": "zedmono-nf",
       "name": "Zed Mono Nerd Font",
-      "face": "ZedMono Nerd Font",
+      "face": "ZedMono NF",
       "match": "ZedMono",
       "nerd": true,
       "source": "nerd-fonts",
@@ -856,8 +870,8 @@
     {
       "id": "ia-writer-nf",
       "name": "i A Writer Nerd Font",
-      "face": "iA-Writer Nerd Font",
-      "match": "iA-Writer",
+      "face": "iMWritingMono Nerd Font",
+      "match": "iMWriting",
       "nerd": true,
       "source": "nerd-fonts",
       "release": "v3.5.1",

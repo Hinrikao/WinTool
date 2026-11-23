@@ -772,6 +772,138 @@ Invoke-WinToolCase -Name "The single-file build embeds the catalogs" -Body {
     }
 }
 
+Invoke-WinToolCase -Name "Every plan step type has a runner" -Body {
+    # Builds plans from every tab and checks that each step is either run in
+    # WinTool (local handler) or turns into a command, the same check the
+    # window's runner and the unattended runner make.
+    $savedTemp = $env:TEMP
+    $savedRoot = $env:SystemRoot
+    if ([string]::IsNullOrWhiteSpace($env:TEMP)) { $env:TEMP = [System.IO.Path]::GetTempPath() }
+    if ([string]::IsNullOrWhiteSpace($env:SystemRoot)) { $env:SystemRoot = $env:TEMP }
+    try {
+        $plans = New-Object System.Collections.Generic.List[object]
+        $app = [pscustomobject]@{ name = "7-Zip"; wingetId = "7zip.7zip" }
+        foreach ($action in @("install", "upgrade", "uninstall")) {
+            $plans.Add(@{ Name = "apps $action"; Steps = @(Get-WinToolAppPlan -App @($app) -Action $action) })
+        }
+        $plans.Add(@{ Name = "upgrade all"; Steps = @(Get-WinToolUpgradeAllPlan) })
+        foreach ($fix in @(Get-WinToolNote -Object (Get-WinToolFixCatalog) -Name "fixes" -Default @())) {
+            $plans.Add(@{ Name = ("fix " + [string]$fix.id); Steps = @(Get-WinToolFixPlan -Fix $fix) })
+        }
+        $features = @(Get-WinToolNote -Object (Get-WinToolFeatureCatalog) -Name "features" -Default @())
+        $plans.Add(@{ Name = "features"; Steps = @(Get-WinToolFeaturePlan -Enable $features -Disable $features) })
+        foreach ($mode in @(Get-WinToolNote -Object (Get-WinToolUpdateCatalog) -Name "modes" -Default @())) {
+            $plans.Add(@{ Name = ("update mode " + [string]$mode.id); Steps = @(Get-WinToolUpdateModePlan -ModeId ([string]$mode.id)) })
+        }
+        $system = Get-WinToolSystemCatalog
+        $adapter = [pscustomobject]@{ Index = 3; Name = "Ethernet"; Description = "NIC"; Servers = @() }
+        foreach ($provider in @(Get-WinToolDnsProvider -Catalog $system)) {
+            $plans.Add(@{ Name = ("dns " + [string]$provider.id); Steps = @(Get-WinToolDnsPlan -Adapter $adapter -Provider $provider) })
+        }
+        foreach ($action in @("add", "remove")) {
+            $plans.Add(@{ Name = "power $action"; Steps = @(Get-WinToolPowerPlanPlan -Action $action) })
+        }
+        $plans.Add(@{ Name = "config export"; Steps = @([pscustomobject]@{ Type = "process"; Label = "Export"; FilePath = "winget"; Arguments = @("export", "-o", "x.json") }) })
+        $terminal = Get-WinToolTerminalCatalog
+        $fonts = @(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @())
+        $fontPicks = @(
+            @($fonts | Where-Object { -not [string]::IsNullOrWhiteSpace([string](Get-WinToolNote -Object $_ -Name "asset" -Default "")) })[0],
+            @($fonts | Where-Object { $null -ne (Get-WinToolNote -Object $_ -Name "github") })[0],
+            @($fonts | Where-Object { -not [string]::IsNullOrWhiteSpace([string](Get-WinToolNote -Object $_ -Name "wingetId" -Default "")) })[0]
+        )
+        $preset = @(Get-WinToolNote -Object $terminal -Name "starshipPresets" -Default @())[0]
+        if ($preset -isnot [string]) { $preset = [string](Get-WinToolNote -Object $preset -Name "id" -Default "") }
+        $scheme = [string]@(Get-WinToolNote -Object $terminal -Name "schemes" -Default @())[0].id
+        foreach ($prompt in @(Get-WinToolNote -Object $terminal -Name "prompts" -Default @())) {
+            foreach ($font in $fontPicks) {
+                $selection = [pscustomobject]@{ prompt = [string]$prompt.id; promptStyle = $preset; fontId = [string]$font.id; schemeId = $scheme; terminalIcons = $true; psReadLine = $true; zoxide = $true; fzf = $true; wsl = $true; zsh = $true }
+                $plans.Add(@{ Name = ("terminal " + [string]$prompt.id + " " + [string]$font.id); Steps = @(Get-WinToolTerminalPlan -Selection $selection) })
+            }
+        }
+        $seen = @{}
+        foreach ($plan in $plans) {
+            foreach ($step in @($plan.Steps)) {
+                $type = [string]$step.Type
+                $seen[$type] = $true
+                if (Test-WinToolLocalStepType -Type $type) {
+                    $handler = [string]$script:WinToolLocalStepHandlers[$type]
+                    Test-WinToolExpectation -Condition ($null -ne (Get-Command -Name $handler -ErrorAction SilentlyContinue)) -Message ("Local step '" + $type + "' has no handler.")
+                    continue
+                }
+                $command = $null
+                try {
+                    $command = Get-WinToolPlanCommand -Step $step
+                }
+                catch {
+                    Test-WinToolExpectation -Condition $false -Message ("Step '" + $type + "' from " + $plan.Name + " failed: " + $_.Exception.Message)
+                    continue
+                }
+                Test-WinToolExpectation -Condition ($null -ne $command) -Message ("Step '" + $type + "' from " + $plan.Name + " has no command.")
+            }
+        }
+        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "profile", "scheme", "starship-preset")) {
+            Test-WinToolExpectation -Condition ($seen.ContainsKey($type)) -Message ("No plan produced step type '" + $type + "', so the coverage check is incomplete.")
+        }
+        Test-WinToolExpectation -Condition (Test-WinToolLocalStepType -Type "scheme") -Message "The color scheme step runs inside WinTool."
+        $threw = $false
+        try { Get-WinToolPlanCommand -Step ([pscustomobject]@{ Type = "no-such-step" }) | Out-Null } catch { $threw = $true }
+        Test-WinToolExpectation -Condition $threw -Message "An unknown step type is still an error."
+
+        $tweakDefinition = (Get-Command -Name Invoke-WinToolTweakStep).Definition
+        $tweakTypes = @{}
+        foreach ($tweak in @(Get-WinToolNote -Object (Get-WinToolTweakCatalog) -Name "tweaks" -Default @())) {
+            foreach ($direction in @("Apply", "Undo")) {
+                foreach ($step in @(Get-WinToolTweakStep -Tweak $tweak -Direction $direction)) {
+                    $tweakTypes[[string]$step.Type] = $true
+                }
+            }
+        }
+        foreach ($type in $tweakTypes.Keys) {
+            Test-WinToolExpectation -Condition ($tweakDefinition.Contains('"' + $type + '"')) -Message ("Tweak step '" + $type + "' has no handler.")
+        }
+        Test-WinToolExpectation -Condition ($tweakTypes.Count -ge 4) -Message "The tweak catalog produced too few step types."
+    }
+    finally {
+        $env:TEMP = $savedTemp
+        $env:SystemRoot = $savedRoot
+    }
+}
+
+Invoke-WinToolCase -Name "Font sources and the installed-font check" -Body {
+    $fonts = @(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @())
+    $checked = @("SourceFoundry.HackFonts")
+    foreach ($font in $fonts) {
+        $wingetId = [string](Get-WinToolNote -Object $font -Name "wingetId" -Default "")
+        if (-not [string]::IsNullOrWhiteSpace($wingetId)) {
+            Test-WinToolExpectation -Condition ($checked -contains $wingetId) -Message ("Font winget id " + $wingetId + " was not checked against winget-pkgs.")
+        }
+        if ([string](Get-WinToolNote -Object $font -Name "source" -Default "") -eq "nerd-fonts") {
+            Test-WinToolExpectation -Condition ([string]$font.asset -match '^[A-Za-z0-9-]+\.zip$') -Message ("Nerd Font " + [string]$font.id + " needs a release zip.")
+        }
+    }
+    $cascadia = @($fonts | Where-Object { [string]$_.id -eq "cascadia-code" })[0]
+    $steps = @(Get-WinToolFontInstallStep -Font $cascadia)
+    Test-WinToolExpectation -Condition ($steps.Count -eq 1 -and $steps[0].Type -eq "font-download" -and $steps[0].Repo -eq "microsoft/cascadia-code") -Message "Cascadia Code downloads from its GitHub release."
+    $nerdFont = @($fonts | Where-Object { -not [string]::IsNullOrWhiteSpace([string](Get-WinToolNote -Object $_ -Name "asset" -Default "")) })[0]
+    $nerdStep = @(Get-WinToolFontInstallStep -Font $nerdFont)[0]
+    Test-WinToolExpectation -Condition ($nerdStep.Type -eq "font-download" -and $nerdStep.Release -eq "v3.5.1") -Message "Nerd Fonts download from the pinned release."
+    foreach ($step in @($steps[0], $nerdStep)) {
+        $script = Get-WinToolFontDownloadScript -Step $step
+        $tokens = $null
+        $parseErrors = $null
+        [void][System.Management.Automation.Language.Parser]::ParseInput($script, [ref]$tokens, [ref]$parseErrors)
+        Test-WinToolExpectation -Condition (@($parseErrors).Count -eq 0) -Message "The font download script parses."
+    }
+    $entries = @(
+        [pscustomobject]@{ Name = "CaskaydiaCoveNerdFontPropo-Regular (TrueType)"; Data = "C:\f\CaskaydiaCoveNerdFontPropo-Regular.ttf" },
+        [pscustomobject]@{ Name = "CaskaydiaCoveNerdFont-Bold (TrueType)"; Data = "C:\f\CaskaydiaCoveNerdFont-Bold.ttf" },
+        [pscustomobject]@{ Name = "CaskaydiaCoveNerdFont-Regular (TrueType)"; Data = "C:\f\CaskaydiaCoveNerdFont-Regular.ttf" }
+    )
+    $found = Find-WinToolInstalledFontFile -Token "CaskaydiaCove Nerd Font" -Entry $entries
+    Test-WinToolExpectation -Condition ($null -ne $found -and $found.Name -eq "CaskaydiaCoveNerdFont-Regular (TrueType)") -Message "The installed-font check prefers the regular file."
+    Test-WinToolExpectation -Condition ($null -eq (Find-WinToolInstalledFontFile -Token "FiraCodeNerdFont" -Entry $entries)) -Message "A missing font is reported as missing."
+}
+
 if ($script:WinToolFailures.Count -gt 0) {
     Write-Output ""
     Write-Output ("{0} test(s) failed." -f $script:WinToolFailures.Count)

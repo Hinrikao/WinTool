@@ -48,7 +48,7 @@ function Get-WinToolPlanCommand {
         [Parameter(Mandatory = $true)]$Step
     )
     $type = [string]$Step.Type
-    if ($type -eq "font" -or $type -eq "profile") {
+    if (Test-WinToolLocalStepType -Type $type) {
         return $null
     }
     if ($type -eq "winget") {
@@ -106,7 +106,7 @@ function Get-WinToolPlanCommand {
     }
     if ($type -eq "font-download") {
         $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-font-download.ps1"
-        $body = Get-WinToolFontDownloadScript -Release ([string]$Step.Release) -Asset ([string]$Step.Asset)
+        $body = Get-WinToolFontDownloadScript -Step $Step
         Write-WinToolUtf8File -Path $scriptPath -Text $body
         $hostPath = Join-Path $env:SystemRoot "System32/WindowsPowerShell/v1.0/powershell.exe"
         return [pscustomobject]@{
@@ -154,28 +154,52 @@ function Get-WinToolPlanCommand {
     throw "Unknown plan step '$type'."
 }
 
+# Steps that run inside WinTool instead of as a separate program. Both the
+# window's runner and Invoke-WinToolPlan ask Get-WinToolPlanCommand first; a
+# $null answer means "run it here", so every type listed here needs a handler.
+$script:WinToolLocalStepHandlers = [ordered]@{
+    "font" = "Invoke-WinToolFontStep"
+    "profile" = "Invoke-WinToolProfileStep"
+    "scheme" = "Invoke-WinToolSchemeStep"
+    "starship-preset" = "Invoke-WinToolStarshipPresetStep"
+}
+
+function Test-WinToolLocalStepType {
+    param(
+        [string]$Type
+    )
+    return $script:WinToolLocalStepHandlers.Contains([string]$Type)
+}
+
+function Invoke-WinToolFontStep {
+    param($Step)
+    Invoke-WinToolTerminalFont -Face ([string]$Step.Face) -Match ([string]$Step.Match)
+}
+
+function Invoke-WinToolProfileStep {
+    param($Step)
+    Write-WinToolShellProfile -PromptId ([string]$Step.Prompt) -TerminalIcons ([bool]$Step.TerminalIcons) -PromptStyle ([string]$Step.PromptStyle) -PsReadLine ([bool]$Step.PsReadLine) -Zoxide ([bool]$Step.Zoxide)
+}
+
+function Invoke-WinToolSchemeStep {
+    param($Step)
+    Invoke-WinToolTerminalScheme -SchemeId ([string]$Step.SchemeId)
+}
+
+function Invoke-WinToolStarshipPresetStep {
+    param($Step)
+    Invoke-WinToolStarshipPreset -Preset ([string]$Step.Preset)
+}
+
 function Invoke-WinToolLocalStep {
     param(
         [Parameter(Mandatory = $true)]$Step
     )
     $type = [string]$Step.Type
-    if ($type -eq "font") {
-        Invoke-WinToolTerminalFont -Face ([string]$Step.Face) -Match ([string]$Step.Match)
-        return
+    if (-not (Test-WinToolLocalStepType -Type $type)) {
+        throw "Step '$type' is not a local step."
     }
-    if ($type -eq "profile") {
-        Write-WinToolShellProfile -PromptId ([string]$Step.Prompt) -TerminalIcons ([bool]$Step.TerminalIcons) -PromptStyle ([string]$Step.PromptStyle) -PsReadLine ([bool]$Step.PsReadLine) -Zoxide ([bool]$Step.Zoxide)
-        return
-    }
-    if ($type -eq "scheme") {
-        Invoke-WinToolTerminalScheme -SchemeId ([string]$Step.SchemeId)
-        return
-    }
-    if ($type -eq "starship-preset") {
-        Invoke-WinToolStarshipPreset -Preset ([string]$Step.Preset)
-        return
-    }
-    throw "Step '$type' is not a local step."
+    & ([string]$script:WinToolLocalStepHandlers[$type]) -Step $Step
 }
 
 function Invoke-WinToolPlan {
