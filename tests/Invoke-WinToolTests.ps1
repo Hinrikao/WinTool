@@ -306,7 +306,7 @@ Invoke-WinToolCase -Name "Apps installed outside winget are found by name" -Body
         }
     }
     $found = @(Find-WinToolAppByName -DisplayName $names -App $apps.ToArray())
-    foreach ($id in @("Discord.Discord", "Telegram.TelegramDesktop", "Spotify.Spotify", "7zip.7zip", "vim.vim", "Microsoft.WindowsTerminal", "GitHub.GitHubDesktop")) {
+    foreach ($id in @("Discord.Discord", "Telegram.TelegramDesktop", "Spotify.Spotify", "7zip.7zip", "vim.vim", "Microsoft.WindowsTerminal", "GitHub.GitHubDesktop", "RARLab.WinRAR")) {
         Test-WinToolExpectation -Condition ($found -contains $id) -Message "$id should be found by name. Found: $($found -join ', ')"
     }
     foreach ($id in @("Git.Git", "Zoom.Zoom", "Microsoft.Edge", "Python.Python.3.13")) {

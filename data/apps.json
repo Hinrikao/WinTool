@@ -923,6 +923,14 @@
           "tags": ["files"]
         },
         {
+          "id": "winrar",
+          "name": "WinRAR",
+          "description": "Open and create RAR, zip, and other archives. Free to try; RARLAB asks for a license after the trial.",
+          "wingetId": "RARLab.WinRAR",
+          "detectNames": ["WinRAR archiver"],
+          "tags": ["files"]
+        },
+        {
           "id": "everything",
           "name": "Everything",
           "description": "Find files by name almost instantly.",
