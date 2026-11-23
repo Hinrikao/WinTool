@@ -1225,6 +1225,9 @@ if ($null -ne $window.FindName("ThemePicker") -or $null -ne $window.FindName("Ac
 }
 $window.FindName("NavConfig").IsChecked = $true
 $window.FindName("ConfigTabProfile").IsChecked = $true
+# The handler sweep raises Checked on every tab without changing IsChecked, so the
+# profile radio can stay ticked while the last handler (Power) is what is on screen.
+Show-WinToolConfigPanel -Name "Profile"
 $script:WinToolTerminalChoice.prompt = "powerlevel10k"
 Update-WinToolProfileSummary
 if (-not ([string]$window.FindName("ProfileSummary").Text).Contains("Prompt: Powerlevel10k.")) {
