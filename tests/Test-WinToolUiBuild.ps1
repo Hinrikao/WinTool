@@ -1307,6 +1307,281 @@ if ($navSlow.Count -gt 0) {
     throw ("Navigation blocked the dispatcher: " + ($navSlow -join ", "))
 }
 
+# In-page switches. The first pass warms each one. The second pass is what
+# must stay under 250 ms. Input runs the Loaded timing callback and not the
+# background timers, so the number is the click itself.
+$script:WinToolUiQuiet = $true
+$surfaceSlow = New-Object System.Collections.Generic.List[string]
+function Measure-WinToolSurface {
+    param(
+        [Parameter(Mandatory = $true)][string]$Label,
+        [Parameter(Mandatory = $true)][scriptblock]$Action
+    )
+    $script:WinToolState.NavMilliseconds = -1
+    & $Action
+    Invoke-WinToolNavPump
+    $surfaceMs = [int]$script:WinToolState.NavMilliseconds
+    Write-Output ("Nav " + $Label + ": " + $surfaceMs + "ms")
+    if ($surfaceMs -lt 0 -or $surfaceMs -gt 250) {
+        $script:WinToolSurfaceSlow.Add($Label + " " + $surfaceMs + "ms")
+    }
+}
+$script:WinToolSurfaceSlow = $surfaceSlow
+$surfaceClick = New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)
+
+$window.FindName("NavTerminal").IsChecked = $true
+Invoke-WinToolNavPump
+$window.FindName("TerminalModeAdvanced").IsChecked = $true
+Invoke-WinToolNavPump
+$window.FindName("TerminalModeSimple").IsChecked = $true
+Invoke-WinToolNavPump
+Measure-WinToolSurface -Label "Terminal Advanced" -Action {
+    $window.FindName("TerminalModeSimple").IsChecked = $true
+    $window.FindName("TerminalModeAdvanced").IsChecked = $true
+}
+Measure-WinToolSurface -Label "Terminal Simple" -Action {
+    $window.FindName("TerminalModeAdvanced").IsChecked = $true
+    $window.FindName("TerminalModeSimple").IsChecked = $true
+}
+$window.FindName("TerminalModeAdvanced").IsChecked = $true
+Invoke-WinToolNavPump
+foreach ($filterName in @("TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd", "TerminalFilterAll")) {
+    $window.FindName($filterName).IsChecked = $true
+    Invoke-WinToolNavPump
+}
+foreach ($filterName in @("TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd", "TerminalFilterAll")) {
+    $filterLabel = [string]$window.FindName($filterName).Tag
+    Measure-WinToolSurface -Label ("Terminal " + $filterLabel) -Action {
+        if ($filterName -eq "TerminalFilterAll") { $window.FindName("TerminalFilterPowerline").IsChecked = $true }
+        else { $window.FindName("TerminalFilterAll").IsChecked = $true }
+        $window.FindName($filterName).IsChecked = $true
+    }
+}
+$themeSearch = $window.FindName("TerminalThemeSearch")
+$themeSearch.Text = "jan"
+Invoke-WinToolNavPump
+Measure-WinToolSurface -Label "Terminal search" -Action { $themeSearch.Text = "" }
+Measure-WinToolSurface -Label "Terminal search" -Action { $themeSearch.Text = "night" }
+$themeSearch.Text = ""
+Invoke-WinToolNavPump
+$nerdBox = $window.FindName("TerminalFontNerdOnly")
+$nerdBox.IsChecked = $false
+$nerdBox.RaiseEvent($surfaceClick)
+Invoke-WinToolNavPump
+Measure-WinToolSurface -Label "Terminal fonts" -Action {
+    $nerdBox.IsChecked = $true
+    $nerdBox.RaiseEvent($surfaceClick)
+}
+
+$window.FindName("NavInstall").IsChecked = $true
+Invoke-WinToolNavPump
+$appChips = @{}
+foreach ($chip in @($window.FindName("AppFilters").Children)) { $appChips[[string]$chip.Tag] = $chip }
+foreach ($chipTag in @("installed", "updates", "category:browsers", "all")) {
+    if ($appChips.ContainsKey($chipTag)) {
+        $appChips[$chipTag].IsChecked = $true
+        Invoke-WinToolNavPump
+    }
+}
+foreach ($chipTag in @("installed", "updates", "category:browsers", "all")) {
+    if (-not $appChips.ContainsKey($chipTag)) { continue }
+    Measure-WinToolSurface -Label ("Install " + $chipTag) -Action {
+        if ($chipTag -eq "all") { $appChips["installed"].IsChecked = $true }
+        else { $appChips["all"].IsChecked = $true }
+        $appChips[$chipTag].IsChecked = $true
+    }
+}
+$appSearch = $window.FindName("AppSearch")
+$appSearch.Text = "zip"
+Invoke-WinToolNavPump
+Measure-WinToolSurface -Label "Install search" -Action { $appSearch.Text = "" }
+Measure-WinToolSurface -Label "Install search" -Action { $appSearch.Text = "code" }
+$appSearch.Text = ""
+Invoke-WinToolNavPump
+if ($appChips.ContainsKey("all")) { $appChips["all"].IsChecked = $true }
+
+$window.FindName("NavTweaks").IsChecked = $true
+Invoke-WinToolNavPump
+$tweakSearch = $window.FindName("TweakSearch")
+$tweakSearch.Text = "dark"
+Invoke-WinToolNavPump
+Measure-WinToolSurface -Label "Tweaks search" -Action { $tweakSearch.Text = "" }
+Measure-WinToolSurface -Label "Tweaks search" -Action { $tweakSearch.Text = "explorer" }
+$tweakSearch.Text = ""
+Invoke-WinToolNavPump
+foreach ($presetButton in @($window.FindName("TweakPresets").Children)) {
+    $presetButton.RaiseEvent($surfaceClick)
+    Invoke-WinToolNavPump
+}
+foreach ($presetButton in @($window.FindName("TweakPresets").Children)) {
+    Measure-WinToolSurface -Label ("Tweaks " + [string]$presetButton.Content) -Action {
+        $presetButton.RaiseEvent($surfaceClick)
+    }
+}
+
+$window.FindName("NavUpdates").IsChecked = $true
+Invoke-WinToolNavPump
+$updateRadios = @($window.FindName("UpdateModeList").Children)
+foreach ($updateRadio in $updateRadios) {
+    $updateRadio.IsChecked = $true
+    Invoke-WinToolNavPump
+}
+foreach ($updateRadio in $updateRadios) {
+    Measure-WinToolSurface -Label ("Updates " + [string]$updateRadio.Tag) -Action {
+        $otherRadio = $updateRadios[0]
+        if ([object]::ReferenceEquals($updateRadio, $updateRadios[0])) { $otherRadio = $updateRadios[1] }
+        $otherRadio.IsChecked = $true
+        $updateRadio.IsChecked = $true
+    }
+}
+
+$window.FindName("NavConfig").IsChecked = $true
+Invoke-WinToolNavPump
+foreach ($configTab in @("ConfigTabProfile", "ConfigTabWinget", "ConfigTabTweaks", "ConfigTabDns", "ConfigTabPower")) {
+    $window.FindName($configTab).IsChecked = $true
+    Invoke-WinToolNavPump
+}
+foreach ($configTab in @("ConfigTabProfile", "ConfigTabWinget", "ConfigTabTweaks", "ConfigTabDns", "ConfigTabPower")) {
+    Measure-WinToolSurface -Label ("Config " + $configTab.Replace("ConfigTab", "")) -Action {
+        if ($configTab -eq "ConfigTabProfile") { $window.FindName("ConfigTabWinget").IsChecked = $true }
+        else { $window.FindName("ConfigTabProfile").IsChecked = $true }
+        $window.FindName($configTab).IsChecked = $true
+    }
+}
+
+$window.FindName("NavFixes").IsChecked = $true
+Invoke-WinToolNavPump
+$fixButtons = New-Object System.Collections.Generic.List[object]
+foreach ($fixCard in @($window.FindName("FixList").Children)) {
+    $fixGrid = $fixCard.Child
+    if ($null -eq $fixGrid) { continue }
+    foreach ($fixChild in @($fixGrid.Children)) {
+        if ($fixChild -is [System.Windows.Controls.Button]) { $fixButtons.Add($fixChild) }
+        if ($fixChild -is [System.Windows.Controls.Grid]) {
+            foreach ($fixInner in @($fixChild.Children)) {
+                if ($fixInner -is [System.Windows.Controls.Button]) { $fixButtons.Add($fixInner) }
+            }
+        }
+    }
+}
+foreach ($fixButton in $fixButtons.ToArray()) {
+    $fixButton.RaiseEvent($surfaceClick)
+    Invoke-WinToolNavPump
+}
+foreach ($fixButton in $fixButtons.ToArray()) {
+    $fixTitle = "Run fix"
+    $fixCardGrid = $fixButton.Parent
+    if ($null -ne $fixCardGrid) { $fixCardGrid = $fixCardGrid.Parent }
+    if ($null -ne $fixCardGrid -and $fixCardGrid.Children.Count -gt 0) {
+        $fixTitle = [string]$fixCardGrid.Children[0].Text
+    }
+    Measure-WinToolSurface -Label ("Fixes " + $fixTitle) -Action {
+        $fixButton.RaiseEvent($surfaceClick)
+    }
+}
+
+$window.FindName("NavFeatures").IsChecked = $true
+Invoke-WinToolNavPump
+$window.FindName("FeatureApply").RaiseEvent($surfaceClick)
+Invoke-WinToolNavPump
+Measure-WinToolSurface -Label "Features apply" -Action {
+    $window.FindName("FeatureApply").RaiseEvent($surfaceClick)
+}
+
+$window.FindName("NavHome").IsChecked = $true
+Invoke-WinToolNavPump
+$window.FindName("ToggleLogButton").RaiseEvent($surfaceClick)
+Invoke-WinToolNavPump
+$window.FindName("ToggleLogButton").RaiseEvent($surfaceClick)
+Invoke-WinToolNavPump
+Measure-WinToolSurface -Label "Show log" -Action { $window.FindName("ToggleLogButton").RaiseEvent($surfaceClick) }
+Measure-WinToolSurface -Label "Hide log" -Action { $window.FindName("ToggleLogButton").RaiseEvent($surfaceClick) }
+if ($script:WinToolState.LogExpanded) {
+    $script:WinToolState.LogExpanded = $false
+    $script:WinToolState.LogPinned = $false
+    Sync-WinToolLogPanel
+}
+
+if ($surfaceSlow.Count -gt 0) {
+    throw ("In-page switches blocked the dispatcher: " + ($surfaceSlow -join ", "))
+}
+
+# Terminal Simple should fill the space above "What will happen" at both sizes.
+$window.FindName("NavTerminal").IsChecked = $true
+Invoke-WinToolNavPump
+$window.FindName("TerminalFilterAll").IsChecked = $true
+$window.FindName("TerminalThemeSearch").Text = ""
+$script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
+Update-WinToolPromptStyleList
+Update-WinToolTerminalSummary
+Update-WinToolSimplePreview
+$window.FindName("TerminalModeSimple").IsChecked = $true
+Invoke-WinToolNavPump
+function Assert-WinToolSimpleFill {
+    param([string]$Label)
+    $rootVisual.UpdateLayout()
+    Sync-WinToolScrollFill -ScrollName "TerminalSimpleScroll" -BodyName "TerminalSimpleHost"
+    $rootVisual.UpdateLayout()
+    $preview = $window.FindName("TerminalSimplePreview")
+    $included = $window.FindName("TerminalSimpleIncluded")
+    $summary = $window.FindName("TerminalSummaryCard")
+    $sample = $window.FindName("TerminalSimpleSample")
+    $gap = $summary.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual).Y - $preview.TranslatePoint([System.Windows.Point]::new(0, $preview.ActualHeight), $rootVisual).Y
+    Write-Output ("{0}: preview {1:0}x{2:0}, included {3:0}x{4:0}, gap {5:0}, lines {6}" -f $Label, $preview.ActualWidth, $preview.ActualHeight, $included.ActualWidth, $included.ActualHeight, $gap, @($sample.Inlines).Count)
+    if (@($sample.Inlines).Count -lt 4) { throw ($Label + " preview did not draw the recommended prompt.") }
+    if ($window.FindName("TerminalSimpleIncludedList").Children.Count -lt 5) { throw ($Label + " is missing the included list.") }
+    if ($preview.ActualHeight -lt 280 -or $included.ActualHeight -lt 280) { throw ($Label + " cards are still a short strip.") }
+    if ([Math]::Abs($preview.ActualHeight - $included.ActualHeight) -gt 4) { throw ($Label + " cards are not the same height.") }
+    if ($gap -gt 48) { throw ($Label + " leaves " + [int]$gap + " px between the preview and What will happen.") }
+}
+function Invoke-WinToolFillShot {
+    param([string]$Name, [double]$Width, [double]$Height, [string]$ScrollName, [string]$BodyName)
+    $rootVisual.Measure([System.Windows.Size]::new($Width, $Height))
+    $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
+    $rootVisual.UpdateLayout()
+    Sync-WinToolScrollFill -ScrollName $ScrollName -BodyName $BodyName
+    $rootVisual.UpdateLayout()
+    Save-WinToolViewShot -Name $Name -Width $Width -Height $Height
+}
+Invoke-WinToolFillShot -Name "terminal-simple-1280" -Width 1280 -Height 800 -ScrollName "TerminalSimpleScroll" -BodyName "TerminalSimpleHost"
+Assert-WinToolSimpleFill -Label "Terminal Simple 1280"
+Invoke-WinToolFillShot -Name "terminal-simple-1920" -Width 1920 -Height 1080 -ScrollName "TerminalSimpleScroll" -BodyName "TerminalSimpleHost"
+Assert-WinToolSimpleFill -Label "Terminal Simple 1920"
+$window.FindName("TerminalModeAdvanced").IsChecked = $true
+Invoke-WinToolNavPump
+Save-WinToolTerminalShot -Name "terminal-advanced-1280" -Width 1280 -Height 800
+Save-WinToolTerminalShot -Name "terminal-advanced-1920" -Width 1920 -Height 1080
+
+function Assert-WinToolPageFill {
+    param($Element, [string]$Label, [string]$ScrollName, [string]$BodyName)
+    $rootVisual.UpdateLayout()
+    Sync-WinToolScrollFill -ScrollName $ScrollName -BodyName $BodyName
+    $rootVisual.UpdateLayout()
+    $status = $window.FindName("StatusBar")
+    $bottom = $Element.TranslatePoint([System.Windows.Point]::new(0, $Element.ActualHeight), $rootVisual).Y
+    $limit = $status.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual).Y
+    $gap = $limit - $bottom
+    Write-Output ("{0}: fill gap {1:0} px, height {2:0}" -f $Label, $gap, $Element.ActualHeight)
+    if ($gap -gt 96) { throw ($Label + " leaves " + [int]$gap + " px empty above the status bar.") }
+}
+$window.FindName("NavUpdates").IsChecked = $true
+Invoke-WinToolNavPump
+Invoke-WinToolFillShot -Name "updates-1920" -Width 1920 -Height 1080 -ScrollName "ViewUpdates" -BodyName "UpdatesBody"
+Assert-WinToolPageFill -Element $window.FindName("UpdateModeList").Parent.Parent -Label "Updates 1920" -ScrollName "ViewUpdates" -BodyName "UpdatesBody"
+$window.FindName("NavFixes").IsChecked = $true
+Invoke-WinToolNavPump
+Invoke-WinToolFillShot -Name "fixes-1920" -Width 1920 -Height 1080 -ScrollName "ViewFixes" -BodyName "FixesBody"
+Assert-WinToolPageFill -Element $window.FindName("FixList") -Label "Fixes 1920" -ScrollName "ViewFixes" -BodyName "FixesBody"
+$window.FindName("NavFeatures").IsChecked = $true
+Invoke-WinToolNavPump
+Invoke-WinToolFillShot -Name "features-1920" -Width 1920 -Height 1080 -ScrollName "ViewFeatures" -BodyName "FeaturesBody"
+Assert-WinToolPageFill -Element $window.FindName("FeatureList").Parent -Label "Features 1920" -ScrollName "ViewFeatures" -BodyName "FeaturesBody"
+$window.FindName("NavConfig").IsChecked = $true
+$window.FindName("ConfigTabProfile").IsChecked = $true
+Invoke-WinToolNavPump
+Invoke-WinToolFillShot -Name "config-1920" -Width 1920 -Height 1080 -ScrollName "ViewConfig" -BodyName "ConfigBody"
+Assert-WinToolPageFill -Element $window.FindName("ConfigProfileCard") -Label "Config 1920" -ScrollName "ViewConfig" -BodyName "ConfigBody"
+
 try {
     $window.Close()
 }

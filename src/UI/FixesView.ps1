@@ -66,6 +66,7 @@ function Invoke-WinToolFixClick {
     param(
         [Parameter(Mandatory = $true)]$Fix
     )
+    Start-WinToolSurfaceTiming -Name ("Fixes " + [string]$Fix.name)
     if ($script:WinToolState.Busy) {
         Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
         return

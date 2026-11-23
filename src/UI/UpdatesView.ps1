@@ -197,6 +197,7 @@ function Initialize-WinToolUpdateModeView {
         Register-WinToolUiEvent -Control $radio -EventName "Checked" -Name "Updates: pick mode" -Data ([string]$mode.id) -Action {
             param($source, $eventData, $modeId)
             $null = $source, $eventData
+            Start-WinToolSurfaceTiming -Name ("Updates " + [string]$modeId)
             $script:WinToolState.UpdateMode = $modeId
         }
         [void]$list.Children.Add($radio)

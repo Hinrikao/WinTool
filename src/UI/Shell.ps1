@@ -6,6 +6,10 @@ function Request-WinToolConfirmation {
         [Parameter(Mandatory = $true)][string]$Message,
         [Parameter(Mandatory = $true)][string]$Title
     )
+    # UI tests answer "no" without a modal dialog, so a click cannot hang the dispatcher.
+    if ($script:WinToolUiQuiet) {
+        return $false
+    }
     $answer = [System.Windows.MessageBox]::Show(
         $Message,
         $Title,
@@ -235,6 +239,61 @@ function Complete-WinToolNavTiming {
     $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$follow)
 }
 
+function Start-WinToolSurfaceTiming {
+    # Same clock as a sidebar switch: the click records a stamp, and the
+    # Loaded pass (after the first frame) writes "Nav: {name} shown in Xms".
+    param(
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+    if ($script:WinToolShuttingDown -or $null -eq $script:WinToolWindow -or $null -eq $script:WinToolState) { return }
+    $stamp = [System.Diagnostics.Stopwatch]::GetTimestamp()
+    $script:WinToolState.NavStamp = [int64]$stamp
+    $script:WinToolState.SurfaceName = $Name
+    $callback = [scriptblock]::Create(("Complete-WinToolSurfaceTiming -Stamp {0}" -f [int64]$stamp))
+    try {
+        $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Loaded, [System.Action]$callback)
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+}
+
+function Complete-WinToolSurfaceTiming {
+    param(
+        [Parameter(Mandatory = $true)][long]$Stamp
+    )
+    if ($script:WinToolShuttingDown) { return }
+    if ([int64]$script:WinToolState.NavStamp -ne [int64]$Stamp) { return }
+    $elapsed = ([System.Diagnostics.Stopwatch]::GetTimestamp() - [int64]$Stamp) * 1000.0 / [System.Diagnostics.Stopwatch]::Frequency
+    $ms = [int][Math]::Round($elapsed)
+    if ($ms -lt 0) { $ms = 0 }
+    $script:WinToolState.NavMilliseconds = $ms
+    Write-WinToolLog -Message ("Nav: {0} shown in {1}ms" -f [string]$script:WinToolState.SurfaceName, $ms) -Level "info" -Diagnostic
+}
+
+function Sync-WinToolScrollFill {
+    # A short page inside a scroll viewer otherwise leaves empty canvas under
+    # it. MinHeight equal to the viewport lets star rows use that space, and
+    # the top of every card stays where it is.
+    param(
+        [Parameter(Mandatory = $true)][string]$ScrollName,
+        [Parameter(Mandatory = $true)][string]$BodyName
+    )
+    $scroll = Get-WinToolUi -Name $ScrollName
+    $body = Get-WinToolUi -Name $BodyName
+    if ($null -eq $scroll -or $null -eq $body) { return }
+    $height = [double]$scroll.ViewportHeight
+    if ($height -lt 1 -or [double]::IsNaN($height) -or [double]::IsInfinity($height)) { return }
+    # Margin sits outside the element and inside the scroll content. Leave it
+    # out of MinHeight so opening the log does not add a scrollbar.
+    $margin = $body.Margin
+    $target = $height - [double]$margin.Top - [double]$margin.Bottom
+    if ($target -lt 1 -or [double]::IsNaN($target) -or [double]::IsInfinity($target)) { return }
+    if ([Math]::Abs([double]$body.MinHeight - $target) -gt 0.5) {
+        $body.MinHeight = $target
+    }
+}
+
 function Complete-WinToolNavFollowUp {
     # Registry, DNS, and list scrolling stay off the click and off the first frame.
     param(
@@ -397,11 +456,20 @@ function Sync-WinToolLogPanel {
         $pageBottom = 196
     }
     (Get-WinToolUi -Name "HomeBody").Margin = [System.Windows.Thickness]::new(20, 0, 10, $homeBottom)
-    foreach ($listName in @("AppCategories", "TweakCategories", "TerminalSimpleHost")) {
+    foreach ($listName in @("AppCategories", "TweakCategories")) {
         (Get-WinToolUi -Name $listName).Margin = [System.Windows.Thickness]::new(0, 0, 0, $listBottom)
     }
     foreach ($pageName in @("UpdatesBody", "FixesBody", "FeaturesBody", "ConfigBody")) {
         (Get-WinToolUi -Name $pageName).Margin = [System.Windows.Thickness]::new(20, 15, 20, $pageBottom)
+    }
+    foreach ($fillPair in @(
+            , @("ViewUpdates", "UpdatesBody")
+            , @("ViewFixes", "FixesBody")
+            , @("ViewFeatures", "FeaturesBody")
+            , @("ViewConfig", "ConfigBody")
+            , @("TerminalSimpleScroll", "TerminalSimpleHost")
+        )) {
+        Sync-WinToolScrollFill -ScrollName $fillPair[0] -BodyName $fillPair[1]
     }
     if ($busy) {
         $bar.Visibility = "Visible"
@@ -415,6 +483,9 @@ function Sync-WinToolLogPanel {
 }
 
 function Switch-WinToolLogPanel {
+    $surface = "Show log"
+    if ($script:WinToolState.LogExpanded) { $surface = "Hide log" }
+    Start-WinToolSurfaceTiming -Name $surface
     if ($script:WinToolState.LogExpanded) {
         $script:WinToolState.LogExpanded = $false
         $script:WinToolState.LogPinned = $false
@@ -853,6 +924,19 @@ function Initialize-WinToolShellEvent {
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ToggleLogButton") -EventName "Click" -Name "Show log" -Action {
         Switch-WinToolLogPanel
+    }
+    foreach ($fillPair in @(
+            , @("ViewUpdates", "UpdatesBody")
+            , @("ViewFixes", "FixesBody")
+            , @("ViewFeatures", "FeaturesBody")
+            , @("ViewConfig", "ConfigBody")
+            , @("TerminalSimpleScroll", "TerminalSimpleHost")
+        )) {
+        Register-WinToolUiEvent -Control (Get-WinToolUi -Name $fillPair[0]) -EventName "SizeChanged" -Name ("Fill " + $fillPair[1]) -Data @($fillPair[0], $fillPair[1]) -Action {
+            param($source, $eventData, $boundPair)
+            $null = $source, $eventData
+            Sync-WinToolScrollFill -ScrollName ([string]$boundPair[0]) -BodyName ([string]$boundPair[1])
+        }
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "CancelRun") -EventName "Click" -Name "Cancel" -Action {
         Stop-WinToolRun

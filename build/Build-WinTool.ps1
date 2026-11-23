@@ -73,6 +73,10 @@ function Get-BuildAppIcon {
             $names.Add($icon)
         }
     }
+    # The Terminal Simple page uses the Oh My Posh mark. It is not an Install app.
+    if (-not $seen.ContainsKey("posh.png")) {
+        $names.Add("posh.png")
+    }
     $sorted = $names.ToArray()
     [Array]::Sort($sorted, [StringComparer]::Ordinal)
     return $sorted

@@ -13,6 +13,7 @@ function Initialize-WinToolTweakView {
         Register-WinToolUiEvent -Control $button -EventName "Click" -Name "Tweaks: preset" -Data $preset -Action {
             param($source, $eventData, $boundPreset)
             $null = $source, $eventData
+            Start-WinToolSurfaceTiming -Name ("Tweaks " + [string]$boundPreset.name)
             Select-WinToolPreset -Preset $boundPreset
         }
         Add-WinToolBusyControl -Control $button
@@ -69,6 +70,7 @@ function Initialize-WinToolTweakView {
     Update-WinToolTweakLayout -Width 992
 
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakSearch") -EventName "TextChanged" -Name "Tweaks: search" -Action {
+        Start-WinToolSurfaceTiming -Name "Tweaks search"
         Sync-WinToolSearchHint -BoxName "TweakSearch" -HintName "TweakSearchHint"
         Update-WinToolTweakFilter
     }

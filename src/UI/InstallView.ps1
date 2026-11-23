@@ -67,6 +67,12 @@ function Initialize-WinToolInstallView {
         Register-WinToolUiEvent -Control $radio -EventName "Checked" -Name "Install: filter" -Data ([string]$chip.Tag) -Action {
             param($source, $eventData, $tag)
             $null = $source, $eventData
+            $surface = "Install filter"
+            if ($tag -eq "all") { $surface = "Install filter all" }
+            elseif ($tag -eq "installed") { $surface = "Install installed" }
+            elseif ($tag -eq "updates") { $surface = "Install updates" }
+            elseif ($tag.StartsWith("category:")) { $surface = "Install category" }
+            Start-WinToolSurfaceTiming -Name $surface
             $script:WinToolState.AppFilter = $tag
             Update-WinToolAppFilter
         }
@@ -74,6 +80,7 @@ function Initialize-WinToolInstallView {
     }
 
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppSearch") -EventName "TextChanged" -Name "Install: search" -Action {
+        Start-WinToolSurfaceTiming -Name "Install search"
         Sync-WinToolSearchHint -BoxName "AppSearch" -HintName "AppSearchHint"
         Update-WinToolAppFilter
     }

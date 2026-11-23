@@ -173,6 +173,7 @@ function Get-WinToolFeatureChange {
 }
 
 function Invoke-WinToolFeatureApplyClick {
+    Start-WinToolSurfaceTiming -Name "Features apply"
     if ($script:WinToolState.Busy) {
         Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
         return

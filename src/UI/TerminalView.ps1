@@ -31,20 +31,189 @@ function Get-WinToolActiveOhMyPoshTheme {
     return $rows.ToArray()
 }
 
+function New-WinToolSimpleIncludedRow {
+    param(
+        [Parameter(Mandatory = $true)][string]$Title,
+        [Parameter(Mandatory = $true)][string]$Detail,
+        [Parameter(Mandatory = $true)][string]$Badge,
+        [string]$IconFile = "",
+        [int]$Glyph = 0
+    )
+    $row = New-Object System.Windows.Controls.Grid
+    $row.Height = 56
+    $row.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+    $row.ColumnDefinitions.Add((New-WinToolColumn))
+    $row.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+    $slot = New-Object System.Windows.Controls.Border
+    $slot.Width = 32
+    $slot.Height = 32
+    $slot.CornerRadius = [System.Windows.CornerRadius]::new(8)
+    $slot.Margin = [System.Windows.Thickness]::new(0, 0, 12, 0)
+    $slot.VerticalAlignment = "Center"
+    $image = $null
+    if (-not [string]::IsNullOrWhiteSpace($IconFile)) {
+        $image = New-WinToolAppIconImage -FileName $IconFile
+    }
+    if ($null -ne $image) {
+        $plate = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString($script:WinToolIconBackplate))
+        $brush = [System.Windows.Media.SolidColorBrush]::new($plate)
+        $brush.Freeze()
+        $slot.Background = $brush
+        $slot.Child = $image
+    }
+    else {
+        $slot.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushAccentSoft")
+        $mark = New-Object System.Windows.Controls.TextBlock
+        if ($Glyph -ne 0) { $mark.Text = [string][char]$Glyph }
+        $mark.FontFamily = [System.Windows.Media.FontFamily]::new("Segoe MDL2 Assets")
+        $mark.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
+        $mark.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushAccent")
+        $mark.HorizontalAlignment = "Center"
+        $mark.VerticalAlignment = "Center"
+        $slot.Child = $mark
+    }
+    [void]$row.Children.Add($slot)
+    $text = New-Object System.Windows.Controls.StackPanel
+    $text.VerticalAlignment = "Center"
+    $titleBlock = New-WinToolText -Text $Title -Weight "SemiBold"
+    $titleBlock.TextTrimming = "CharacterEllipsis"
+    [void]$text.Children.Add($titleBlock)
+    $detailBlock = New-WinToolText -Text $Detail -Brush "BrushMuted"
+    $detailBlock.TextTrimming = "CharacterEllipsis"
+    [void]$text.Children.Add($detailBlock)
+    [System.Windows.Controls.Grid]::SetColumn($text, 1)
+    [void]$row.Children.Add($text)
+    $badge = New-WinToolBadge -Text $Badge -Kind "ok"
+    [System.Windows.Controls.Grid]::SetColumn($badge, 2)
+    [void]$row.Children.Add($badge)
+    return $row
+}
+
 function Build-WinToolSimpleTerminalCard {
-    $hostPanel = Get-WinToolUi -Name "TerminalSimpleHost"
-    $hostPanel.Children.Clear()
-    $card = New-WinToolCard
-    $stack = New-Object System.Windows.Controls.StackPanel
-    [void]$stack.Children.Add((New-WinToolText -Text "Recommended setup" -Weight "Bold"))
-    [void]$stack.Children.Add((New-WinToolText -Text "Windows Terminal, PowerShell 7, Oh My Posh with the Jan De Dobbeleer theme, a Nerd Font, file icons, and history suggestions. You can change any of this in Advanced." -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 6, 0, 8))))
-    [void]$stack.Children.Add((New-WinToolTerminalPreview -Segments @(
-        [pscustomobject]@{ text = "~/src "; color = "#6C9BFF" },
-        [pscustomobject]@{ text = "main "; color = "#3DDC97" },
-        [pscustomobject]@{ text = ">"; color = "#E8EDF7" }
-    )))
-    $card.Child = $stack
-    [void]$hostPanel.Children.Add($card)
+    $list = Get-WinToolUi -Name "TerminalSimpleIncludedList"
+    if ($null -eq $list) { return }
+    $list.Children.Clear()
+    $choice = Get-WinToolSimpleTerminalChoice
+    $fontName = "Nerd Font"
+    foreach ($font in @(Get-WinToolActiveFont)) {
+        if ([string]$font.id -eq [string]$choice.fontId) { $fontName = [string]$font.name; break }
+    }
+    $themeName = [string]$choice.promptStyle
+    foreach ($theme in @(Get-WinToolActiveOhMyPoshTheme)) {
+        if ([string]$theme.id -eq [string]$choice.promptStyle) { $themeName = [string]$theme.name; break }
+    }
+    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Windows Terminal" -Detail "The window this prompt opens in" -Badge "App" -IconFile "terminal.png" -Glyph 0xE756))
+    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "PowerShell 7" -Detail "The shell WinTool configures" -Badge "Shell" -IconFile "powershell.png" -Glyph 0xE756))
+    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Oh My Posh" -Detail ($themeName + " theme") -Badge "Prompt" -IconFile "posh.png" -Glyph 0xE756))
+    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title $fontName -Detail "Icons in the prompt line" -Badge "Font" -Glyph 0xE8D2))
+    if ([bool]$choice.terminalIcons) {
+        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Terminal-Icons" -Detail "Folder and file icons in listings" -Badge "Icons" -Glyph 0xE8B9))
+    }
+    if ([bool]$choice.psReadLine) {
+        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "PSReadLine" -Detail "History suggestions as you type" -Badge "Suggestions" -Glyph 0xE81C))
+    }
+    $lead = Get-WinToolUi -Name "TerminalSimpleLead"
+    if ($null -ne $lead) {
+        $lead.Text = "Windows Terminal, PowerShell 7, Oh My Posh, a Nerd Font, file icons, and history suggestions. Switch to Advanced to change any part."
+    }
+}
+
+function Update-WinToolSimplePreview {
+    # Paints the recommended prompt from memory. The Simple click does not call this.
+    $sample = Get-WinToolUi -Name "TerminalSimpleSample"
+    $screen = Get-WinToolUi -Name "TerminalSimpleScreen"
+    if ($null -eq $sample -or $null -eq $screen) { return }
+    try {
+    $choice = Get-WinToolSimpleTerminalChoice
+    $theme = $null
+    if ([string]$choice.prompt -eq "oh-my-posh" -and $null -ne $script:WinToolOmpThemeCache) {
+        $file = Get-WinToolOmpThemeFileName -ThemeId ([string]$choice.promptStyle) -Themes @(Get-WinToolActiveOhMyPoshTheme)
+        if (-not [string]::IsNullOrWhiteSpace($file) -and $script:WinToolOmpThemeCache.ContainsKey($file)) {
+            $theme = $script:WinToolOmpThemeCache[$file]
+        }
+    }
+    $segments = @(Get-WinToolPromptPreview -PromptId ([string]$choice.prompt) -PromptStyle ([string]$choice.promptStyle) -Theme $theme)
+    $scheme = $null
+    foreach ($item in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "schemes" -Default @())) {
+        if ([string]$item.id -eq [string]$choice.schemeId) { $scheme = $item; break }
+    }
+    if ($null -eq $scheme) {
+        $scheme = [pscustomobject]@{ name = "Night"; background = "#1B2230"; foreground = "#E8EDF7"; cursor = "#6C9BFF"; palette = $null }
+    }
+    $background = ConvertTo-WinToolPreviewBrush -Color ([string]$scheme.background)
+    if ($null -ne $background) {
+        $screen.Background = $background
+        $tab = Get-WinToolUi -Name "TerminalSimpleTab"
+        if ($null -ne $tab) { $tab.Background = $background }
+    }
+    $foreground = ConvertTo-WinToolPreviewBrush -Color ([string]$scheme.foreground)
+    if ($null -ne $foreground) { $sample.Foreground = $foreground }
+    $face = "CaskaydiaCove Nerd Font"
+    foreach ($font in @(Get-WinToolActiveFont)) {
+        if ([string]$font.id -eq [string]$choice.fontId) { $face = [string]$font.face; break }
+    }
+    $families = $face + ", Cascadia Mono, Consolas"
+    if ($null -eq $script:WinToolPreviewFonts) { $script:WinToolPreviewFonts = @{} }
+    if (-not $script:WinToolPreviewFonts.ContainsKey($families)) {
+        $script:WinToolPreviewFonts[$families] = [System.Windows.Media.FontFamily]::new($families)
+    }
+    $sample.FontFamily = $script:WinToolPreviewFonts[$families]
+    Set-WinToolLigatureTypography -Element $sample
+    $size = 12
+    $sizeValue = Get-WinToolNote -Object $choice -Name "fontSize"
+    if ($null -ne $sizeValue -and [int]$sizeValue -gt 0) { $size = [int]$sizeValue }
+    $sample.FontSize = [Math]::Round($size * 1.1, 1)
+    $sample.LineHeight = [Math]::Round($sample.FontSize * 1.5)
+    $palette = Get-WinToolNote -Object $scheme -Name "palette"
+    $red = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "red" -Default "#F07178")) -Palette $null
+    $yellow = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "yellow" -Default "#EED49F")) -Palette $null
+    $blue = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "blue" -Default "#6C9BFF")) -Palette $null
+    $dim = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "brightBlack" -Default "#5B6680")) -Palette $null
+    $sample.Inlines.Clear()
+    $text = { param([string]$Value, [string]$Color) New-WinToolPreviewSegment -Text $Value -Foreground $Color }
+    $addLine = {
+        param([object[]]$Parts)
+        if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
+        foreach ($part in @($Parts)) { $sample.Inlines.Add((New-WinToolPreviewRun -Segment $part)) }
+    }
+    & $addLine @((& $text "PowerShell 7" $dim))
+    & $addLine @((& $text " " ""))
+    & $addLine (@($segments) + @((& $text " git status" "")))
+    & $addLine @((& $text "On branch main" ""))
+    & $addLine @((& $text "Changes not staged for commit:" ""))
+    & $addLine @((& $text "        modified:   src/app.ts" $red))
+    & $addLine @((& $text " " ""))
+    & $addLine (@($segments) + @((& $text " ls" "")))
+    $folder = ""
+    $file = ""
+    if ([bool]$choice.terminalIcons) {
+        $folder = [string][char]0xF07B + " "
+        $file = [string][char]0xF489 + " "
+    }
+    $listing = ""
+    foreach ($name in @("assets", "build", "data", "src")) { $listing += $folder + $name + "   " }
+    & $addLine @((& $text $listing $blue), (& $text ($file + "wintool.ps1") $yellow))
+    & $addLine @((& $text " " ""))
+    $last = @($segments) + @((& $text " git s" ""), (New-WinToolPreviewSegment -Text " " -Background ([string]$scheme.cursor)))
+    if ([bool]$choice.psReadLine) { $last += (& $text "tatus" $dim) }
+    & $addLine $last
+    $caption = Get-WinToolUi -Name "TerminalSimpleCaption"
+    if ($null -ne $caption) {
+        $themeName = [string]$choice.promptStyle
+        foreach ($row in @(Get-WinToolActiveOhMyPoshTheme)) {
+            if ([string]$row.id -eq [string]$choice.promptStyle) { $themeName = [string]$row.name; break }
+        }
+        $fontName = $face
+        foreach ($font in @(Get-WinToolActiveFont)) {
+            if ([string]$font.id -eq [string]$choice.fontId) { $fontName = [string]$font.name; break }
+        }
+        $dot = " " + [string][char]0x00B7 + " "
+        $caption.Text = ("Oh My Posh" + $dot + $themeName + $dot + $fontName + $dot + [string]$scheme.name)
+    }
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
 }
 
 function New-WinToolTerminalTile {
@@ -202,6 +371,7 @@ function Complete-WinToolPreviewThemeDownload {
     }
     try {
         Update-WinToolTerminalPreview
+        Update-WinToolSimplePreview
     }
     catch {
         $null = $_.Exception.Message
@@ -353,30 +523,39 @@ function Initialize-WinToolTerminalView {
     $script:WinToolExtraFont = @()
     $script:WinToolExtraOhMyPoshTheme = @()
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalModeSimple") -EventName "Checked" -Name "Terminal: Simple mode" -Action {
+        Start-WinToolSurfaceTiming -Name "Terminal Simple"
         $script:WinToolTerminalMode = "simple"
         Set-WinToolTerminalModeView
         $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
         Update-WinToolTerminalSummary
-        Update-WinToolTerminalPreview
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalModeAdvanced") -EventName "Checked" -Name "Terminal: Advanced mode" -Action {
+        Start-WinToolSurfaceTiming -Name "Terminal Advanced"
         $script:WinToolTerminalMode = "advanced"
         Set-WinToolTerminalModeView
-        Update-WinToolExtraToggle
-        # Simple resets the choice to the recommended setup, so the theme list,
-        # fonts, and sizes are rebuilt for that choice here, before anything
-        # reads them. Without this the theme list kept the last engine's rows.
-        Update-WinToolFontSizeSelection
-        Update-WinToolFontList
+        # Lists are built at startup. Rebuilding them is skipped when this
+        # engine, filter, and search are already showing.
+        $styleList = Get-WinToolUi -Name "TerminalStyleList"
+        $promptNow = [string]$script:WinToolTerminalChoice.prompt
+        $listMismatch = ([string]$styleList.Tag -ne $promptNow -or [string]$script:WinToolThemeListKey -ne (Get-WinToolThemeListKey))
         Update-WinToolPromptStyleList
-        Update-WinToolTerminalSummary
-        Update-WinToolPromptSelection
+        if ($listMismatch) { Update-WinToolPromptSelection }
+        Update-WinToolExtraToggle
+        Update-WinToolFontSizeSelection
+        Sync-WinToolFontSelection
         Update-WinToolSchemeSelection
-        Update-WinToolTerminalPreview
-        Show-WinToolTerminalSelection
+        Update-WinToolTerminalSummary
+        if ([string]$script:WinToolPreviewKey -ne (Get-WinToolPreviewKey)) {
+            Update-WinToolTerminalPreview
+        }
+        $script:WinToolTerminalScrollPending = $true
     }
-    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontNerdOnly") -EventName "Click" -Name "Terminal: Nerd Fonts only" -Action { Update-WinToolFontList }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontNerdOnly") -EventName "Click" -Name "Terminal: Nerd Fonts only" -Action {
+        Start-WinToolSurfaceTiming -Name "Terminal fonts"
+        Update-WinToolFontList
+    }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalThemeSearch") -EventName "TextChanged" -Name "Terminal: theme search" -Action {
+        Start-WinToolSurfaceTiming -Name "Terminal search"
         Sync-WinToolSearchHint -BoxName "TerminalThemeSearch" -HintName "TerminalThemeSearchHint"
         Update-WinToolPromptStyleList
         Update-WinToolTerminalSummary
@@ -386,6 +565,7 @@ function Initialize-WinToolTerminalView {
         Register-WinToolUiEvent -Control (Get-WinToolUi -Name $filterName) -EventName "Checked" -Name "Terminal: theme filter" -Action {
             param($source, $eventData)
             $null = $eventData
+            Start-WinToolSurfaceTiming -Name ("Terminal " + [string]$source.Tag)
             $script:WinToolTerminalFilter = [string]$source.Tag
             Update-WinToolPromptStyleList
             Update-WinToolTerminalSummary
@@ -395,6 +575,7 @@ function Initialize-WinToolTerminalView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalRefresh") -EventName "Click" -Name "Terminal: refresh lists" -Action { Update-WinToolTerminalCatalogOnline }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalSetup") -EventName "Click" -Name "Terminal: apply setup" -Action { Invoke-WinToolTerminalClick }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontList") -EventName "SelectionChanged" -Name "Terminal: choose font" -Action {
+        if ($script:WinToolTerminalSyncing) { return }
         Update-WinToolFontSample
         Update-WinToolTerminalSummary
     }
@@ -444,6 +625,10 @@ function Initialize-WinToolTerminalView {
     Update-WinToolPromptStyleList
     Update-WinToolTerminalSummary
     Update-WinToolTerminalPreview
+    Update-WinToolSimplePreview
+    # Keep Advanced measured behind Simple so the first click does not lay it out.
+    $script:WinToolTerminalSurfaceWarm = $true
+    Set-WinToolTerminalModeView
 }
 
 function Set-WinToolTerminalModeView {
@@ -452,14 +637,44 @@ function Set-WinToolTerminalModeView {
     $simple = Get-WinToolUi -Name "TerminalSimpleScroll"
     $subtitle = Get-WinToolUi -Name "TerminalSubtitle"
     if ($advanced) {
-        $simple.Visibility = "Collapsed"
-        $body.Visibility = "Visible"
         $subtitle.Text = "Pick a prompt, a theme, a font and a color scheme. The preview updates as you click."
     }
     else {
-        $body.Visibility = "Collapsed"
-        $simple.Visibility = "Visible"
         $subtitle.Text = "A recommended setup in one click. Switch to Advanced to choose each part."
+    }
+    if (-not $script:WinToolTerminalSurfaceWarm) {
+        if ($advanced) {
+            $simple.Visibility = "Collapsed"
+            $body.Visibility = "Visible"
+        }
+        else {
+            $body.Visibility = "Collapsed"
+            $simple.Visibility = "Visible"
+        }
+        return
+    }
+    # Both stay laid out. The click only changes which one is on top.
+    $body.Visibility = "Visible"
+    $simple.Visibility = "Visible"
+    if ($advanced) {
+        $body.Opacity = 1
+        $body.IsHitTestVisible = $true
+        $body.Focusable = $true
+        [System.Windows.Controls.Panel]::SetZIndex($body, 2)
+        $simple.Opacity = 0
+        $simple.IsHitTestVisible = $false
+        $simple.Focusable = $false
+        [System.Windows.Controls.Panel]::SetZIndex($simple, 0)
+    }
+    else {
+        $simple.Opacity = 1
+        $simple.IsHitTestVisible = $true
+        $simple.Focusable = $true
+        [System.Windows.Controls.Panel]::SetZIndex($simple, 2)
+        $body.Opacity = 0
+        $body.IsHitTestVisible = $false
+        $body.Focusable = $false
+        [System.Windows.Controls.Panel]::SetZIndex($body, 0)
     }
 }
 
@@ -640,12 +855,84 @@ function New-WinToolTerminalChip {
     return $chip
 }
 
+function Get-WinToolPreviewKey {
+    $choice = $script:WinToolTerminalChoice
+    if ($null -eq $choice) { return "" }
+    return ([string]$choice.prompt + "|" + [string]$choice.promptStyle + "|" + [string]$choice.fontId + "|" + [string](Get-WinToolNote -Object $choice -Name "fontSize" -Default 12) + "|" + [string]$choice.schemeId + "|" + [string]$choice.terminalIcons + "|" + [string]$choice.psReadLine + "|" + [string]$choice.zoxide + "|" + [string]$choice.fzf)
+}
+
+function Get-WinToolThemeListKey {
+    $prompt = [string]$script:WinToolTerminalChoice.prompt
+    $filter = [string]$script:WinToolTerminalFilter
+    if ([string]::IsNullOrWhiteSpace($filter)) { $filter = "all" }
+    $query = ""
+    $box = Get-WinToolUi -Name "TerminalThemeSearch"
+    if ($null -ne $box) { $query = [string]$box.Text }
+    return ($prompt + "|" + $filter + "|" + $query)
+}
+
+function Reset-WinToolThemeListCache {
+    $extra = @($script:WinToolExtraOhMyPoshTheme).Count
+    if ([int]$script:WinToolThemeExtraCount -eq $extra -and $null -ne $script:WinToolThemeRowCache) { return }
+    $script:WinToolThemeExtraCount = $extra
+    $script:WinToolThemeRowCache = @{}
+    $script:WinToolThemeItemCache = @{}
+    $script:WinToolThemeListKey = ""
+}
+
+function Get-WinToolCachedThemeRow {
+    param(
+        [Parameter(Mandatory = $true)][string]$PromptId
+    )
+    if ($null -eq $script:WinToolThemeRowCache) { $script:WinToolThemeRowCache = @{} }
+    if ($script:WinToolThemeRowCache.ContainsKey($PromptId)) {
+        return @($script:WinToolThemeRowCache[$PromptId])
+    }
+    $rows = @(Get-WinToolThemeRow -PromptId $PromptId -OhMyPoshTheme @(Get-WinToolActiveOhMyPoshTheme))
+    $script:WinToolThemeRowCache[$PromptId] = $rows
+    return $rows
+}
+
+function Get-WinToolCachedThemeItem {
+    param(
+        $Row,
+        $Style,
+        [Parameter(Mandatory = $true)][string]$PromptId
+    )
+    if ($null -eq $script:WinToolThemeItemCache) { $script:WinToolThemeItemCache = @{} }
+    $id = $PromptId + "|" + [string]$Row.Id
+    if ($script:WinToolThemeItemCache.ContainsKey($id)) {
+        return $script:WinToolThemeItemCache[$id]
+    }
+    $item = New-WinToolThemeItem -Row $Row -Style $Style
+    $script:WinToolThemeItemCache[$id] = $item
+    return $item
+}
+
 function Update-WinToolPromptStyleList {
-    $script:WinToolTerminalBodyKey = 0
     $list = Get-WinToolUi -Name "TerminalStyleList"
     $prompt = [string]$script:WinToolTerminalChoice.prompt
+    Reset-WinToolThemeListCache
+    $key = Get-WinToolThemeListKey
     # The list remembers which prompt it was built for, so an old selection
     # never overwrites the style of a newly picked prompt.
+    if ([string]$list.Tag -eq $prompt -and [string]$script:WinToolThemeListKey -eq $key -and $list.Items.Count -gt 0) {
+        $wanted = [string]$script:WinToolTerminalChoice.promptStyle
+        if ($null -eq $list.SelectedItem -or [string]$list.SelectedItem.Tag -ne $wanted) {
+            $wasSyncing = [bool]$script:WinToolTerminalSyncing
+            $script:WinToolTerminalSyncing = $true
+            try {
+                foreach ($item in @($list.Items)) {
+                    if ([string]$item.Tag -eq $wanted) { $list.SelectedItem = $item; break }
+                }
+            }
+            finally {
+                $script:WinToolTerminalSyncing = $wasSyncing
+            }
+        }
+        return
+    }
+    $script:WinToolTerminalBodyKey = 0
     $wasSyncing = [bool]$script:WinToolTerminalSyncing
     $script:WinToolTerminalSyncing = $true
     try {
@@ -658,12 +945,12 @@ function Update-WinToolPromptStyleList {
         $titles = Get-WinToolThemeTitle -PromptId $prompt
         (Get-WinToolUi -Name "TerminalThemeTitle").Text = [string]$titles.Title
         (Get-WinToolUi -Name "TerminalThemeSearchHint").Text = ([string]$titles.Hint + [string][char]0x2026)
-        $rows = @(Get-WinToolThemeRow -PromptId $prompt -OhMyPoshTheme @(Get-WinToolActiveOhMyPoshTheme))
+        $rows = @(Get-WinToolCachedThemeRow -PromptId $prompt)
         $script:WinToolTerminalRows = $rows
         $shown = @(Select-WinToolThemeRow -Row $rows -Query $query -Filter $filter)
         $rowStyle = $list.FindResource("TerminalRow")
         foreach ($row in $shown) {
-            $item = New-WinToolThemeItem -Row $row -Style $rowStyle
+            $item = Get-WinToolCachedThemeItem -Row $row -Style $rowStyle -PromptId $prompt
             [void]$list.Items.Add($item)
             if ([string]$row.Id -eq [string]$script:WinToolTerminalChoice.promptStyle) {
                 $list.SelectedItem = $item
@@ -682,6 +969,7 @@ function Update-WinToolPromptStyleList {
             $note.Visibility = "Collapsed"
         }
         $list.Tag = $prompt
+        $script:WinToolThemeListKey = $key
         if ($null -ne $list.SelectedItem) {
             $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
         }
@@ -689,7 +977,7 @@ function Update-WinToolPromptStyleList {
     finally {
         $script:WinToolTerminalSyncing = $wasSyncing
     }
-    Show-WinToolTerminalSelection
+    $script:WinToolTerminalScrollPending = $true
 }
 
 function New-WinToolThemeItem {
@@ -1004,10 +1292,37 @@ function Get-WinToolTerminalBodyMinHeight {
     return $need
 }
 
+function Sync-WinToolFontSelection {
+    $list = Get-WinToolUi -Name "TerminalFontList"
+    if ($null -eq $list -or $list.Items.Count -eq 0) { return }
+    $wanted = [string]$script:WinToolTerminalChoice.fontId
+    if ($null -ne $list.SelectedItem -and [string]$list.SelectedItem.Tag -eq $wanted) { return }
+    $wasSyncing = [bool]$script:WinToolTerminalSyncing
+    $script:WinToolTerminalSyncing = $true
+    try {
+        for ($index = 0; $index -lt $list.Items.Count; $index++) {
+            $item = $list.Items[$index]
+            if ([string]$item.Tag -eq $wanted) {
+                $list.SelectedItem = $item
+                break
+            }
+        }
+    }
+    finally {
+        $script:WinToolTerminalSyncing = $wasSyncing
+    }
+}
+
 function Update-WinToolFontList {
     $list = Get-WinToolUi -Name "TerminalFontList"
     $nerdOnly = ((Get-WinToolUi -Name "TerminalFontNerdOnly").IsChecked -eq $true)
     $allFonts = @(Get-WinToolActiveFont)
+    $fontKey = ([string]$nerdOnly + "|" + [string]$allFonts.Count + "|" + [string]@($script:WinToolExtraFont).Count)
+    if ([string]$script:WinToolFontListKey -eq $fontKey -and $list.Items.Count -gt 0) {
+        Sync-WinToolFontSelection
+        return
+    }
+    $script:WinToolFontListKey = ""
     $fonts = @(Select-WinToolFont -Font $allFonts -Query "" -NerdOnly $nerdOnly)
     $script:WinToolTerminalSyncing = $true
     try {
@@ -1038,33 +1353,30 @@ function Update-WinToolFontList {
     if ($null -ne $countBlock) {
         $countBlock.Text = ([string]$allFonts.Count + " fonts" + $dot + $nerdCount + " Nerd Fonts" + $dot + $schemeCount + " schemes")
     }
+    $script:WinToolFontListKey = $fontKey
     Update-WinToolFontSizeSelection
     Update-WinToolFontSample
 }
 
 function Show-WinToolTerminalSelection {
-    # Brings the chosen engine and theme into view in their lists. When a list
-    # is not laid out yet, the log pump calls this again a moment later.
+    # Brings the chosen engine and theme into view. UpdateLayout is not called
+    # here: doing it from a click measured the whole list before the frame.
     $script:WinToolTerminalScrollPending = $false
     foreach ($name in @("TerminalPromptList", "TerminalStyleList")) {
         $list = Get-WinToolUi -Name $name
         if ($null -eq $list -or $null -eq $list.SelectedItem) { continue }
         try {
-            $list.UpdateLayout()
+            if ($list.ActualHeight -le 0) {
+                if ($script:WinToolTerminalMode -eq "advanced") { $script:WinToolTerminalScrollPending = $true }
+                continue
+            }
             $list.ScrollIntoView($list.SelectedItem)
-            # ScrollIntoView needs a later layout pass; moving the list's own
-            # scroll viewer (item based) works right away.
             $viewer = Find-WinToolChildScrollViewer -Element $list
             if ($null -ne $viewer -and $list.SelectedIndex -ge 0 -and $viewer.ViewportHeight -gt 0) {
                 $target = [Math]::Max(0, $list.SelectedIndex - 1)
                 if ($list.SelectedIndex -lt $viewer.VerticalOffset -or $list.SelectedIndex -ge ($viewer.VerticalOffset + $viewer.ViewportHeight)) {
                     $viewer.ScrollToVerticalOffset($target)
-                    $list.UpdateLayout()
                 }
-            }
-            if ($list.ActualHeight -le 0 -and $script:WinToolTerminalMode -eq "advanced") {
-                # Not laid out yet (hidden tab or mode); the log pump retries.
-                $script:WinToolTerminalScrollPending = $true
             }
         }
         catch {
@@ -1121,7 +1433,11 @@ function Update-WinToolTerminalPreview {
         }
         $families = "Cascadia Mono, Consolas"
         if (-not [string]::IsNullOrWhiteSpace($face)) { $families = $face + ", " + $families }
-        $family = [System.Windows.Media.FontFamily]::new($families)
+        if ($null -eq $script:WinToolPreviewFonts) { $script:WinToolPreviewFonts = @{} }
+        if (-not $script:WinToolPreviewFonts.ContainsKey($families)) {
+            $script:WinToolPreviewFonts[$families] = [System.Windows.Media.FontFamily]::new($families)
+        }
+        $family = $script:WinToolPreviewFonts[$families]
         $sample.FontFamily = $family
         Set-WinToolLigatureTypography -Element $sample
         $styleList = Get-WinToolUi -Name "TerminalStyleList"
@@ -1202,6 +1518,7 @@ function Update-WinToolTerminalPreview {
         if ($waiting) { $tip += "`nLoading the theme colors from GitHub..." }
         elseif ($promptId -eq "oh-my-posh" -and $null -eq $theme) { $tip += "`nTheme colors come from the WinTool catalog sample." }
         $border.ToolTip = $tip
+        $script:WinToolPreviewKey = Get-WinToolPreviewKey
     }
     catch {
         $null = $_.Exception.Message

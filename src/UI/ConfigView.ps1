@@ -3,13 +3,34 @@
 
 function Show-WinToolConfigPanel {
     param(
-        [Parameter(Mandatory = $true)][string]$Name
+        [Parameter(Mandatory = $true)][string]$Name,
+        [switch]$Quiet
     )
+    if (-not $Quiet) {
+        Start-WinToolSurfaceTiming -Name ("Config " + $Name)
+    }
+    # Once a section has been measured it stays Visible. Collapsing it throws
+    # the layout away and the next click measures it again.
+    if ($null -eq $script:WinToolConfigShown) {
+        $script:WinToolConfigShown = @{}
+    }
+    foreach ($panel in @("Profile", "Winget", "Tweaks", "Dns", "Power")) {
+        $script:WinToolConfigShown[$panel] = $true
+    }
     foreach ($panel in @("Profile", "Winget", "Tweaks", "Dns", "Power")) {
         $element = Get-WinToolUi -Name ("ConfigPanel" + $panel)
         if ($null -eq $element) { continue }
-        if ($panel -eq $Name) { $element.Visibility = "Visible" }
-        else { $element.Visibility = "Collapsed" }
+        $element.Visibility = "Visible"
+        if ($panel -eq $Name) {
+            $element.Opacity = 1
+            $element.IsHitTestVisible = $true
+            [System.Windows.Controls.Panel]::SetZIndex($element, 2)
+        }
+        else {
+            $element.Opacity = 0
+            $element.IsHitTestVisible = $false
+            [System.Windows.Controls.Panel]::SetZIndex($element, 0)
+        }
     }
 }
 
@@ -31,7 +52,7 @@ function Initialize-WinToolConfigView {
             Show-WinToolConfigPanel -Name $panelName
         }
     }
-    Show-WinToolConfigPanel -Name "Profile"
+    Show-WinToolConfigPanel -Name "Profile" -Quiet
     Initialize-WinToolSystemView
     Update-WinToolProfileSummary
 }
