@@ -1280,7 +1280,41 @@
                   </WrapPanel>
                   <Border Grid.Row="3" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="6" Background="{DynamicResource BrushInput}" ClipToBounds="True">
                     <Grid>
-                      <ListBox x:Name="TerminalStyleList" Style="{StaticResource TerminalList}" AutomationProperties.Name="Prompt theme"/>
+                      <ListBox x:Name="TerminalStyleList" Style="{StaticResource TerminalList}" AutomationProperties.Name="Prompt theme">
+                        <ListBox.ItemContainerStyle>
+                          <Style TargetType="ListBoxItem" BasedOn="{StaticResource TerminalRow}">
+                            <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                            <Setter Property="Padding" Value="8,6,8,7"/>
+                            <Setter Property="Margin" Value="0,0,0,1"/>
+                            <Setter Property="ToolTip" Value="{Binding Tip}"/>
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+                          </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                          <DataTemplate>
+                            <StackPanel>
+                              <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="Nerd Font" Visibility="{Binding Nerd}" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushWarn}"/>
+                                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushInk}"/>
+                              </DockPanel>
+                              <Border Background="{DynamicResource BrushLog}" CornerRadius="4" Padding="6,3,6,3" Margin="0,4,0,0" ClipToBounds="True" Visibility="{Binding SampleVisible}">
+                                <ItemsControl ItemsSource="{Binding Preview}">
+                                  <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                      <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                  </ItemsControl.ItemsPanel>
+                                  <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                      <TextBlock Text="{Binding Text}" Foreground="{Binding Brush}" Background="{Binding Fill}" FontSize="{DynamicResource FontSizeBody}" FontFamily="Cascadia Mono, Consolas"/>
+                                    </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                              </Border>
+                            </StackPanel>
+                          </DataTemplate>
+                        </ListBox.ItemTemplate>
+                      </ListBox>
                       <TextBlock x:Name="TerminalStyleNote" Text="Themes" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16,0" IsHitTestVisible="False"/>
                     </Grid>
                   </Border>

@@ -561,7 +561,9 @@ function Initialize-WinToolTerminalView {
         Sync-WinToolSearchHint -BoxName "TerminalThemeSearch" -HintName "TerminalThemeSearchHint"
         Update-WinToolPromptStyleList
         Update-WinToolTerminalSummary
-        Update-WinToolTerminalPreview
+        if ([string]$script:WinToolPreviewKey -ne (Get-WinToolPreviewKey)) {
+            Update-WinToolTerminalPreview
+        }
     }
     foreach ($filterName in @("TerminalFilterAll", "TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd")) {
         Register-WinToolUiEvent -Control (Get-WinToolUi -Name $filterName) -EventName "Checked" -Name "Terminal: theme filter" -Action {
@@ -571,7 +573,9 @@ function Initialize-WinToolTerminalView {
             $script:WinToolTerminalFilter = [string]$source.Tag
             Update-WinToolPromptStyleList
             Update-WinToolTerminalSummary
-            Update-WinToolTerminalPreview
+            if ([string]$script:WinToolPreviewKey -ne (Get-WinToolPreviewKey)) {
+                Update-WinToolTerminalPreview
+            }
         }
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalRefresh") -EventName "Click" -Name "Terminal: refresh lists" -Action { Update-WinToolTerminalCatalogOnline }
@@ -895,20 +899,64 @@ function Get-WinToolCachedThemeRow {
     return $rows
 }
 
-function Get-WinToolCachedThemeItem {
+function Initialize-WinToolThemeEntryType {
+    # Plain objects, not ListBoxItems. The list virtualizes them, so a filter
+    # does not build a visual for every theme before the first frame.
+    if ($null -ne ("WinToolThemeEntry" -as [type])) { return }
+    Add-Type -TypeDefinition @"
+using System.Collections.Generic;
+public class WinToolPreviewPiece {
+    public string Text { get; set; }
+    public string Brush { get; set; }
+    public string Fill { get; set; }
+}
+public class WinToolThemeEntry {
+    public string Tag { get; set; }
+    public string Name { get; set; }
+    public string Tip { get; set; }
+    public string Nerd { get; set; }
+    public string SampleVisible { get; set; }
+    public List<WinToolPreviewPiece> Preview { get; set; }
+}
+"@
+}
+
+function Get-WinToolCachedThemeEntry {
     param(
         $Row,
-        $Style,
         [Parameter(Mandatory = $true)][string]$PromptId
     )
+    Initialize-WinToolThemeEntryType
     if ($null -eq $script:WinToolThemeItemCache) { $script:WinToolThemeItemCache = @{} }
     $id = $PromptId + "|" + [string]$Row.Id
     if ($script:WinToolThemeItemCache.ContainsKey($id)) {
         return $script:WinToolThemeItemCache[$id]
     }
-    $item = New-WinToolThemeItem -Row $Row -Style $Style
-    $script:WinToolThemeItemCache[$id] = $item
-    return $item
+    $pieces = New-Object System.Collections.Generic.List[WinToolPreviewPiece]
+    foreach ($segment in @($Row.Preview)) {
+        $piece = New-Object WinToolPreviewPiece
+        $piece.Text = [string]$segment.Text
+        $brush = [string]$segment.Foreground
+        if ([string]::IsNullOrWhiteSpace($brush)) { $brush = "#E8EDF7" }
+        $piece.Brush = $brush
+        $fill = [string]$segment.Background
+        if ([string]::IsNullOrWhiteSpace($fill)) { $fill = "Transparent" }
+        $piece.Fill = $fill
+        [void]$pieces.Add($piece)
+    }
+    $entry = New-Object WinToolThemeEntry
+    $entry.Tag = [string]$Row.Id
+    $entry.Name = [string]$Row.Name
+    $tip = [string]$Row.Id
+    if (-not [string]::IsNullOrWhiteSpace([string]$Row.Description)) { $tip = ([string]$Row.Description + "`n" + $tip) }
+    $entry.Tip = $tip
+    $entry.Nerd = "Collapsed"
+    if ($Row.NerdFont -eq $true) { $entry.Nerd = "Visible" }
+    $entry.SampleVisible = "Collapsed"
+    if ($pieces.Count -gt 0) { $entry.SampleVisible = "Visible" }
+    $entry.Preview = $pieces
+    $script:WinToolThemeItemCache[$id] = $entry
+    return $entry
 }
 
 function Update-WinToolPromptStyleList {
@@ -939,7 +987,7 @@ function Update-WinToolPromptStyleList {
     $script:WinToolTerminalSyncing = $true
     try {
         $list.Tag = $null
-        $list.Items.Clear()
+        $list.ItemsSource = $null
         $query = [string](Get-WinToolUi -Name "TerminalThemeSearch").Text
         $note = Get-WinToolUi -Name "TerminalStyleNote"
         $filter = [string]$script:WinToolTerminalFilter
@@ -950,14 +998,15 @@ function Update-WinToolPromptStyleList {
         $rows = @(Get-WinToolCachedThemeRow -PromptId $prompt)
         $script:WinToolTerminalRows = $rows
         $shown = @(Select-WinToolThemeRow -Row $rows -Query $query -Filter $filter)
-        $rowStyle = $list.FindResource("TerminalRow")
+        $entries = New-Object System.Collections.Generic.List[object]
+        $chosen = $null
         foreach ($row in $shown) {
-            $item = Get-WinToolCachedThemeItem -Row $row -Style $rowStyle -PromptId $prompt
-            [void]$list.Items.Add($item)
-            if ([string]$row.Id -eq [string]$script:WinToolTerminalChoice.promptStyle) {
-                $list.SelectedItem = $item
-            }
+            $entry = Get-WinToolCachedThemeEntry -Row $row -PromptId $prompt
+            [void]$entries.Add($entry)
+            if ([string]$row.Id -eq [string]$script:WinToolTerminalChoice.promptStyle) { $chosen = $entry }
         }
+        $list.ItemsSource = $entries
+        if ($null -ne $chosen) { $list.SelectedItem = $chosen }
         (Get-WinToolUi -Name "TerminalThemeCount").Text = ([string]$shown.Count + " of " + [string]$rows.Count)
         if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
             $list.SelectedIndex = 0
@@ -980,61 +1029,6 @@ function Update-WinToolPromptStyleList {
         $script:WinToolTerminalSyncing = $wasSyncing
     }
     $script:WinToolTerminalScrollPending = $true
-}
-
-function New-WinToolThemeItem {
-    param($Row, $Style)
-    # Name, a "Nerd Font" tag when the theme needs one, the id, and a sample
-    # prompt line in the theme colors.
-    $item = New-Object System.Windows.Controls.ListBoxItem
-    $item.Style = $Style
-    $item.Tag = [string]$Row.Id
-    $item.BorderThickness = [System.Windows.Thickness]::new(3, 0, 0, 0)
-    $item.Padding = [System.Windows.Thickness]::new(8, 6, 8, 7)
-    $item.Margin = [System.Windows.Thickness]::new(0, 0, 0, 1)
-    $tip = [string]$Row.Id
-    if (-not [string]::IsNullOrWhiteSpace([string]$Row.Description)) { $tip = [string]$Row.Description + "`n" + $tip }
-    $item.ToolTip = $tip
-    [System.Windows.Automation.AutomationProperties]::SetName($item, [string]$Row.Name)
-    $stack = New-Object System.Windows.Controls.StackPanel
-    $top = New-Object System.Windows.Controls.DockPanel
-    if ($Row.NerdFont -eq $true) {
-        $tag = New-WinToolTerminalLabel -Text "Nerd Font" -Brush "BrushWarn"
-        $tag.TextTrimming = "None"
-        $tag.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
-        $tag.VerticalAlignment = "Center"
-        [System.Windows.Controls.DockPanel]::SetDock($tag, "Right")
-        [void]$top.Children.Add($tag)
-    }
-    $nameLabel = New-WinToolTerminalLabel -Text ([string]$Row.Name)
-    $nameLabel.TextTrimming = "None"
-    $nameLabel.TextWrapping = "Wrap"
-    [void]$top.Children.Add($nameLabel)
-    [void]$stack.Children.Add($top)
-    $segments = @($Row.Preview)
-    if ($segments.Count -gt 0) {
-        $sample = New-Object System.Windows.Controls.Border
-        $sample.CornerRadius = [System.Windows.CornerRadius]::new(4)
-        $sample.Padding = [System.Windows.Thickness]::new(6, 3, 6, 3)
-        $sample.Margin = [System.Windows.Thickness]::new(0, 4, 0, 0)
-        $sample.ClipToBounds = $true
-        $sample.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushLog")
-        $line = New-Object System.Windows.Controls.TextBlock
-        # A sample prompt in the theme colors; it may run past the edge like a real terminal line.
-        $line.Tag = "preview-content"
-        $line.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
-        $line.TextWrapping = "NoWrap"
-        $line.SetResourceReference([System.Windows.Controls.TextBlock]::FontFamilyProperty, "TerminalPreviewFont")
-        Set-WinToolLigatureTypography -Element $line
-        $line.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushLogText")
-        foreach ($segment in $segments) {
-            [void]$line.Inlines.Add((New-WinToolPreviewRun -Segment $segment))
-        }
-        $sample.Child = $line
-        [void]$stack.Children.Add($sample)
-    }
-    $item.Content = $stack
-    return $item
 }
 
 function Set-WinToolLigatureTypography {
@@ -1333,17 +1327,23 @@ function Update-WinToolFontList {
     $fonts = @(Select-WinToolFont -Font $allFonts -Query "" -NerdOnly $nerdOnly)
     $script:WinToolTerminalSyncing = $true
     try {
+        if ($null -eq $script:WinToolFontItemCache) { $script:WinToolFontItemCache = @{} }
         $list.Items.Clear()
         foreach ($font in $fonts) {
-            $item = New-Object System.Windows.Controls.ComboBoxItem
-            $badge = "Programming font"
-            if ($font.nerd) { $badge = "Nerd Font" }
-            $item.Content = [string]$font.name
-            $item.ToolTip = $badge
-            $item.Tag = [string]$font.id
-            [void]$list.Items.Add($item)
-            if ([string]$font.id -eq [string]$script:WinToolTerminalChoice.fontId) {
-                $list.SelectedItem = $item
+            $fontId = [string]$font.id
+            if (-not $script:WinToolFontItemCache.ContainsKey($fontId)) {
+                $item = New-Object System.Windows.Controls.ComboBoxItem
+                $badge = "Programming font"
+                if ($font.nerd) { $badge = "Nerd Font" }
+                $item.Content = [string]$font.name
+                $item.ToolTip = $badge
+                $item.Tag = $fontId
+                $script:WinToolFontItemCache[$fontId] = $item
+            }
+            $cached = $script:WinToolFontItemCache[$fontId]
+            [void]$list.Items.Add($cached)
+            if ($fontId -eq [string]$script:WinToolTerminalChoice.fontId) {
+                $list.SelectedItem = $cached
             }
         }
     }
@@ -1352,6 +1352,9 @@ function Update-WinToolFontList {
     }
     if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
         $list.SelectedIndex = 0
+    }
+    if ($null -ne $list.SelectedItem) {
+        $script:WinToolTerminalChoice.fontId = [string]$list.SelectedItem.Tag
     }
     $nerdCount = @($allFonts | Where-Object { $_.nerd }).Count
     $schemeCount = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "schemes" -Default @()).Count
@@ -1362,7 +1365,9 @@ function Update-WinToolFontList {
     }
     $script:WinToolFontListKey = $fontKey
     Update-WinToolFontSizeSelection
-    Update-WinToolFontSample
+    if ([string]$script:WinToolPreviewKey -ne (Get-WinToolPreviewKey)) {
+        Update-WinToolTerminalPreview
+    }
 }
 
 function Show-WinToolTerminalSelection {
