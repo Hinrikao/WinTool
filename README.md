@@ -1,6 +1,6 @@
 # WinTool
 
-WinTool is a small, friendly helper for a fresh Windows 11 PC. It installs the apps you pick, applies optional tweaks, sets up a developer terminal, and points you at Windows Update and official graphics downloads.
+WinTool is a small, friendly helper for a fresh Windows 11 PC. It installs and updates the apps you pick, applies optional tweaks, sets up a developer terminal, runs common repairs, and manages Windows Update, optional features, DNS, and the power plan.
 
 It is an independent project by [Henrique](https://github.com/Hinrikao). It is not made by Microsoft, and it is not a copy of any other Windows utility.
 
@@ -12,11 +12,13 @@ That image is a placeholder. Replace `docs/screenshots/placeholder.svg` with a P
 
 ## What you can do
 
-- **Install.** A searchable checklist of common apps, grouped into browsers, communication, development, gaming, media, and utilities. WinTool installs the ones you tick with [winget](https://learn.microsoft.com/windows/package-manager/winget/).
-- **Tweaks.** Safe Windows settings such as file extensions, dark mode, fewer suggestions, and less diagnostic data. Presets named Minimal and Recommended select a starting set. A few stronger changes are marked Caution and stay off until you choose them.
+- **Install.** A searchable checklist of about 175 apps, grouped into browsers, communication, development, gaming, media, office and notes, security and network, runtimes, and utilities. WinTool installs the ones you tick with [winget](https://learn.microsoft.com/windows/package-manager/winget/). In the background it checks which apps are already installed and which have an update, and marks them **Installed** or **Update available**. You can select the installed ones, update or uninstall the ticked apps (or one app from its right-click menu), and upgrade everything winget knows about.
+- **Tweaks.** About 70 Windows settings for File Explorer, the taskbar and Start, appearance, privacy, search, input, gaming, and system behavior. Every tweak has an undo. Presets named Minimal and Recommended select a starting set. Stronger changes are marked Caution and stay off until you choose them.
 - **Terminal.** Windows Terminal, PowerShell 7, either Oh My Posh or Starship, a Nerd Font, optional Terminal-Icons, and optional Ubuntu with zsh and Oh My Zsh.
-- **Updates.** Scan Windows Update for driver updates, open Windows Update and optional updates, and open the NVIDIA, AMD, or Intel download page. WinTool does not install driver-booster tools.
-- **Config.** Save your ticks to a JSON profile and load them next time. You can also export or import winget's own package list.
+- **Updates.** Choose an update mode: Default, Security updates only (feature updates wait 365 days, no automatic restart while signed in), or Disabled. **Back to default** removes everything WinTool set. You can also scan Windows Update for driver updates, open Windows Update and optional updates, and open the NVIDIA, AMD, or Intel download page. WinTool does not install driver-booster tools.
+- **Fixes.** Reset Windows Update, reset the network stack, repair system files with DISM and SFC, and repair winget. Each asks first and logs what it runs.
+- **Features.** Turn optional Windows features on or off: Hyper-V, Windows Sandbox, .NET Framework 3.5, WSL, Virtual Machine Platform, and more. The tab shows the current state and reminds you to restart.
+- **Config.** Save your ticks to a JSON profile and load them next time, and export or import winget's own package list. Pick the DNS servers for a network adapter (Automatic, Cloudflare, Google, Quad9, or AdGuard, with IPv6), and add or remove the Ultimate Performance power plan.
 
 ## Requirements
 
@@ -170,6 +172,8 @@ powershell -STA -NoProfile -ExecutionPolicy Bypass -File .\src\Start-WinTool.ps1
 - Home and Pro editions often keep required diagnostic data even when a policy asks for the minimum. The tweak says so.
 - Terminal setup rewrites the font section of Windows Terminal `settings.json` and keeps one backup next to that file. Comments in the settings file are not preserved.
 - WSL setup may ask for a reboot before zsh can be installed. Run the terminal step again after you restart.
+- Update modes, DNS, Windows features, and the power plan change settings for the whole PC. **Back to default**, **Automatic (DHCP)**, turning a feature back off, and **Remove it** undo them. Disabling Windows Update leaves the PC without security fixes, and Windows may turn parts of it back on.
+- Fixes stop and restart Windows services and can take several minutes. A network reset needs a restart.
 - WinTool does not phone home and does not install third-party driver cleaners.
 
 ## Development
