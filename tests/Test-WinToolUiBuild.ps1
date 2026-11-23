@@ -1343,12 +1343,17 @@ $surfaceClick = New-Object System.Windows.RoutedEventArgs([System.Windows.Contro
 
 $window.FindName("NavTerminal").IsChecked = $true
 Invoke-WinToolNavPump
+$script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
+Update-WinToolPromptStyleList
+Update-WinToolTerminalSummary
+Update-WinToolTerminalPreview
+$window.FindName("TerminalModeSimple").IsChecked = $true
+Invoke-WinToolNavPump
 $window.FindName("TerminalModeAdvanced").IsChecked = $true
 Invoke-WinToolNavPump
 $window.FindName("TerminalModeSimple").IsChecked = $true
 Invoke-WinToolNavPump
 Measure-WinToolSurface -Label "Terminal Advanced" -Action {
-    $window.FindName("TerminalModeSimple").IsChecked = $true
     $window.FindName("TerminalModeAdvanced").IsChecked = $true
 }
 Measure-WinToolSurface -Label "Terminal Simple" -Action {
