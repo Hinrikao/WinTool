@@ -426,15 +426,19 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
-            <StackPanel Orientation="Horizontal" Background="Transparent">
-              <Border x:Name="Box" Width="20" Height="20" CornerRadius="5" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushMuted}" BorderThickness="1.5">
+            <Grid Background="Transparent">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Border x:Name="Box" Grid.Column="0" Width="20" Height="20" CornerRadius="5" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushMuted}" BorderThickness="1.5">
                 <Grid>
                   <Path x:Name="Mark" Data="M 4.5,10 L 8.5,14 L 15.5,6.5" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Margin="-1.5" Visibility="Collapsed"/>
                   <Rectangle x:Name="Dash" Width="9" Height="2" RadiusX="1" RadiusY="1" Fill="White" Visibility="Collapsed"/>
                 </Grid>
               </Border>
-              <ContentPresenter x:Name="Label" VerticalAlignment="Center" Margin="8,0,0,0"/>
-            </StackPanel>
+              <ContentPresenter x:Name="Label" Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="Content" Value="{x:Null}">
                 <Setter TargetName="Label" Property="Margin" Value="0"/>
@@ -476,13 +480,17 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <StackPanel Orientation="Horizontal">
-              <Grid Width="18" Height="18" Margin="0,1,8,0" VerticalAlignment="Center">
+            <Grid Background="Transparent">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Grid Grid.Column="0" Width="18" Height="18" Margin="0,2,8,0" VerticalAlignment="Top">
                 <Ellipse x:Name="Ring" Stroke="{DynamicResource BrushInputBorder}" StrokeThickness="1.5" Fill="{DynamicResource BrushInput}"/>
                 <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource BrushAccent}" Visibility="Collapsed"/>
               </Grid>
-              <ContentPresenter VerticalAlignment="Center"/>
-            </StackPanel>
+              <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
+            </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource BrushAccent}"/>

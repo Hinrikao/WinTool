@@ -374,6 +374,7 @@ $featureChange = Get-WinToolFeatureChange
 if (@($featureChange.Enable).Count -ne 1 -or @($featureChange.Disable).Count -ne 1) {
     throw "Feature changes were not worked out from the ticks."
 }
+Set-WinToolFeatureState -State $fakeState
 
 # Installed-app detection on Windows PowerShell 5.1, first with a stand-in
 # winget that writes to stderr (which used to abort the check on 5.1), then
@@ -1206,9 +1207,16 @@ $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
 $window.FindName("NavUpdates").IsChecked = $true
 Save-WinToolViewShot -Name "updates-1280" -Width 1280 -Height 760
+$modeList = $window.FindName("UpdateModeList")
+foreach ($modeRadio in @($modeList.Children)) {
+    if ($modeRadio.DesiredSize.Width -gt ($modeList.ActualWidth + 1.0)) {
+        throw ("Update mode radio text did not wrap inside the card: " + $modeRadio.DesiredSize.Width + " > " + $modeList.ActualWidth)
+    }
+}
 $window.FindName("NavFixes").IsChecked = $true
 Save-WinToolViewShot -Name "fixes-1280" -Width 1280 -Height 760
 $window.FindName("NavFeatures").IsChecked = $true
+Set-WinToolFeatureState -State $fakeState
 Save-WinToolViewShot -Name "features-1280" -Width 1280 -Height 760
 $window.FindName("NavHome").IsChecked = $true
 
