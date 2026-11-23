@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>WinTool — features</title>
+<link rel="stylesheet" href="shell.css"/>
+
+</head>
+<body>
+<div class="app">
+  <header class="titlebar">
+    <div class="titlebar-icon"><svg viewBox="0 0 18 18" fill="none"><path d="M3 13.5V4.5L9 11l6-6.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="titlebar-name">WinTool</div>
+    <div class="titlebar-badge">Layout proposal</div>
+    <div class="titlebar-spacer"></div>
+    <div class="caption">
+      <button><svg viewBox="0 0 10 10"><path d="M1 5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+      <button><svg viewBox="0 0 10 10"><rect x="1.4" y="1.4" width="7.2" height="7.2" rx="0.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      <button class="close"><svg viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+    </div>
+  </header>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 18 18" fill="none"><path d="M3 13.5V4.5L9 11l6-6.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="brand-name">WinTool</div>
+    </div>
+    <p class="tagline">A calm setup helper for a fresh Windows 11 PC.</p>
+    <nav class="nav"><div class="nav-group"><div class="nav-label">Setup</div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-7H10v7H5a1 1 0 0 1-1-1V10.5z"/></svg><span>Home</span></div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="M8 10l4 4 4-4"/><path d="M5 19h14"/></svg><span>Install</span></div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2.2" fill="currentColor" stroke="none"/><circle cx="15" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Tweaks</span></div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 4-5 4"/><path d="M12 16h7"/></svg><span>Terminal</span></div></div><div class="nav-group"><div class="nav-label">System</div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.2-5.5"/><path d="M20 5v5h-5"/></svg><span>Updates</span></div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0-5.7 5.5L4 16.8 7.2 20l4.8-4.8a4 4 0 0 0 5.5-5.7l-2.2 2.2-2.8-2.8 2-2z"/></svg><span>Fixes</span></div><div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>Features</span></div></div><div class="nav-group"><div class="nav-label">Settings</div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 4.5v1.6M12 17.9v1.6M19.5 12h-1.6M6.1 12H4.5M17.3 6.7l-1.1 1.1M7.8 16.2l-1.1 1.1M17.3 17.3l-1.1-1.1M7.8 7.8 6.7 6.7"/></svg><span>Config</span></div></div></nav>
+    <div class="sidebar-foot">
+      <div class="version">Version 1.0.0</div>
+      <a href="#">Project on GitHub</a>
+    </div>
+  </aside>
+  <section class="main">
+    
+    <div class="page">
+      <div class="page-head"><div class="page-title">Windows features</div></div>
+      <p class="page-sub">Optional parts of Windows. Ticked means on. Change the ticks and press Apply. Windows needs a restart after a change.</p>
+      <div class="feat-toolbar">
+        <button class="btn btn-primary">Apply changes</button>
+        <button class="btn btn-secondary">Refresh</button>
+        <span class="muted">3 features are on. 1 change is pending.</span>
+      </div>
+      <div class="feat-grid"><div class="feat-row">
+          <div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">Hyper-V</div><div class="desc">Microsoft's virtual machine platform and Hyper-V Manager. Needs Windows 11 Pro and virtualization in the firmware.</div></div>
+          <div class="pill pill-neutral">Off</div>
+        </div><div class="feat-row">
+          <div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">Windows Sandbox</div><div class="desc">A throwaway desktop for trying unknown apps. Everything inside is deleted when it closes.</div></div>
+          <div class="pill pill-neutral">Off</div>
+        </div><div class="feat-row">
+          <div class="cb on"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">Windows Subsystem for Linux</div><div class="desc">Runs Linux distributions such as Ubuntu. Turn on Virtual Machine Platform too for WSL 2.</div></div>
+          <div class="pill pill-ok">On</div>
+        </div><div class="feat-row">
+          <div class="cb on"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">Virtual Machine Platform</div><div class="desc">The virtualization layer WSL 2 and Android apps need.</div></div>
+          <div class="pill pill-ok">On</div>
+        </div><div class="feat-row">
+          <div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">Windows Hypervisor Platform</div><div class="desc">Lets other virtualization apps, such as some Android emulators, run on top of Hyper-V.</div></div>
+          <div class="pill pill-neutral">Off</div>
+        </div><div class="feat-row">
+          <div class="cb on"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">.NET Framework 3.5</div><div class="desc">Includes .NET 2.0 and 3.0. Older apps and games ask for it.</div></div>
+          <div class="pill pill-ok">On</div>
+        </div><div class="feat-row">
+          <div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">NFS client</div><div class="desc">Mount NFS network shares, common on Linux servers and NAS devices.</div></div>
+          <div class="pill pill-neutral">Off</div>
+        </div><div class="feat-row">
+          <div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">DirectPlay (legacy games)</div><div class="desc">An old networking component some games from the early 2000s still need.</div></div>
+          <div class="pill pill-neutral">Off</div>
+        </div><div class="feat-row">
+          <div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">Telnet client</div><div class="desc">The telnet command, handy for testing whether a network port answers.</div></div>
+          <div class="pill pill-neutral">Off</div>
+        </div><div class="feat-row">
+          <div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div>
+          <div class="txt"><div class="name">TFTP client</div><div class="desc">The tftp command, used to flash routers and network gear.</div></div>
+          <div class="pill pill-neutral">Off</div>
+        </div></div>
+    </div>
+    <footer class="status">
+      <div class="status-text">Ready · 1 feature change pending</div>
+      <div class="status-spacer"></div>
+      <button class="btn btn-ghost quiet">Show log</button>
+    </footer>
+  </section>
+</div>
+</body>
+</html>

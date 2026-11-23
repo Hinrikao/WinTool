@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>WinTool — terminal</title>
+<link rel="stylesheet" href="shell.css"/>
+
+</head>
+<body>
+<div class="app">
+  <header class="titlebar">
+    <div class="titlebar-icon"><svg viewBox="0 0 18 18" fill="none"><path d="M3 13.5V4.5L9 11l6-6.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="titlebar-name">WinTool</div>
+    <div class="titlebar-badge">Layout proposal</div>
+    <div class="titlebar-spacer"></div>
+    <div class="caption">
+      <button><svg viewBox="0 0 10 10"><path d="M1 5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+      <button><svg viewBox="0 0 10 10"><rect x="1.4" y="1.4" width="7.2" height="7.2" rx="0.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+      <button class="close"><svg viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+    </div>
+  </header>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 18 18" fill="none"><path d="M3 13.5V4.5L9 11l6-6.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="brand-name">WinTool</div>
+    </div>
+    <p class="tagline">A calm setup helper for a fresh Windows 11 PC.</p>
+    <nav class="nav"><div class="nav-group"><div class="nav-label">Setup</div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-7H10v7H5a1 1 0 0 1-1-1V10.5z"/></svg><span>Home</span></div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="M8 10l4 4 4-4"/><path d="M5 19h14"/></svg><span>Install</span></div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2.2" fill="currentColor" stroke="none"/><circle cx="15" cy="16" r="2.2" fill="currentColor" stroke="none"/></svg><span>Tweaks</span></div><div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 4-5 4"/><path d="M12 16h7"/></svg><span>Terminal</span></div></div><div class="nav-group"><div class="nav-label">System</div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.2-5.5"/><path d="M20 5v5h-5"/></svg><span>Updates</span></div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0-5.7 5.5L4 16.8 7.2 20l4.8-4.8a4 4 0 0 0 5.5-5.7l-2.2 2.2-2.8-2.8 2-2z"/></svg><span>Fixes</span></div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>Features</span></div></div><div class="nav-group"><div class="nav-label">Settings</div><div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 4.5v1.6M12 17.9v1.6M19.5 12h-1.6M6.1 12H4.5M17.3 6.7l-1.1 1.1M7.8 16.2l-1.1 1.1M17.3 17.3l-1.1-1.1M7.8 7.8 6.7 6.7"/></svg><span>Config</span></div></div></nav>
+    <div class="sidebar-foot">
+      <div class="version">Version 1.0.0</div>
+      <a href="#">Project on GitHub</a>
+    </div>
+  </aside>
+  <section class="main">
+    
+    <div class="page" style="padding-bottom:0">
+      <div class="page-head">
+        <div class="page-title">Terminal</div>
+        <div class="segment">
+          <button>Simple</button>
+          <button class="active">Advanced</button>
+        </div>
+        <div class="page-head-right">
+          <span class="muted">Nothing changes until you press Apply</span>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:6px">Choose the prompt, theme, font, color scheme, and extras.</div>
+      <div class="term-body">
+        <div class="term-card">
+          <div class="term-card-head"><span class="step">1</span><span class="semibold">Prompt</span><span class="term-count">8 engines</span></div>
+          <div class="term-list"><div class="term-item active"><div class="semibold">Oh My Posh</div><div class="sum">A colorful PowerShell prompt. Pick any official theme.</div></div><div class="term-item"><div class="semibold">Starship</div><div class="sum">A small, fast prompt that stays out of the way.</div></div><div class="term-item"><div class="semibold">Powerlevel10k</div><div class="sum">The familiar zsh prompt, inside Ubuntu on WSL.</div></div><div class="term-item"><div class="semibold">Pure</div><div class="sum">A minimal zsh prompt. Installed inside Ubuntu on WSL.</div></div><div class="term-item"><div class="semibold">Spaceship</div><div class="sum">A feature-rich zsh prompt. Installed inside Ubuntu on WSL.</div></div><div class="term-item"><div class="semibold">Oh My Zsh theme</div><div class="sum">Use one of the themes that ship with Oh My Zsh.</div></div><div class="term-item"><div class="semibold">Tide</div><div class="sum">A Fish prompt for Ubuntu on WSL. This installs Fish as well as zsh.</div></div><div class="term-item"><div class="semibold">Powerline-go</div><div class="sum">A single small program that draws a Powerline-style prompt.</div></div></div>
+        </div>
+        <div class="term-card">
+          <div class="term-card-head"><span class="step">2</span><span class="semibold">Theme</span><span class="term-count">Official Oh My Posh themes</span></div>
+          <div class="term-list"><div class="term-item active"><div class="semibold">jandedobbeleer</div></div><div class="term-item"><div class="semibold">agnoster</div></div><div class="term-item"><div class="semibold">atomic</div></div><div class="term-item"><div class="semibold">blueish</div></div><div class="term-item"><div class="semibold">bubbles</div></div><div class="term-item"><div class="semibold">catppuccin</div></div><div class="term-item"><div class="semibold">clean-detailed</div></div><div class="term-item"><div class="semibold">cloud-native-azure</div></div><div class="term-item"><div class="semibold">cobalt2</div></div><div class="term-item"><div class="semibold">paradox</div></div></div>
+        </div>
+        <div class="term-card">
+          <div class="term-card-head"><span class="step">3</span><span class="semibold">Preview</span></div>
+          <div class="term-preview">
+            <div class="term-tabs"><div class="term-tab">PowerShell</div></div>
+            <div class="term-screen">
+              <div><span style="color:#6C9BFF">~/src</span> <span style="color:#C6A0F6">on main</span> <span style="color:#3DDC97">via node</span></div>
+              <div><span style="color:#6C9BFF">❯</span> <span style="color:#E8EDF7">Get-ChildItem</span></div>
+            </div>
+          </div>
+          <div class="term-fields">
+            <div class="field"><label>Font</label><div class="combo">Cascadia Code <i>▾</i></div></div>
+            <div class="field"><label>Color scheme</label><div class="combo">Night <i>▾</i></div></div>
+          </div>
+          <div class="term-extras"><div class="extra-row"><div class="cb on"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div><span>Terminal-Icons</span></div><div class="extra-row"><div class="cb on"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div><span>PSReadLine predictions</span></div><div class="extra-row"><div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div><span>zoxide</span></div><div class="extra-row"><div class="cb"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div><span>fzf</span></div></div>
+        </div>
+      </div>
+      <div class="term-bar">
+        <div class="term-bar-top">
+          <span class="bold">What will happen</span>
+          <div class="page-head-right">
+            <div class="cb on"><svg viewBox="0 0 12 12"><path d="M2 6.2 4.8 9 10 3.2"/></svg></div><span>Include in saved profiles</span>
+            <button class="btn btn-primary" style="width:190px">Apply terminal setup</button>
+          </div>
+        </div>
+        <div class="term-chips">
+          <div class="chip active">+ Windows Terminal</div>
+          <div class="chip active">+ PowerShell 7</div>
+          <div class="chip active">+ Oh My Posh</div>
+          <div class="chip active">+ Cascadia Code</div>
+          <div class="chip">~ Prompt theme</div>
+          <div class="chip">+ Terminal-Icons</div>
+        </div>
+      </div>
+    </div>
+    <footer class="status">
+      <div class="status-text">Ready · nothing applied yet</div>
+      <div class="status-spacer"></div>
+      <button class="btn btn-ghost quiet">Show log</button>
+    </footer>
+  </section>
+</div>
+</body>
+</html>
