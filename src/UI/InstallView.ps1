@@ -27,7 +27,7 @@ function Initialize-WinToolInstallView {
         $headerMargin = [System.Windows.Thickness]::new(0, 6, 0, 6)
         if ($first) { $headerMargin = [System.Windows.Thickness]::new(0, 0, 0, 6) }
         $first = $false
-        $header = New-WinToolText -Text ([string]$category.name) -Size 13 -Weight "Bold" -Margin $headerMargin
+        $header = New-WinToolText -Text ([string]$category.name) -Weight "Bold" -Margin $headerMargin
         $header.ToolTip = [string](Get-WinToolNote -Object $category -Name "description" -Default "")
         [void]$section.Children.Add($header)
         $grid = New-Object System.Windows.Controls.Primitives.UniformGrid
@@ -163,8 +163,7 @@ function New-WinToolCardButton {
     $button = New-Object System.Windows.Controls.Button
     $button.Style = $script:WinToolWindow.FindResource("CardButton")
     $button.Width = [double]::NaN
-    $button.Height = 28
-    $button.FontSize = 12.5
+    $button.Height = 32
     $button.Padding = [System.Windows.Thickness]::new(4, 0, 4, 0)
     $button.Margin = [System.Windows.Thickness]::new(2, 0, 2, 0)
     switch ($Kind) {
@@ -206,7 +205,6 @@ function Set-WinToolCardButtonText {
     $icon = New-Object System.Windows.Controls.TextBlock
     $icon.Text = $Glyph
     $icon.FontFamily = [System.Windows.Media.FontFamily]::new("Segoe MDL2 Assets")
-    $icon.FontSize = 12
     $icon.VerticalAlignment = "Center"
     $icon.Margin = [System.Windows.Thickness]::new(0, 1, 6, 0)
     $label = New-Object System.Windows.Controls.TextBlock
@@ -232,10 +230,10 @@ function New-WinToolAppRow {
     $panel.CornerRadius = [System.Windows.CornerRadius]::new(8)
     $panel.Padding = [System.Windows.Thickness]::new(10, 10, 10, 9)
     $panel.Margin = [System.Windows.Thickness]::new(0, 0, 10, 10)
-    $panel.Height = 130
+    $panel.Height = 156
 
     $layout = New-Object System.Windows.Controls.Grid
-    foreach ($height in @(32, 0, 28)) {
+    foreach ($height in @(40, 0, 32)) {
         $rowDefinition = New-Object System.Windows.Controls.RowDefinition
         if ($height -gt 0) { $rowDefinition.Height = [System.Windows.GridLength]::new($height) }
         else { $rowDefinition.Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }
@@ -254,7 +252,6 @@ function New-WinToolAppRow {
     $icon.Background = [System.Windows.Media.SolidColorBrush]::new($iconColor)
     $initial = New-Object System.Windows.Controls.TextBlock
     $initial.Text = Get-WinToolAppInitial -Name ([string]$App.name)
-    $initial.FontSize = 15
     $initial.FontWeight = [System.Windows.FontWeights]::Bold
     $initial.Foreground = [System.Windows.Media.Brushes]::White
     $initial.HorizontalAlignment = "Center"
@@ -265,11 +262,11 @@ function New-WinToolAppRow {
     $names = New-Object System.Windows.Controls.StackPanel
     $names.Margin = [System.Windows.Thickness]::new(8, 0, 6, 0)
     $names.VerticalAlignment = "Center"
-    $title = New-WinToolText -Text ([string]$App.name) -Size 14 -Weight "SemiBold"
+    $title = New-WinToolText -Text ([string]$App.name) -Weight "SemiBold"
     $title.TextTrimming = "CharacterEllipsis"
     $title.ToolTip = [string]$App.name
     [void]$names.Children.Add($title)
-    $idText = New-WinToolText -Text ([string]$App.wingetId) -Size 11.5 -Brush "BrushHint" -Margin ([System.Windows.Thickness]::new(0, 0, 0, 0))
+    $idText = New-WinToolText -Text ([string]$App.wingetId) -Brush "BrushHint" -Margin ([System.Windows.Thickness]::new(0, 0, 0, 0))
     $idText.TextTrimming = "CharacterEllipsis"
     $idText.ToolTip = "winget: " + [string]$App.wingetId
     [void]$names.Children.Add($idText)
@@ -285,11 +282,11 @@ function New-WinToolAppRow {
     [void]$head.Children.Add($checkbox)
     [void]$layout.Children.Add($head)
 
-    $description = New-WinToolText -Text ([string]$App.description) -Size 12.5 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 6, 0, 0))
+    $description = New-WinToolText -Text ([string]$App.description) -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 6, 0, 0))
     $description.TextWrapping = "Wrap"
     $description.TextTrimming = "CharacterEllipsis"
-    $description.MaxHeight = 34
-    $description.LineHeight = 17
+    $description.MaxHeight = 40
+    $description.LineHeight = 20
     $description.LineStackingStrategy = "BlockLineHeight"
     $description.ToolTip = [string]$App.description
     [System.Windows.Controls.Grid]::SetRow($description, 1)

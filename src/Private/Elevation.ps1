@@ -192,10 +192,25 @@ function Start-WinToolRelaunch {
         catch {
             Write-Host "WinTool was not started. Administrator approval was declined."
         }
+        Exit-WinToolOwnedHost
         return
     }
     Write-Host "WinTool is opening in its own window. You can close this terminal."
     Start-Process -FilePath $executable -ArgumentList $line -WindowStyle $style | Out-Null
+    Exit-WinToolOwnedHost
+}
+
+function Test-WinToolOwnedHost {
+    # True when this powershell.exe was started by WinTool itself (the hidden
+    # relaunch). The user's own console is never closed by WinTool.
+    return ($env:WINTOOL_HIDDEN -eq "1")
+}
+
+function Exit-WinToolOwnedHost {
+    param([int]$Code = 0)
+    if (Test-WinToolOwnedHost) {
+        [Environment]::Exit($Code)
+    }
 }
 
 function Request-WinToolAdministrator {

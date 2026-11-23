@@ -22,7 +22,8 @@ function Get-WinToolBrush {
 function New-WinToolText {
     param(
         [Parameter(Mandatory = $true)][string]$Text,
-        [int]$Size = 14,
+        # Leave -Size out: every text uses the shared FontSizeBody resource.
+        [double]$Size = 0,
         [string]$Weight = "Normal",
         [string]$Brush = "BrushInk",
         [switch]$Wrap,
@@ -30,7 +31,8 @@ function New-WinToolText {
     )
     $block = New-Object System.Windows.Controls.TextBlock
     $block.Text = $Text
-    $block.FontSize = $Size
+    if ($Size -gt 0) { $block.FontSize = $Size }
+    else { $block.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody") }
     $weights = [type]"System.Windows.FontWeights"
     $flags = [System.Reflection.BindingFlags]::Public -bor [System.Reflection.BindingFlags]::Static
     $weightProperty = $weights.GetProperty($Weight, $flags)
@@ -69,7 +71,7 @@ function New-WinToolBadge {
     $border.VerticalAlignment = "Center"
     $label = New-Object System.Windows.Controls.TextBlock
     $label.Text = $Text
-    $label.FontSize = 11
+    $label.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
     $label.FontWeight = "SemiBold"
     if ($Kind -eq "caution") {
         $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushWarnSoft")

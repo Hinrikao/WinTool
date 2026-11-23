@@ -67,6 +67,12 @@ public static class WinToolConsoleApi
 
     [DllImport("user32.dll")]
     public static extern bool ShowWindow(IntPtr handle, int command);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr FindWindow(string className, string windowName);
+
+    [DllImport("user32.dll")]
+    public static extern bool SetForegroundWindow(IntPtr handle);
 }
 "@
 }

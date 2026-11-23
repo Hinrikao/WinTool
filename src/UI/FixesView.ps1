@@ -12,12 +12,12 @@ function Initialize-WinToolFixView {
         $text = New-Object System.Windows.Controls.StackPanel
         $title = New-Object System.Windows.Controls.StackPanel
         $title.Orientation = "Horizontal"
-        [void]$title.Children.Add((New-WinToolText -Text ([string]$fix.name) -Size 16 -Weight "SemiBold"))
+        [void]$title.Children.Add((New-WinToolText -Text ([string]$fix.name) -Weight "SemiBold"))
         if ([bool](Get-WinToolNote -Object $fix -Name "restart" -Default $false)) {
             [void]$title.Children.Add((New-WinToolBadge -Text "Restart needed" -Kind "caution"))
         }
         [void]$text.Children.Add($title)
-        [void]$text.Children.Add((New-WinToolText -Text ([string]$fix.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 4, 16, 0))))
+        [void]$text.Children.Add((New-WinToolText -Text ([string]$fix.description) -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 4, 16, 0))))
         [System.Windows.Controls.Grid]::SetColumn($text, 0)
         [void]$grid.Children.Add($text)
         $button = New-Object System.Windows.Controls.Button
