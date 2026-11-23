@@ -278,8 +278,12 @@ foreach ($entry in $script:WinToolUiHandlers.ToArray()) {
 
 # Picking each prompt engine must update the Terminal choice, the theme
 # column title, and the theme list.
+$window.FindName("TerminalFilterNoNerd").IsChecked = $true
 foreach ($engine in $promptItems) {
     $promptList.SelectedItem = $engine
+    if ($window.FindName("TerminalFilterAll").IsChecked -ne $true) {
+        throw "Picking a prompt engine should reset the theme filter to All."
+    }
     if ([string]$script:WinToolTerminalChoice.prompt -ne [string]$engine.Tag) {
         throw ("Picking the prompt engine '" + [string]$engine.Tag + "' did not select it.")
     }

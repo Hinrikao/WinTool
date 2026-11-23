@@ -13278,6 +13278,10 @@ function Select-WinToolTerminalPrompt {
         [Parameter(Mandatory = $true)][string]$PromptId
     )
     Set-WinToolTerminalChoiceValue -Name "prompt" -Value $PromptId
+    # A new engine starts on All, so a filter never leaves its list empty.
+    $script:WinToolTerminalFilter = "all"
+    $allChip = Get-WinToolUi -Name "TerminalFilterAll"
+    if ($null -ne $allChip -and $allChip.IsChecked -ne $true) { $allChip.IsChecked = $true }
     Update-WinToolPromptStyleList
     Update-WinToolTerminalSummary
     Update-WinToolPromptSelection
