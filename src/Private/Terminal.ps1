@@ -1178,8 +1178,12 @@ function Split-WinToolCoveredText {
     $builder = New-Object System.Text.StringBuilder
     $current = $null
     foreach ($code in @(Get-WinToolTextCode -Text $Text)) {
+        $privateUse = ($code -ge 0xE000 -and $code -le 0xF8FF)
         $face = $null
         foreach ($item in $chain) {
+            # A system face can claim a private-use slot and still draw an empty
+            # box. Those icons stay only when the face is a Nerd Font.
+            if ($privateUse -and -not $item.Nerd) { continue }
             if (Test-WinToolGlyphMapped -Glyph $item.Glyph -Code $code) { $face = $item; break }
         }
         $chunk = [char]::ConvertFromUtf32($code)
