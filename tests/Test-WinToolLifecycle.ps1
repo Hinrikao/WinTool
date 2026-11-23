@@ -28,6 +28,8 @@ function Start-LifecycleHost {
     $marker = Join-Path $work ($Name + ".shown")
     $arguments = '-STA -NoProfile -ExecutionPolicy Bypass -File "{0}" -Marker "{1}" -CloseAfterSeconds {2}' -f $hostScript, $marker, $CloseAfter
     $process = Start-Process -FilePath $powershellExe -ArgumentList $arguments -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $work ($Name + ".out")) -RedirectStandardError (Join-Path $work ($Name + ".err"))
+    # Reading Handle now keeps ExitCode readable after the process ends.
+    $null = $process.Handle
     return [pscustomobject]@{ Name = $Name; Process = $process; Marker = $marker }
 }
 
