@@ -1245,8 +1245,12 @@ $script:WinToolState.LogExpanded = $true
 Sync-WinToolLogPanel
 Save-WinToolViewShot -Name "config-log-open" -Width 1280 -Height 800
 $cardAfter = $configFirstCard.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
-if ([Math]::Abs($cardAfter.Y - $cardBefore.Y) -gt 0.5 -or $window.FindName("ConfigBody").Margin.Bottom -lt 180) {
-    throw "Opening LogPanel on Config should keep cards in place while adding bottom scroll clearance."
+$cardDelta = [Math]::Abs($cardAfter.Y - $cardBefore.Y)
+$configBottom = $window.FindName("ConfigBody").Margin.Bottom
+# UseLayoutRounding can move a wrapped line by 1 px when the log reserves its
+# scroll margin. A real jump (an extra line, a collapsed row) is far larger.
+if ($cardDelta -gt 1.5 -or $configBottom -lt 180) {
+    throw ("Opening LogPanel on Config should keep cards in place while adding bottom scroll clearance. Moved " + $cardDelta + " px, bottom margin " + $configBottom + ".")
 }
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
