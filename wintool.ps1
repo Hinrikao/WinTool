@@ -18274,8 +18274,10 @@ function Initialize-WinToolThemeEntryType {
     # Plain objects, not ListBoxItems. A C# predicate filters them, so the
     # click does not walk the catalog in PowerShell or build a row visual.
     if ($null -ne ("WinToolThemeEntry" -as [type])) { return }
-    Add-Type -TypeDefinition @"
+    $framework = [System.Windows.Data.ListCollectionView].Assembly.Location
+    Add-Type -ReferencedAssemblies $framework -TypeDefinition @"
 using System;
+using System.Windows.Data;
 public class WinToolThemeEntry {
     public string Tag { get; set; }
     public string Name { get; set; }
@@ -18290,12 +18292,8 @@ public class WinToolThemeEntry {
 public class WinToolThemeFilter {
     public string Mode;
     public string Query;
-    private Predicate<object> match;
-    public WinToolThemeFilter() {
-        match = AllowObject;
-    }
-    public Predicate<object> GetMatch() {
-        return match;
+    public void Attach(ListCollectionView view) {
+        view.Filter = new Predicate<object>(AllowObject);
     }
     private bool AllowObject(object item) {
         return Allow(item as WinToolThemeEntry);
@@ -18413,7 +18411,8 @@ function Update-WinToolPromptStyleList {
             $wasSyncing = [bool]$script:WinToolTerminalSyncing
             $script:WinToolTerminalSyncing = $true
             try {
-                foreach ($item in @($list.Items)) {
+                for ($index = 0; $index -lt $list.Items.Count; $index++) {
+                    $item = $list.Items[$index]
                     if ([string]$item.Tag -eq $wanted) { $list.SelectedItem = $item; break }
                 }
             }
@@ -18444,9 +18443,11 @@ function Update-WinToolPromptStyleList {
             $script:WinToolThemeEntries = $entries
             $script:WinToolThemeFilter = New-Object WinToolThemeFilter
             $view = [System.Windows.Data.ListCollectionView]::new($entries)
-            $view.Filter = $script:WinToolThemeFilter.GetMatch()
             $script:WinToolThemeView = $view
             $script:WinToolThemeEntryPrompt = $prompt
+            $script:WinToolThemeFilter.Mode = $filter
+            $script:WinToolThemeFilter.Query = $query
+            $script:WinToolThemeFilter.Attach($view)
             $list.ItemsSource = $view
         }
         $script:WinToolThemeFilter.Mode = $filter
@@ -18454,8 +18455,9 @@ function Update-WinToolPromptStyleList {
         $script:WinToolThemeView.Refresh()
         $wanted = [string]$script:WinToolTerminalChoice.promptStyle
         $chosen = $null
-        foreach ($entry in @($script:WinToolThemeEntries)) {
-            if ([string]$entry.Tag -eq $wanted -and $script:WinToolThemeFilter.Allow($entry)) { $chosen = $entry; break }
+        for ($index = 0; $index -lt $list.Items.Count; $index++) {
+            $entry = $list.Items[$index]
+            if ([string]$entry.Tag -eq $wanted) { $chosen = $entry; break }
         }
         if ($null -ne $chosen) { $list.SelectedItem = $chosen }
         elseif ($list.Items.Count -gt 0) { $list.SelectedIndex = 0 }
