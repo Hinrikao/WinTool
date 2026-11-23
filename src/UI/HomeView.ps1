@@ -261,10 +261,10 @@ function New-WinToolHomeMini {
     $top = New-Object System.Windows.Controls.Grid
     $top.Height = 56
     foreach ($width in @(56, 14, -1)) {
-        $column = New-Object System.Windows.Controls.ColumnDefinition
-        if ($width -lt 0) { $column.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }
-        else { $column.Width = [System.Windows.GridLength]::new($width) }
-        $top.ColumnDefinitions.Add($column)
+        $colDef = New-Object System.Windows.Controls.ColumnDefinition
+        if ($width -lt 0) { $colDef.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }
+        else { $colDef.Width = [System.Windows.GridLength]::new($width) }
+        $top.ColumnDefinitions.Add($colDef)
     }
     $null = $grid.Children.Add($top)
 
