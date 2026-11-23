@@ -31,16 +31,18 @@ function Initialize-WinToolUpdateView {
         $button.Margin = [System.Windows.Thickness]::new(0, 0, 8, 8)
         $button.Tag = [string]$vendor.url
         $button.ToolTip = [string](Get-WinToolNote -Object $vendor -Name "note" -Default "")
-        $button.Add_Click({
-            Open-WinToolUri -Uri ([string]$args[0].Tag)
-        })
+        Register-WinToolUiEvent -Control $button -EventName "Click" -Name "Updates: vendor downloads" -Data ([string]$vendor.url) -Action {
+            param($source, $eventData, $url)
+            $null = $source, $eventData
+            Open-WinToolUri -Uri $url
+        }
         [void]$panel.Children.Add($button)
     }
 
-    (Get-WinToolUi -Name "ScanDrivers").Add_Click({ Invoke-WinToolScanClick })
-    (Get-WinToolUi -Name "OpenWindowsUpdate").Add_Click({ Open-WinToolUri -Uri "ms-settings:windowsupdate" })
-    (Get-WinToolUi -Name "OpenOptionalUpdates").Add_Click({ Open-WinToolUri -Uri "ms-settings:windowsupdate-optionalupdates" })
-    (Get-WinToolUi -Name "InstallScannedUpdates").Add_Click({ Invoke-WinToolInstallUpdatesClick })
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ScanDrivers") -EventName "Click" -Name "Updates: scan" -Action { Invoke-WinToolScanClick }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenWindowsUpdate") -EventName "Click" -Name "Updates: open Windows Update" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate" }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenOptionalUpdates") -EventName "Click" -Name "Updates: open optional updates" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate-optionalupdates" }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "InstallScannedUpdates") -EventName "Click" -Name "Updates: install scanned updates" -Action { Invoke-WinToolInstallUpdatesClick }
 }
 
 function Invoke-WinToolScanClick {

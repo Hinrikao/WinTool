@@ -54,38 +54,39 @@ function Initialize-WinToolInstallView {
             $script:WinToolState.AppRows += $row
         }
 
-        $boundCategory = $categoryRow
-        $selectAll.Add_Click({
+        Register-WinToolUiEvent -Control $selectAll -EventName "Click" -Name "Install: select all in category" -Data $categoryRow -Action {
+            param($source, $eventData, $boundCategory)
+            $null = $source, $eventData
             Sync-WinToolCategoryFromHeader -CategoryRow $boundCategory
-        }.GetNewClosure())
+        }
         foreach ($row in $appRows) {
-            $boundRowCategory = $categoryRow
-            $row.Checkbox.Add_Checked({
-                Sync-WinToolAppToggle -CategoryRow $boundRowCategory
-            }.GetNewClosure())
-            $row.Checkbox.Add_Unchecked({
-                Sync-WinToolAppToggle -CategoryRow $boundRowCategory
-            }.GetNewClosure())
+            foreach ($eventName in @("Checked", "Unchecked")) {
+                Register-WinToolUiEvent -Control $row.Checkbox -EventName $eventName -Name "Install: tick an app" -Data $categoryRow -Action {
+                    param($source, $eventData, $boundCategory)
+                    $null = $source, $eventData
+                    Sync-WinToolAppToggle -CategoryRow $boundCategory
+                }
+            }
         }
     }
 
-    (Get-WinToolUi -Name "AppSearch").Add_TextChanged({
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppSearch") -EventName "TextChanged" -Name "Install: search" -Action {
         Sync-WinToolSearchHint -BoxName "AppSearch" -HintName "AppSearchHint"
         Update-WinToolAppFilter
-    })
-    (Get-WinToolUi -Name "AppSelectVisible").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppSelectVisible") -EventName "Click" -Name "Install: select visible" -Action {
         foreach ($row in @($script:WinToolState.AppRows)) {
             if ($row.Panel.Visibility -eq "Visible") {
                 $row.Checkbox.IsChecked = $true
             }
         }
-    })
-    (Get-WinToolUi -Name "AppClear").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppClear") -EventName "Click" -Name "Install: clear" -Action {
         Sync-WinToolAppCheck -Id @() -OnlyThese
-    })
-    (Get-WinToolUi -Name "AppInstall").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppInstall") -EventName "Click" -Name "Install: install selected" -Action {
         Invoke-WinToolInstallClick
-    })
+    }
     Sync-WinToolAppCount
 }
 

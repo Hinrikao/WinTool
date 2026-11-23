@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: MIT
 
 function Initialize-WinToolConfigView {
-    (Get-WinToolUi -Name "SaveProfile").Add_Click({ Invoke-WinToolSaveProfile })
-    (Get-WinToolUi -Name "LoadProfile").Add_Click({ Invoke-WinToolLoadProfile })
-    (Get-WinToolUi -Name "ExportWinget").Add_Click({ Invoke-WinToolExportWinget })
-    (Get-WinToolUi -Name "ImportWinget").Add_Click({ Invoke-WinToolImportWinget })
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "SaveProfile") -EventName "Click" -Name "Config: save profile" -Action { Invoke-WinToolSaveProfile }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "LoadProfile") -EventName "Click" -Name "Config: load profile" -Action { Invoke-WinToolLoadProfile }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ExportWinget") -EventName "Click" -Name "Config: export winget list" -Action { Invoke-WinToolExportWinget }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ImportWinget") -EventName "Click" -Name "Config: import winget list" -Action { Invoke-WinToolImportWinget }
     Update-WinToolProfileSummary
 }
 

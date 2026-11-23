@@ -146,7 +146,7 @@ function Enable-WinToolLogPump {
     }
     $timer = New-Object System.Windows.Threading.DispatcherTimer
     $timer.Interval = [TimeSpan]::FromMilliseconds(200)
-    $timer.Add_Tick({ Update-WinToolLogPump })
+    Register-WinToolUiEvent -Control $timer -EventName "Tick" -Name "Log refresh" -Action { Update-WinToolLogPump }
     $timer.Start()
     $script:WinToolState.Pump = $timer
 }
@@ -388,28 +388,30 @@ function Update-WinToolLogPump {
 
 function Initialize-WinToolShellEvent {
     (Get-WinToolUi -Name "VersionText").Text = "Version " + $script:WinToolVersion
-    (Get-WinToolUi -Name "NavInstall").Add_Checked({ Switch-WinToolView -Name "Install" })
-    (Get-WinToolUi -Name "NavTweaks").Add_Checked({ Switch-WinToolView -Name "Tweaks" })
-    (Get-WinToolUi -Name "NavTerminal").Add_Checked({ Switch-WinToolView -Name "Terminal" })
-    (Get-WinToolUi -Name "NavUpdates").Add_Checked({ Switch-WinToolView -Name "Updates" })
-    (Get-WinToolUi -Name "NavConfig").Add_Checked({ Switch-WinToolView -Name "Config" })
-    (Get-WinToolUi -Name "ClearLogButton").Add_Click({
+    foreach ($view in @("Install", "Tweaks", "Terminal", "Updates", "Config")) {
+        Register-WinToolUiEvent -Control (Get-WinToolUi -Name ("Nav" + $view)) -EventName "Checked" -Name ("Open the " + $view + " tab") -Data $view -Action {
+            param($source, $eventData, $viewName)
+            $null = $source, $eventData
+            Switch-WinToolView -Name $viewName
+        }
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ClearLogButton") -EventName "Click" -Name "Clear log" -Action {
         (Get-WinToolUi -Name "LogBox").Clear()
-    })
-    (Get-WinToolUi -Name "ToggleLogButton").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ToggleLogButton") -EventName "Click" -Name "Show log" -Action {
         Switch-WinToolLogPanel
-    })
-    (Get-WinToolUi -Name "CancelRun").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "CancelRun") -EventName "Click" -Name "Cancel" -Action {
         Stop-WinToolRun
-    })
-    (Get-WinToolUi -Name "ProjectLink").Add_RequestNavigate({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ProjectLink") -EventName "RequestNavigate" -Name "Open project link" -Action {
         $uiEvent = $args[1]
         if ($null -ne $uiEvent -and $null -ne $uiEvent.Uri) {
             Open-WinToolUri -Uri $uiEvent.Uri.AbsoluteUri
             $uiEvent.Handled = $true
         }
-    })
-    $script:WinToolWindow.Add_PreviewKeyDown({
+    }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "PreviewKeyDown" -Name "Keyboard shortcut" -Action {
         $uiEvent = $args[1]
         $modifiers = [System.Windows.Input.Keyboard]::Modifiers
         $control = [System.Windows.Input.ModifierKeys]::Control
@@ -422,8 +424,8 @@ function Initialize-WinToolShellEvent {
             }
             $uiEvent.Handled = $true
         }
-    })
-    $script:WinToolWindow.Add_Closing({
+    }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Closing" -Name "Close WinTool" -Action {
         $uiEvent = $args[1]
         if ($script:WinToolState.Busy) {
             $ok = Request-WinToolConfirmation -Message "A task is still running. Stop it and close WinTool?" -Title "WinTool is busy"
@@ -433,13 +435,13 @@ function Initialize-WinToolShellEvent {
             }
             Stop-WinToolRun
         }
-    })
-    $script:WinToolWindow.Add_Closed({
+    }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Closed" -Name "Window closed" -Action {
         if ($null -ne $script:WinToolState.Pump) {
             $script:WinToolState.Pump.Stop()
         }
-    })
-    $script:WinToolWindow.Add_Loaded({
+    }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Window loaded" -Action {
         Write-WinToolLog -Message "Welcome to WinTool. Choose what you want, then run it when you are ready." -Level "info"
         $winget = Get-WinToolWingetPath
         if ([string]::IsNullOrWhiteSpace($winget)) {
@@ -450,7 +452,7 @@ function Initialize-WinToolShellEvent {
             Write-WinToolLog -Message "winget is available." -Level "ok"
             Sync-WinToolStatus -Text "Ready"
         }
-    })
+    }
 }
 
 function New-WinToolWindow {
@@ -492,7 +494,7 @@ function New-WinToolWindow {
     Initialize-WinToolConfigView
     Initialize-WinToolShellEvent
     Sync-WinToolLogPanel
-    $window.Add_Activated({
+    Register-WinToolUiEvent -Control $window -EventName "Activated" -Name "Follow the Windows theme" -Action {
         if ($null -eq $script:WinToolSetting) { return }
         if ([string]$script:WinToolSetting.theme -ne "system") { return }
         $want = "dark"
@@ -500,7 +502,7 @@ function New-WinToolWindow {
         if ([string]$script:WinToolResolvedTheme -ne $want) {
             Set-WinToolTheme -Theme "system" -Accent ([string]$script:WinToolSetting.accent)
         }
-    })
+    }
 
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
         try {

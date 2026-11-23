@@ -2302,10 +2302,11 @@ function ConvertTo-WinToolArgumentLine {
 
 function Format-WinToolErrorText {
     param(
-        $ErrorRecord
+        $ErrorRecord,
+        [string]$Title = "WinTool could not start."
     )
     if ($null -eq $ErrorRecord) {
-        return "WinTool could not start."
+        return $Title
     }
     $body = ""
     try {
@@ -2317,7 +2318,7 @@ function Format-WinToolErrorText {
     if ([string]::IsNullOrWhiteSpace($body) -and $null -ne $ErrorRecord.Exception) {
         $body = [string]$ErrorRecord.Exception.Message
     }
-    $text = "WinTool could not start.`r`n`r`n" + $body
+    $text = $Title + "`r`n`r`n" + $body
     $stack = [string]$ErrorRecord.ScriptStackTrace
     if (-not [string]::IsNullOrWhiteSpace($stack)) {
         $text += "`r`n`r`n" + $stack
@@ -3070,6 +3071,32 @@ function Invoke-WinToolCapturedProcess {
     }
 }
 
+function Initialize-WinToolProcessPipe {
+    if ($null -ne ("WinToolProcessPipe" -as [type])) {
+        return
+    }
+    $source = @"
+using System.Collections.Concurrent;
+using System.Diagnostics;
+
+public static class WinToolProcessPipe
+{
+    public static void Attach(Process process, ConcurrentQueue<string> queue)
+    {
+        process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e)
+        {
+            if (e.Data != null) { queue.Enqueue(e.Data); }
+        };
+        process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs e)
+        {
+            if (e.Data != null) { queue.Enqueue(e.Data); }
+        };
+    }
+}
+"@
+    Add-Type -TypeDefinition $source -Language CSharp
+}
+
 function Start-WinToolAsyncProcess {
     param(
         [Parameter(Mandatory = $true)][string]$FilePath,
@@ -3089,23 +3116,12 @@ function Start-WinToolAsyncProcess {
     $process = New-Object System.Diagnostics.Process
     $process.StartInfo = $info
     $process.EnableRaisingEvents = $true
-    $queue = $LineQueue
-
-    $outputHandler = {
-        $payload = $args[1]
-        if ($null -ne $payload -and $null -ne $payload.Data) {
-            $queue.Enqueue([string]$payload.Data)
-        }
-    }.GetNewClosure()
-    $errorHandler = {
-        $payload = $args[1]
-        if ($null -ne $payload -and $null -ne $payload.Data) {
-            $queue.Enqueue([string]$payload.Data)
-        }
-    }.GetNewClosure()
-
-    $process.add_OutputDataReceived($outputHandler)
-    $process.add_ErrorDataReceived($errorHandler)
+    # The output events fire on thread-pool threads that have no PowerShell
+    # runspace. A scriptblock handler there throws "There is no Runspace
+    # available" and ends the whole process, so a small compiled handler fills
+    # the queue instead. The log pump timer reads it on the UI thread.
+    Initialize-WinToolProcessPipe
+    [WinToolProcessPipe]::Attach($process, $LineQueue)
     $started = $process.Start()
     if (-not $started) {
         throw "The process did not start: $FilePath"
@@ -4652,7 +4668,7 @@ function Initialize-WinToolAppearance {
         }
     }
     $script:WinToolState.UpdatingTheme = $false
-    $picker.Add_SelectionChanged({
+    Register-WinToolUiEvent -Control $picker -EventName "SelectionChanged" -Name "Appearance: theme" -Action {
         if ($script:WinToolState.UpdatingTheme) {
             return
         }
@@ -4667,7 +4683,7 @@ function Initialize-WinToolAppearance {
         }
         Set-WinToolTheme -Theme $themeId -Accent $accentId
         Save-WinToolSetting -Setting $script:WinToolSetting
-    })
+    }
 
     $panel = Get-WinToolUi -Name "AccentSwatches"
     $panel.Children.Clear()
@@ -4686,15 +4702,16 @@ function Initialize-WinToolAppearance {
         $swatch.Cursor = [System.Windows.Input.Cursors]::Hand
         $swatch.Padding = [System.Windows.Thickness]::new(0)
         $swatch.Template = $template
-        $accentId = [string]$accent.Id
-        $swatch.Add_Click({
+        Register-WinToolUiEvent -Control $swatch -EventName "Click" -Name "Appearance: accent color" -Data ([string]$accent.Id) -Action {
+            param($source, $eventData, $accentId)
+            $null = $source, $eventData
             $themeId = "dark"
             if ($null -ne $script:WinToolSetting) {
                 $themeId = [string]$script:WinToolSetting.theme
             }
             Set-WinToolTheme -Theme $themeId -Accent $accentId
             Save-WinToolSetting -Setting $script:WinToolSetting
-        }.GetNewClosure())
+        }
         [void]$panel.Children.Add($swatch)
     }
     Sync-WinToolAccentSwatch
@@ -5224,6 +5241,104 @@ function Sync-WinToolSearchHint {
         $hint.Visibility = "Collapsed"
     }
 }
+
+# Event handlers are registered through Register-WinToolUiEvent instead of
+# scriptblock.GetNewClosure(). A closure runs in its own dynamic module, so
+# $script: inside it does not reach WinTool's state and reads as $null. That is
+# what crashed the Terminal tab with "The property 'prompt' cannot be found".
+# Per-control values travel in -Data, and every handler runs inside try/catch.
+function Register-WinToolUiEvent {
+    param(
+        [Parameter(Mandatory = $true)]$Control,
+        [Parameter(Mandatory = $true)][string]$EventName,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][scriptblock]$Action,
+        $Data
+    )
+    if ($null -eq $script:WinToolUiHandlers) {
+        $script:WinToolUiHandlers = New-Object System.Collections.Generic.List[object]
+    }
+    $id = $script:WinToolUiHandlers.Count
+    $script:WinToolUiHandlers.Add([pscustomobject]@{
+            Id = $id
+            Name = $Name
+            EventName = $EventName
+            Control = $Control
+            Action = $Action
+            Data = $Data
+        })
+    $dispatch = [scriptblock]::Create(('Invoke-WinToolUiEvent -Id {0} -Source $args[0] -EventData $args[1]' -f $id))
+    $method = "add_" + $EventName
+    $null = $Control.$method($dispatch)
+}
+
+function Invoke-WinToolUiEvent {
+    param(
+        [Parameter(Mandatory = $true)][int]$Id,
+        $Source,
+        $EventData
+    )
+    $entry = $script:WinToolUiHandlers[$Id]
+    try {
+        $null = & $entry.Action $Source $EventData $entry.Data
+    }
+    catch {
+        Write-WinToolUiError -Name ([string]$entry.Name) -ErrorRecord $_
+    }
+}
+
+function Write-WinToolUiError {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        $ErrorRecord
+    )
+    if ($null -eq $script:WinToolUiErrors) {
+        $script:WinToolUiErrors = New-Object System.Collections.Generic.List[object]
+    }
+    $message = "Unknown error."
+    if ($null -ne $ErrorRecord -and $null -ne $ErrorRecord.Exception) {
+        $message = [string]$ErrorRecord.Exception.Message
+    }
+    $script:WinToolUiErrors.Add([pscustomobject]@{ Name = $Name; Message = $message; Record = $ErrorRecord })
+    $logPath = $null
+    try {
+        $detail = Format-WinToolErrorText -ErrorRecord $ErrorRecord -Title ("A WinTool action failed: " + $Name)
+        $logPath = Write-WinToolFailureLog -Text $detail
+        Write-WinToolLog -Message ("{0} failed: {1}" -f $Name, $message) -Level "error"
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    if ($script:WinToolUiQuiet) {
+        return
+    }
+    # Show each failing action once, so a repeating event cannot flood the screen.
+    if ($null -eq $script:WinToolUiErrorShown) {
+        $script:WinToolUiErrorShown = @{}
+    }
+    if ($script:WinToolUiErrorShown.ContainsKey($Name)) {
+        return
+    }
+    $script:WinToolUiErrorShown[$Name] = $true
+    try {
+        $text = "Something went wrong in '" + $Name + "'. WinTool is still open.`r`n`r`n" + $message
+        if (-not [string]::IsNullOrWhiteSpace($logPath)) {
+            $text += "`r`n`r`nDetails: " + $logPath
+        }
+        [System.Windows.MessageBox]::Show($text, "WinTool") | Out-Null
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+}
+
+function Get-WinToolUiError {
+    # ToArray() keeps this on object[]; @() around a generic list fails on 5.1.
+    if ($null -eq $script:WinToolUiErrors) {
+        return , @()
+    }
+    return , $script:WinToolUiErrors.ToArray()
+}
 # endregion
 
 # region src/UI/InstallView.ps1
@@ -5283,38 +5398,39 @@ function Initialize-WinToolInstallView {
             $script:WinToolState.AppRows += $row
         }
 
-        $boundCategory = $categoryRow
-        $selectAll.Add_Click({
+        Register-WinToolUiEvent -Control $selectAll -EventName "Click" -Name "Install: select all in category" -Data $categoryRow -Action {
+            param($source, $eventData, $boundCategory)
+            $null = $source, $eventData
             Sync-WinToolCategoryFromHeader -CategoryRow $boundCategory
-        }.GetNewClosure())
+        }
         foreach ($row in $appRows) {
-            $boundRowCategory = $categoryRow
-            $row.Checkbox.Add_Checked({
-                Sync-WinToolAppToggle -CategoryRow $boundRowCategory
-            }.GetNewClosure())
-            $row.Checkbox.Add_Unchecked({
-                Sync-WinToolAppToggle -CategoryRow $boundRowCategory
-            }.GetNewClosure())
+            foreach ($eventName in @("Checked", "Unchecked")) {
+                Register-WinToolUiEvent -Control $row.Checkbox -EventName $eventName -Name "Install: tick an app" -Data $categoryRow -Action {
+                    param($source, $eventData, $boundCategory)
+                    $null = $source, $eventData
+                    Sync-WinToolAppToggle -CategoryRow $boundCategory
+                }
+            }
         }
     }
 
-    (Get-WinToolUi -Name "AppSearch").Add_TextChanged({
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppSearch") -EventName "TextChanged" -Name "Install: search" -Action {
         Sync-WinToolSearchHint -BoxName "AppSearch" -HintName "AppSearchHint"
         Update-WinToolAppFilter
-    })
-    (Get-WinToolUi -Name "AppSelectVisible").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppSelectVisible") -EventName "Click" -Name "Install: select visible" -Action {
         foreach ($row in @($script:WinToolState.AppRows)) {
             if ($row.Panel.Visibility -eq "Visible") {
                 $row.Checkbox.IsChecked = $true
             }
         }
-    })
-    (Get-WinToolUi -Name "AppClear").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppClear") -EventName "Click" -Name "Install: clear" -Action {
         Sync-WinToolAppCheck -Id @() -OnlyThese
-    })
-    (Get-WinToolUi -Name "AppInstall").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppInstall") -EventName "Click" -Name "Install: install selected" -Action {
         Invoke-WinToolInstallClick
-    })
+    }
     Sync-WinToolAppCount
 }
 
@@ -5503,10 +5619,11 @@ function Initialize-WinToolTweakView {
         $button.Style = $script:WinToolWindow.FindResource("SecondaryButton")
         $button.Margin = [System.Windows.Thickness]::new(0, 0, 8, 0)
         $button.ToolTip = [string](Get-WinToolNote -Object $preset -Name "description" -Default "")
-        $boundPreset = $preset
-        $button.Add_Click({
+        Register-WinToolUiEvent -Control $button -EventName "Click" -Name "Tweaks: preset" -Data $preset -Action {
+            param($source, $eventData, $boundPreset)
+            $null = $source, $eventData
             Select-WinToolPreset -Preset $boundPreset
-        }.GetNewClosure())
+        }
         [void]$presetPanel.Children.Add($button)
     }
 
@@ -5551,19 +5668,19 @@ function Initialize-WinToolTweakView {
         }
     }
 
-    (Get-WinToolUi -Name "TweakSearch").Add_TextChanged({
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakSearch") -EventName "TextChanged" -Name "Tweaks: search" -Action {
         Sync-WinToolSearchHint -BoxName "TweakSearch" -HintName "TweakSearchHint"
         Update-WinToolTweakFilter
-    })
-    (Get-WinToolUi -Name "TweakClear").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakClear") -EventName "Click" -Name "Tweaks: clear" -Action {
         Sync-WinToolTweakCheck -Id @() -OnlyThese
-    })
-    (Get-WinToolUi -Name "TweakApply").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakApply") -EventName "Click" -Name "Tweaks: apply selected" -Action {
         Invoke-WinToolTweakClick -Direction "Apply"
-    })
-    (Get-WinToolUi -Name "TweakUndo").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakUndo") -EventName "Click" -Name "Tweaks: undo selected" -Action {
         Invoke-WinToolTweakClick -Direction "Undo"
-    })
+    }
 }
 
 function New-WinToolTweakRow {
@@ -5779,37 +5896,37 @@ function Initialize-WinToolTerminalView {
     $script:WinToolTerminalMode = "simple"
     $script:WinToolExtraFont = @()
     $script:WinToolExtraOhMyPoshTheme = @()
-    (Get-WinToolUi -Name "TerminalModeSimple").Add_Checked({
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalModeSimple") -EventName "Checked" -Name "Terminal: Simple mode" -Action {
         $script:WinToolTerminalMode = "simple"
         (Get-WinToolUi -Name "TerminalAdvancedHost").Visibility = "Collapsed"
         (Get-WinToolUi -Name "TerminalSimpleHost").Visibility = "Visible"
         $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
         Update-WinToolTerminalSummary
-    })
-    (Get-WinToolUi -Name "TerminalModeAdvanced").Add_Checked({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalModeAdvanced") -EventName "Checked" -Name "Terminal: Advanced mode" -Action {
         $script:WinToolTerminalMode = "advanced"
         (Get-WinToolUi -Name "TerminalSimpleHost").Visibility = "Collapsed"
         (Get-WinToolUi -Name "TerminalAdvancedHost").Visibility = "Visible"
         Update-WinToolTerminalSummary
-    })
-    (Get-WinToolUi -Name "TerminalFontSearch").Add_TextChanged({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontSearch") -EventName "TextChanged" -Name "Terminal: font search" -Action {
         Sync-WinToolSearchHint -BoxName "TerminalFontSearch" -HintName "TerminalFontSearchHint"
         Update-WinToolFontList
-    })
-    (Get-WinToolUi -Name "TerminalFontNerdOnly").Add_Click({ Update-WinToolFontList })
-    (Get-WinToolUi -Name "TerminalThemeSearch").Add_TextChanged({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontNerdOnly") -EventName "Click" -Name "Terminal: Nerd Fonts only" -Action { Update-WinToolFontList }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalThemeSearch") -EventName "TextChanged" -Name "Terminal: theme search" -Action {
         Sync-WinToolSearchHint -BoxName "TerminalThemeSearch" -HintName "TerminalThemeSearchHint"
         Update-WinToolPromptStyleList
-    })
-    (Get-WinToolUi -Name "TerminalRefresh").Add_Click({ Update-WinToolTerminalCatalogOnline })
-    (Get-WinToolUi -Name "TerminalSetup").Add_Click({ Invoke-WinToolTerminalClick })
-    (Get-WinToolUi -Name "TerminalFontList").Add_SelectionChanged({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalRefresh") -EventName "Click" -Name "Terminal: refresh lists" -Action { Update-WinToolTerminalCatalogOnline }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalSetup") -EventName "Click" -Name "Terminal: apply setup" -Action { Invoke-WinToolTerminalClick }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontList") -EventName "SelectionChanged" -Name "Terminal: choose font" -Action {
         Update-WinToolFontSample
         Update-WinToolTerminalSummary
-    })
-    (Get-WinToolUi -Name "TerminalStyleList").Add_SelectionChanged({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalStyleList") -EventName "SelectionChanged" -Name "Terminal: choose prompt style" -Action {
         Update-WinToolTerminalSummary
-    })
+    }
     Build-WinToolSimpleTerminalCard
     Build-WinToolPromptCard
     Build-WinToolExtraToggle
@@ -5851,16 +5968,28 @@ function Build-WinToolPromptCard {
         $installs = @($prompt.installs) -join ", "
         [void]$stack.Children.Add((New-WinToolText -Text ("Installs: " + $installs) -Size 12 -Brush "BrushMuted" -Wrap))
         $card.Child = $stack
-        $promptId = [string]$prompt.id
-        $card.Add_MouseLeftButtonUp({
-            $script:WinToolTerminalChoice.prompt = $promptId
+        Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose prompt" -Data ([string]$prompt.id) -Action {
+            param($source, $eventData, $promptId)
+            $null = $source, $eventData
+            Set-WinToolTerminalChoiceValue -Name "prompt" -Value $promptId
             Update-WinToolPromptStyleList
             Update-WinToolTerminalSummary
             Update-WinToolPromptSelection
-        }.GetNewClosure())
+        }
         [void]$hostPanel.Children.Add($card)
     }
     Update-WinToolPromptSelection
+}
+
+function Set-WinToolTerminalChoiceValue {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        $Value
+    )
+    if ($null -eq $script:WinToolTerminalChoice) {
+        $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
+    }
+    $script:WinToolTerminalChoice.$Name = $Value
 }
 
 function Update-WinToolPromptSelection {
@@ -5941,7 +6070,7 @@ function Build-WinToolExtraToggle {
         if ([string]$extra.id -eq "terminal-icons" -or [string]$extra.id -eq "psreadline") {
             $box.IsChecked = $true
         }
-        $box.Add_Click({ Update-WinToolTerminalSummary })
+        Register-WinToolUiEvent -Control $box -EventName "Click" -Name "Terminal: extras" -Action { Update-WinToolTerminalSummary }
         [void]$hostPanel.Children.Add($box)
     }
 }
@@ -5965,11 +6094,12 @@ function Build-WinToolSchemeCard {
         [void]$stack.Children.Add((New-WinToolText -Text ([string]$scheme.name) -Weight "SemiBold"))
         [void]$stack.Children.Add($swatch)
         $card.Child = $stack
-        $schemeId = [string]$scheme.id
-        $card.Add_MouseLeftButtonUp({
-            $script:WinToolTerminalChoice.schemeId = $schemeId
+        Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose color scheme" -Data ([string]$scheme.id) -Action {
+            param($source, $eventData, $schemeId)
+            $null = $source, $eventData
+            Set-WinToolTerminalChoiceValue -Name "schemeId" -Value $schemeId
             Update-WinToolTerminalSummary
-        }.GetNewClosure())
+        }
         [void]$hostPanel.Children.Add($card)
     }
 }
@@ -6209,16 +6339,18 @@ function Initialize-WinToolUpdateView {
         $button.Margin = [System.Windows.Thickness]::new(0, 0, 8, 8)
         $button.Tag = [string]$vendor.url
         $button.ToolTip = [string](Get-WinToolNote -Object $vendor -Name "note" -Default "")
-        $button.Add_Click({
-            Open-WinToolUri -Uri ([string]$args[0].Tag)
-        })
+        Register-WinToolUiEvent -Control $button -EventName "Click" -Name "Updates: vendor downloads" -Data ([string]$vendor.url) -Action {
+            param($source, $eventData, $url)
+            $null = $source, $eventData
+            Open-WinToolUri -Uri $url
+        }
         [void]$panel.Children.Add($button)
     }
 
-    (Get-WinToolUi -Name "ScanDrivers").Add_Click({ Invoke-WinToolScanClick })
-    (Get-WinToolUi -Name "OpenWindowsUpdate").Add_Click({ Open-WinToolUri -Uri "ms-settings:windowsupdate" })
-    (Get-WinToolUi -Name "OpenOptionalUpdates").Add_Click({ Open-WinToolUri -Uri "ms-settings:windowsupdate-optionalupdates" })
-    (Get-WinToolUi -Name "InstallScannedUpdates").Add_Click({ Invoke-WinToolInstallUpdatesClick })
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ScanDrivers") -EventName "Click" -Name "Updates: scan" -Action { Invoke-WinToolScanClick }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenWindowsUpdate") -EventName "Click" -Name "Updates: open Windows Update" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate" }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenOptionalUpdates") -EventName "Click" -Name "Updates: open optional updates" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate-optionalupdates" }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "InstallScannedUpdates") -EventName "Click" -Name "Updates: install scanned updates" -Action { Invoke-WinToolInstallUpdatesClick }
 }
 
 function Invoke-WinToolScanClick {
@@ -6343,10 +6475,10 @@ function Complete-WinToolUpdateInstall {
 # SPDX-License-Identifier: MIT
 
 function Initialize-WinToolConfigView {
-    (Get-WinToolUi -Name "SaveProfile").Add_Click({ Invoke-WinToolSaveProfile })
-    (Get-WinToolUi -Name "LoadProfile").Add_Click({ Invoke-WinToolLoadProfile })
-    (Get-WinToolUi -Name "ExportWinget").Add_Click({ Invoke-WinToolExportWinget })
-    (Get-WinToolUi -Name "ImportWinget").Add_Click({ Invoke-WinToolImportWinget })
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "SaveProfile") -EventName "Click" -Name "Config: save profile" -Action { Invoke-WinToolSaveProfile }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "LoadProfile") -EventName "Click" -Name "Config: load profile" -Action { Invoke-WinToolLoadProfile }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ExportWinget") -EventName "Click" -Name "Config: export winget list" -Action { Invoke-WinToolExportWinget }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ImportWinget") -EventName "Click" -Name "Config: import winget list" -Action { Invoke-WinToolImportWinget }
     Update-WinToolProfileSummary
 }
 
@@ -6636,7 +6768,7 @@ function Enable-WinToolLogPump {
     }
     $timer = New-Object System.Windows.Threading.DispatcherTimer
     $timer.Interval = [TimeSpan]::FromMilliseconds(200)
-    $timer.Add_Tick({ Update-WinToolLogPump })
+    Register-WinToolUiEvent -Control $timer -EventName "Tick" -Name "Log refresh" -Action { Update-WinToolLogPump }
     $timer.Start()
     $script:WinToolState.Pump = $timer
 }
@@ -6878,28 +7010,30 @@ function Update-WinToolLogPump {
 
 function Initialize-WinToolShellEvent {
     (Get-WinToolUi -Name "VersionText").Text = "Version " + $script:WinToolVersion
-    (Get-WinToolUi -Name "NavInstall").Add_Checked({ Switch-WinToolView -Name "Install" })
-    (Get-WinToolUi -Name "NavTweaks").Add_Checked({ Switch-WinToolView -Name "Tweaks" })
-    (Get-WinToolUi -Name "NavTerminal").Add_Checked({ Switch-WinToolView -Name "Terminal" })
-    (Get-WinToolUi -Name "NavUpdates").Add_Checked({ Switch-WinToolView -Name "Updates" })
-    (Get-WinToolUi -Name "NavConfig").Add_Checked({ Switch-WinToolView -Name "Config" })
-    (Get-WinToolUi -Name "ClearLogButton").Add_Click({
+    foreach ($view in @("Install", "Tweaks", "Terminal", "Updates", "Config")) {
+        Register-WinToolUiEvent -Control (Get-WinToolUi -Name ("Nav" + $view)) -EventName "Checked" -Name ("Open the " + $view + " tab") -Data $view -Action {
+            param($source, $eventData, $viewName)
+            $null = $source, $eventData
+            Switch-WinToolView -Name $viewName
+        }
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ClearLogButton") -EventName "Click" -Name "Clear log" -Action {
         (Get-WinToolUi -Name "LogBox").Clear()
-    })
-    (Get-WinToolUi -Name "ToggleLogButton").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ToggleLogButton") -EventName "Click" -Name "Show log" -Action {
         Switch-WinToolLogPanel
-    })
-    (Get-WinToolUi -Name "CancelRun").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "CancelRun") -EventName "Click" -Name "Cancel" -Action {
         Stop-WinToolRun
-    })
-    (Get-WinToolUi -Name "ProjectLink").Add_RequestNavigate({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ProjectLink") -EventName "RequestNavigate" -Name "Open project link" -Action {
         $uiEvent = $args[1]
         if ($null -ne $uiEvent -and $null -ne $uiEvent.Uri) {
             Open-WinToolUri -Uri $uiEvent.Uri.AbsoluteUri
             $uiEvent.Handled = $true
         }
-    })
-    $script:WinToolWindow.Add_PreviewKeyDown({
+    }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "PreviewKeyDown" -Name "Keyboard shortcut" -Action {
         $uiEvent = $args[1]
         $modifiers = [System.Windows.Input.Keyboard]::Modifiers
         $control = [System.Windows.Input.ModifierKeys]::Control
@@ -6912,8 +7046,8 @@ function Initialize-WinToolShellEvent {
             }
             $uiEvent.Handled = $true
         }
-    })
-    $script:WinToolWindow.Add_Closing({
+    }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Closing" -Name "Close WinTool" -Action {
         $uiEvent = $args[1]
         if ($script:WinToolState.Busy) {
             $ok = Request-WinToolConfirmation -Message "A task is still running. Stop it and close WinTool?" -Title "WinTool is busy"
@@ -6923,13 +7057,13 @@ function Initialize-WinToolShellEvent {
             }
             Stop-WinToolRun
         }
-    })
-    $script:WinToolWindow.Add_Closed({
+    }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Closed" -Name "Window closed" -Action {
         if ($null -ne $script:WinToolState.Pump) {
             $script:WinToolState.Pump.Stop()
         }
-    })
-    $script:WinToolWindow.Add_Loaded({
+    }
+    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Window loaded" -Action {
         Write-WinToolLog -Message "Welcome to WinTool. Choose what you want, then run it when you are ready." -Level "info"
         $winget = Get-WinToolWingetPath
         if ([string]::IsNullOrWhiteSpace($winget)) {
@@ -6940,7 +7074,7 @@ function Initialize-WinToolShellEvent {
             Write-WinToolLog -Message "winget is available." -Level "ok"
             Sync-WinToolStatus -Text "Ready"
         }
-    })
+    }
 }
 
 function New-WinToolWindow {
@@ -6982,7 +7116,7 @@ function New-WinToolWindow {
     Initialize-WinToolConfigView
     Initialize-WinToolShellEvent
     Sync-WinToolLogPanel
-    $window.Add_Activated({
+    Register-WinToolUiEvent -Control $window -EventName "Activated" -Name "Follow the Windows theme" -Action {
         if ($null -eq $script:WinToolSetting) { return }
         if ([string]$script:WinToolSetting.theme -ne "system") { return }
         $want = "dark"
@@ -6990,7 +7124,7 @@ function New-WinToolWindow {
         if ([string]$script:WinToolResolvedTheme -ne $want) {
             Set-WinToolTheme -Theme "system" -Accent ([string]$script:WinToolSetting.accent)
         }
-    })
+    }
 
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
         try {

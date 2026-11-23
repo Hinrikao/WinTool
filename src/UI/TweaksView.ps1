@@ -11,10 +11,11 @@ function Initialize-WinToolTweakView {
         $button.Style = $script:WinToolWindow.FindResource("SecondaryButton")
         $button.Margin = [System.Windows.Thickness]::new(0, 0, 8, 0)
         $button.ToolTip = [string](Get-WinToolNote -Object $preset -Name "description" -Default "")
-        $boundPreset = $preset
-        $button.Add_Click({
+        Register-WinToolUiEvent -Control $button -EventName "Click" -Name "Tweaks: preset" -Data $preset -Action {
+            param($source, $eventData, $boundPreset)
+            $null = $source, $eventData
             Select-WinToolPreset -Preset $boundPreset
-        }.GetNewClosure())
+        }
         [void]$presetPanel.Children.Add($button)
     }
 
@@ -59,19 +60,19 @@ function Initialize-WinToolTweakView {
         }
     }
 
-    (Get-WinToolUi -Name "TweakSearch").Add_TextChanged({
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakSearch") -EventName "TextChanged" -Name "Tweaks: search" -Action {
         Sync-WinToolSearchHint -BoxName "TweakSearch" -HintName "TweakSearchHint"
         Update-WinToolTweakFilter
-    })
-    (Get-WinToolUi -Name "TweakClear").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakClear") -EventName "Click" -Name "Tweaks: clear" -Action {
         Sync-WinToolTweakCheck -Id @() -OnlyThese
-    })
-    (Get-WinToolUi -Name "TweakApply").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakApply") -EventName "Click" -Name "Tweaks: apply selected" -Action {
         Invoke-WinToolTweakClick -Direction "Apply"
-    })
-    (Get-WinToolUi -Name "TweakUndo").Add_Click({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TweakUndo") -EventName "Click" -Name "Tweaks: undo selected" -Action {
         Invoke-WinToolTweakClick -Direction "Undo"
-    })
+    }
 }
 
 function New-WinToolTweakRow {

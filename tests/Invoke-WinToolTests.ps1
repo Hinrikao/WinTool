@@ -314,6 +314,79 @@ Invoke-WinToolCase -Name "UI collection adds do not leak indexes" -Body {
     }
 }
 
+Invoke-WinToolCase -Name "UI events reach WinTool state and survive errors" -Body {
+    . (Join-Path $script:WinToolRoot "src/UI/Factory.ps1")
+    if ($null -eq ("WinToolTestEventSource" -as [type])) {
+        Add-Type -TypeDefinition @"
+using System;
+public class WinToolTestEventSource
+{
+    public object Tag;
+    public event EventHandler Fired;
+    public void Raise() { if (Fired != null) { Fired(this, EventArgs.Empty); } }
+}
+"@
+    }
+    $script:WinToolUiQuiet = $true
+    $script:WinToolUiErrors = $null
+    $script:WinToolUiHandlers = $null
+    $script:WinToolTerminalChoice = [pscustomobject]@{ prompt = "oh-my-posh"; schemeId = "wintool-night" }
+
+    $card = New-Object WinToolTestEventSource
+    Register-WinToolUiEvent -Control $card -EventName "Fired" -Name "Test: choose prompt" -Data "starship" -Action {
+        param($source, $eventData, $promptId)
+        $null = $eventData
+        $script:WinToolTerminalChoice.prompt = $promptId
+        $source.Tag = "seen"
+    }
+    $card.Raise()
+    $uiErrors = Get-WinToolUiError
+    Test-WinToolExpectation -Condition ($uiErrors.Count -eq 0) -Message ("A UI handler failed: " + (($uiErrors | ForEach-Object { $_.Message }) -join " | "))
+    Test-WinToolExpectation -Condition ([string]$script:WinToolTerminalChoice.prompt -eq "starship") -Message "A UI handler could not update script state."
+    Test-WinToolExpectation -Condition ([string]$card.Tag -eq "seen") -Message "A UI handler did not receive its sender."
+
+    $broken = New-Object WinToolTestEventSource
+    Register-WinToolUiEvent -Control $broken -EventName "Fired" -Name "Test: broken" -Action { throw "boom" }
+    $broken.Raise()
+    $uiErrors = Get-WinToolUiError
+    Test-WinToolExpectation -Condition ($uiErrors.Count -eq 1 -and [string]$uiErrors[0].Name -eq "Test: broken") -Message "A failing UI handler was not caught and recorded."
+    $script:WinToolUiErrors = $null
+    $script:WinToolUiHandlers = $null
+}
+
+Invoke-WinToolCase -Name "UI handlers do not use closures or direct event adds" -Body {
+    $files = @(Get-ChildItem -LiteralPath (Join-Path $script:WinToolRoot "src/UI") -Filter *.ps1)
+    $files += Get-Item -LiteralPath (Join-Path $script:WinToolRoot "src/Private/Theme.ps1")
+    foreach ($file in $files) {
+        $lineNumber = 0
+        foreach ($line in [System.IO.File]::ReadAllLines($file.FullName)) {
+            $lineNumber++
+            if ($line.TrimStart().StartsWith("#")) {
+                continue
+            }
+            $bad = $line -match '\.GetNewClosure\(' -or $line -match '\.Add_[A-Za-z]+\('
+            Test-WinToolExpectation -Condition (-not $bad) -Message ("Use Register-WinToolUiEvent in " + $file.Name + ":" + $lineNumber)
+        }
+    }
+}
+
+Invoke-WinToolCase -Name "Process output is queued without a runspace" -Body {
+    $queue = New-Object System.Collections.Concurrent.ConcurrentQueue[string]
+    $file = "/bin/sh"
+    $arguments = @("-c", "echo one; echo two 1>&2")
+    if (Test-WinToolWindows) {
+        $file = Join-Path $env:SystemRoot "System32\cmd.exe"
+        $arguments = @("/c", "echo one & echo two 1>&2")
+    }
+    $process = Start-WinToolAsyncProcess -FilePath $file -ArgumentList $arguments -LineQueue $queue
+    $process.WaitForExit()
+    $deadline = [DateTime]::UtcNow.AddSeconds(5)
+    while ($queue.Count -lt 2 -and [DateTime]::UtcNow -lt $deadline) {
+        [System.Threading.Thread]::Sleep(50)
+    }
+    Test-WinToolExpectation -Condition ($queue.Count -eq 2) -Message ("Expected two queued output lines, got " + $queue.Count)
+}
+
 Invoke-WinToolCase -Name "The single-file build embeds the catalogs" -Body {
     $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-build-" + [guid]::NewGuid().ToString() + ".ps1")
     try {

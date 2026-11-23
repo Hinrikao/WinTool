@@ -308,7 +308,7 @@ function Initialize-WinToolAppearance {
         }
     }
     $script:WinToolState.UpdatingTheme = $false
-    $picker.Add_SelectionChanged({
+    Register-WinToolUiEvent -Control $picker -EventName "SelectionChanged" -Name "Appearance: theme" -Action {
         if ($script:WinToolState.UpdatingTheme) {
             return
         }
@@ -323,7 +323,7 @@ function Initialize-WinToolAppearance {
         }
         Set-WinToolTheme -Theme $themeId -Accent $accentId
         Save-WinToolSetting -Setting $script:WinToolSetting
-    })
+    }
 
     $panel = Get-WinToolUi -Name "AccentSwatches"
     $panel.Children.Clear()
@@ -342,15 +342,16 @@ function Initialize-WinToolAppearance {
         $swatch.Cursor = [System.Windows.Input.Cursors]::Hand
         $swatch.Padding = [System.Windows.Thickness]::new(0)
         $swatch.Template = $template
-        $accentId = [string]$accent.Id
-        $swatch.Add_Click({
+        Register-WinToolUiEvent -Control $swatch -EventName "Click" -Name "Appearance: accent color" -Data ([string]$accent.Id) -Action {
+            param($source, $eventData, $accentId)
+            $null = $source, $eventData
             $themeId = "dark"
             if ($null -ne $script:WinToolSetting) {
                 $themeId = [string]$script:WinToolSetting.theme
             }
             Set-WinToolTheme -Theme $themeId -Accent $accentId
             Save-WinToolSetting -Setting $script:WinToolSetting
-        }.GetNewClosure())
+        }
         [void]$panel.Children.Add($swatch)
     }
     Sync-WinToolAccentSwatch

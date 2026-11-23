@@ -111,3 +111,101 @@ function Sync-WinToolSearchHint {
         $hint.Visibility = "Collapsed"
     }
 }
+
+# Event handlers are registered through Register-WinToolUiEvent instead of
+# scriptblock.GetNewClosure(). A closure runs in its own dynamic module, so
+# $script: inside it does not reach WinTool's state and reads as $null. That is
+# what crashed the Terminal tab with "The property 'prompt' cannot be found".
+# Per-control values travel in -Data, and every handler runs inside try/catch.
+function Register-WinToolUiEvent {
+    param(
+        [Parameter(Mandatory = $true)]$Control,
+        [Parameter(Mandatory = $true)][string]$EventName,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][scriptblock]$Action,
+        $Data
+    )
+    if ($null -eq $script:WinToolUiHandlers) {
+        $script:WinToolUiHandlers = New-Object System.Collections.Generic.List[object]
+    }
+    $id = $script:WinToolUiHandlers.Count
+    $script:WinToolUiHandlers.Add([pscustomobject]@{
+            Id = $id
+            Name = $Name
+            EventName = $EventName
+            Control = $Control
+            Action = $Action
+            Data = $Data
+        })
+    $dispatch = [scriptblock]::Create(('Invoke-WinToolUiEvent -Id {0} -Source $args[0] -EventData $args[1]' -f $id))
+    $method = "add_" + $EventName
+    $null = $Control.$method($dispatch)
+}
+
+function Invoke-WinToolUiEvent {
+    param(
+        [Parameter(Mandatory = $true)][int]$Id,
+        $Source,
+        $EventData
+    )
+    $entry = $script:WinToolUiHandlers[$Id]
+    try {
+        $null = & $entry.Action $Source $EventData $entry.Data
+    }
+    catch {
+        Write-WinToolUiError -Name ([string]$entry.Name) -ErrorRecord $_
+    }
+}
+
+function Write-WinToolUiError {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        $ErrorRecord
+    )
+    if ($null -eq $script:WinToolUiErrors) {
+        $script:WinToolUiErrors = New-Object System.Collections.Generic.List[object]
+    }
+    $message = "Unknown error."
+    if ($null -ne $ErrorRecord -and $null -ne $ErrorRecord.Exception) {
+        $message = [string]$ErrorRecord.Exception.Message
+    }
+    $script:WinToolUiErrors.Add([pscustomobject]@{ Name = $Name; Message = $message; Record = $ErrorRecord })
+    $logPath = $null
+    try {
+        $detail = Format-WinToolErrorText -ErrorRecord $ErrorRecord -Title ("A WinTool action failed: " + $Name)
+        $logPath = Write-WinToolFailureLog -Text $detail
+        Write-WinToolLog -Message ("{0} failed: {1}" -f $Name, $message) -Level "error"
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    if ($script:WinToolUiQuiet) {
+        return
+    }
+    # Show each failing action once, so a repeating event cannot flood the screen.
+    if ($null -eq $script:WinToolUiErrorShown) {
+        $script:WinToolUiErrorShown = @{}
+    }
+    if ($script:WinToolUiErrorShown.ContainsKey($Name)) {
+        return
+    }
+    $script:WinToolUiErrorShown[$Name] = $true
+    try {
+        $text = "Something went wrong in '" + $Name + "'. WinTool is still open.`r`n`r`n" + $message
+        if (-not [string]::IsNullOrWhiteSpace($logPath)) {
+            $text += "`r`n`r`nDetails: " + $logPath
+        }
+        [System.Windows.MessageBox]::Show($text, "WinTool") | Out-Null
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+}
+
+function Get-WinToolUiError {
+    # ToArray() keeps this on object[]; @() around a generic list fails on 5.1.
+    if ($null -eq $script:WinToolUiErrors) {
+        return , @()
+    }
+    return , $script:WinToolUiErrors.ToArray()
+}

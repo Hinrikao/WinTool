@@ -36,37 +36,37 @@ function Initialize-WinToolTerminalView {
     $script:WinToolTerminalMode = "simple"
     $script:WinToolExtraFont = @()
     $script:WinToolExtraOhMyPoshTheme = @()
-    (Get-WinToolUi -Name "TerminalModeSimple").Add_Checked({
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalModeSimple") -EventName "Checked" -Name "Terminal: Simple mode" -Action {
         $script:WinToolTerminalMode = "simple"
         (Get-WinToolUi -Name "TerminalAdvancedHost").Visibility = "Collapsed"
         (Get-WinToolUi -Name "TerminalSimpleHost").Visibility = "Visible"
         $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
         Update-WinToolTerminalSummary
-    })
-    (Get-WinToolUi -Name "TerminalModeAdvanced").Add_Checked({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalModeAdvanced") -EventName "Checked" -Name "Terminal: Advanced mode" -Action {
         $script:WinToolTerminalMode = "advanced"
         (Get-WinToolUi -Name "TerminalSimpleHost").Visibility = "Collapsed"
         (Get-WinToolUi -Name "TerminalAdvancedHost").Visibility = "Visible"
         Update-WinToolTerminalSummary
-    })
-    (Get-WinToolUi -Name "TerminalFontSearch").Add_TextChanged({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontSearch") -EventName "TextChanged" -Name "Terminal: font search" -Action {
         Sync-WinToolSearchHint -BoxName "TerminalFontSearch" -HintName "TerminalFontSearchHint"
         Update-WinToolFontList
-    })
-    (Get-WinToolUi -Name "TerminalFontNerdOnly").Add_Click({ Update-WinToolFontList })
-    (Get-WinToolUi -Name "TerminalThemeSearch").Add_TextChanged({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontNerdOnly") -EventName "Click" -Name "Terminal: Nerd Fonts only" -Action { Update-WinToolFontList }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalThemeSearch") -EventName "TextChanged" -Name "Terminal: theme search" -Action {
         Sync-WinToolSearchHint -BoxName "TerminalThemeSearch" -HintName "TerminalThemeSearchHint"
         Update-WinToolPromptStyleList
-    })
-    (Get-WinToolUi -Name "TerminalRefresh").Add_Click({ Update-WinToolTerminalCatalogOnline })
-    (Get-WinToolUi -Name "TerminalSetup").Add_Click({ Invoke-WinToolTerminalClick })
-    (Get-WinToolUi -Name "TerminalFontList").Add_SelectionChanged({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalRefresh") -EventName "Click" -Name "Terminal: refresh lists" -Action { Update-WinToolTerminalCatalogOnline }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalSetup") -EventName "Click" -Name "Terminal: apply setup" -Action { Invoke-WinToolTerminalClick }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontList") -EventName "SelectionChanged" -Name "Terminal: choose font" -Action {
         Update-WinToolFontSample
         Update-WinToolTerminalSummary
-    })
-    (Get-WinToolUi -Name "TerminalStyleList").Add_SelectionChanged({
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalStyleList") -EventName "SelectionChanged" -Name "Terminal: choose prompt style" -Action {
         Update-WinToolTerminalSummary
-    })
+    }
     Build-WinToolSimpleTerminalCard
     Build-WinToolPromptCard
     Build-WinToolExtraToggle
@@ -108,16 +108,28 @@ function Build-WinToolPromptCard {
         $installs = @($prompt.installs) -join ", "
         [void]$stack.Children.Add((New-WinToolText -Text ("Installs: " + $installs) -Size 12 -Brush "BrushMuted" -Wrap))
         $card.Child = $stack
-        $promptId = [string]$prompt.id
-        $card.Add_MouseLeftButtonUp({
-            $script:WinToolTerminalChoice.prompt = $promptId
+        Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose prompt" -Data ([string]$prompt.id) -Action {
+            param($source, $eventData, $promptId)
+            $null = $source, $eventData
+            Set-WinToolTerminalChoiceValue -Name "prompt" -Value $promptId
             Update-WinToolPromptStyleList
             Update-WinToolTerminalSummary
             Update-WinToolPromptSelection
-        }.GetNewClosure())
+        }
         [void]$hostPanel.Children.Add($card)
     }
     Update-WinToolPromptSelection
+}
+
+function Set-WinToolTerminalChoiceValue {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        $Value
+    )
+    if ($null -eq $script:WinToolTerminalChoice) {
+        $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
+    }
+    $script:WinToolTerminalChoice.$Name = $Value
 }
 
 function Update-WinToolPromptSelection {
@@ -198,7 +210,7 @@ function Build-WinToolExtraToggle {
         if ([string]$extra.id -eq "terminal-icons" -or [string]$extra.id -eq "psreadline") {
             $box.IsChecked = $true
         }
-        $box.Add_Click({ Update-WinToolTerminalSummary })
+        Register-WinToolUiEvent -Control $box -EventName "Click" -Name "Terminal: extras" -Action { Update-WinToolTerminalSummary }
         [void]$hostPanel.Children.Add($box)
     }
 }
@@ -222,11 +234,12 @@ function Build-WinToolSchemeCard {
         [void]$stack.Children.Add((New-WinToolText -Text ([string]$scheme.name) -Weight "SemiBold"))
         [void]$stack.Children.Add($swatch)
         $card.Child = $stack
-        $schemeId = [string]$scheme.id
-        $card.Add_MouseLeftButtonUp({
-            $script:WinToolTerminalChoice.schemeId = $schemeId
+        Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose color scheme" -Data ([string]$scheme.id) -Action {
+            param($source, $eventData, $schemeId)
+            $null = $source, $eventData
+            Set-WinToolTerminalChoiceValue -Name "schemeId" -Value $schemeId
             Update-WinToolTerminalSummary
-        }.GetNewClosure())
+        }
         [void]$hostPanel.Children.Add($card)
     }
 }

@@ -166,10 +166,11 @@ function ConvertTo-WinToolArgumentLine {
 
 function Format-WinToolErrorText {
     param(
-        $ErrorRecord
+        $ErrorRecord,
+        [string]$Title = "WinTool could not start."
     )
     if ($null -eq $ErrorRecord) {
-        return "WinTool could not start."
+        return $Title
     }
     $body = ""
     try {
@@ -181,7 +182,7 @@ function Format-WinToolErrorText {
     if ([string]::IsNullOrWhiteSpace($body) -and $null -ne $ErrorRecord.Exception) {
         $body = [string]$ErrorRecord.Exception.Message
     }
-    $text = "WinTool could not start.`r`n`r`n" + $body
+    $text = $Title + "`r`n`r`n" + $body
     $stack = [string]$ErrorRecord.ScriptStackTrace
     if (-not [string]::IsNullOrWhiteSpace($stack)) {
         $text += "`r`n`r`n" + $stack

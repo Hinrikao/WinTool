@@ -30,6 +30,32 @@ function Invoke-WinToolCapturedProcess {
     }
 }
 
+function Initialize-WinToolProcessPipe {
+    if ($null -ne ("WinToolProcessPipe" -as [type])) {
+        return
+    }
+    $source = @"
+using System.Collections.Concurrent;
+using System.Diagnostics;
+
+public static class WinToolProcessPipe
+{
+    public static void Attach(Process process, ConcurrentQueue<string> queue)
+    {
+        process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e)
+        {
+            if (e.Data != null) { queue.Enqueue(e.Data); }
+        };
+        process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs e)
+        {
+            if (e.Data != null) { queue.Enqueue(e.Data); }
+        };
+    }
+}
+"@
+    Add-Type -TypeDefinition $source -Language CSharp
+}
+
 function Start-WinToolAsyncProcess {
     param(
         [Parameter(Mandatory = $true)][string]$FilePath,
@@ -49,23 +75,12 @@ function Start-WinToolAsyncProcess {
     $process = New-Object System.Diagnostics.Process
     $process.StartInfo = $info
     $process.EnableRaisingEvents = $true
-    $queue = $LineQueue
-
-    $outputHandler = {
-        $payload = $args[1]
-        if ($null -ne $payload -and $null -ne $payload.Data) {
-            $queue.Enqueue([string]$payload.Data)
-        }
-    }.GetNewClosure()
-    $errorHandler = {
-        $payload = $args[1]
-        if ($null -ne $payload -and $null -ne $payload.Data) {
-            $queue.Enqueue([string]$payload.Data)
-        }
-    }.GetNewClosure()
-
-    $process.add_OutputDataReceived($outputHandler)
-    $process.add_ErrorDataReceived($errorHandler)
+    # The output events fire on thread-pool threads that have no PowerShell
+    # runspace. A scriptblock handler there throws "There is no Runspace
+    # available" and ends the whole process, so a small compiled handler fills
+    # the queue instead. The log pump timer reads it on the UI thread.
+    Initialize-WinToolProcessPipe
+    [WinToolProcessPipe]::Attach($process, $LineQueue)
     $started = $process.Start()
     if (-not $started) {
         throw "The process did not start: $FilePath"

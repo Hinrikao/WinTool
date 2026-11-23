@@ -91,6 +91,90 @@ if ($null -eq $logPanel -or $logPanel.Visibility -ne "Collapsed") {
     throw "The log should be collapsed until a task starts."
 }
 
+# Raise the safe UI events the same way WPF does, so a broken handler fails CI.
+# Handlers that install, change Windows, open dialogs, or go online are skipped.
+$script:WinToolUiQuiet = $true
+$script:WinToolUiErrors = $null
+$skip = @(
+    "Install: install selected",
+    "Tweaks: apply selected",
+    "Tweaks: undo selected",
+    "Terminal: apply setup",
+    "Terminal: refresh lists",
+    "Updates: scan",
+    "Updates: open Windows Update",
+    "Updates: open optional updates",
+    "Updates: install scanned updates",
+    "Updates: vendor downloads",
+    "Config: save profile",
+    "Config: load profile",
+    "Config: export winget list",
+    "Config: import winget list",
+    "Cancel",
+    "Open project link",
+    "Close WinTool",
+    "Window closed",
+    "Keyboard shortcut",
+    "Appearance: accent color",
+    "Appearance: theme"
+)
+$raised = 0
+foreach ($entry in $script:WinToolUiHandlers.ToArray()) {
+    if ($skip -contains [string]$entry.Name) {
+        continue
+    }
+    $control = $entry.Control
+    switch ([string]$entry.EventName) {
+        "Click" {
+            $control.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent))
+        }
+        "Checked" {
+            $control.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Primitives.ToggleButton]::CheckedEvent))
+        }
+        "Unchecked" {
+            $control.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Primitives.ToggleButton]::UncheckedEvent))
+        }
+        "MouseLeftButtonUp" {
+            $mouseArgs = [System.Windows.Input.MouseButtonEventArgs]::new([System.Windows.Input.Mouse]::PrimaryDevice, 0, [System.Windows.Input.MouseButton]::Left)
+            $mouseArgs.RoutedEvent = [System.Windows.UIElement]::MouseLeftButtonUpEvent
+            $control.RaiseEvent($mouseArgs)
+        }
+        "TextChanged" {
+            $control.Text = "a"
+            $control.Text = ""
+        }
+        "SelectionChanged" {
+            if ($control.Items.Count -gt 1) {
+                $control.SelectedIndex = 1
+                $control.SelectedIndex = 0
+            }
+        }
+        default {
+            Invoke-WinToolUiEvent -Id ([int]$entry.Id) -Source $control -EventData $null
+        }
+    }
+    $raised++
+}
+
+# Clicking each prompt card must update the Terminal choice.
+foreach ($card in @($promptHost.Children)) {
+    $mouseArgs = [System.Windows.Input.MouseButtonEventArgs]::new([System.Windows.Input.Mouse]::PrimaryDevice, 0, [System.Windows.Input.MouseButton]::Left)
+    $mouseArgs.RoutedEvent = [System.Windows.UIElement]::MouseLeftButtonUpEvent
+    $card.RaiseEvent($mouseArgs)
+    if ([string]$script:WinToolTerminalChoice.prompt -ne [string]$card.Tag) {
+        throw ("Clicking the prompt card '" + [string]$card.Tag + "' did not select it.")
+    }
+}
+
+$uiErrors = Get-WinToolUiError
+if ($uiErrors.Count -gt 0) {
+    foreach ($uiError in $uiErrors) {
+        Write-Output ("UI handler failed: " + $uiError.Name + ": " + $uiError.Message)
+    }
+    throw "$($uiErrors.Count) UI handler(s) failed."
+}
+Write-Output "Raised $raised UI events without errors."
+
 try {
     $window.Close()
 }
