@@ -12,6 +12,7 @@ That image is a placeholder. Replace `docs/screenshots/placeholder.svg` with a P
 
 ## What you can do
 
+- **Home.** Checks junk files, recommended tweaks, startup programs, device status, and drive health without changing anything until you ask, and shows live memory, disk, and PC hardware details.
 - **Install.** A searchable checklist of about 175 apps, grouped into browsers, communication, development, gaming, media, office and notes, security and network, runtimes, and utilities. WinTool installs the ones you tick with [winget](https://learn.microsoft.com/windows/package-manager/winget/). In the background it checks which apps are already installed and which have an update, and marks them **Installed** or **Update available**. You can select the installed ones, update or uninstall the ticked apps (or one app from its right-click menu), and upgrade everything winget knows about.
 - **Tweaks.** About 70 Windows settings for File Explorer, the taskbar and Start, appearance, privacy, search, input, gaming, and system behavior. Every tweak has an undo. Presets named Minimal and Recommended select a starting set. Stronger changes are marked Caution and stay off until you choose them.
 - **Terminal.** Windows Terminal, PowerShell 7, either Oh My Posh or Starship, a Nerd Font, optional Terminal-Icons, and optional Ubuntu with zsh and Oh My Zsh.
@@ -35,7 +36,7 @@ Open PowerShell and paste:
 irm https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1 | iex
 ```
 
-Approve the administrator prompt. The WinTool window opens in a dark theme. Appearance in the sidebar switches between Dark, Light, and System (the Windows app theme) and lets you pick an accent. That choice is saved in `%APPDATA%\WinTool\settings.json`. The log stays collapsed until a task is running, or until you press Show log.
+Approve the administrator prompt. The WinTool window opens in a dark theme. The log stays collapsed until a task is running, or until you press Show log.
 
 Only the WinTool window stays on screen. The PowerShell console that starts it is hidden once the window appears (from Windows Terminal, WinTool reopens in its own hidden console and you can close the terminal). Add `-ShowConsole` to `wintool.ps1` or `src\Start-WinTool.ps1`, or set `WINTOOL_SHOW_CONSOLE=1` before the one-liner, to keep the console for debugging.
 

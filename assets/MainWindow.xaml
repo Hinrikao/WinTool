@@ -30,7 +30,7 @@
     <SolidColorBrush x:Key="BrushOkSoft" Color="#17382E"/>
     <SolidColorBrush x:Key="BrushWarn" Color="#E6B15A"/>
     <SolidColorBrush x:Key="BrushWarnSoft" Color="#3A3120"/>
-    <SolidColorBrush x:Key="BrushBad" Color="#B42318"/>
+    <SolidColorBrush x:Key="BrushBad" Color="#F07178"/>
     <SolidColorBrush x:Key="BrushSidebar" Color="#141A27"/>
     <SolidColorBrush x:Key="BrushLog" Color="#121826"/>
     <SolidColorBrush x:Key="BrushAccentHover" Color="#8BB0FF"/>
@@ -472,6 +472,7 @@
     <Style TargetType="RadioButton">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
       <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
@@ -503,6 +504,7 @@
     <Style TargetType="ListBoxItem">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
       <Setter Property="Padding" Value="8,4"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ListBoxItem">
@@ -550,6 +552,85 @@
             <ControlTemplate.Triggers>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter TargetName="PART_Track" Property="Visibility" Value="Hidden"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <!-- Dark drop-down shared by Terminal and Config, as tall as a search box. -->
+    <Style x:Key="TerminalComboToggle" TargetType="ToggleButton">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border x:Name="Bd" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushInputBorder}" BorderThickness="1" CornerRadius="6">
+              <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="{DynamicResource FontSizeBody}" VerticalAlignment="Center" Margin="0,0,10,0" HorizontalAlignment="Right" Foreground="{DynamicResource BrushMuted}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="TerminalCombo" TargetType="ComboBox">
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+      <Setter Property="IsTextSearchEnabled" Value="True"/>
+      <Setter Property="ItemsPanel">
+        <Setter.Value>
+          <ItemsPanelTemplate>
+            <VirtualizingStackPanel/>
+          </ItemsPanelTemplate>
+        </Setter.Value>
+      </Setter>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBox">
+            <Grid>
+              <ToggleButton Style="{StaticResource TerminalComboToggle}" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+              <ContentPresenter Margin="10,0,30,0" IsHitTestVisible="False" VerticalAlignment="Center" HorizontalAlignment="Left" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
+              <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade" IsOpen="{TemplateBinding IsDropDownOpen}">
+                <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="6" Padding="2" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                  <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                  </ScrollViewer>
+                </Border>
+              </Popup>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="TerminalComboItem" TargetType="ComboBoxItem">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBoxItem">
+            <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="10,8">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -651,12 +732,12 @@
               <Button x:Name="HomeAgain" Content="Analyze again" Style="{StaticResource HomeLinkButton}" Width="104" Height="32" Margin="16,0,0,0"/>
             </StackPanel>
           </Grid>
-          <ScrollViewer x:Name="HomeScroll" Grid.Row="1" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <Grid x:Name="HomeBody" Margin="20,0,20,16">
+          <ScrollViewer x:Name="HomeScroll" Grid.Row="1" Margin="0,12,0,0" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+            <Grid x:Name="HomeBody" Margin="20,0,10,16">
               <Grid.RowDefinitions>
                 <RowDefinition Height="474"/>
                 <RowDefinition Height="16"/>
-                <RowDefinition Height="*" MinHeight="150"/>
+                <RowDefinition Height="160"/>
               </Grid.RowDefinitions>
               <Border x:Name="HomeHero" Grid.Row="0" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="22">
                 <Grid>
@@ -948,78 +1029,6 @@
               <Setter Property="VirtualizingStackPanel.IsVirtualizing" Value="True"/>
               <Setter Property="VirtualizingStackPanel.VirtualizationMode" Value="Recycling"/>
             </Style>
-            <!-- A dark drop-down for the font and the size, as tall as a search box. -->
-            <Style x:Key="TerminalComboToggle" TargetType="ToggleButton">
-              <Setter Property="Focusable" Value="False"/>
-              <Setter Property="Cursor" Value="Hand"/>
-              <Setter Property="Template">
-                <Setter.Value>
-                  <ControlTemplate TargetType="ToggleButton">
-                    <Border x:Name="Bd" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushInputBorder}" BorderThickness="1" CornerRadius="6">
-                      <TextBlock Text="&#xE70D;" Style="{StaticResource TerminalGlyph}" Margin="0,0,10,0" HorizontalAlignment="Right" Foreground="{DynamicResource BrushMuted}"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                      <Trigger Property="IsMouseOver" Value="True">
-                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
-                      </Trigger>
-                    </ControlTemplate.Triggers>
-                  </ControlTemplate>
-                </Setter.Value>
-              </Setter>
-            </Style>
-            <Style x:Key="TerminalCombo" TargetType="ComboBox">
-              <Setter Property="Height" Value="34"/>
-              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
-              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-              <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
-              <Setter Property="IsTextSearchEnabled" Value="True"/>
-              <Setter Property="ItemsPanel">
-                <Setter.Value>
-                  <ItemsPanelTemplate>
-                    <VirtualizingStackPanel/>
-                  </ItemsPanelTemplate>
-                </Setter.Value>
-              </Setter>
-              <Setter Property="Template">
-                <Setter.Value>
-                  <ControlTemplate TargetType="ComboBox">
-                    <Grid>
-                      <ToggleButton Style="{StaticResource TerminalComboToggle}" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
-                      <ContentPresenter Margin="10,0,30,0" IsHitTestVisible="False" VerticalAlignment="Center" HorizontalAlignment="Left" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
-                      <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade" IsOpen="{TemplateBinding IsDropDownOpen}">
-                        <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="6" Padding="2" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                          <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto">
-                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
-                          </ScrollViewer>
-                        </Border>
-                      </Popup>
-                    </Grid>
-                  </ControlTemplate>
-                </Setter.Value>
-              </Setter>
-            </Style>
-            <Style x:Key="TerminalComboItem" TargetType="ComboBoxItem">
-              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
-              <Setter Property="Cursor" Value="Hand"/>
-              <Setter Property="Template">
-                <Setter.Value>
-                  <ControlTemplate TargetType="ComboBoxItem">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="10,8">
-                      <ContentPresenter/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                      <Trigger Property="IsHighlighted" Value="True">
-                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
-                      </Trigger>
-                      <Trigger Property="IsSelected" Value="True">
-                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
-                      </Trigger>
-                    </ControlTemplate.Triggers>
-                  </ControlTemplate>
-                </Setter.Value>
-              </Setter>
-            </Style>
           </Grid.Resources>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -1228,7 +1237,7 @@
         </Grid>
 
         <ScrollViewer x:Name="ViewUpdates" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
-          <StackPanel Margin="24,22,24,12">
+          <StackPanel x:Name="UpdatesBody" Margin="24,22,24,12">
             <TextBlock Text="Drivers and updates" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
 
@@ -1272,7 +1281,7 @@
         </ScrollViewer>
 
         <ScrollViewer x:Name="ViewFixes" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
-          <StackPanel Margin="24,22,24,12">
+          <StackPanel x:Name="FixesBody" Margin="24,22,24,12">
             <TextBlock Text="Fixes" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Repairs for common Windows problems. Each one asks first and writes what it does to the log." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
             <StackPanel x:Name="FixList"/>
@@ -1280,7 +1289,7 @@
         </ScrollViewer>
 
         <ScrollViewer x:Name="ViewFeatures" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
-          <StackPanel Margin="24,22,24,12">
+          <StackPanel x:Name="FeaturesBody" Margin="24,22,24,12">
             <TextBlock Text="Windows features" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Optional parts of Windows. Ticked means on. Change the ticks and press Apply. Windows needs a restart after a change." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
@@ -1297,7 +1306,7 @@
         </ScrollViewer>
 
         <ScrollViewer x:Name="ViewConfig" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
-          <StackPanel Margin="24,22,24,12">
+          <StackPanel x:Name="ConfigBody" Margin="24,22,24,12">
             <TextBlock Text="Config" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Save what you picked and use it again after the next format." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
 
@@ -1347,9 +1356,9 @@
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
                   <TextBlock Text="Adapter" VerticalAlignment="Center" Margin="0,0,12,8"/>
-                  <ComboBox x:Name="DnsAdapter" Grid.Column="1" Margin="0,0,0,8" AutomationProperties.Name="Network adapter"/>
+                  <ComboBox x:Name="DnsAdapter" Grid.Column="1" Margin="0,0,0,8" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" MaxDropDownHeight="320" AutomationProperties.Name="Network adapter"/>
                   <TextBlock Text="DNS" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                  <ComboBox x:Name="DnsProvider" Grid.Row="1" Grid.Column="1" AutomationProperties.Name="DNS provider"/>
+                  <ComboBox x:Name="DnsProvider" Grid.Row="1" Grid.Column="1" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" MaxDropDownHeight="320" AutomationProperties.Name="DNS provider"/>
                 </Grid>
                 <CheckBox x:Name="DnsIncludeIpv6" Content="Also set IPv6 DNS servers" IsChecked="True" Margin="0,4,0,8"/>
                 <TextBlock x:Name="DnsCurrent" Text="Open this tab to read the current DNS servers." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
