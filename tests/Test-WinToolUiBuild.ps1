@@ -223,8 +223,6 @@ $skip = @(
     "Close WinTool",
     "Window closed",
     "Keyboard shortcut",
-    "Appearance: accent color",
-    "Appearance: theme",
     "View history",
     "Fix all",
     "Start the Home analysis"

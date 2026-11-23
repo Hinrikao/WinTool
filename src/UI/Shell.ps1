@@ -591,15 +591,6 @@ function New-WinToolWindow {
     Initialize-WinToolConfigView
     Initialize-WinToolShellEvent
     Sync-WinToolLogPanel
-    Register-WinToolUiEvent -Control $window -EventName "Activated" -Name "Follow the Windows theme" -Action {
-        if ($null -eq $script:WinToolSetting) { return }
-        if ([string]$script:WinToolSetting.theme -ne "system") { return }
-        $want = "dark"
-        if (Test-WinToolSystemLightTheme) { $want = "light" }
-        if ([string]$script:WinToolResolvedTheme -ne $want) {
-            Set-WinToolTheme -Theme "system" -Accent ([string]$script:WinToolSetting.accent)
-        }
-    }
 
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
         try {

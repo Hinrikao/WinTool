@@ -567,9 +567,6 @@
     <Border Grid.Column="0" Background="{StaticResource BrushSidebar}">
       <DockPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="20,0,20,20">
-          <TextBlock Text="Appearance" Margin="0,0,0,6" Foreground="{DynamicResource BrushSidebarMuted}"/>
-          <ComboBox x:Name="ThemePicker" Margin="0,0,0,8" AutomationProperties.Name="Theme"/>
-          <StackPanel x:Name="AccentSwatches" Orientation="Horizontal" Margin="0,0,0,14"/>
           <TextBlock x:Name="VersionText" Text="Version" Foreground="{DynamicResource BrushSidebarMuted}"/>
           <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource BrushSidebarText}" TextWrapping="Wrap">
             <Hyperlink x:Name="ProjectLink" Foreground="{DynamicResource BrushSidebarText}" NavigateUri="https://github.com/Hinrikao/WinTool">
