@@ -630,6 +630,21 @@ $firefox.Checkbox.IsChecked = $false
 if ($window.FindName("AppBulkBar").Visibility -ne "Collapsed") {
     throw "The bulk bar should hide when nothing is ticked."
 }
+# The selection actions sit in the top row, so ticking an app never moves the cards.
+$window.FindName("NavInstall").IsChecked = $true
+$script:WinToolState.LogExpanded = $false
+Sync-WinToolLogPanel
+$rootVisual = $window.Content
+Save-WinToolViewShot -Name "install-noselection" -Width 1280 -Height 760
+$before = $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+$firefox.Checkbox.IsChecked = $true
+$chrome.Checkbox.IsChecked = $true
+Save-WinToolViewShot -Name "install-selected" -Width 1280 -Height 760
+$after = $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+if ([math]::Abs($after.Y - $before.Y) -gt 0.5) { throw ("Ticking an app moved the cards from " + $before.Y + " to " + $after.Y) }
+if ([string]$window.FindName("AppCount").Text -ne "2 selected") { throw "The selection count should read 2 selected." }
+Write-Output ("Selection actions in the top row; first card stays at y=" + [int]$after.Y)
+Sync-WinToolAppCheck -Id @() -OnlyThese
 $window.FindName("NavInstall").IsChecked = $true
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel

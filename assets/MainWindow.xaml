@@ -525,6 +525,7 @@
               <ColumnDefinition Width="220"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0" Height="26" VerticalAlignment="Top">
               <TextBox x:Name="AppSearch" Style="{StaticResource PageSearch}" Height="26" FontSize="11" AutomationProperties.Name="Search apps"/>
@@ -534,22 +535,21 @@
             <ScrollViewer x:Name="AppFilterScroll" Grid.Column="1" Margin="12,0,8,0" Height="26" VerticalAlignment="Top" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
               <StackPanel x:Name="AppFilters" Orientation="Horizontal" VerticalAlignment="Center"/>
             </ScrollViewer>
-            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+            <!-- Shown only while apps are ticked; the chips give up the room, so the cards never move. -->
+            <StackPanel x:Name="AppBulkBar" Grid.Column="2" Orientation="Horizontal" Height="26" VerticalAlignment="Top" Margin="0,0,8,0" Visibility="Collapsed">
+              <TextBlock x:Name="AppCount" Text="0 selected" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,8,0"/>
+              <Button x:Name="AppInstall" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" Height="26" Padding="10,0" FontSize="10" Margin="0,0,6,0" Background="{DynamicResource BrushAccent}" Foreground="{DynamicResource BrushOnAccent}" FontWeight="SemiBold"/>
+              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" Height="26" Padding="10,0" FontSize="10" Margin="0,0,6,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
+              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" Height="26" Padding="10,0" FontSize="10" Margin="0,0,6,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
+              <Button x:Name="AppClear" Content="Clear" Style="{StaticResource ToolbarButton}" Height="26" Padding="10,0" FontSize="10"/>
+            </StackPanel>
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top">
               <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Height="26" Padding="10,0" FontSize="10" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
               <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="26" Height="26" Padding="0" FontFamily="Segoe MDL2 Assets" FontSize="11" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
             </StackPanel>
           </Grid>
           <StackPanel Grid.Row="2" Margin="20,6,20,0">
             <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." FontSize="11" Foreground="{DynamicResource BrushMuted}" Visibility="Collapsed" Margin="0,0,0,4"/>
-            <Border x:Name="AppBulkBar" Visibility="Collapsed" Background="{DynamicResource BrushAccentSoft}" CornerRadius="8" Padding="12,6" Margin="0,0,0,4">
-              <DockPanel LastChildFill="False">
-                <TextBlock x:Name="AppCount" DockPanel.Dock="Left" Text="0 selected" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,16,0"/>
-                <Button x:Name="AppInstall" DockPanel.Dock="Left" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushAccent}" Foreground="White" FontWeight="SemiBold"/>
-                <Button x:Name="AppUpdate" DockPanel.Dock="Left" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
-                <Button x:Name="AppUninstall" DockPanel.Dock="Left" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
-                <Button x:Name="AppClear" DockPanel.Dock="Right" Content="Clear" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Margin="0"/>
-              </DockPanel>
-            </Border>
           </StackPanel>
           <ScrollViewer x:Name="AppScroll" Grid.Row="3" Margin="20,0,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
