@@ -952,6 +952,8 @@ Invoke-WinToolCase -Name "Every prompt has a preview" -Body {
     Test-WinToolExpectation -Condition ($null -ne $agnoster[0].Background) -Message "agnoster has a powerline preview."
     Test-WinToolExpectation -Condition ((Get-WinToolOmpThemeFileName -ThemeId "atomic" -Themes @()) -eq "atomic.omp.json") -Message "Theme file names default to <id>.omp.json."
     Test-WinToolExpectation -Condition ($null -eq (ConvertTo-WinToolPreviewColor -Value "transparent" -Palette $null)) -Message "Unknown colors are ignored."
+    $rows = @(Get-WinToolSummaryRow -Line @("a", "b", "c", "d", "e", "f", "g", "h", "i", "j") -Count 3)
+    Test-WinToolExpectation -Condition ($rows.Count -eq 3 -and $rows[0].StartsWith("a ") -and $rows[2].EndsWith(" j")) -Message ("Summary rows: " + ($rows -join " | "))
 }
 
 Invoke-WinToolCase -Name "Generated PowerShell profiles never throw" -Body {

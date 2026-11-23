@@ -3465,7 +3465,7 @@ dGlvbnM+CiAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIEdyaWQuUm93PSIwIiBHcmlkLkNvbHVtblNw
 YW49IjIiIFRleHQ9IldoYXQgd2lsbCBiZSBpbnN0YWxsZWQgYW5kIGNoYW5nZWQiIFN0eWxlPSJ7U3Rh
 dGljUmVzb3VyY2UgVGVybWluYWxDYXJkVGl0bGV9Ii8+CiAgICAgICAgICAgICAgICA8VW5pZm9ybUdy
 aWQgeDpOYW1lPSJUZXJtaW5hbFN1bW1hcnlIb3N0IiBHcmlkLlJvdz0iMSIgR3JpZC5Sb3dTcGFuPSIy
-IiBHcmlkLkNvbHVtbj0iMCIgQ29sdW1ucz0iMyIgTWFyZ2luPSIwLDIsMTYsMCIgVmVydGljYWxBbGln
+IiBHcmlkLkNvbHVtbj0iMCIgQ29sdW1ucz0iMSIgTWFyZ2luPSIwLDIsMTYsMCIgVmVydGljYWxBbGln
 bm1lbnQ9IlRvcCIvPgogICAgICAgICAgICAgICAgPFRleHRCbG9jayB4Ok5hbWU9IlRlcm1pbmFsU3Vt
 bWFyeSIgR3JpZC5Sb3c9IjEiIEdyaWQuQ29sdW1uPSIwIiBWaXNpYmlsaXR5PSJDb2xsYXBzZWQiIFRl
 eHRXcmFwcGluZz0iV3JhcCIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIv
@@ -6718,7 +6718,7 @@ function Get-WinToolOmpPreviewSegment {
         if ([string](Get-WinToolNote -Object $block -Name "type" -Default "prompt") -ne "prompt") { continue }
         if ([string](Get-WinToolNote -Object $block -Name "alignment" -Default "left") -eq "right") { continue }
         foreach ($segment in @(Get-WinToolNote -Object $block -Name "segments" -Default @())) {
-            if ($parts.Count -ge 6) { break }
+            if ($parts.Count -ge 4) { break }
             $type = [string](Get-WinToolNote -Object $segment -Name "type" -Default "")
             $text = ""
             if ($script:WinToolPreviewSampleText.ContainsKey($type)) {
@@ -6852,6 +6852,28 @@ function Read-WinToolCachedOmpTheme {
     catch {
         return $null
     }
+}
+
+function Get-WinToolSummaryRow {
+    # Joins the summary lines into a few rows ("a - b - c") so the summary
+    # card keeps a fixed height.
+    param(
+        [AllowEmptyCollection()][string[]]$Line,
+        [int]$Count = 3
+    )
+    $items = @($Line | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($items.Count -eq 0) {
+        return @()
+    }
+    if ($Count -lt 1) { $Count = 1 }
+    $perRow = [int][Math]::Ceiling($items.Count / [double]$Count)
+    $separator = " " + [string][char]0x00B7 + " "
+    $rows = New-Object System.Collections.Generic.List[string]
+    for ($start = 0; $start -lt $items.Count; $start += $perRow) {
+        $end = [Math]::Min($items.Count, $start + $perRow) - 1
+        $rows.Add((($items[$start..$end]) -join $separator))
+    }
+    return $rows.ToArray()
 }
 # endregion
 
@@ -10525,9 +10547,6 @@ function Update-WinToolTerminalLayout {
         $gap.Width = [System.Windows.GridLength]::new(15)
         $left.MinWidth = 330
     }
-    $columns = 3
-    if ($narrow -and $Width -lt 560) { $columns = 2 }
-    (Get-WinToolUi -Name "TerminalSummaryHost").Columns = $columns
 }
 
 function Update-WinToolFontList {
@@ -10563,6 +10582,27 @@ function Update-WinToolFontSample {
     Update-WinToolTerminalPreview
 }
 
+function Find-WinToolChildScrollViewer {
+    param(
+        $Element
+    )
+    if ($null -eq $Element) {
+        return $null
+    }
+    $count = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($Element)
+    for ($index = 0; $index -lt $count; $index++) {
+        $child = [System.Windows.Media.VisualTreeHelper]::GetChild($Element, $index)
+        if ($child -is [System.Windows.Controls.ScrollViewer]) {
+            return $child
+        }
+        $found = Find-WinToolChildScrollViewer -Element $child
+        if ($null -ne $found) {
+            return $found
+        }
+    }
+    return $null
+}
+
 function Show-WinToolTerminalSelection {
     # Brings the chosen font and theme into view in their lists. When a list
     # is not laid out yet, the log pump calls this again a moment later.
@@ -10573,6 +10613,13 @@ function Show-WinToolTerminalSelection {
         try {
             $list.UpdateLayout()
             $list.ScrollIntoView($list.SelectedItem)
+            # ScrollIntoView needs a later layout pass; moving the list's own
+            # scroll viewer (item based) works right away.
+            $viewer = Find-WinToolChildScrollViewer -Element $list
+            if ($null -ne $viewer -and $list.SelectedIndex -ge 0) {
+                $viewer.ScrollToVerticalOffset([Math]::Max(0, $list.SelectedIndex - 1))
+                $list.UpdateLayout()
+            }
             if ($list.ActualHeight -le 0 -and $script:WinToolTerminalMode -eq "advanced") {
                 # Not laid out yet (hidden tab or mode); the log pump retries.
                 $script:WinToolTerminalScrollPending = $true
@@ -10770,12 +10817,14 @@ function Update-WinToolTerminalSummary {
     (Get-WinToolUi -Name "TerminalSummary").Text = ($lines -join "`n")
     $summaryHost = Get-WinToolUi -Name "TerminalSummaryHost"
     if ($null -ne $summaryHost) {
+        # Three short rows, as in the mockup; the full list is the tooltip.
         $summaryHost.Children.Clear()
-        foreach ($line in $lines) {
-            $text = New-WinToolText -Text ([string]$line) -Size 11 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 0, 12, 0))
+        $rows = @(Get-WinToolSummaryRow -Line $lines -Count 3)
+        foreach ($row in $rows) {
+            $text = New-WinToolText -Text ([string]$row) -Size 11 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 0, 12, 0))
             $text.Height = 18
             $text.TextTrimming = "CharacterEllipsis"
-            $text.ToolTip = [string]$line
+            $text.ToolTip = ($lines -join "`n")
             [void]$summaryHost.Children.Add($text)
         }
     }

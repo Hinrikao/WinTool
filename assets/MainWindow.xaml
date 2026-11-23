@@ -568,7 +568,7 @@
                   <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="What will be installed and changed" Style="{StaticResource TerminalCardTitle}"/>
-                <UniformGrid x:Name="TerminalSummaryHost" Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Columns="3" Margin="0,2,16,0" VerticalAlignment="Top"/>
+                <UniformGrid x:Name="TerminalSummaryHost" Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Columns="1" Margin="0,2,16,0" VerticalAlignment="Top"/>
                 <TextBlock x:Name="TerminalSummary" Grid.Row="1" Grid.Column="0" Visibility="Collapsed" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}"/>
                 <StackPanel Grid.Row="1" Grid.RowSpan="2" Grid.Column="1" VerticalAlignment="Bottom" HorizontalAlignment="Right">
                   <CheckBox x:Name="TerminalEnabled" Content="Replay with a saved profile" IsChecked="True" FontSize="11" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" Margin="0,0,0,8" LayoutTransform="0.85,0,0,0.85,0,0" ToolTip="Include this terminal setup when a saved WinTool profile is replayed."/>

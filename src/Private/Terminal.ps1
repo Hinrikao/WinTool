@@ -923,7 +923,7 @@ function Get-WinToolOmpPreviewSegment {
         if ([string](Get-WinToolNote -Object $block -Name "type" -Default "prompt") -ne "prompt") { continue }
         if ([string](Get-WinToolNote -Object $block -Name "alignment" -Default "left") -eq "right") { continue }
         foreach ($segment in @(Get-WinToolNote -Object $block -Name "segments" -Default @())) {
-            if ($parts.Count -ge 6) { break }
+            if ($parts.Count -ge 4) { break }
             $type = [string](Get-WinToolNote -Object $segment -Name "type" -Default "")
             $text = ""
             if ($script:WinToolPreviewSampleText.ContainsKey($type)) {
@@ -1057,4 +1057,26 @@ function Read-WinToolCachedOmpTheme {
     catch {
         return $null
     }
+}
+
+function Get-WinToolSummaryRow {
+    # Joins the summary lines into a few rows ("a - b - c") so the summary
+    # card keeps a fixed height.
+    param(
+        [AllowEmptyCollection()][string[]]$Line,
+        [int]$Count = 3
+    )
+    $items = @($Line | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($items.Count -eq 0) {
+        return @()
+    }
+    if ($Count -lt 1) { $Count = 1 }
+    $perRow = [int][Math]::Ceiling($items.Count / [double]$Count)
+    $separator = " " + [string][char]0x00B7 + " "
+    $rows = New-Object System.Collections.Generic.List[string]
+    for ($start = 0; $start -lt $items.Count; $start += $perRow) {
+        $end = [Math]::Min($items.Count, $start + $perRow) - 1
+        $rows.Add((($items[$start..$end]) -join $separator))
+    }
+    return $rows.ToArray()
 }

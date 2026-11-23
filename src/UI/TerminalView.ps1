@@ -362,9 +362,6 @@ function Update-WinToolTerminalLayout {
         $gap.Width = [System.Windows.GridLength]::new(15)
         $left.MinWidth = 330
     }
-    $columns = 3
-    if ($narrow -and $Width -lt 560) { $columns = 2 }
-    (Get-WinToolUi -Name "TerminalSummaryHost").Columns = $columns
 }
 
 function Update-WinToolFontList {
@@ -400,6 +397,27 @@ function Update-WinToolFontSample {
     Update-WinToolTerminalPreview
 }
 
+function Find-WinToolChildScrollViewer {
+    param(
+        $Element
+    )
+    if ($null -eq $Element) {
+        return $null
+    }
+    $count = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($Element)
+    for ($index = 0; $index -lt $count; $index++) {
+        $child = [System.Windows.Media.VisualTreeHelper]::GetChild($Element, $index)
+        if ($child -is [System.Windows.Controls.ScrollViewer]) {
+            return $child
+        }
+        $found = Find-WinToolChildScrollViewer -Element $child
+        if ($null -ne $found) {
+            return $found
+        }
+    }
+    return $null
+}
+
 function Show-WinToolTerminalSelection {
     # Brings the chosen font and theme into view in their lists. When a list
     # is not laid out yet, the log pump calls this again a moment later.
@@ -410,6 +428,13 @@ function Show-WinToolTerminalSelection {
         try {
             $list.UpdateLayout()
             $list.ScrollIntoView($list.SelectedItem)
+            # ScrollIntoView needs a later layout pass; moving the list's own
+            # scroll viewer (item based) works right away.
+            $viewer = Find-WinToolChildScrollViewer -Element $list
+            if ($null -ne $viewer -and $list.SelectedIndex -ge 0) {
+                $viewer.ScrollToVerticalOffset([Math]::Max(0, $list.SelectedIndex - 1))
+                $list.UpdateLayout()
+            }
             if ($list.ActualHeight -le 0 -and $script:WinToolTerminalMode -eq "advanced") {
                 # Not laid out yet (hidden tab or mode); the log pump retries.
                 $script:WinToolTerminalScrollPending = $true
@@ -607,12 +632,14 @@ function Update-WinToolTerminalSummary {
     (Get-WinToolUi -Name "TerminalSummary").Text = ($lines -join "`n")
     $summaryHost = Get-WinToolUi -Name "TerminalSummaryHost"
     if ($null -ne $summaryHost) {
+        # Three short rows, as in the mockup; the full list is the tooltip.
         $summaryHost.Children.Clear()
-        foreach ($line in $lines) {
-            $text = New-WinToolText -Text ([string]$line) -Size 11 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 0, 12, 0))
+        $rows = @(Get-WinToolSummaryRow -Line $lines -Count 3)
+        foreach ($row in $rows) {
+            $text = New-WinToolText -Text ([string]$row) -Size 11 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 0, 12, 0))
             $text.Height = 18
             $text.TextTrimming = "CharacterEllipsis"
-            $text.ToolTip = [string]$line
+            $text.ToolTip = ($lines -join "`n")
             [void]$summaryHost.Children.Add($text)
         }
     }
