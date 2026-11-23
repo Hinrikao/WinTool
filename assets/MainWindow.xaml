@@ -41,6 +41,142 @@
     <SolidColorBrush x:Key="BrushInputBorder" Color="#44506A"/>
     <SolidColorBrush x:Key="BrushHint" Color="#8E9BB3"/>
     <SolidColorBrush x:Key="BrushOnAccent" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushBadSoft" Color="#3A1D24"/>
+    <SolidColorBrush x:Key="BrushOkLine" Color="#2F6B4A"/>
+    <SolidColorBrush x:Key="BrushWarnLine" Color="#7A5A1E"/>
+    <SolidColorBrush x:Key="BrushWarnStrong" Color="#D39B2A"/>
+    <SolidColorBrush x:Key="BrushOnWarn" Color="#1B1B1B"/>
+
+    <!-- Small rounded button used on app cards; colors are set per button. -->
+    <Style x:Key="CardButton" TargetType="Button">
+      <Setter Property="Width" Value="96"/>
+      <Setter Property="Height" Value="26"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Background" Value="{DynamicResource BrushNavHover}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Pill chips: filters on Install (radio) and presets on Tweaks (button). -->
+    <Style x:Key="ChipRadio" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Height" Value="24"/>
+      <Setter Property="Margin" Value="0,2,6,2"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="12" Padding="11,0">
+              <ContentPresenter VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="ChipButton" TargetType="Button">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Height" Value="24"/>
+      <Setter Property="Margin" Value="0,0,6,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="12" Padding="11,0">
+              <ContentPresenter VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="ToolbarButton" TargetType="Button">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="Padding" Value="12,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- On/off switch for tweaks. An unknown state (IsChecked null) shows off and faded. -->
+    <Style x:Key="SwitchToggle" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Grid Width="40" Height="20" Background="Transparent">
+              <Border x:Name="Track" CornerRadius="10" Background="{DynamicResource BrushInputBorder}"/>
+              <Ellipse x:Name="Knob" Width="14" Height="14" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+                <Setter TargetName="Knob" Property="Margin" Value="0,0,3,0"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
 
 
     <Style x:Key="NavButton" TargetType="RadioButton">
@@ -156,6 +292,11 @@
       <Setter Property="FontSize" Value="14"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="PageSearch" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Padding" Value="9,0"/>
     </Style>
     <Style TargetType="CheckBox">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
@@ -351,52 +492,44 @@
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
-          <StackPanel Grid.Row="0" Margin="24,22,24,0">
-            <TextBlock Text="Install" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
-            <TextBlock Text="Choose the apps you want. WinTool installs them with winget, one at a time, and writes a log below. Right-click an app to update or uninstall just that one." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-          </StackPanel>
-          <Grid Grid.Row="1" Margin="24,16,24,12">
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto"/>
-              <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+          <TextBlock Grid.Row="0" Margin="20,19,20,0" Text="Install" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+          <Grid Grid.Row="1" Margin="20,9,20,0">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="280"/>
+              <ColumnDefinition Width="300"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <!-- Wraps onto a second line when the window is narrow, so no button is cut off. -->
-            <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,12,0,0">
-              <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,16,6"/>
-              <Button x:Name="AppRefreshInstalled" Content="Refresh" ToolTip="Check again which apps are installed and which have updates" Style="{StaticResource SecondaryButton}" Margin="0,0,8,6"/>
-              <Button x:Name="AppSelectInstalled" Content="Select installed" Style="{StaticResource SecondaryButton}" Margin="0,0,8,6"/>
-              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource SecondaryButton}" Margin="0,0,8,6"/>
-              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource SecondaryButton}" Margin="0,0,8,6"/>
-              <Button x:Name="AppUpgradeAll" Content="Update all" Style="{StaticResource SecondaryButton}" ToolTip="Runs winget upgrade --all" Margin="0,0,8,6"/>
-            </WrapPanel>
-            <Grid Grid.Column="0">
-              <TextBox x:Name="AppSearch" AutomationProperties.Name="Search apps"/>
-              <TextBlock x:Name="AppSearchHint" Text="Search apps" IsHitTestVisible="False" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
+            <Grid Grid.Column="0" VerticalAlignment="Top">
+              <TextBox x:Name="AppSearch" Style="{StaticResource PageSearch}" AutomationProperties.Name="Search apps"/>
+              <TextBlock x:Name="AppSearchHint" Text="Search apps&#x2026;" FontSize="12" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
             </Grid>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-              <TextBlock x:Name="AppCount" Text="0 selected" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
-            </StackPanel>
-            <StackPanel Grid.Column="2" Orientation="Horizontal">
-              <Button x:Name="AppSelectVisible" Content="Select visible" Style="{StaticResource SecondaryButton}" Margin="0"/>
-              <Button x:Name="AppClear" Content="Clear" Style="{StaticResource SecondaryButton}"/>
-              <Button x:Name="AppInstall" Content="Install selected" Style="{StaticResource PrimaryButton}"/>
+            <WrapPanel x:Name="AppFilters" Grid.Column="1" Margin="15,0,8,0" VerticalAlignment="Top"/>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+              <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="28" Padding="0" Margin="0,0,6,0" FontFamily="Segoe MDL2 Assets" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
+              <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Content="Update all" ToolTip="Runs winget upgrade --all" MinWidth="100"/>
             </StackPanel>
           </Grid>
-          <Grid Grid.Row="2" Margin="24,0,24,8">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-              <StackPanel>
-                <TextBlock x:Name="AppEmpty" Text="No apps match that search." Foreground="{DynamicResource BrushMuted}" Margin="4,8,0,0" Visibility="Collapsed"/>
-                <StackPanel x:Name="AppCategories"/>
-              </StackPanel>
-            </ScrollViewer>
-          </Grid>
+          <StackPanel Grid.Row="2" Margin="20,8,20,0">
+            <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." FontSize="11" Foreground="{DynamicResource BrushMuted}" Visibility="Collapsed" Margin="0,0,0,4"/>
+            <Border x:Name="AppBulkBar" Visibility="Collapsed" Background="{DynamicResource BrushAccentSoft}" CornerRadius="8" Padding="12,6" Margin="0,0,0,4">
+              <DockPanel LastChildFill="False">
+                <TextBlock x:Name="AppCount" DockPanel.Dock="Left" Text="0 selected" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,16,0"/>
+                <Button x:Name="AppInstall" DockPanel.Dock="Left" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushAccent}" Foreground="White" FontWeight="SemiBold"/>
+                <Button x:Name="AppUpdate" DockPanel.Dock="Left" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
+                <Button x:Name="AppUninstall" DockPanel.Dock="Left" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
+                <Button x:Name="AppClear" DockPanel.Dock="Right" Content="Clear" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Margin="0"/>
+              </DockPanel>
+            </Border>
+          </StackPanel>
+          <ScrollViewer x:Name="AppScroll" Grid.Row="3" Margin="20,0,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+              <TextBlock x:Name="AppEmpty" Text="No apps match that search." Foreground="{DynamicResource BrushMuted}" Margin="0,8,0,0" Visibility="Collapsed"/>
+              <StackPanel x:Name="AppCategories"/>
+            </StackPanel>
+          </ScrollViewer>
         </Grid>
 
         <Grid x:Name="ViewTweaks" Visibility="Collapsed">
@@ -405,42 +538,35 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
-          <StackPanel Grid.Row="0" Margin="24,22,24,0">
-            <TextBlock Text="Tweaks" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
-            <TextBlock Text="Optional changes for a calmer PC. WinTool creates a restore point first. Every tweak here has an undo. Removing an inbox app can be restored only while Windows still has a copy." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-          </StackPanel>
-          <Grid Grid.Row="1" Margin="24,16,24,12">
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto"/>
-              <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Grid Grid.Row="0">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-              </Grid.ColumnDefinitions>
-              <Grid Grid.Column="0">
-                <TextBox x:Name="TweakSearch" AutomationProperties.Name="Search tweaks"/>
-                <TextBlock x:Name="TweakSearchHint" Text="Search tweaks" IsHitTestVisible="False" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
-              </Grid>
-              <WrapPanel x:Name="TweakPresets" Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center"/>
-              <StackPanel Grid.Column="2" Orientation="Horizontal">
-                <Button x:Name="TweakClear" Content="Clear" Style="{StaticResource SecondaryButton}" Margin="0"/>
-                <Button x:Name="TweakUndo" Content="Undo selected" Style="{StaticResource SecondaryButton}"/>
-                <Button x:Name="TweakApply" Content="Apply selected" Style="{StaticResource PrimaryButton}"/>
-              </StackPanel>
+          <TextBlock Grid.Row="0" Margin="20,19,20,0" Text="Tweaks" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+          <Grid Grid.Row="1" Margin="20,9,20,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="300"/>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+              <TextBox x:Name="TweakSearch" Style="{StaticResource PageSearch}" AutomationProperties.Name="Search tweaks"/>
+              <TextBlock x:Name="TweakSearchHint" Text="Search tweaks&#x2026;" FontSize="12" IsHitTestVisible="False" Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
             </Grid>
-            <CheckBox x:Name="TweakRestartExplorer" Grid.Row="1" Content="Restart File Explorer when a tweak needs it" IsChecked="True" Margin="0,12,0,0"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,12,0">
+              <TextBlock Text="Presets:" FontSize="11" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+              <WrapPanel x:Name="TweakPresets" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock x:Name="TweakRestoreNote" Grid.Column="2" Text="Restore point is created before the first change" FontSize="11" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
           </Grid>
-          <Grid Grid.Row="2" Margin="24,0,24,8">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-              <StackPanel>
-                <TextBlock x:Name="TweakEmpty" Text="No tweaks match that search." Foreground="{DynamicResource BrushMuted}" Margin="4,8,0,0" Visibility="Collapsed"/>
-                <StackPanel x:Name="TweakCategories"/>
-              </StackPanel>
-            </ScrollViewer>
-          </Grid>
+          <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,14,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+              <TextBlock x:Name="TweakEmpty" Text="No tweaks match that search." Foreground="{DynamicResource BrushMuted}" Margin="0,8,0,0" Visibility="Collapsed"/>
+              <Grid x:Name="TweakCategories">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition x:Name="TweakColumnLeft" Width="*"/>
+                  <ColumnDefinition x:Name="TweakColumnGap" Width="15"/>
+                  <ColumnDefinition x:Name="TweakColumnRight" Width="*"/>
+                </Grid.ColumnDefinitions>
+              </Grid>
+            </StackPanel>
+          </ScrollViewer>
         </Grid>
 
         <ScrollViewer x:Name="ViewTerminal" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
@@ -674,6 +800,14 @@
                   <Button x:Name="ExportWinget" Content="Export winget list" Style="{StaticResource SecondaryButton}" Margin="0"/>
                   <Button x:Name="ImportWinget" Content="Import winget list" Style="{StaticResource SecondaryButton}"/>
                 </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,12,0,0">
+              <StackPanel>
+                <TextBlock Text="Tweaks" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Some tweaks only show up after File Explorer restarts." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                <CheckBox x:Name="TweakRestartExplorer" Content="Restart File Explorer when a tweak needs it" IsChecked="True"/>
               </StackPanel>
             </Border>
 

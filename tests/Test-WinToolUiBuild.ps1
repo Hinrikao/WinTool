@@ -189,13 +189,15 @@ $skip = @(
     "Install: uninstall selected",
     "Install: update all",
     "Install: update one app",
+    "Install: install one app",
+    "Install: open app",
     "Install: uninstall one app",
     "Install: check installed",
     "Check installed apps",
     "Features: apply changes",
     "Features: refresh state",
-    "Tweaks: apply selected",
-    "Tweaks: undo selected",
+    "Tweaks: switch",
+    "Tweaks: preset",
     "Terminal: apply setup",
     "Terminal: refresh lists",
     "Updates: scan",
@@ -299,9 +301,6 @@ if ($thirdApp.InstalledBadge.Visibility -ne "Visible" -or @($byNameState.ByName)
     throw "An app found by its Apps and features name did not get the Installed badge."
 }
 $null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
-if (-not ($window.FindName("AppInstalledStatus").Parent -is [System.Windows.Controls.WrapPanel])) {
-    throw "The Install toolbar row should wrap so no button is cut off."
-}
 # Notepad++ has plus signs in its id and name. It must get the badge from the
 # export, from winget list alone, and from a shortened list id.
 $notepadRow = @($appRows | Where-Object { [string]$_.WingetId -eq "Notepad++.Notepad++" })[0]
@@ -497,6 +496,128 @@ if ([System.Windows.Controls.Grid]::GetRow($window.FindName("TerminalCardFont"))
 if ($null -eq $advancedGrid -or $window.FindName("TerminalSummaryHost").Children.Count -lt 3) {
     throw "The Terminal summary did not list the steps."
 }
+
+# Install and Tweaks tabs at 1280x760 (the approved mockups) and narrower.
+function Save-WinToolViewShot {
+    param([string]$Name, [double]$Width, [double]$Height)
+    $rootVisual.Measure([System.Windows.Size]::new($Width, $Height))
+    $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
+    $rootVisual.UpdateLayout()
+    $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]$Width, [int]$Height, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    $backdrop = New-Object System.Windows.Media.DrawingVisual
+    $context = $backdrop.RenderOpen()
+    $context.DrawRectangle($window.Background, $null, [System.Windows.Rect]::new(0, 0, $Width, $Height))
+    $context.Close()
+    $bitmap.Render($backdrop)
+    $bitmap.Render($rootVisual)
+    $encoder = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
+    $encoder.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($bitmap))
+    $path = Join-Path $shotFolder ($Name + ".png")
+    $stream = [System.IO.File]::Create($path)
+    try { $encoder.Save($stream) } finally { $stream.Dispose() }
+    Write-Output ("Saved " + $path)
+}
+
+# Sample state like the mockup: a few installed apps and two with updates.
+Sync-WinToolAppCheck -Id @() -OnlyThese
+$script:WinToolState.AppStartApps = @("Google Chrome`tChrome", "Discord`tcom.squirrel.Discord.Discord", "Telegram Desktop`tTelegram", "7-Zip File Manager`t7zFM")
+$sampleIds = @()
+foreach ($wingetId in @("Google.Chrome", "Brave.Brave", "Discord.Discord", "Telegram.TelegramDesktop", "Spotify.Spotify", "7zip.7zip")) {
+    if (@($appRows | Where-Object { $_.WingetId -eq $wingetId }).Count -gt 0) { $sampleIds += $wingetId }
+}
+$null = Set-WinToolAppState -InstalledId $sampleIds -UpgradeText "Name Id Version Available`nBrave Brave.Brave 1.0 2.0`nSpotify Spotify.Spotify 1.0 2.0"
+$script:WinToolState.AppFilter = "all"
+$window.FindName("AppSearch").Text = ""
+$allChip = @($window.FindName("AppFilters").Children)[0]
+$allChip.IsChecked = $false
+$allChip.IsChecked = $true
+Update-WinToolAppFilter
+$chrome = @($appRows | Where-Object { $_.WingetId -eq "Google.Chrome" })[0]
+$brave = @($appRows | Where-Object { $_.WingetId -eq "Brave.Brave" })[0]
+$firefox = @($appRows | Where-Object { $_.WingetId -eq "Mozilla.Firefox" })[0]
+if ($chrome.OpenButton.Visibility -ne "Visible" -or $chrome.UninstallButton.Visibility -ne "Visible" -or $chrome.InstallButton.Visibility -ne "Collapsed" -or $chrome.InstalledBadge.Visibility -ne "Visible") {
+    throw "An installed app card should show Open, Uninstall, and the Installed pill."
+}
+if ($brave.UpdateButton.Visibility -ne "Visible" -or $brave.OpenButton.Visibility -ne "Collapsed" -or $brave.UpdateBadge.Visibility -ne "Visible" -or $brave.InstalledBadge.Visibility -ne "Collapsed") {
+    throw "An app with an update should show Update, Uninstall, and the Update ready pill."
+}
+if ($firefox.InstallButton.Visibility -ne "Visible" -or $firefox.UninstallButton.Visibility -ne "Collapsed") {
+    throw "An app that is not installed should show only Install."
+}
+if ([string]$window.FindName("AppUpgradeAll").Content -ne "Update all (2)") {
+    throw ("Update all should count the updates, got " + [string]$window.FindName("AppUpgradeAll").Content)
+}
+$installedChip = @($window.FindName("AppFilters").Children | Where-Object { [string]$_.Tag -eq "installed" })[0]
+$installedChip.IsChecked = $true
+if ($firefox.Panel.Visibility -ne "Collapsed" -or $chrome.Panel.Visibility -ne "Visible") {
+    throw "The Installed chip should show only installed apps."
+}
+$allChip.IsChecked = $true
+$firefox.Checkbox.IsChecked = $true
+if ($window.FindName("AppBulkBar").Visibility -ne "Visible") {
+    throw "Ticking an app should show the bulk bar."
+}
+$firefox.Checkbox.IsChecked = $false
+if ($window.FindName("AppBulkBar").Visibility -ne "Collapsed") {
+    throw "The bulk bar should hide when nothing is ticked."
+}
+$window.FindName("NavInstall").IsChecked = $true
+$script:WinToolState.LogExpanded = $false
+Sync-WinToolLogPanel
+foreach ($size in @(@(1280, 760, "install-mockup"), @(1000, 760, "install-narrow"))) {
+    Update-WinToolInstallLayout -Width ([double]$size[0] - 248 - 40)
+    Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
+}
+Update-WinToolInstallLayout -Width 1000
+if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne 3) { throw "Install cards should use three columns on a wide window." }
+Update-WinToolInstallLayout -Width 700
+if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne 2) { throw "Install cards should use two columns under about 1100 px." }
+Update-WinToolInstallLayout -Width 400
+if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne 1) { throw "Install cards should use one column under about 760 px." }
+
+# Tweak switches follow the real state of this PC; registry tweaks must be readable.
+$window.FindName("TweakSearch").Text = ""
+Update-WinToolTweakState
+$unreadable = @($tweakRows | Where-Object { $_.State -eq "unknown" -and [string]$_.Tweak.apply.type -eq "registry" })
+if ($unreadable.Count -gt 0) {
+    throw ("Registry tweaks whose state could not be read: " + (@($unreadable | ForEach-Object { $_.Id }) -join ", "))
+}
+Write-Output ("Tweaks on this runner: " + (@($tweakRows | Where-Object { $_.Checkbox.IsChecked -eq $true } | ForEach-Object { $_.Id }) -join ", "))
+# The switch handler with a stand-in runner: on, then off, then a failure that reverts.
+$script:WinToolState.RestorePointDone = $true
+$script:WinToolTweakProbeOverride = @{ ReadValue = { throw "stand-in" } }
+$script:TestTweakCalls = New-Object System.Collections.Generic.List[string]
+$script:WinToolTweakRunnerOverride = { param($Tweak, $Direction) $script:TestTweakCalls.Add(([string]$Tweak.id + ":" + $Direction)) }
+$switchRow = @($tweakRows | Where-Object { $_.Checkbox.IsChecked -ne $true })[0]
+$clickEvent = [System.Windows.Controls.Primitives.ButtonBase]::ClickEvent
+$switchRow.Checkbox.IsChecked = $true
+$switchRow.Checkbox.RaiseEvent([System.Windows.RoutedEventArgs]::new($clickEvent))
+if ($script:TestTweakCalls[0] -ne ($switchRow.Id + ":Apply") -or $switchRow.Checkbox.IsChecked -ne $true -or -not $switchRow.Checkbox.IsEnabled) {
+    throw ("Turning a switch on did not apply the tweak: " + ($script:TestTweakCalls -join ", "))
+}
+$switchRow.Checkbox.IsChecked = $false
+$switchRow.Checkbox.RaiseEvent([System.Windows.RoutedEventArgs]::new($clickEvent))
+if ($script:TestTweakCalls[1] -ne ($switchRow.Id + ":Undo") -or $switchRow.Checkbox.IsChecked -ne $false) {
+    throw "Turning a switch off did not run the undo."
+}
+$script:WinToolTweakRunnerOverride = { param($Tweak, $Direction) $null = $Tweak, $Direction; throw "stand-in failure" }
+$switchRow.Checkbox.IsChecked = $true
+$switchRow.Checkbox.RaiseEvent([System.Windows.RoutedEventArgs]::new($clickEvent))
+if ($switchRow.Checkbox.IsChecked -ne $false -or -not $switchRow.Checkbox.IsEnabled) {
+    throw "A failed tweak change should put the switch back."
+}
+$script:WinToolTweakRunnerOverride = $null
+$script:WinToolTweakProbeOverride = $null
+Update-WinToolTweakState
+$window.FindName("NavTweaks").IsChecked = $true
+foreach ($size in @(@(1280, 760, "tweaks-mockup"), @(980, 760, "tweaks-narrow"))) {
+    Update-WinToolTweakLayout -Width ([double]$size[0] - 248 - 40)
+    Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
+}
+Update-WinToolTweakLayout -Width 1000
+if ([System.Windows.Controls.Grid]::GetColumn($script:WinToolState.TweakGroups[1].Card) -ne 2) { throw "Tweak cards should sit in two columns on a wide window." }
+Update-WinToolTweakLayout -Width 600
+if ([System.Windows.Controls.Grid]::GetRow($script:WinToolState.TweakGroups[1].Card) -ne 1) { throw "Tweak cards should stack under about 1000 px." }
 
 $uiErrors = Get-WinToolUiError
 if ($uiErrors.Count -gt 0) {

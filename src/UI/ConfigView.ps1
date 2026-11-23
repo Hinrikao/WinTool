@@ -22,7 +22,7 @@ function Update-WinToolProfileSummary {
     if (-not $terminal.enabled) {
         $replay = "Terminal setup is not included when this profile is replayed."
     }
-    $text = "{0} apps selected, {1} tweaks selected. Prompt: {2}. {3}" -f $apps.Count, $tweaks.Count, $prompt, $replay
+    $text = "{0} apps selected, {1} tweaks on. Prompt: {2}. {3}" -f $apps.Count, $tweaks.Count, $prompt, $replay
     (Get-WinToolUi -Name "ProfileSummary").Text = $text
 }
 

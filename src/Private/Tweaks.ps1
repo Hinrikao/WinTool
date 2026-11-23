@@ -380,3 +380,217 @@ function Invoke-WinToolTweakChange {
         Restart-WinToolExplorer
     }
 }
+
+# Reading the current state of a tweak. A probe is a hashtable of script
+# blocks that read Windows; tests pass a fake one.
+function Get-WinToolTweakProbe {
+    $script:WinToolAppxNames = $null
+    return @{
+        ReadValue = {
+            param($Path, $Name)
+            if (-not (Test-Path -LiteralPath $Path)) {
+                return $null
+            }
+            $key = Get-Item -LiteralPath $Path -ErrorAction Stop
+            return $key.GetValue([string]$Name, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+        }
+        KeyExists = {
+            param($Path)
+            return (Test-Path -LiteralPath $Path)
+        }
+        ServiceStart = {
+            param($Name)
+            $service = Get-Service -Name $Name -ErrorAction SilentlyContinue
+            if ($null -eq $service) {
+                return $null
+            }
+            return [string]$service.StartType
+        }
+        TaskState = {
+            param($TaskPath, $TaskName)
+            $task = Get-ScheduledTask -TaskName $TaskName -TaskPath $TaskPath -ErrorAction SilentlyContinue
+            if ($null -eq $task) {
+                return $null
+            }
+            return [string]$task.State
+        }
+        AppxInstalled = {
+            param($Name)
+            if ($null -eq $script:WinToolAppxNames) {
+                $names = @{}
+                foreach ($package in @(Get-AppxPackage -ErrorAction Stop)) {
+                    $names[[string]$package.Name] = $true
+                }
+                $script:WinToolAppxNames = $names
+            }
+            return $script:WinToolAppxNames.ContainsKey([string]$Name)
+        }
+    }
+}
+
+function Test-WinToolTweakStepState {
+    # Returns "on", "off" or "unknown" for one apply step.
+    param(
+        [Parameter(Mandatory = $true)]$Step,
+        [Parameter(Mandatory = $true)][hashtable]$Probe
+    )
+    try {
+        switch ([string]$Step.Type) {
+            "registry-set" {
+                $current = & $Probe.ReadValue ([string]$Step.Path) ([string]$Step.Name)
+                if ($null -eq $current) {
+                    return "off"
+                }
+                $kind = [string]$Step.Kind
+                if ($kind -eq "DWord" -or $kind -eq "QWord") {
+                    $wantedNumber = [int64]0
+                    $currentNumber = [int64]0
+                    if (-not [int64]::TryParse([string]$Step.Value, [ref]$wantedNumber)) { return "unknown" }
+                    if ($current -is [int] -or $current -is [long] -or $current -is [uint32] -or $current -is [uint64]) {
+                        $currentNumber = [int64]$current
+                    }
+                    elseif (-not [int64]::TryParse([string]$current, [ref]$currentNumber)) {
+                        return "off"
+                    }
+                    # DWORDs above 0x7FFFFFFF come back negative from the registry.
+                    if ($kind -eq "DWord" -and $currentNumber -lt 0) { $currentNumber += 4294967296 }
+                    if ($kind -eq "DWord" -and $wantedNumber -lt 0) { $wantedNumber += 4294967296 }
+                    if ($currentNumber -eq $wantedNumber) { return "on" }
+                    return "off"
+                }
+                if ($kind -eq "String" -or $kind -eq "ExpandString" -or [string]::IsNullOrEmpty($kind)) {
+                    if ([string]$current -eq [string]$Step.Value) { return "on" }
+                    return "off"
+                }
+                return "unknown"
+            }
+            "registry-remove-value" {
+                $current = & $Probe.ReadValue ([string]$Step.Path) ([string]$Step.Name)
+                if ($null -eq $current) { return "on" }
+                return "off"
+            }
+            "registry-key" {
+                $exists = [bool](& $Probe.KeyExists ([string]$Step.Path))
+                if ([string]$Step.Operation -eq "remove") {
+                    if ($exists) { return "off" }
+                    return "on"
+                }
+                if ($exists) { return "on" }
+                return "off"
+            }
+            "service" {
+                $start = & $Probe.ServiceStart ([string]$Step.Name)
+                if ($null -eq $start) { return "unknown" }
+                if ([string]$start -eq [string]$Step.StartupType) { return "on" }
+                return "off"
+            }
+            "scheduled-task" {
+                $state = & $Probe.TaskState ([string]$Step.TaskPath) ([string]$Step.TaskName)
+                if ($null -eq $state) { return "unknown" }
+                $disabled = ([string]$state -eq "Disabled")
+                if (([string]$Step.State -eq "Disabled") -eq $disabled) { return "on" }
+                return "off"
+            }
+            "appx-remove" {
+                foreach ($name in @($Step.Packages)) {
+                    if ([bool](& $Probe.AppxInstalled ([string]$name))) { return "off" }
+                }
+                return "on"
+            }
+            default {
+                return "unknown"
+            }
+        }
+    }
+    catch {
+        return "unknown"
+    }
+}
+
+function Get-WinToolTweakState {
+    # "on" when every apply step is already in place, "off" when one is not,
+    # "unknown" when the state cannot be read.
+    param(
+        [Parameter(Mandatory = $true)]$Tweak,
+        [Parameter(Mandatory = $true)][hashtable]$Probe
+    )
+    $steps = @()
+    try {
+        $steps = @(Get-WinToolTweakStep -Tweak $Tweak -Direction "Apply")
+    }
+    catch {
+        return "unknown"
+    }
+    if ($steps.Count -eq 0) {
+        return "unknown"
+    }
+    $unknown = $false
+    foreach ($step in $steps) {
+        $state = Test-WinToolTweakStepState -Step $step -Probe $Probe
+        if ($state -eq "off") {
+            return "off"
+        }
+        if ($state -eq "unknown") {
+            $unknown = $true
+        }
+    }
+    if ($unknown) {
+        return "unknown"
+    }
+    return "on"
+}
+
+function Set-WinToolTweakToggleState {
+    # Puts a row's switch in line with a detected state. Unknown shows off.
+    param(
+        [Parameter(Mandatory = $true)]$Row,
+        [Parameter(Mandatory = $true)][string]$State
+    )
+    $Row.State = $State
+    $Row.Checkbox.IsChecked = ($State -eq "on")
+}
+
+function Invoke-WinToolTweakItem {
+    # Runs the queued switch changes. Each item is @{ Row; Direction; Previous }.
+    # A change that throws puts the switch back where it was. Returns $true
+    # when File Explorer should be restarted.
+    param(
+        [object[]]$Item,
+        [Parameter(Mandatory = $true)][hashtable]$Probe,
+        [scriptblock]$Runner
+    )
+    if ($null -eq $Runner) {
+        $Runner = {
+            param($Tweak, $Direction)
+            Invoke-WinToolTweakChange -Tweak $Tweak -Direction $Direction -RestartExplorer $false
+        }
+    }
+    $needsExplorer = $false
+    foreach ($entry in @($Item)) {
+        $row = $entry.Row
+        $name = [string](Get-WinToolNote -Object $row.Tweak -Name "name" -Default "Tweak")
+        try {
+            & $Runner $row.Tweak ([string]$entry.Direction)
+            $state = Get-WinToolTweakState -Tweak $row.Tweak -Probe $Probe
+            if ($state -eq "unknown") {
+                $row.State = "unknown"
+                $row.Checkbox.IsChecked = ([string]$entry.Direction -eq "Apply")
+            }
+            else {
+                Set-WinToolTweakToggleState -Row $row -State $state
+            }
+            if ([string](Get-WinToolNote -Object $row.Tweak -Name "refresh" -Default "none") -eq "explorer") {
+                $needsExplorer = $true
+            }
+            $verb = "Turned on"
+            if ([string]$entry.Direction -eq "Undo") { $verb = "Turned off" }
+            Write-WinToolLog -Message ("{0}: {1}." -f $verb, $name) -Level "ok"
+        }
+        catch {
+            $row.Checkbox.IsChecked = [bool]$entry.Previous
+            Write-WinToolLog -Message ("Could not change {0}, so the switch went back. {1}" -f $name, $_.Exception.Message) -Level "error"
+        }
+        $row.Checkbox.IsEnabled = $true
+    }
+    return $needsExplorer
+}

@@ -10,6 +10,16 @@
       "id": "recommended",
       "name": "Recommended",
       "description": "A calmer everyday PC: Explorer, dark mode, fewer suggestions, less telemetry, and a small set of inbox apps removed."
+    },
+    {
+      "id": "gaming",
+      "name": "Gaming",
+      "description": "Game Mode on, background game recording off, raw mouse input, and no Sticky Keys prompt while playing."
+    },
+    {
+      "id": "privacy",
+      "name": "Privacy",
+      "description": "The safe privacy tweaks: less telemetry, no advertising ID, no activity history, and no web results or highlights in search."
     }
   ],
   "tweaks": [
@@ -373,7 +383,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -488,7 +498,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -519,7 +529,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -580,7 +590,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -629,7 +639,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -773,7 +783,7 @@
       "category": "Input",
       "risk": "safe",
       "refresh": "none",
-      "presets": [],
+      "presets": ["gaming"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1241,7 +1251,7 @@
       "category": "Taskbar and Start",
       "risk": "safe",
       "refresh": "explorer",
-      "presets": [],
+      "presets": ["privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1458,7 +1468,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1501,7 +1511,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1532,7 +1542,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1563,7 +1573,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": [],
+      "presets": ["privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1594,7 +1604,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": [],
+      "presets": ["privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1649,7 +1659,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1678,7 +1688,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": [],
+      "presets": ["privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1707,7 +1717,7 @@
       "category": "Privacy",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1796,7 +1806,7 @@
       "category": "Search",
       "risk": "safe",
       "refresh": "explorer",
-      "presets": ["recommended"],
+      "presets": ["recommended", "privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -1827,7 +1837,7 @@
       "category": "Search",
       "risk": "safe",
       "refresh": "none",
-      "presets": [],
+      "presets": ["privacy"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -2133,7 +2143,7 @@
       "category": "Input",
       "risk": "safe",
       "refresh": "none",
-      "presets": ["recommended"],
+      "presets": ["recommended", "gaming"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -2195,7 +2205,7 @@
       "category": "Gaming",
       "risk": "safe",
       "refresh": "none",
-      "presets": [],
+      "presets": ["gaming"],
       "apply": {
         "type": "registry",
         "entries": [
@@ -2238,7 +2248,7 @@
       "category": "Gaming",
       "risk": "safe",
       "refresh": "none",
-      "presets": [],
+      "presets": ["gaming"],
       "apply": {
         "type": "registry",
         "entries": [

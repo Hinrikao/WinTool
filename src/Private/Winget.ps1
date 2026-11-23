@@ -252,6 +252,19 @@ try {
     $Sync.DisplayNames = $names.ToArray()
     $log.Add(("Read {0} names from Apps and features and the Store." -f $names.Count))
 
+    # Start menu entries, so an installed app can be opened from its card.
+    try {
+        $startApps = New-Object System.Collections.Generic.List[string]
+        foreach ($entry in @(Get-StartApps -ErrorAction Stop)) {
+            $startApps.Add(([string]$entry.Name + "`t" + [string]$entry.AppID))
+        }
+        $Sync.StartApps = $startApps.ToArray()
+        $log.Add(("Read {0} Start menu entries." -f $startApps.Count))
+    }
+    catch {
+        $log.Add("Could not list Start menu apps: " + $_.Exception.Message)
+    }
+
     $upgradeArgs = @("upgrade") + $common
     $Sync.UpgradeText = (& $winget @upgradeArgs 2>&1 | ForEach-Object { [string]$_ }) -join "`n"
     $log.Add(("winget upgrade exited with {0}." -f $LASTEXITCODE))
@@ -503,4 +516,73 @@ function Get-WinToolUpgradeAllPlan {
             WingetId = ""
             Scope = ""
         })
+}
+
+function Resolve-WinToolAppLaunchId {
+    # Finds the Start menu entry (shell:AppsFolder id) for a catalog app.
+    # StartApp lines are "Name<TAB>AppID". Returns $null when nothing fits.
+    param(
+        [string]$Name,
+        [string[]]$DetectName = @(),
+        [string[]]$StartApp = @()
+    )
+    $wanted = New-Object System.Collections.Generic.List[string]
+    foreach ($item in @(@($Name) + @($DetectName))) {
+        if (-not [string]::IsNullOrWhiteSpace($item)) {
+            $wanted.Add(([string]$item).Trim().ToLowerInvariant())
+        }
+    }
+    if ($wanted.Count -eq 0) {
+        return $null
+    }
+    $entries = New-Object System.Collections.Generic.List[object]
+    foreach ($line in @($StartApp)) {
+        $text = [string]$line
+        $tab = $text.IndexOf("`t")
+        if ($tab -lt 1) { continue }
+        $entryName = $text.Substring(0, $tab).Trim()
+        $appId = $text.Substring($tab + 1).Trim()
+        if ([string]::IsNullOrWhiteSpace($appId)) { continue }
+        $lower = $entryName.ToLowerInvariant()
+        if ($lower.Contains("uninstall") -or $lower.Contains("readme") -or $lower.Contains("help")) { continue }
+        $entries.Add([pscustomobject]@{ Name = $lower; AppId = $appId })
+    }
+    foreach ($candidate in $wanted.ToArray()) {
+        foreach ($entry in $entries.ToArray()) {
+            if ($entry.Name -eq $candidate) { return $entry.AppId }
+        }
+    }
+    foreach ($candidate in $wanted.ToArray()) {
+        if ($candidate.Length -lt 4) { continue }
+        foreach ($entry in $entries.ToArray()) {
+            if ($entry.Name.StartsWith($candidate + " ") -or $entry.Name.StartsWith($candidate + "-")) { return $entry.AppId }
+        }
+    }
+    return $null
+}
+
+$script:WinToolIconPalette = @("#E66000", "#4285F4", "#FB542B", "#EF3939", "#00ACFF", "#FF1B2D", "#5865F2", "#2AABEE", "#1DB954", "#0078D4", "#7B5CD6", "#0F9D58", "#D83B01", "#00A4A6", "#C2185B", "#6D4C41")
+
+function Get-WinToolAppIconColor {
+    # A steady color per app id, so the icon tile looks the same every run.
+    param(
+        [string]$Id
+    )
+    $hash = 17
+    foreach ($character in ([string]$Id).ToCharArray()) {
+        $hash = (($hash * 31) + [int]$character) % 1000003
+    }
+    return $script:WinToolIconPalette[$hash % $script:WinToolIconPalette.Count]
+}
+
+function Get-WinToolAppInitial {
+    param(
+        [string]$Name
+    )
+    foreach ($character in ([string]$Name).ToCharArray()) {
+        if ([char]::IsLetterOrDigit($character)) {
+            return ([string]$character).ToUpperInvariant()
+        }
+    }
+    return "?"
 }

@@ -4,6 +4,7 @@
     {
       "id": "browsers",
       "name": "Browsers",
+      "chip": "Browsers",
       "description": "Pick the browsers you actually want on a new PC.",
       "apps": [
         {
@@ -96,6 +97,7 @@
     {
       "id": "communication",
       "name": "Communication",
+      "chip": "Chat",
       "description": "Chat, calls, and team tools.",
       "apps": [
         {
@@ -197,6 +199,7 @@
     {
       "id": "office",
       "name": "Office and notes",
+      "chip": "Office",
       "description": "Documents, PDFs, notes, and study tools.",
       "apps": [
         {
@@ -260,6 +263,7 @@
     {
       "id": "development",
       "name": "Development",
+      "chip": "Dev",
       "description": "Editors, languages, and everyday developer tools.",
       "apps": [
         {
@@ -597,6 +601,7 @@
     {
       "id": "gaming",
       "name": "Gaming",
+      "chip": "Gaming",
       "description": "Stores and launchers. Game installs still happen inside each store.",
       "apps": [
         {
@@ -723,6 +728,7 @@
     {
       "id": "media",
       "name": "Media",
+      "chip": "Media",
       "description": "Play, edit, and record.",
       "apps": [
         {
@@ -906,6 +912,7 @@
     {
       "id": "utilities",
       "name": "Utilities",
+      "chip": "Utilities",
       "description": "Small tools that make a fresh PC more comfortable.",
       "apps": [
         {
@@ -1187,6 +1194,7 @@
     {
       "id": "security",
       "name": "Security and network",
+      "chip": "Security",
       "description": "VPNs, encryption, and network tools.",
       "apps": [
         {
@@ -1271,6 +1279,7 @@
     {
       "id": "runtimes",
       "name": "Runtimes",
+      "chip": "Runtimes",
       "description": "Shared runtimes that apps and games ask for.",
       "apps": [
         {

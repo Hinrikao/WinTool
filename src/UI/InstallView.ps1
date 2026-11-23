@@ -7,88 +7,80 @@ function Initialize-WinToolInstallView {
     $hostPanel.Children.Clear()
     $script:WinToolState.AppRows = @()
     $script:WinToolState.CategoryRows = @()
+    $script:WinToolState.AppFilter = "all"
+    $script:WinToolState.AppStartApps = @()
+    $script:WinToolState.AppCardAction = $null
 
+    $filters = Get-WinToolUi -Name "AppFilters"
+    $filters.Children.Clear()
+    $chips = New-Object System.Collections.Generic.List[object]
+    $chips.Add([pscustomobject]@{ Tag = "all"; Text = "All" })
+    $chips.Add([pscustomobject]@{ Tag = "installed"; Text = "Installed (0)" })
+    $chips.Add([pscustomobject]@{ Tag = "updates"; Text = "Updates (0)" })
+
+    $first = $true
     foreach ($category in @(Get-WinToolNote -Object $catalog -Name "categories" -Default @())) {
-        $card = New-WinToolCard
-        $stack = New-Object System.Windows.Controls.StackPanel
-        $header = New-Object System.Windows.Controls.Grid
-        $header.ColumnDefinitions.Add((New-WinToolColumn))
-        $header.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+        $chipText = [string](Get-WinToolNote -Object $category -Name "chip" -Default ([string]$category.name))
+        $chips.Add([pscustomobject]@{ Tag = ("category:" + [string]$category.id); Text = $chipText })
 
-        $titleStack = New-Object System.Windows.Controls.StackPanel
-        [void]$titleStack.Children.Add((New-WinToolText -Text ([string]$category.name) -Size 18 -Weight "SemiBold"))
-        $description = [string](Get-WinToolNote -Object $category -Name "description" -Default "")
-        [void]$titleStack.Children.Add((New-WinToolText -Text $description -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 4, 16, 0))))
-        [System.Windows.Controls.Grid]::SetColumn($titleStack, 0)
-        [void]$header.Children.Add($titleStack)
-
-        $selectAll = New-Object System.Windows.Controls.CheckBox
-        $selectAll.Content = "Select all"
-        $selectAll.VerticalAlignment = "Center"
-        $selectAll.IsThreeState = $true
-        [System.Windows.Controls.Grid]::SetColumn($selectAll, 1)
-        [void]$header.Children.Add($selectAll)
-        [void]$stack.Children.Add($header)
-
-        $appsPanel = New-Object System.Windows.Controls.StackPanel
-        $appsPanel.Margin = [System.Windows.Thickness]::new(0, 12, 0, 0)
+        $section = New-Object System.Windows.Controls.StackPanel
+        $headerMargin = [System.Windows.Thickness]::new(0, 10, 0, 7)
+        if ($first) { $headerMargin = [System.Windows.Thickness]::new(0, 6, 0, 7) }
+        $first = $false
+        $header = New-WinToolText -Text ([string]$category.name) -Size 14 -Weight "Bold" -Margin $headerMargin
+        $header.ToolTip = [string](Get-WinToolNote -Object $category -Name "description" -Default "")
+        [void]$section.Children.Add($header)
+        $grid = New-Object System.Windows.Controls.Primitives.UniformGrid
+        $grid.Columns = 3
+        $grid.Margin = [System.Windows.Thickness]::new(0, 0, -12, 0)
         $appRows = @()
         foreach ($app in @(Get-WinToolNote -Object $category -Name "apps" -Default @())) {
             $row = New-WinToolAppRow -App $app -CategoryName ([string]$category.name)
-            [void]$appsPanel.Children.Add($row.Panel)
+            $row | Add-Member -NotePropertyName CategoryId -NotePropertyValue ([string]$category.id)
+            [void]$grid.Children.Add($row.Panel)
             $appRows += $row
         }
-        [void]$stack.Children.Add($appsPanel)
-        $card.Child = $stack
-        [void]$hostPanel.Children.Add($card)
-
-        $categoryRow = [pscustomobject]@{
+        [void]$section.Children.Add($grid)
+        [void]$hostPanel.Children.Add($section)
+        $script:WinToolState.CategoryRows += [pscustomobject]@{
             Id = [string]$category.id
-            Card = $card
-            SelectAll = $selectAll
+            Card = $section
+            Grid = $grid
             Apps = $appRows
-            Updating = $false
         }
-        $script:WinToolState.CategoryRows += $categoryRow
         foreach ($row in $appRows) {
             $script:WinToolState.AppRows += $row
-        }
-
-        Register-WinToolUiEvent -Control $selectAll -EventName "Click" -Name "Install: select all in category" -Data $categoryRow -Action {
-            param($source, $eventData, $boundCategory)
-            $null = $source, $eventData
-            Sync-WinToolCategoryFromHeader -CategoryRow $boundCategory
-        }
-        foreach ($row in $appRows) {
             foreach ($eventName in @("Checked", "Unchecked")) {
-                Register-WinToolUiEvent -Control $row.Checkbox -EventName $eventName -Name "Install: tick an app" -Data $categoryRow -Action {
-                    param($source, $eventData, $boundCategory)
-                    $null = $source, $eventData
-                    Sync-WinToolAppToggle -CategoryRow $boundCategory
-                }
+                Register-WinToolUiEvent -Control $row.Checkbox -EventName $eventName -Name "Install: tick an app" -Action { Sync-WinToolAppCount }
             }
         }
+    }
+
+    foreach ($chip in $chips.ToArray()) {
+        $radio = New-Object System.Windows.Controls.RadioButton
+        $radio.Style = $script:WinToolWindow.FindResource("ChipRadio")
+        $radio.GroupName = "AppFilter"
+        $radio.Content = [string]$chip.Text
+        $radio.Tag = [string]$chip.Tag
+        if ($chip.Tag -eq "all") { $radio.IsChecked = $true }
+        Register-WinToolUiEvent -Control $radio -EventName "Checked" -Name "Install: filter" -Data ([string]$chip.Tag) -Action {
+            param($source, $eventData, $tag)
+            $null = $source, $eventData
+            $script:WinToolState.AppFilter = $tag
+            Update-WinToolAppFilter
+        }
+        [void]$filters.Children.Add($radio)
     }
 
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppSearch") -EventName "TextChanged" -Name "Install: search" -Action {
         Sync-WinToolSearchHint -BoxName "AppSearch" -HintName "AppSearchHint"
         Update-WinToolAppFilter
     }
-    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppSelectVisible") -EventName "Click" -Name "Install: select visible" -Action {
-        foreach ($row in @($script:WinToolState.AppRows)) {
-            if ($row.Panel.Visibility -eq "Visible") {
-                $row.Checkbox.IsChecked = $true
-            }
-        }
-    }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppClear") -EventName "Click" -Name "Install: clear" -Action {
         Sync-WinToolAppCheck -Id @() -OnlyThese
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppInstall") -EventName "Click" -Name "Install: install selected" -Action {
         Invoke-WinToolInstallClick
-    }
-    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppSelectInstalled") -EventName "Click" -Name "Install: select installed" -Action {
-        Select-WinToolInstalledApp
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppRefreshInstalled") -EventName "Click" -Name "Install: check installed" -Action {
         Start-WinToolAppDetection
@@ -102,7 +94,115 @@ function Initialize-WinToolInstallView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AppUpgradeAll") -EventName "Click" -Name "Install: update all" -Action {
         Invoke-WinToolUpgradeAllClick
     }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ViewInstall") -EventName "SizeChanged" -Name "Install: layout" -Action {
+        Update-WinToolInstallLayout -Width ((Get-WinToolUi -Name "ViewInstall").ActualWidth - 40)
+    }
+    Update-WinToolAppChip
     Sync-WinToolAppCount
+}
+
+function Update-WinToolInstallLayout {
+    param(
+        [double]$Width
+    )
+    # Three cards per row; two under about 1100 px window width, one under 760.
+    if ($Width -le 0) {
+        return
+    }
+    $columns = 3
+    if ($Width -lt 812) { $columns = 2 }
+    if ($Width -lt 472) { $columns = 1 }
+    foreach ($category in @($script:WinToolState.CategoryRows)) {
+        if ($category.Grid.Columns -ne $columns) {
+            $category.Grid.Columns = $columns
+        }
+    }
+}
+
+function New-WinToolCardButton {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [string]$Glyph,
+        [ValidateSet("primary", "neutral", "danger", "warn")][string]$Kind = "neutral"
+    )
+    $button = New-Object System.Windows.Controls.Button
+    $button.Style = $script:WinToolWindow.FindResource("CardButton")
+    switch ($Kind) {
+        "primary" {
+            $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushAccent")
+            $button.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "BrushOnAccent")
+            $button.FontWeight = "Bold"
+        }
+        "danger" {
+            $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushBadSoft")
+            $button.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "BrushBad")
+        }
+        "warn" {
+            $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushWarnStrong")
+            $button.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "BrushOnWarn")
+            $button.FontWeight = "Bold"
+        }
+        default {
+            $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushNavHover")
+            $button.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "BrushInk")
+        }
+    }
+    Set-WinToolCardButtonText -Button $button -Text $Text -Glyph $Glyph
+    return $button
+}
+
+function Set-WinToolCardButtonText {
+    param(
+        [Parameter(Mandatory = $true)]$Button,
+        [Parameter(Mandatory = $true)][string]$Text,
+        [string]$Glyph
+    )
+    if ([string]::IsNullOrEmpty($Glyph)) {
+        $Button.Content = $Text
+        return
+    }
+    $line = New-Object System.Windows.Controls.StackPanel
+    $line.Orientation = "Horizontal"
+    $icon = New-Object System.Windows.Controls.TextBlock
+    $icon.Text = $Glyph
+    $icon.FontFamily = [System.Windows.Media.FontFamily]::new("Segoe MDL2 Assets")
+    $icon.FontSize = 11
+    $icon.VerticalAlignment = "Center"
+    $icon.Margin = [System.Windows.Thickness]::new(0, 1, 6, 0)
+    $label = New-Object System.Windows.Controls.TextBlock
+    $label.Text = $Text
+    $label.VerticalAlignment = "Center"
+    [void]$line.Children.Add($icon)
+    [void]$line.Children.Add($label)
+    $Button.Content = $line
+}
+
+function New-WinToolStatusPill {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][ValidateSet("ok", "warn")][string]$Kind
+    )
+    $pill = New-Object System.Windows.Controls.Border
+    $pill.CornerRadius = [System.Windows.CornerRadius]::new(9)
+    $pill.Height = 18
+    $pill.Padding = [System.Windows.Thickness]::new(10, 0, 10, 0)
+    $pill.VerticalAlignment = "Top"
+    $pill.HorizontalAlignment = "Right"
+    $label = New-Object System.Windows.Controls.TextBlock
+    $label.Text = $Text
+    $label.FontSize = 10
+    $label.VerticalAlignment = "Center"
+    if ($Kind -eq "warn") {
+        $pill.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushWarnSoft")
+        $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushWarn")
+    }
+    else {
+        $pill.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushOkSoft")
+        $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushOk")
+    }
+    $pill.Child = $label
+    $pill.Visibility = "Collapsed"
+    return $pill
 }
 
 function New-WinToolAppRow {
@@ -111,32 +211,95 @@ function New-WinToolAppRow {
         [string]$CategoryName
     )
     $tags = @(Get-WinToolNote -Object $App -Name "tags" -Default @()) -join " "
-    $panel = New-Object System.Windows.Controls.Grid
-    $panel.Margin = [System.Windows.Thickness]::new(0, 0, 0, 12)
-    $panel.ColumnDefinitions.Add((New-WinToolColumn -Auto))
-    $panel.ColumnDefinitions.Add((New-WinToolColumn))
+    # A card: icon, name, winget id, status pill, one line of description,
+    # the action buttons, and a checkbox for picking several apps at once.
+    $panel = New-Object System.Windows.Controls.Border
+    $panel.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushCard")
+    $panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
+    $panel.BorderThickness = [System.Windows.Thickness]::new(1)
+    $panel.CornerRadius = [System.Windows.CornerRadius]::new(10)
+    $panel.Padding = [System.Windows.Thickness]::new(13, 13, 11, 9)
+    $panel.Margin = [System.Windows.Thickness]::new(0, 0, 12, 10)
+    $panel.Height = 124
 
+    $layout = New-Object System.Windows.Controls.Grid
+    foreach ($height in @(40, 24, 34)) {
+        $rowDefinition = New-Object System.Windows.Controls.RowDefinition
+        $rowDefinition.Height = [System.Windows.GridLength]::new($height)
+        $layout.RowDefinitions.Add($rowDefinition)
+    }
+
+    $head = New-Object System.Windows.Controls.Grid
+    $head.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+    $head.ColumnDefinitions.Add((New-WinToolColumn))
+    $head.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+    $icon = New-Object System.Windows.Controls.Border
+    $icon.Width = 40
+    $icon.Height = 40
+    $icon.CornerRadius = [System.Windows.CornerRadius]::new(9)
+    $iconColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString((Get-WinToolAppIconColor -Id ([string]$App.id))))
+    $icon.Background = [System.Windows.Media.SolidColorBrush]::new($iconColor)
+    $initial = New-Object System.Windows.Controls.TextBlock
+    $initial.Text = Get-WinToolAppInitial -Name ([string]$App.name)
+    $initial.FontSize = 16
+    $initial.FontWeight = "Bold"
+    $initial.Foreground = [System.Windows.Media.Brushes]::White
+    $initial.HorizontalAlignment = "Center"
+    $initial.VerticalAlignment = "Center"
+    $icon.Child = $initial
+    [void]$head.Children.Add($icon)
+
+    $names = New-Object System.Windows.Controls.StackPanel
+    $names.Margin = [System.Windows.Thickness]::new(12, 3, 8, 0)
+    $title = New-WinToolText -Text ([string]$App.name) -Size 13 -Weight "Bold"
+    $title.TextTrimming = "CharacterEllipsis"
+    [void]$names.Children.Add($title)
+    $idText = New-WinToolText -Text ("winget: " + [string]$App.wingetId) -Size 10 -Brush "BrushHint" -Margin ([System.Windows.Thickness]::new(0, 3, 0, 0))
+    $idText.TextTrimming = "CharacterEllipsis"
+    [void]$names.Children.Add($idText)
+    [System.Windows.Controls.Grid]::SetColumn($names, 1)
+    [void]$head.Children.Add($names)
+
+    $pills = New-Object System.Windows.Controls.Grid
+    $pills.Margin = [System.Windows.Thickness]::new(0, 2, 2, 0)
+    $installedBadge = New-WinToolStatusPill -Text "Installed" -Kind "ok"
+    $updateBadge = New-WinToolStatusPill -Text "Update ready" -Kind "warn"
+    [void]$pills.Children.Add($installedBadge)
+    [void]$pills.Children.Add($updateBadge)
+    [System.Windows.Controls.Grid]::SetColumn($pills, 2)
+    [void]$head.Children.Add($pills)
+    [void]$layout.Children.Add($head)
+
+    $description = New-WinToolText -Text ([string]$App.description) -Size 11 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 8, 2, 0))
+    $description.TextTrimming = "CharacterEllipsis"
+    $description.ToolTip = [string]$App.description
+    [System.Windows.Controls.Grid]::SetRow($description, 1)
+    [void]$layout.Children.Add($description)
+
+    $actions = New-Object System.Windows.Controls.Grid
+    $actions.ColumnDefinitions.Add((New-WinToolColumn))
+    $actions.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+    $buttons = New-Object System.Windows.Controls.StackPanel
+    $buttons.Orientation = "Horizontal"
+    $buttons.VerticalAlignment = "Bottom"
+    $installButton = New-WinToolCardButton -Text "Install" -Glyph ([string][char]0xE896) -Kind "primary"
+    $updateButton = New-WinToolCardButton -Text "Update" -Glyph ([string][char]0xE72C) -Kind "warn"
+    $openButton = New-WinToolCardButton -Text "Open" -Kind "neutral"
+    $uninstallButton = New-WinToolCardButton -Text "Uninstall" -Kind "danger"
+    foreach ($button in @($installButton, $updateButton, $openButton, $uninstallButton)) {
+        [void]$buttons.Children.Add($button)
+        Add-WinToolBusyControl -Control $button
+    }
+    [void]$actions.Children.Add($buttons)
     $checkbox = New-Object System.Windows.Controls.CheckBox
-    $checkbox.VerticalAlignment = "Top"
-    $checkbox.Margin = [System.Windows.Thickness]::new(0, 2, 10, 0)
-    [System.Windows.Controls.Grid]::SetColumn($checkbox, 0)
-    [void]$panel.Children.Add($checkbox)
-
-    $text = New-Object System.Windows.Controls.StackPanel
-    $titleLine = New-Object System.Windows.Controls.StackPanel
-    $titleLine.Orientation = "Horizontal"
-    [void]$titleLine.Children.Add((New-WinToolText -Text ([string]$App.name) -Weight "SemiBold"))
-    $installedBadge = New-WinToolBadge -Text "Installed" -Kind "ok"
-    $installedBadge.Visibility = "Collapsed"
-    [void]$titleLine.Children.Add($installedBadge)
-    $updateBadge = New-WinToolBadge -Text "Update available" -Kind "caution"
-    $updateBadge.Visibility = "Collapsed"
-    [void]$titleLine.Children.Add($updateBadge)
-    [void]$text.Children.Add($titleLine)
-    [void]$text.Children.Add((New-WinToolText -Text ([string]$App.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
-    [void]$text.Children.Add((New-WinToolText -Text ("winget: " + [string]$App.wingetId) -Size 12 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
-    [System.Windows.Controls.Grid]::SetColumn($text, 1)
-    [void]$panel.Children.Add($text)
+    $checkbox.VerticalAlignment = "Bottom"
+    $checkbox.Margin = [System.Windows.Thickness]::new(0, 0, -6, 4)
+    $checkbox.ToolTip = "Pick several apps and install, update, or uninstall them together."
+    [System.Windows.Controls.Grid]::SetColumn($checkbox, 1)
+    [void]$actions.Children.Add($checkbox)
+    [System.Windows.Controls.Grid]::SetRow($actions, 2)
+    [void]$layout.Children.Add($actions)
+    $panel.Child = $layout
 
     $search = (@([string]$App.name, [string]$App.description, [string]$App.wingetId, [string]$App.id, $tags, $CategoryName) -join " ")
     $row = [pscustomobject]@{
@@ -150,11 +313,29 @@ function New-WinToolAppRow {
         Checkbox = $checkbox
         InstalledBadge = $installedBadge
         UpdateBadge = $updateBadge
+        InstallButton = $installButton
+        UpdateButton = $updateButton
+        OpenButton = $openButton
+        UninstallButton = $uninstallButton
         Installed = $false
         UpdateAvailable = $false
+        LaunchId = $null
+        Pending = $false
+    }
+    foreach ($choice in @(
+            [pscustomobject]@{ Button = $installButton; Action = "install"; Name = "Install: install one app" },
+            [pscustomobject]@{ Button = $updateButton; Action = "upgrade"; Name = "Install: update one app" },
+            [pscustomobject]@{ Button = $uninstallButton; Action = "uninstall"; Name = "Install: uninstall one app" },
+            [pscustomobject]@{ Button = $openButton; Action = "open"; Name = "Install: open app" }
+        )) {
+        Register-WinToolUiEvent -Control $choice.Button -EventName "Click" -Name $choice.Name -Data ([pscustomobject]@{ Row = $row; Action = $choice.Action }) -Action {
+            param($source, $eventData, $target)
+            $null = $source, $eventData
+            Invoke-WinToolAppCardAction -Row $target.Row -Action $target.Action
+        }
     }
 
-    # Right-click an app for a one-off update or uninstall.
+    # The old right-click menu stays as a shortcut.
     $menu = New-Object System.Windows.Controls.ContextMenu
     foreach ($choice in @(
             [pscustomobject]@{ Header = "Update this app"; Action = "upgrade"; Name = "Install: update one app" },
@@ -170,23 +351,155 @@ function New-WinToolAppRow {
         [void]$menu.Items.Add($item)
     }
     $panel.ContextMenu = $menu
-    $panel.Background = [System.Windows.Media.Brushes]::Transparent
+    Sync-WinToolAppBadge -Row $row
     return $row
 }
 
 function Sync-WinToolAppBadge {
     param($Row)
-    if ($Row.Installed) {
-        $Row.InstalledBadge.Visibility = "Visible"
-    }
-    else {
-        $Row.InstalledBadge.Visibility = "Collapsed"
-    }
+    # Pill, border tint, and buttons follow the detected state.
+    $Row.InstalledBadge.Visibility = "Collapsed"
+    $Row.UpdateBadge.Visibility = "Collapsed"
+    $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
     if ($Row.UpdateAvailable) {
         $Row.UpdateBadge.Visibility = "Visible"
+        $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushWarnLine")
+    }
+    elseif ($Row.Installed) {
+        $Row.InstalledBadge.Visibility = "Visible"
+        $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushOkLine")
+    }
+    if ($Row.Pending) {
+        return
+    }
+    $Row.InstallButton.Visibility = "Collapsed"
+    $Row.UpdateButton.Visibility = "Collapsed"
+    $Row.OpenButton.Visibility = "Collapsed"
+    $Row.UninstallButton.Visibility = "Collapsed"
+    if (-not $Row.Installed) {
+        $Row.InstallButton.Visibility = "Visible"
+        return
+    }
+    if ($Row.UpdateAvailable) {
+        $Row.UpdateButton.Visibility = "Visible"
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([string]$Row.LaunchId)) {
+        $Row.OpenButton.Visibility = "Visible"
+    }
+    $Row.UninstallButton.Visibility = "Visible"
+}
+
+function Set-WinToolAppStatus {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [bool]$Show = $true
+    )
+    $status = Get-WinToolUi -Name "AppInstalledStatus"
+    $status.Text = $Text
+    if ($Show) {
+        $status.Visibility = "Visible"
     }
     else {
-        $Row.UpdateBadge.Visibility = "Collapsed"
+        $status.Visibility = "Collapsed"
+    }
+    (Get-WinToolUi -Name "AppRefreshInstalled").ToolTip = $Text + " Press to check again."
+}
+
+function Update-WinToolAppChip {
+    $installed = 0
+    $updates = 0
+    foreach ($row in @($script:WinToolState.AppRows)) {
+        if ($row.Installed) { $installed++ }
+        if ($row.UpdateAvailable) { $updates++ }
+    }
+    foreach ($chip in @((Get-WinToolUi -Name "AppFilters").Children)) {
+        if ([string]$chip.Tag -eq "installed") { $chip.Content = "Installed ($installed)" }
+        if ([string]$chip.Tag -eq "updates") { $chip.Content = "Updates ($updates)" }
+    }
+    $upgradeAll = Get-WinToolUi -Name "AppUpgradeAll"
+    if ($updates -gt 0) {
+        $upgradeAll.Content = "Update all ($updates)"
+    }
+    else {
+        $upgradeAll.Content = "Update all"
+    }
+}
+
+function Invoke-WinToolAppCardAction {
+    param(
+        [Parameter(Mandatory = $true)]$Row,
+        [Parameter(Mandatory = $true)][ValidateSet("install", "upgrade", "uninstall", "open")][string]$Action
+    )
+    if ($Action -eq "open") {
+        Open-WinToolApp -Row $Row
+        return
+    }
+    if ($script:WinToolState.Busy) {
+        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        return
+    }
+    if ($Action -eq "uninstall") {
+        $ok = Request-WinToolConfirmation -Message ("Uninstall {0} with winget?" -f [string]$Row.Name) -Title "Uninstall app"
+        if (-not $ok) {
+            return
+        }
+    }
+    $button = $Row.InstallButton
+    $busyText = "Installing" + [char]0x2026
+    $verb = "Install"
+    if ($Action -eq "upgrade") { $button = $Row.UpdateButton; $busyText = "Updating" + [char]0x2026; $verb = "Update" }
+    if ($Action -eq "uninstall") { $button = $Row.UninstallButton; $busyText = "Removing" + [char]0x2026; $verb = "Uninstall" }
+    $steps = @(Get-WinToolAppPlan -App @($Row) -Action $Action)
+    $Row.Pending = $true
+    $script:WinToolState.AppCardAction = [pscustomobject]@{ Row = $Row; Button = $button }
+    Set-WinToolCardButtonText -Button $button -Text $busyText
+    Write-WinToolLog -Message ("{0}: {1} ({2})." -f $verb, [string]$Row.Name, [string]$Row.WingetId) -Level "info"
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage ("{0} {1} finished." -f $verb, [string]$Row.Name) -AfterDone "Complete-WinToolAppCardAction"
+    $button.IsEnabled = $false
+}
+
+function Complete-WinToolAppCardAction {
+    # The card keeps a "Checking" label until the installed-app check is back.
+    $action = $script:WinToolState.AppCardAction
+    if ($null -ne $action) {
+        Set-WinToolCardButtonText -Button $action.Button -Text ("Checking" + [char]0x2026)
+        $action.Button.IsEnabled = $false
+    }
+    Start-WinToolAppDetection
+    if ($null -eq $script:WinToolState.DetectJob) {
+        Clear-WinToolAppCardAction
+    }
+}
+
+function Clear-WinToolAppCardAction {
+    $action = $script:WinToolState.AppCardAction
+    $script:WinToolState.AppCardAction = $null
+    if ($null -eq $action) {
+        return
+    }
+    $action.Row.Pending = $false
+    Set-WinToolCardButtonText -Button $action.Row.InstallButton -Text "Install" -Glyph ([string][char]0xE896)
+    Set-WinToolCardButtonText -Button $action.Row.UpdateButton -Text "Update" -Glyph ([string][char]0xE72C)
+    Set-WinToolCardButtonText -Button $action.Row.UninstallButton -Text "Uninstall"
+    $action.Button.IsEnabled = (-not $script:WinToolState.Busy)
+    Sync-WinToolAppBadge -Row $action.Row
+}
+
+function Open-WinToolApp {
+    param(
+        [Parameter(Mandatory = $true)]$Row
+    )
+    $launchId = [string]$Row.LaunchId
+    if ([string]::IsNullOrWhiteSpace($launchId)) {
+        Write-WinToolLog -Message ("WinTool could not find {0} in the Start menu." -f [string]$Row.Name) -Level "warn"
+        return
+    }
+    try {
+        Start-Process -FilePath "explorer.exe" -ArgumentList ("shell:AppsFolder\" + $launchId)
+        Write-WinToolLog -Message ("Opened {0}." -f [string]$Row.Name) -Level "info"
+    }
+    catch {
+        Write-WinToolLog -Message ("Could not open {0}. {1}" -f [string]$Row.Name, $_.Exception.Message) -Level "warn"
     }
 }
 
@@ -196,14 +509,14 @@ function Start-WinToolAppDetection {
     if ($null -ne $script:WinToolState.DetectJob) {
         return
     }
-    $status = Get-WinToolUi -Name "AppInstalledStatus"
     $candidates = @(Get-WinToolWingetCandidate)
     if ($candidates.Count -eq 0) {
-        $status.Text = "winget not found, so installed apps cannot be checked."
+        Set-WinToolAppStatus -Text "winget not found, so installed apps cannot be checked."
+        Clear-WinToolAppCardAction
         Write-WinToolLog -Message "Installed apps: winget.exe was not found on this PC." -Level "warn" -Diagnostic
         return
     }
-    $status.Text = "Checking installed apps..."
+    Set-WinToolAppStatus -Text "Checking installed apps..."
     Write-WinToolLog -Message ("Installed apps: checking with winget. Candidates: " + ($candidates -join "; ")) -Level "info" -Diagnostic
     $exportPath = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-installed-" + [guid]::NewGuid().ToString("N") + ".json")
     $job = Start-WinToolScriptJob -ScriptText (Get-WinToolAppDetectionScript) -Argument @($candidates, $exportPath)
@@ -222,7 +535,8 @@ function Test-WinToolAppDetectionTimeout {
     Write-WinToolDetectionLog -Job $job
     Stop-WinToolThread -Job $job
     $script:WinToolState.DetectJob = $null
-    (Get-WinToolUi -Name "AppInstalledStatus").Text = "Checking installed apps took too long. Press Refresh to try again."
+    Set-WinToolAppStatus -Text "Checking installed apps took too long. Press Refresh to try again."
+    Clear-WinToolAppCardAction
     Write-WinToolLog -Message ("Installed apps: winget did not finish in {0} seconds, so the check was stopped." -f $script:WinToolDetectTimeoutSeconds) -Level "warn" -Diagnostic
 }
 
@@ -254,9 +568,12 @@ function Complete-WinToolAppDetection {
     Write-WinToolDetectionLog -Job $job
     Stop-WinToolThread -Job $job
     $script:WinToolState.DetectJob = $null
-    $status = Get-WinToolUi -Name "AppInstalledStatus"
+    if ($null -ne $job.Sync.StartApps) {
+        $script:WinToolState.AppStartApps = [string[]]$job.Sync.StartApps
+    }
     if (-not $ok) {
-        $status.Text = "Could not check installed apps. See the log."
+        Set-WinToolAppStatus -Text "Could not check installed apps. See the log."
+        Clear-WinToolAppCardAction
         Write-WinToolLog -Message ("Could not check installed apps. {0}" -f $errorMessage) -Level "warn" -Diagnostic
         return
     }
@@ -281,7 +598,7 @@ function Complete-WinToolAppDetection {
         Write-WinToolLog -Message ("Installed apps: update available: " + (@($counts.UpdateIds) -join ", ")) -Level "info" -Diagnostic
     }
     if ($counts.Installed -eq 0 -and $installedIds.Count -eq 0 -and [string]::IsNullOrWhiteSpace($listText)) {
-        $status.Text = "winget returned nothing. See the log."
+        Set-WinToolAppStatus -Text "winget returned nothing. See the log."
     }
 }
 
@@ -304,6 +621,7 @@ function Set-WinToolAppState {
             $byName.Add($id)
         }
     }
+    $startApps = @($script:WinToolState.AppStartApps)
     $installedCount = 0
     $updateCount = 0
     $installedIds = New-Object System.Collections.Generic.List[string]
@@ -311,11 +629,18 @@ function Set-WinToolAppState {
     foreach ($row in @($script:WinToolState.AppRows)) {
         $row.Installed = $state.Installed.ContainsKey([string]$row.WingetId)
         $row.UpdateAvailable = $state.Updates.ContainsKey([string]$row.WingetId)
+        $row.LaunchId = $null
+        if ($row.Installed -and $startApps.Count -gt 0) {
+            $row.LaunchId = Resolve-WinToolAppLaunchId -Name ([string]$row.Name) -DetectName @($row.DetectNames) -StartApp $startApps
+        }
         if ($row.Installed) { $installedCount++; $installedIds.Add([string]$row.WingetId) }
         if ($row.UpdateAvailable) { $updateCount++; $updateIds.Add([string]$row.WingetId) }
         Sync-WinToolAppBadge -Row $row
     }
-    (Get-WinToolUi -Name "AppInstalledStatus").Text = ("{0} installed, {1} with an update." -f $installedCount, $updateCount)
+    Set-WinToolAppStatus -Text ("{0} installed, {1} with an update." -f $installedCount, $updateCount) -Show $false
+    Clear-WinToolAppCardAction
+    Update-WinToolAppChip
+    Update-WinToolAppFilter
     return [pscustomobject]@{ Installed = $installedCount; Updates = $updateCount; ByName = $byName.ToArray(); InstalledIds = $installedIds.ToArray(); UpdateIds = $updateIds.ToArray() }
 }
 
@@ -327,7 +652,7 @@ function Select-WinToolInstalledApp {
         }
     }
     if ($ids.Count -eq 0) {
-        Write-WinToolLog -Message "No installed catalog apps were found yet. Press Check installed first." -Level "warn"
+        Write-WinToolLog -Message "No installed catalog apps were found yet. Press Refresh first." -Level "warn"
     }
     Sync-WinToolAppCheck -Id $ids.ToArray() -OnlyThese
 }
@@ -366,68 +691,42 @@ function Invoke-WinToolUpgradeAllClick {
     Invoke-WinToolPlanAsync -Step @(Get-WinToolUpgradeAllPlan) -DoneMessage "Update all finished." -AfterDone "Start-WinToolAppDetection"
 }
 
-function Sync-WinToolAppToggle {
-    param($CategoryRow)
-    if ($CategoryRow.Updating) {
-        return
-    }
-    Sync-WinToolCategoryCheck -CategoryRow $CategoryRow
-    Sync-WinToolAppCount
-}
-
-function Sync-WinToolCategoryFromHeader {
-    param($CategoryRow)
-    if ($CategoryRow.Updating) {
-        return
-    }
-    $target = $false
-    if ($CategoryRow.SelectAll.IsChecked -eq $true) {
-        $target = $true
-    }
-    $CategoryRow.Updating = $true
-    foreach ($app in @($CategoryRow.Apps)) {
-        if ($app.Panel.Visibility -eq "Visible") {
-            $app.Checkbox.IsChecked = $target
-        }
-    }
-    $CategoryRow.Updating = $false
-    Sync-WinToolAppCount
-}
-
-function Sync-WinToolCategoryCheck {
-    param($CategoryRow)
-    $visible = @($CategoryRow.Apps | Where-Object { $_.Panel.Visibility -eq "Visible" })
-    $CategoryRow.Updating = $true
-    if ($visible.Count -eq 0) {
-        $CategoryRow.SelectAll.IsChecked = $false
-    }
-    else {
-        $selected = @($visible | Where-Object { $_.Checkbox.IsChecked -eq $true })
-        if ($selected.Count -eq 0) {
-            $CategoryRow.SelectAll.IsChecked = $false
-        }
-        elseif ($selected.Count -eq $visible.Count) {
-            $CategoryRow.SelectAll.IsChecked = $true
-        }
-        else {
-            $CategoryRow.SelectAll.IsChecked = $null
-        }
-    }
-    $CategoryRow.Updating = $false
-}
-
 function Sync-WinToolAppCount {
     $selected = @(Get-WinToolCheckedApp)
     (Get-WinToolUi -Name "AppCount").Text = "{0} selected" -f $selected.Count
+    $bar = Get-WinToolUi -Name "AppBulkBar"
+    if ($selected.Count -gt 0) {
+        $bar.Visibility = "Visible"
+    }
+    else {
+        $bar.Visibility = "Collapsed"
+    }
+}
+
+function Test-WinToolAppFilterMatch {
+    param(
+        $Row,
+        [string]$Filter,
+        [string]$Query
+    )
+    if (-not (Test-WinToolTextMatch -Haystack $Row.SearchText -Query $Query)) {
+        return $false
+    }
+    if ($Filter -eq "installed") { return [bool]$Row.Installed }
+    if ($Filter -eq "updates") { return [bool]$Row.UpdateAvailable }
+    if ($Filter.StartsWith("category:")) { return ([string]$Row.CategoryId -eq $Filter.Substring(9)) }
+    return $true
 }
 
 function Update-WinToolAppFilter {
     $query = [string](Get-WinToolUi -Name "AppSearch").Text
+    $filter = [string]$script:WinToolState.AppFilter
+    if ([string]::IsNullOrWhiteSpace($filter)) { $filter = "all" }
     $any = $false
     foreach ($category in @($script:WinToolState.CategoryRows)) {
         $visible = 0
         foreach ($app in @($category.Apps)) {
-            if (Test-WinToolTextMatch -Haystack $app.SearchText -Query $query) {
+            if (Test-WinToolAppFilterMatch -Row $app -Filter $filter -Query $query) {
                 $app.Panel.Visibility = "Visible"
                 $visible++
                 $any = $true
@@ -441,7 +740,6 @@ function Update-WinToolAppFilter {
         }
         else {
             $category.Card.Visibility = "Visible"
-            Sync-WinToolCategoryCheck -CategoryRow $category
         }
     }
     $empty = Get-WinToolUi -Name "AppEmpty"
@@ -450,6 +748,7 @@ function Update-WinToolAppFilter {
     }
     else {
         $empty.Visibility = "Visible"
+        $empty.Text = "No apps match this search or filter."
     }
 }
 
@@ -479,9 +778,6 @@ function Sync-WinToolAppCheck {
         if ($OnlyThese -or $shouldCheck) {
             $row.Checkbox.IsChecked = $shouldCheck
         }
-    }
-    foreach ($category in @($script:WinToolState.CategoryRows)) {
-        Sync-WinToolCategoryCheck -CategoryRow $category
     }
     Sync-WinToolAppCount
 }

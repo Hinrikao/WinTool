@@ -138,10 +138,9 @@ function Sync-WinToolBusyState {
     }
     Sync-WinToolLogPanel
     $names = @(
-        "AppInstall", "AppSelectVisible", "AppClear",
-        "AppSelectInstalled", "AppRefreshInstalled", "AppUpdate", "AppUninstall", "AppUpgradeAll",
+        "AppInstall", "AppClear",
+        "AppRefreshInstalled", "AppUpdate", "AppUninstall", "AppUpgradeAll",
         "FeatureApply",
-        "TweakApply", "TweakUndo", "TweakClear",
         "TerminalSetup", "ScanDrivers",
         "SaveProfile", "LoadProfile", "ExportWinget", "ImportWinget"
     )
@@ -551,9 +550,13 @@ function New-WinToolWindow {
         BusyControls = $null
         FeatureJob = $null
         FeatureRows = @()
-        PendingTweaks = @()
-        PendingDirection = "Apply"
-        PendingRestart = $true
+        TweakQueue = $null
+        TweakStateRead = $false
+        TweakTwoColumns = $true
+        RestorePointDone = $false
+        AppFilter = "all"
+        AppStartApps = @()
+        AppCardAction = $null
         LogExpanded = $false
         LogPinned = $false
     }

@@ -56,6 +56,11 @@ function Get-WinToolBasePalette {
             BrushWarn = "#8A5A00"
             BrushWarnSoft = "#FFF4E0"
             BrushBad = "#B42318"
+            BrushBadSoft = "#FDECEC"
+            BrushOkLine = "#9AD6BC"
+            BrushWarnLine = "#E7C27A"
+            BrushWarnStrong = "#D39B2A"
+            BrushOnWarn = "#1B1B1B"
         }
         return ,$palette
     }
@@ -81,6 +86,11 @@ function Get-WinToolBasePalette {
         BrushWarn = "#E6B15A"
         BrushWarnSoft = "#3A3120"
         BrushBad = "#F07178"
+        BrushBadSoft = "#3A1D24"
+        BrushOkLine = "#2F6B4A"
+        BrushWarnLine = "#7A5A1E"
+        BrushWarnStrong = "#D39B2A"
+        BrushOnWarn = "#1B1B1B"
     }
     return ,$palette
 }

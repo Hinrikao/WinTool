@@ -926,6 +926,108 @@ Invoke-WinToolCase -Name "Color schemes carry all 16 colors" -Body {
     Test-WinToolExpectation -Condition (@($settings.schemes).Count -eq 1) -Message "Running the scheme step twice keeps one copy."
 }
 
+Invoke-WinToolCase -Name "Tweak state is read from the apply steps" -Body {
+    $script:FakeRegistry = @{
+        "HKCU:\A|One" = 1
+        "HKCU:\A|Two" = "x"
+        "HKCU:\B|Big" = -1
+    }
+    $script:FakeKeys = @{ "HKCU:\Key" = $true }
+    $probe = @{
+        ReadValue = { param($Path, $Name) $key = $Path + "|" + $Name; if ($script:FakeRegistry.ContainsKey($key)) { return $script:FakeRegistry[$key] }; return $null }
+        KeyExists = { param($Path) return $script:FakeKeys.ContainsKey($Path) }
+        ServiceStart = { param($Name) if ($Name -eq "gone") { return $null }; return "Disabled" }
+        TaskState = { param($TaskPath, $TaskName) $null = $TaskPath; if ($TaskName -eq "off") { return "Disabled" }; return "Ready" }
+        AppxInstalled = { param($Name) return ($Name -eq "Still.Here") }
+    }
+    function New-TestTweak {
+        param($Apply)
+        return (ConvertFrom-WinToolJsonText -Text ('{"id":"t","name":"T","apply":' + $Apply + ',"undo":{"type":"registry","entries":[]}}'))
+    }
+    $cases = @(
+        @('{"type":"registry","entries":[{"path":"HKCU:\\A","name":"One","value":1,"kind":"DWord"},{"path":"HKCU:\\A","name":"Two","value":"x","kind":"String"}]}', "on"),
+        @('{"type":"registry","entries":[{"path":"HKCU:\\A","name":"One","value":0,"kind":"DWord"}]}', "off"),
+        @('{"type":"registry","entries":[{"path":"HKCU:\\A","name":"Missing","value":0,"kind":"DWord"}]}', "off"),
+        @('{"type":"registry","entries":[{"path":"HKCU:\\B","name":"Big","value":4294967295,"kind":"DWord"}]}', "on"),
+        @('{"type":"registry-remove","entries":[{"path":"HKCU:\\A","name":"Missing"}]}', "on"),
+        @('{"type":"registry-remove","entries":[{"path":"HKCU:\\A","name":"One"}]}', "off"),
+        @('{"type":"registry-key","operation":"create","path":"HKCU:\\Key"}', "on"),
+        @('{"type":"registry-key","operation":"remove","path":"HKCU:\\Key"}', "off"),
+        @('{"type":"service","name":"DiagTrack","startupType":"Disabled","stop":true}', "on"),
+        @('{"type":"service","name":"gone","startupType":"Disabled"}', "unknown"),
+        @('{"type":"scheduled-task","taskPath":"\\","taskName":"off","state":"Disabled"}', "on"),
+        @('{"type":"scheduled-task","taskPath":"\\","taskName":"on","state":"Disabled"}', "off"),
+        @('{"type":"appx","packages":["Gone.App"]}', "on"),
+        @('{"type":"appx","packages":["Gone.App","Still.Here"]}', "off"),
+        @('{"type":"group","actions":[{"type":"registry","entries":[{"path":"HKCU:\\A","name":"One","value":1,"kind":"DWord"}]},{"type":"service","name":"gone","startupType":"Disabled"}]}', "unknown")
+    )
+    foreach ($case in $cases) {
+        $state = Get-WinToolTweakState -Tweak (New-TestTweak -Apply $case[0]) -Probe $probe
+        Test-WinToolExpectation -Condition ($state -eq $case[1]) -Message ("Tweak state for " + $case[0] + " was " + $state + ", expected " + $case[1])
+    }
+    $broken = @{ ReadValue = { throw "no registry" } }
+    $state = Get-WinToolTweakState -Tweak (New-TestTweak -Apply $cases[0][0]) -Probe $broken
+    Test-WinToolExpectation -Condition ($state -eq "unknown") -Message "A probe that fails gives unknown."
+    $catalog = Get-WinToolTweakCatalog
+    $registryOnly = 0
+    foreach ($tweak in @(Get-WinToolNote -Object $catalog -Name "tweaks" -Default @())) {
+        $state = Get-WinToolTweakState -Tweak $tweak -Probe $probe
+        Test-WinToolExpectation -Condition (@("on", "off", "unknown") -contains $state) -Message ("No state for " + [string]$tweak.id)
+        if ([string]$tweak.apply.type -eq "registry") { $registryOnly++ }
+    }
+    Test-WinToolExpectation -Condition ($registryOnly -gt 40) -Message "Most tweaks can be read from the registry."
+    foreach ($presetId in @("minimal", "recommended", "gaming", "privacy")) {
+        Test-WinToolExpectation -Condition (@(Get-WinToolPresetTweak -Catalog $catalog -PresetId $presetId).Count -ge 3) -Message ("The " + $presetId + " preset has too few tweaks.")
+    }
+}
+
+Invoke-WinToolCase -Name "Tweak switches apply, undo, and go back on failure" -Body {
+    $probe = @{
+        ReadValue = { param($Path, $Name) $null = $Path, $Name; return $script:FakeValue }
+        KeyExists = { param($Path) $null = $Path; return $false }
+        ServiceStart = { param($Name) $null = $Name; return $null }
+        TaskState = { param($TaskPath, $TaskName) $null = $TaskPath, $TaskName; return $null }
+        AppxInstalled = { param($Name) $null = $Name; return $false }
+    }
+    $tweak = ConvertFrom-WinToolJsonText -Text '{"id":"t","name":"Test tweak","refresh":"explorer","apply":{"type":"registry","entries":[{"path":"HKCU:\\A","name":"V","value":1,"kind":"DWord"}]},"undo":{"type":"registry","entries":[{"path":"HKCU:\\A","name":"V","value":0,"kind":"DWord"}]}}'
+    $row = [pscustomobject]@{ Tweak = $tweak; State = "off"; Checkbox = [pscustomobject]@{ IsChecked = $true; IsEnabled = $false } }
+    $script:Ran = New-Object System.Collections.Generic.List[string]
+    $runner = { param($Tweak, $Direction) $script:Ran.Add(([string]$Tweak.id + ":" + $Direction)); if ($Direction -eq "Apply") { $script:FakeValue = 1 } else { $script:FakeValue = 0 } }
+    $script:FakeValue = 0
+    $explorer = Invoke-WinToolTweakItem -Item @([pscustomobject]@{ Row = $row; Direction = "Apply"; Previous = $false }) -Probe $probe -Runner $runner
+    Test-WinToolExpectation -Condition ($script:Ran[0] -eq "t:Apply" -and $row.Checkbox.IsChecked -eq $true -and $row.State -eq "on" -and $row.Checkbox.IsEnabled) -Message "Turning a switch on applies the tweak and keeps it on."
+    Test-WinToolExpectation -Condition ($explorer -eq $true) -Message "An Explorer tweak asks for an Explorer restart."
+    $row.Checkbox.IsChecked = $false
+    $null = Invoke-WinToolTweakItem -Item @([pscustomobject]@{ Row = $row; Direction = "Undo"; Previous = $true }) -Probe $probe -Runner $runner
+    Test-WinToolExpectation -Condition ($script:Ran[1] -eq "t:Undo" -and $row.Checkbox.IsChecked -eq $false -and $row.State -eq "off") -Message "Turning a switch off runs the undo."
+    $failing = { param($Tweak, $Direction) $null = $Tweak, $Direction; throw "access denied" }
+    $row.Checkbox.IsChecked = $true
+    $null = Invoke-WinToolTweakItem -Item @([pscustomobject]@{ Row = $row; Direction = "Apply"; Previous = $false }) -Probe $probe -Runner $failing
+    Test-WinToolExpectation -Condition ($row.Checkbox.IsChecked -eq $false -and $row.Checkbox.IsEnabled) -Message "A failed change puts the switch back."
+    $unknownProbe = @{ ReadValue = { throw "no registry" } }
+    $row.Checkbox.IsChecked = $true
+    $null = Invoke-WinToolTweakItem -Item @([pscustomobject]@{ Row = $row; Direction = "Apply"; Previous = $false }) -Probe $unknownProbe -Runner $runner
+    Test-WinToolExpectation -Condition ($row.Checkbox.IsChecked -eq $true -and $row.State -eq "unknown") -Message "When the state cannot be read after a change, the switch shows what was asked."
+    if (-not (Test-WinToolWindows)) {
+        $row.Checkbox.IsChecked = $true
+        $null = Invoke-WinToolTweakItem -Item @([pscustomobject]@{ Row = $row; Direction = "Apply"; Previous = $false }) -Probe $probe
+        Test-WinToolExpectation -Condition ($row.Checkbox.IsChecked -eq $false) -Message "The real runner refuses off Windows and the switch goes back."
+    }
+}
+
+Invoke-WinToolCase -Name "App cards: Start menu entry, icon color, and initial" -Body {
+    $start = @("Google Chrome`tChrome", "Mozilla Firefox`t308046B0AF4A39CB", "Uninstall Firefox`tX", "Visual Studio Code`tMicrosoft.VisualStudioCode", "7-Zip File Manager`tF:\7zFM.exe")
+    Test-WinToolExpectation -Condition ((Resolve-WinToolAppLaunchId -Name "Google Chrome" -StartApp $start) -eq "Chrome") -Message "Exact Start menu names match."
+    Test-WinToolExpectation -Condition ((Resolve-WinToolAppLaunchId -Name "Firefox" -DetectName @("Mozilla Firefox") -StartApp $start) -eq "308046B0AF4A39CB") -Message "Detect names match Start menu entries."
+    Test-WinToolExpectation -Condition ((Resolve-WinToolAppLaunchId -Name "7-Zip" -StartApp $start) -eq "F:\7zFM.exe") -Message "A Start menu name that starts with the app name matches."
+    Test-WinToolExpectation -Condition ($null -eq (Resolve-WinToolAppLaunchId -Name "Brave" -StartApp $start)) -Message "Apps without a Start menu entry have no Open button."
+    Test-WinToolExpectation -Condition ((Get-WinToolAppIconColor -Id "firefox") -eq (Get-WinToolAppIconColor -Id "firefox") -and (Get-WinToolAppIconColor -Id "firefox") -match '^#[0-9A-F]{6}$') -Message "Icon colors are steady per app."
+    Test-WinToolExpectation -Condition ((Get-WinToolAppInitial -Name "7-Zip") -eq "7" -and (Get-WinToolAppInitial -Name "vlc") -eq "V") -Message "Icon initials come from the name."
+    foreach ($category in @(Get-WinToolNote -Object (Get-WinToolAppCatalog) -Name "categories" -Default @())) {
+        Test-WinToolExpectation -Condition (-not [string]::IsNullOrWhiteSpace([string](Get-WinToolNote -Object $category -Name "chip" -Default ""))) -Message ("Category " + [string]$category.id + " has no chip name.")
+    }
+}
+
 Invoke-WinToolCase -Name "Prompt preview follows the theme colors" -Body {
     $json = '{"palette":{"blue":"#3B78FF"},"blocks":[{"type":"prompt","alignment":"left","segments":[{"type":"session","style":"diamond","leading_diamond":"<","trailing_diamond":">","foreground":"#ffffff","background":"#c386f1"},{"type":"path","style":"powerline","powerline_symbol":"X","foreground":"#100e23","background":"p:blue"},{"type":"git","style":"powerline","powerline_symbol":"X","foreground":"#193549","background":"#95ffa4"},{"type":"text","style":"plain","foreground":"red","template":"{{ .Var }}"},{"type":"text","style":"plain","foreground":"#abc","template":" $ "}]},{"type":"prompt","alignment":"right","segments":[{"type":"time","style":"plain"}]}]}'
     $theme = ConvertFrom-WinToolJsonText -Text $json
