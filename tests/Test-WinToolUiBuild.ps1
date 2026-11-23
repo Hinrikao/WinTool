@@ -94,9 +94,17 @@ $modeList = $window.FindName("UpdateModeList")
 if ($null -eq $modeList -or $modeList.Children.Count -ne 3) {
     throw "The Updates tab did not list the three update modes."
 }
-if (@($modeList.Children | Where-Object { $_.IsChecked -eq $true }).Count -ne 1) {
-    throw "The current update mode should be selected."
+# The runner may already carry Windows Update policies, which reads as Custom
+# and leaves every choice clear, so only a known mode must be ticked.
+$currentMode = [string]$script:WinToolState.UpdateModeCurrent
+$expectedTicks = 1
+if ($currentMode -eq "custom") {
+    $expectedTicks = 0
 }
+if ([string]::IsNullOrWhiteSpace($currentMode) -or @($modeList.Children | Where-Object { $_.IsChecked -eq $true }).Count -ne $expectedTicks) {
+    throw "The current update mode ($currentMode) should be selected."
+}
+Write-Output ("Update mode: " + $window.FindName("UpdateModeCurrent").Text)
 $logPanel = $window.FindName("LogPanel")
 if ($null -eq $logPanel -or $logPanel.Visibility -ne "Collapsed") {
     throw "The log should be collapsed until a task starts."
