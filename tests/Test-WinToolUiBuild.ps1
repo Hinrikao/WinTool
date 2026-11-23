@@ -279,17 +279,23 @@ foreach ($entry in $script:WinToolUiHandlers.ToArray()) {
 # Picking each prompt engine must update the Terminal choice, the theme
 # column title, and the theme list.
 $window.FindName("TerminalFilterNoNerd").IsChecked = $true
+$filterResetSeen = $false
 foreach ($engine in $promptItems) {
+    $engineChanged = ([string]$script:WinToolTerminalChoice.prompt -ne [string]$engine.Tag)
     $promptList.SelectedItem = $engine
-    if ($window.FindName("TerminalFilterAll").IsChecked -ne $true) {
+    if ($engineChanged -and $window.FindName("TerminalFilterAll").IsChecked -ne $true) {
         throw "Picking a prompt engine should reset the theme filter to All."
     }
+    if ($engineChanged) { $filterResetSeen = $true }
     if ([string]$script:WinToolTerminalChoice.prompt -ne [string]$engine.Tag) {
         throw ("Picking the prompt engine '" + [string]$engine.Tag + "' did not select it.")
     }
     if ([string]$window.FindName("TerminalStyleList").Tag -ne [string]$engine.Tag -or $window.FindName("TerminalStyleList").Items.Count -lt 1) {
         throw ("The theme list did not follow the prompt engine '" + [string]$engine.Tag + "'.")
     }
+}
+if (-not $filterResetSeen) {
+    throw "No prompt engine change was tested."
 }
 # The group headers in the engine list cannot be picked.
 if (@($promptList.Items | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.Tag) -and $_.IsEnabled }).Count -ne 0) {
