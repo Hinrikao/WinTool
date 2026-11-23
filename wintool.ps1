@@ -18589,6 +18589,11 @@ function Update-WinToolTerminalLayout {
     else {
         $grid.Height = $need
     }
+    # The lists scroll themselves. A leftover page scroll gets clamped when a
+    # shorter theme list is shown, and the prompt card jumps.
+    if ($scroll.VerticalOffset -ne 0) {
+        $scroll.ScrollToVerticalOffset(0)
+    }
 }
 
 function Get-WinToolTerminalBodyMinHeight {
@@ -18696,7 +18701,8 @@ function Show-WinToolTerminalSelection {
         if ($null -eq $list -or $null -eq $list.SelectedItem) { continue }
         try {
             $list.UpdateLayout()
-            $list.ScrollIntoView($list.SelectedItem)
+            # Scroll the list's own viewer. ScrollIntoView also scrolls the page
+            # and the prompt card jumps when the theme list gets shorter.
             $viewer = Find-WinToolChildScrollViewer -Element $list
             if ($null -ne $viewer -and $list.SelectedIndex -ge 0 -and $viewer.ViewportHeight -gt 0) {
                 $target = [Math]::Max(0, $list.SelectedIndex - 1)
@@ -18712,6 +18718,10 @@ function Show-WinToolTerminalSelection {
         catch {
             $null = $_.Exception.Message
         }
+    }
+    $bodyScroll = Get-WinToolUi -Name "TerminalBodyScroll"
+    if ($null -ne $bodyScroll -and $bodyScroll.VerticalOffset -ne 0) {
+        $bodyScroll.ScrollToVerticalOffset(0)
     }
 }
 

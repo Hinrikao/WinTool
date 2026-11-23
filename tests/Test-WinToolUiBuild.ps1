@@ -547,6 +547,8 @@ function Invoke-WinToolTerminalShotLayout {
     $rootVisual.Measure([System.Windows.Size]::new($Width, $Height))
     $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
     $rootVisual.UpdateLayout()
+    if ($body.VerticalOffset -ne 0) { $body.ScrollToVerticalOffset(0) }
+    $rootVisual.UpdateLayout()
 }
 
 function Get-WinToolVisualChild {
