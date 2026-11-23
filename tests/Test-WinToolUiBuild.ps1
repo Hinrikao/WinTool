@@ -292,7 +292,7 @@ if (@($promptList.Items | Where-Object { [string]::IsNullOrWhiteSpace([string]$_
     throw "The engine group headers should not be selectable."
 }
 # Clicking a color scheme tile must update the choice.
-foreach ($tile in @($window.FindName("TerminalSchemeHost").Children)) {
+foreach ($tile in ($window.FindName("TerminalSchemeHost").Children | ForEach-Object { $_ })) {
     $mouseArgs = [System.Windows.Input.MouseButtonEventArgs]::new([System.Windows.Input.Mouse]::PrimaryDevice, 0, [System.Windows.Input.MouseButton]::Left)
     $mouseArgs.RoutedEvent = [System.Windows.UIElement]::MouseLeftButtonUpEvent
     $tile.RaiseEvent($mouseArgs)
@@ -510,7 +510,7 @@ if ([System.Windows.Controls.Grid]::GetRow($sideColumn) -ne 1 -or [System.Window
     throw "The preview, font, and extras should move under the lists on a narrow window."
 }
 Update-WinToolTerminalLayout -Width 1000
-$summaryChips = @($window.FindName("TerminalSummaryHost").Children | ForEach-Object { @($_.Children) })
+$summaryChips = @($window.FindName("TerminalSummaryHost").Children | ForEach-Object { $_.Children | ForEach-Object { $_ } })
 if ($null -eq $advancedGrid -or $summaryChips.Count -lt 3) {
     throw "The Terminal action bar did not list the steps."
 }
@@ -533,11 +533,11 @@ if ($powerCount -lt 1 -or $powerCount -ge $allCount -or $window.FindName("Termin
     throw ("The Powerline filter should narrow the Starship presets: " + $powerCount + " of " + $allCount)
 }
 $sizeBox = $window.FindName("TerminalFontSize")
-foreach ($sizeItem in @($sizeBox.Items)) { if ([int]$sizeItem.Tag -eq 14) { $sizeBox.SelectedItem = $sizeItem } }
+foreach ($sizeItem in ($sizeBox.Items | ForEach-Object { $_ })) { if ([int]$sizeItem.Tag -eq 14) { $sizeBox.SelectedItem = $sizeItem } }
 if ([int](Get-WinToolTerminalChoice).fontSize -ne 14 -or @(Get-WinToolTerminalPlan -Selection (Get-WinToolTerminalChoice) | Where-Object { $_.Type -eq "font" -and [int]$_.Size -eq 14 }).Count -ne 1) {
     throw "The chosen font size should reach the terminal plan."
 }
-foreach ($sizeItem in @($sizeBox.Items)) { if ([int]$sizeItem.Tag -eq 12) { $sizeBox.SelectedItem = $sizeItem } }
+foreach ($sizeItem in ($sizeBox.Items | ForEach-Object { $_ })) { if ([int]$sizeItem.Tag -eq 12) { $sizeBox.SelectedItem = $sizeItem } }
 $script:WinToolTerminalChoice.prompt = "oh-my-posh"
 $script:WinToolTerminalChoice.promptStyle = "jandedobbeleer"
 Update-WinToolPromptStyleList

@@ -497,7 +497,8 @@ function Update-WinToolPromptSelection {
     $list = Get-WinToolUi -Name "TerminalPromptList"
     $script:WinToolTerminalSyncing = $true
     try {
-        foreach ($item in @($list.Items)) {
+        for ($index = 0; $index -lt $list.Items.Count; $index++) {
+            $item = $list.Items[$index]
             if ([string]$item.Tag -eq $selected -and -not [string]::IsNullOrWhiteSpace($selected)) {
                 if (-not [object]::ReferenceEquals($list.SelectedItem, $item)) { $list.SelectedItem = $item }
             }
@@ -507,7 +508,7 @@ function Update-WinToolPromptSelection {
         $script:WinToolTerminalSyncing = $false
     }
     if ($null -ne $script:WinToolPromptCheck) {
-        foreach ($key in @($script:WinToolPromptCheck.Keys)) {
+        foreach ($key in $script:WinToolPromptCheck.Keys) {
             if ($key -eq $selected) { $script:WinToolPromptCheck[$key].Visibility = "Visible" }
             else { $script:WinToolPromptCheck[$key].Visibility = "Collapsed" }
         }
@@ -665,7 +666,7 @@ function Build-WinToolExtraToggle {
     # Each extra as a switch with a one-line description, in two columns.
     $hostPanel = Get-WinToolUi -Name "TerminalExtrasHost"
     $hostPanel.Children.Clear()
-    $script:WinToolTerminalExtraBox = New-Object System.Collections.Generic.List[object]
+    $script:WinToolTerminalExtraBox = @()
     $extras = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "extras" -Default @())
     for ($index = 0; $index -lt $extras.Count; $index++) {
         $extra = $extras[$index]
@@ -699,27 +700,28 @@ function Build-WinToolExtraToggle {
         }
         $cell.Child = $grid
         [void]$hostPanel.Children.Add($cell)
-        $script:WinToolTerminalExtraBox.Add($box)
+        $script:WinToolTerminalExtraBox += $box
     }
     Update-WinToolExtraToggle
 }
 
 function Get-WinToolExtraChoiceName {
     param([string]$ExtraId)
-    switch ($ExtraId) {
-        "terminal-icons" { return "terminalIcons" }
-        "psreadline" { return "psReadLine" }
-        default { return $ExtraId }
-    }
+    if ($ExtraId -eq "terminal-icons") { return "terminalIcons" }
+    if ($ExtraId -eq "psreadline") { return "psReadLine" }
+    return $ExtraId
 }
 
 function Update-WinToolExtraToggle {
     # The switches follow the current choice (Simple turns on the recommended ones).
-    foreach ($box in @($script:WinToolTerminalExtraBox)) {
-        if ($null -eq $box) { continue }
-        $name = Get-WinToolExtraChoiceName -ExtraId ([string]$box.Tag)
-        $value = Get-WinToolNote -Object $script:WinToolTerminalChoice -Name $name
-        $box.IsChecked = ($null -ne $value -and [bool]$value)
+    $boxes = $script:WinToolTerminalExtraBox
+    if ($null -eq $boxes) { return }
+    for ($index = 0; $index -lt $boxes.Count; $index++) {
+        $toggle = $boxes[$index]
+        if ($null -eq $toggle) { continue }
+        $choiceName = Get-WinToolExtraChoiceName -ExtraId ([string]$toggle.Tag)
+        $choiceValue = Get-WinToolNote -Object $script:WinToolTerminalChoice -Name $choiceName
+        $toggle.IsChecked = [bool]($null -ne $choiceValue -and [bool]$choiceValue)
     }
 }
 
@@ -799,7 +801,8 @@ function Update-WinToolFontSizeSelection {
     if ($null -ne $value) { $wanted = [int]$value }
     $script:WinToolTerminalSyncing = $true
     try {
-        foreach ($item in @($box.Items)) {
+        for ($index = 0; $index -lt $box.Items.Count; $index++) {
+            $item = $box.Items[$index]
             if ([int]$item.Tag -eq $wanted) { $box.SelectedItem = $item }
         }
     }
@@ -1057,9 +1060,12 @@ function Update-WinToolTerminalPreview {
 
 function Read-WinToolExtraSelection {
     $flags = @{ "terminal-icons" = $false; psreadline = $false; zoxide = $false; fzf = $false }
-    foreach ($box in @($script:WinToolTerminalExtraBox)) {
-        if ($null -eq $box) { continue }
-        $flags[[string]$box.Tag] = ($box.IsChecked -eq $true)
+    $boxes = $script:WinToolTerminalExtraBox
+    if ($null -eq $boxes) { return $flags }
+    for ($index = 0; $index -lt $boxes.Count; $index++) {
+        $toggle = $boxes[$index]
+        if ($null -eq $toggle) { continue }
+        $flags[[string]$toggle.Tag] = ($toggle.IsChecked -eq $true)
     }
     return $flags
 }
@@ -1074,7 +1080,7 @@ function Update-WinToolTerminalSummary {
         if ($null -ne $fonts.SelectedItem) {
             $script:WinToolTerminalChoice.fontId = [string]$fonts.SelectedItem.Tag
         }
-        if (@($script:WinToolTerminalExtraBox).Count -gt 0) {
+        if ($null -ne $script:WinToolTerminalExtraBox -and $script:WinToolTerminalExtraBox.Count -gt 0) {
             $flags = Read-WinToolExtraSelection
             $script:WinToolTerminalChoice.terminalIcons = [bool]$flags["terminal-icons"]
             $script:WinToolTerminalChoice.psReadLine = [bool]$flags["psreadline"]
@@ -1087,9 +1093,10 @@ function Update-WinToolTerminalSummary {
     (Get-WinToolUi -Name "TerminalSummary").Text = ($lines -join "`n")
     $extrasCount = Get-WinToolUi -Name "TerminalExtrasCount"
     if ($null -ne $extrasCount) {
-        $boxes = @($script:WinToolTerminalExtraBox | Where-Object { $null -ne $_ })
-        $on = @($boxes | Where-Object { $_.IsChecked -eq $true }).Count
-        $extrasCount.Text = ([string]$on + " of " + [string]$boxes.Count + " on")
+        $flags = Read-WinToolExtraSelection
+        $on = 0
+        foreach ($flagKey in $flags.Keys) { if ($flags[$flagKey]) { $on++ } }
+        $extrasCount.Text = ([string]$on + " of " + [string]$flags.Count + " on")
     }
     $summaryHost = Get-WinToolUi -Name "TerminalSummaryHost"
     if ($null -eq $summaryHost) { return }
