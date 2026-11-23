@@ -289,15 +289,15 @@ foreach ($card in @($promptHost.Children)) {
 $firstApp = $appRows[0]
 $secondApp = $appRows[1]
 $null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
-if ($firstApp.InstalledBadge.Visibility -ne "Visible" -or $firstApp.UpdateBadge.Visibility -ne "Collapsed") {
+if (-not $firstApp.Installed -or $firstApp.UpdateAvailable) {
     throw "The Installed badge did not follow the detected state."
 }
-if ($secondApp.UpdateBadge.Visibility -ne "Visible" -or -not $secondApp.Installed) {
+if (-not $secondApp.UpdateAvailable -or -not $secondApp.Installed) {
     throw "The Update available badge did not follow the upgrade list."
 }
 $thirdApp = $appRows[2]
 $byNameState = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0") -DisplayName @(($thirdApp.Name + " 1.2.3 (64-bit)"))
-if ($thirdApp.InstalledBadge.Visibility -ne "Visible" -or @($byNameState.ByName) -notcontains $thirdApp.WingetId) {
+if (-not $thirdApp.Installed -or @($byNameState.ByName) -notcontains $thirdApp.WingetId) {
     throw "An app found by its Apps and features name did not get the Installed badge."
 }
 $null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
@@ -315,7 +315,7 @@ $notepadCases = @(
 foreach ($case in $notepadCases) {
     $null = Set-WinToolAppState -InstalledId @() -UpgradeText "" -ListText ""
     $result = Set-WinToolAppState -InstalledId $case.Ids -UpgradeText "" -ListText $case.List
-    if ($notepadRow.InstalledBadge.Visibility -ne "Visible" -or @($result.InstalledIds) -notcontains "Notepad++.Notepad++") {
+    if (-not $notepadRow.Installed -or @($result.InstalledIds) -notcontains "Notepad++.Notepad++") {
         throw ("Notepad++ did not get the Installed badge for: " + (@($case.Ids) -join ",") + " / " + $case.List)
     }
 }
@@ -604,11 +604,11 @@ Update-WinToolAppFilter
 $chrome = @($appRows | Where-Object { $_.WingetId -eq "Google.Chrome" })[0]
 $brave = @($appRows | Where-Object { $_.WingetId -eq "Brave.Brave" })[0]
 $firefox = @($appRows | Where-Object { $_.WingetId -eq "Mozilla.Firefox" })[0]
-if ($chrome.OpenButton.Visibility -ne "Visible" -or $chrome.UninstallButton.Visibility -ne "Visible" -or $chrome.InstallButton.Visibility -ne "Collapsed" -or $chrome.InstalledBadge.Visibility -ne "Visible") {
+if ($chrome.OpenButton.Visibility -ne "Visible" -or $chrome.UninstallButton.Visibility -ne "Visible" -or $chrome.InstallButton.Visibility -ne "Collapsed" -or -not $chrome.Installed) {
     throw "An installed app card should show Open, Uninstall, and the Installed pill."
 }
-if ($brave.UpdateButton.Visibility -ne "Visible" -or $brave.OpenButton.Visibility -ne "Collapsed" -or $brave.UpdateBadge.Visibility -ne "Visible" -or $brave.InstalledBadge.Visibility -ne "Collapsed") {
-    throw "An app with an update should show Update, Uninstall, and the Update ready pill."
+if ($brave.UpdateButton.Visibility -ne "Visible" -or $brave.OpenButton.Visibility -ne "Collapsed" -or -not $brave.UpdateAvailable -or $brave.UninstallButton.Visibility -ne "Visible") {
+    throw "An app with an update should show Update, Uninstall, and the amber border."
 }
 if ($firefox.InstallButton.Visibility -ne "Visible" -or $firefox.UninstallButton.Visibility -ne "Collapsed") {
     throw "An app that is not installed should show only Install."

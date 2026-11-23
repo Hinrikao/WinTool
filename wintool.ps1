@@ -10625,28 +10625,6 @@ function Set-WinToolCardButtonText {
     $Button.Content = $line
 }
 
-function New-WinToolStatusDot {
-    param(
-        [Parameter(Mandatory = $true)][string]$Text,
-        [Parameter(Mandatory = $true)][ValidateSet("ok", "warn")][string]$Kind
-    )
-    # A small dot at the top right of a card: green installed, amber update.
-    $dot = New-Object System.Windows.Shapes.Ellipse
-    $dot.Width = 8
-    $dot.Height = 8
-    $dot.VerticalAlignment = "Top"
-    $dot.HorizontalAlignment = "Right"
-    $dot.ToolTip = $Text
-    if ($Kind -eq "warn") {
-        $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushWarn")
-    }
-    else {
-        $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushOk")
-    }
-    $dot.Visibility = "Collapsed"
-    return $dot
-}
-
 function New-WinToolAppRow {
     param(
         $App,
@@ -10706,14 +10684,13 @@ function New-WinToolAppRow {
     [System.Windows.Controls.Grid]::SetColumn($names, 1)
     [void]$head.Children.Add($names)
 
-    $dots = New-Object System.Windows.Controls.Grid
-    $dots.Margin = [System.Windows.Thickness]::new(0, 0, 1, 0)
-    $installedBadge = New-WinToolStatusDot -Text "Installed" -Kind "ok"
-    $updateBadge = New-WinToolStatusDot -Text "Update ready" -Kind "warn"
-    [void]$dots.Children.Add($installedBadge)
-    [void]$dots.Children.Add($updateBadge)
-    [System.Windows.Controls.Grid]::SetColumn($dots, 2)
-    [void]$head.Children.Add($dots)
+    # The checkbox for picking several apps sits at the top right.
+    $checkbox = New-Object System.Windows.Controls.CheckBox
+    $checkbox.VerticalAlignment = "Top"
+    $checkbox.Margin = [System.Windows.Thickness]::new(0, 1, -4, 0)
+    $checkbox.ToolTip = "Pick several apps and install, update, or uninstall them together."
+    [System.Windows.Controls.Grid]::SetColumn($checkbox, 2)
+    [void]$head.Children.Add($checkbox)
     [void]$layout.Children.Add($head)
 
     $description = New-WinToolText -Text ([string]$App.description) -Size 12.5 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 6, 0, 0))
@@ -10726,13 +10703,10 @@ function New-WinToolAppRow {
     [System.Windows.Controls.Grid]::SetRow($description, 1)
     [void]$layout.Children.Add($description)
 
-    $actions = New-Object System.Windows.Controls.Grid
-    $actions.ColumnDefinitions.Add((New-WinToolColumn))
-    $actions.ColumnDefinitions.Add((New-WinToolColumn -Auto))
-    # The visible buttons share the row evenly (collapsed ones take no room).
+    # The visible buttons share the full row evenly (collapsed ones take no room).
     $buttons = New-Object System.Windows.Controls.Primitives.UniformGrid
     $buttons.Rows = 1
-    $buttons.Margin = [System.Windows.Thickness]::new(-2, 0, 8, 0)
+    $buttons.Margin = [System.Windows.Thickness]::new(-2, 0, -2, 0)
     $installButton = New-WinToolCardButton -Text "Install" -Glyph ([string][char]0xE896) -Kind "primary"
     $updateButton = New-WinToolCardButton -Text "Update" -Glyph ([string][char]0xE72C) -Kind "warn"
     $openButton = New-WinToolCardButton -Text "Open" -Kind "neutral"
@@ -10741,15 +10715,8 @@ function New-WinToolAppRow {
         [void]$buttons.Children.Add($button)
         Add-WinToolBusyControl -Control $button
     }
-    [void]$actions.Children.Add($buttons)
-    $checkbox = New-Object System.Windows.Controls.CheckBox
-    $checkbox.VerticalAlignment = "Center"
-    $checkbox.Margin = [System.Windows.Thickness]::new(0, 0, -4, 0)
-    $checkbox.ToolTip = "Pick several apps and install, update, or uninstall them together."
-    [System.Windows.Controls.Grid]::SetColumn($checkbox, 1)
-    [void]$actions.Children.Add($checkbox)
-    [System.Windows.Controls.Grid]::SetRow($actions, 2)
-    [void]$layout.Children.Add($actions)
+    [System.Windows.Controls.Grid]::SetRow($buttons, 2)
+    [void]$layout.Children.Add($buttons)
     $panel.Child = $layout
 
     $search = (@([string]$App.name, [string]$App.description, [string]$App.wingetId, [string]$App.id, $tags, $CategoryName) -join " ")
@@ -10762,8 +10729,6 @@ function New-WinToolAppRow {
         SearchText = $search
         Panel = $panel
         Checkbox = $checkbox
-        InstalledBadge = $installedBadge
-        UpdateBadge = $updateBadge
         InstallButton = $installButton
         UpdateButton = $updateButton
         OpenButton = $openButton
@@ -10808,16 +10773,12 @@ function New-WinToolAppRow {
 
 function Sync-WinToolAppBadge {
     param($Row)
-    # Status dot, border tint, and buttons follow the detected state.
-    $Row.InstalledBadge.Visibility = "Collapsed"
-    $Row.UpdateBadge.Visibility = "Collapsed"
+    # Border tint and buttons follow the detected state.
     $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
     if ($Row.UpdateAvailable) {
-        $Row.UpdateBadge.Visibility = "Visible"
         $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushWarnLine")
     }
     elseif ($Row.Installed) {
-        $Row.InstalledBadge.Visibility = "Visible"
         $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushOkLine")
     }
     if ($Row.Pending) {
