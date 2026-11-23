@@ -664,6 +664,12 @@ $advancedHost = $window.FindName("TerminalAdvancedHost")
 $bodyNeed = Get-WinToolTerminalBodyMinHeight -Width $bodyScroll.ActualWidth
 if ($advancedHost.ActualHeight + 0.5 -lt $bodyNeed) { throw ("The Advanced body should never be squeezed below " + $bodyNeed + " px.") }
 Write-Output ("Terminal body at 1280 x 760: viewport " + [Math]::Round($bodyScroll.ViewportHeight) + " px, cards need " + $bodyNeed + " px, scrolls " + [Math]::Max(0, [Math]::Round($bodyScroll.ExtentHeight - $bodyScroll.ViewportHeight)) + " px.")
+Invoke-WinToolTerminalShotLayout -Width 1000 -Height 1300
+$engineScroll = $null
+foreach ($node in @(Get-WinToolVisualChild -Root $window.FindName("TerminalPromptList"))) { if ($node -is [System.Windows.Controls.ScrollViewer]) { $engineScroll = $node; break } }
+if ($null -ne $engineScroll -and $engineScroll.ExtentHeight -gt $engineScroll.ViewportHeight + 1) {
+    throw ("On a narrow window every prompt engine should show without scrolling the list: " + $engineScroll.ExtentHeight + " > " + $engineScroll.ViewportHeight)
+}
 Invoke-WinToolTerminalShotLayout -Width 1280 -Height 900
 Write-Output ("Terminal body at 1280 x 900: viewport " + [Math]::Round($bodyScroll.ViewportHeight) + " px, scrolls " + [Math]::Max(0, [Math]::Round($bodyScroll.ExtentHeight - $bodyScroll.ViewportHeight)) + " px.")
 # Filters narrow the theme list, and the font size reaches the plan.

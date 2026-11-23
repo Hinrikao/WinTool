@@ -932,7 +932,7 @@
               <!-- Right column: live preview, then font and colors. -->
               <Grid x:Name="TerminalSideColumn" Grid.Row="0" Grid.Column="4">
                 <Grid.RowDefinitions>
-                  <RowDefinition x:Name="TerminalRowPreview" Height="*" MinHeight="150"/>
+                  <RowDefinition x:Name="TerminalRowPreview" Height="*" MinHeight="190"/>
                   <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <Border x:Name="TerminalCardPreview" Grid.Row="0" Style="{StaticResource TerminalCard}" Padding="0" ClipToBounds="True" ToolTip="Live preview: sample output, not a real shell.">

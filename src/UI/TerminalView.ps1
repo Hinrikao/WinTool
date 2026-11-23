@@ -869,7 +869,10 @@ function Update-WinToolTerminalLayout {
         }
     }
     if ($narrow) {
-        # Fixed row heights; the body scrolls.
+        # The lists get a row tall enough for every engine; the body scrolls.
+        $promptCard = Get-WinToolUi -Name "TerminalCardPrompt"
+        $promptCard.Measure([System.Windows.Size]::new(230.0, [double]::PositiveInfinity))
+        $mainRow.Height = [System.Windows.GridLength]::new([Math]::Max(520.0, [Math]::Ceiling($promptCard.DesiredSize.Height)))
         $grid.Height = [double]::NaN
         return
     }
@@ -897,7 +900,8 @@ function Get-WinToolTerminalBodyMinHeight {
     $font.Measure([System.Windows.Size]::new($restWidth, $infinite))
     $extras.Measure([System.Windows.Size]::new(($restWidth * 2.0) + 12.0, $infinite))
     $promptNeed = $prompt.DesiredSize.Height
-    $sideNeed = 150.0 + 12.0 + $font.DesiredSize.Height
+    $previewMin = [double](Get-WinToolUi -Name "TerminalRowPreview").MinHeight
+    $sideNeed = $previewMin + 12.0 + $font.DesiredSize.Height
     $themeNeed = 260.0
     $restNeed = [Math]::Max($sideNeed, $themeNeed) + $extras.DesiredSize.Height
     return [Math]::Ceiling([Math]::Max([Math]::Max($promptNeed, $restNeed), 420.0))

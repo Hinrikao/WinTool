@@ -4683,7 +4683,7 @@ ICAgICA8IS0tIFJpZ2h0IGNvbHVtbjogbGl2ZSBwcmV2aWV3LCB0aGVuIGZvbnQgYW5kIGNvbG9ycy4g
 LS0+CiAgICAgICAgICAgICAgPEdyaWQgeDpOYW1lPSJUZXJtaW5hbFNpZGVDb2x1bW4iIEdyaWQuUm93
 PSIwIiBHcmlkLkNvbHVtbj0iNCI+CiAgICAgICAgICAgICAgICA8R3JpZC5Sb3dEZWZpbml0aW9ucz4K
 ICAgICAgICAgICAgICAgICAgPFJvd0RlZmluaXRpb24geDpOYW1lPSJUZXJtaW5hbFJvd1ByZXZpZXci
-IEhlaWdodD0iKiIgTWluSGVpZ2h0PSIxNTAiLz4KICAgICAgICAgICAgICAgICAgPFJvd0RlZmluaXRp
+IEhlaWdodD0iKiIgTWluSGVpZ2h0PSIxOTAiLz4KICAgICAgICAgICAgICAgICAgPFJvd0RlZmluaXRp
 b24gSGVpZ2h0PSJBdXRvIi8+CiAgICAgICAgICAgICAgICA8L0dyaWQuUm93RGVmaW5pdGlvbnM+CiAg
 ICAgICAgICAgICAgICA8Qm9yZGVyIHg6TmFtZT0iVGVybWluYWxDYXJkUHJldmlldyIgR3JpZC5Sb3c9
 IjAiIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2UgVGVybWluYWxDYXJkfSIgUGFkZGluZz0iMCIgQ2xpcFRv
@@ -13964,7 +13964,10 @@ function Update-WinToolTerminalLayout {
         }
     }
     if ($narrow) {
-        # Fixed row heights; the body scrolls.
+        # The lists get a row tall enough for every engine; the body scrolls.
+        $promptCard = Get-WinToolUi -Name "TerminalCardPrompt"
+        $promptCard.Measure([System.Windows.Size]::new(230.0, [double]::PositiveInfinity))
+        $mainRow.Height = [System.Windows.GridLength]::new([Math]::Max(520.0, [Math]::Ceiling($promptCard.DesiredSize.Height)))
         $grid.Height = [double]::NaN
         return
     }
@@ -13992,7 +13995,8 @@ function Get-WinToolTerminalBodyMinHeight {
     $font.Measure([System.Windows.Size]::new($restWidth, $infinite))
     $extras.Measure([System.Windows.Size]::new(($restWidth * 2.0) + 12.0, $infinite))
     $promptNeed = $prompt.DesiredSize.Height
-    $sideNeed = 150.0 + 12.0 + $font.DesiredSize.Height
+    $previewMin = [double](Get-WinToolUi -Name "TerminalRowPreview").MinHeight
+    $sideNeed = $previewMin + 12.0 + $font.DesiredSize.Height
     $themeNeed = 260.0
     $restNeed = [Math]::Max($sideNeed, $themeNeed) + $extras.DesiredSize.Height
     return [Math]::Ceiling([Math]::Max([Math]::Max($promptNeed, $restNeed), 420.0))
