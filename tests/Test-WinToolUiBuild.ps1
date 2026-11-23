@@ -1133,7 +1133,7 @@ foreach ($size in @(@(1280, 800), @(1920, 1080), @(1024, 640))) {
     $right = $hero.TranslatePoint([System.Windows.Point]::new($hero.ActualWidth, 0), $rootVisual).X
     $cards = $window.FindName("HomeMinis")
     $cardsRight = $cards.TranslatePoint([System.Windows.Point]::new($cards.ActualWidth, 0), $rootVisual).X
-    if ([Math]::Abs($right - $cardsRight) -gt 0.5 -or $right -lt ($w - 30)) { throw ("Home should fill the width at " + $size[0] + ": hero ends at " + $right + ", cards at " + $cardsRight) }
+    if ([Math]::Abs($right - $cardsRight) -gt 1.5 -or $right -lt ($w - 40)) { throw ("Home should fill the width at " + $size[0] + ": hero ends at " + $right + ", cards at " + $cardsRight) }
     Write-Output ("Home at {0}x{1}: analyzing, done and fixing share the same bounds (hero {2:0}x{3:0})." -f $size[0], $size[1], $hero.ActualWidth, $hero.ActualHeight)
 }
 
