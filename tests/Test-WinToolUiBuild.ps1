@@ -700,13 +700,13 @@ if ($firefox.Panel.Visibility -ne "Collapsed" -or $chrome.Panel.Visibility -ne "
 $allChip.IsChecked = $true
 $firefox.Checkbox.IsChecked = $true
 if ($window.FindName("AppBulkBar").Visibility -ne "Visible") {
-    throw "Ticking an app should show the bulk bar."
+    throw "Ticking an app should show the selection actions."
 }
 $firefox.Checkbox.IsChecked = $false
 if ($window.FindName("AppBulkBar").Visibility -ne "Collapsed") {
-    throw "The bulk bar should hide when nothing is ticked."
+    throw "The selection actions should hide when nothing is ticked."
 }
-# The selection actions sit in the top row, so ticking an app never moves the cards.
+# The selection actions sit on the title row, so ticking an app never moves the cards.
 $window.FindName("NavInstall").IsChecked = $true
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
@@ -719,7 +719,20 @@ Save-WinToolViewShot -Name "install-selected" -Width 1280 -Height 760
 $after = $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
 if ([math]::Abs($after.Y - $before.Y) -gt 0.5) { throw ("Ticking an app moved the cards from " + $before.Y + " to " + $after.Y) }
 if ([string]$window.FindName("AppCount").Text -ne "2 selected") { throw "The selection count should read 2 selected." }
-Write-Output ("Selection actions in the top row; first card stays at y=" + [int]$after.Y)
+$count = $window.FindName("AppCount")
+# DesiredSize includes the margin, ActualWidth does not.
+$countRoom = $count.ActualWidth + $count.Margin.Left + $count.Margin.Right
+if ($countRoom + 0.5 -lt $count.DesiredSize.Width -or $count.ActualWidth -lt 40) { throw ("The selection count is clipped: " + $count.ActualWidth + " of " + $count.DesiredSize.Width) }
+$bar = $window.FindName("AppBulkBar")
+$barTop = $bar.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+$searchTop = $window.FindName("AppSearch").TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+if ($barTop.Y + $bar.ActualHeight -gt $searchTop.Y) { throw "The selection actions should sit on the title row, above the search box." }
+# At 1280 every filter chip fits on its own row without scrolling.
+$chipScroll = $window.FindName("AppFilterScroll")
+$lastChip = $window.FindName("AppFilters").Children[$window.FindName("AppFilters").Children.Count - 1]
+$chipRight = $lastChip.TranslatePoint([System.Windows.Point]::new($lastChip.ActualWidth, 0), $chipScroll).X
+if ($chipRight -gt $chipScroll.ActualWidth + 0.5) { throw ("Filter chips are cut off at 1280: the last ends at " + [int]$chipRight + " of " + [int]$chipScroll.ActualWidth) }
+Write-Output ("Selection actions on the title row; first card stays at y=" + [int]$after.Y + "; chips end at " + [int]$chipRight + " of " + [int]$chipScroll.ActualWidth)
 Sync-WinToolAppCheck -Id @() -OnlyThese
 $window.FindName("NavInstall").IsChecked = $true
 $script:WinToolState.LogExpanded = $false

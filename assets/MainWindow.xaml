@@ -53,6 +53,7 @@
 
     <!-- Small rounded button used on app cards; colors are set per button. -->
     <Style x:Key="CardButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Width" Value="96"/>
       <Setter Property="Height" Value="32"/>
       <Setter Property="Padding" Value="0"/>
@@ -91,7 +92,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="16" Padding="14,0">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="16" Padding="12,0">
               <ContentPresenter VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -108,6 +109,7 @@
       </Setter>
     </Style>
     <Style x:Key="ChipButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
       <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
       <Setter Property="Height" Value="32"/>
@@ -116,7 +118,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="16" Padding="14,0">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="16" Padding="12,0">
               <ContentPresenter VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -132,6 +134,7 @@
       </Setter>
     </Style>
     <Style x:Key="ToolbarButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
       <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
       <Setter Property="Height" Value="32"/>
@@ -234,6 +237,7 @@
     </Style>
 
     <Style x:Key="PrimaryButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Foreground" Value="White"/>
       <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
       <Setter Property="Padding" Value="16,9"/>
@@ -263,6 +267,7 @@
     </Style>
 
     <Style x:Key="SecondaryButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
       <Setter Property="Background" Value="{DynamicResource BrushCard}"/>
       <Setter Property="Padding" Value="14,9"/>
@@ -288,6 +293,7 @@
     </Style>
 
     <Style x:Key="QuietButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Foreground" Value="{DynamicResource BrushLogText}"/>
       <Setter Property="Background" Value="Transparent"/>
       <Setter Property="Padding" Value="10,4"/>
@@ -326,27 +332,50 @@
       <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
       <Setter Property="Padding" Value="9,0"/>
     </Style>
+    <!-- Rounded checkbox: 20 px box, 1.5 px border, accent fill and a white
+         check mark when ticked. No dotted focus rectangle. -->
     <Style TargetType="CheckBox">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
       <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="CheckBox">
-            <StackPanel Orientation="Horizontal">
-              <Border x:Name="Box" Width="18" Height="18" CornerRadius="4" Margin="0,0,8,0" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushInputBorder}" BorderThickness="1">
-                <Path x:Name="Mark" Data="M 2,5 L 6,9 L 12,2" Stroke="{DynamicResource BrushOnAccent}" StrokeThickness="2" Visibility="Collapsed" Margin="3" Stretch="Uniform"/>
+            <StackPanel Orientation="Horizontal" Background="Transparent">
+              <Border x:Name="Box" Width="20" Height="20" CornerRadius="5" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushMuted}" BorderThickness="1.5">
+                <Grid>
+                  <Path x:Name="Mark" Data="M 4.5,10 L 8.5,14 L 15.5,6.5" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Margin="-1.5" Visibility="Collapsed"/>
+                  <Rectangle x:Name="Dash" Width="9" Height="2" RadiusX="1" RadiusY="1" Fill="White" Visibility="Collapsed"/>
+                </Grid>
               </Border>
-              <ContentPresenter VerticalAlignment="Center"/>
+              <ContentPresenter x:Name="Label" VerticalAlignment="Center" Margin="8,0,0,0"/>
             </StackPanel>
             <ControlTemplate.Triggers>
+              <Trigger Property="Content" Value="{x:Null}">
+                <Setter TargetName="Label" Property="Margin" Value="0"/>
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                <Setter TargetName="Box" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
               <Trigger Property="IsChecked" Value="True">
                 <Setter TargetName="Box" Property="Background" Value="{DynamicResource BrushAccent}"/>
                 <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
                 <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
               </Trigger>
+              <MultiTrigger>
+                <MultiTrigger.Conditions>
+                  <Condition Property="IsChecked" Value="True"/>
+                  <Condition Property="IsMouseOver" Value="True"/>
+                </MultiTrigger.Conditions>
+                <Setter TargetName="Box" Property="Background" Value="{DynamicResource BrushAccentHover}"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BrushAccentHover}"/>
+              </MultiTrigger>
               <Trigger Property="IsChecked" Value="{x:Null}">
-                <Setter TargetName="Box" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+                <Setter TargetName="Box" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                <Setter TargetName="Dash" Property="Visibility" Value="Visible"/>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.45"/>
@@ -523,31 +552,36 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
-          <TextBlock Grid.Row="0" Margin="20,15,20,0" Text="Install" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+          <Grid Grid.Row="0" Margin="20,15,20,0">
+            <TextBlock Text="Install" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+            <!-- Selection actions: on the title row, right side, only while apps are ticked. The title row is taller than the buttons, so nothing below moves. -->
+            <StackPanel x:Name="AppBulkBar" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed">
+              <TextBlock x:Name="AppCount" Text="0 selected" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,12,0" TextWrapping="NoWrap"/>
+              <Button x:Name="AppInstall" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushAccent}" Foreground="{DynamicResource BrushOnAccent}" FontWeight="SemiBold"/>
+              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
+              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
+              <Button x:Name="AppClear" Content="Clear" Style="{StaticResource ToolbarButton}" Height="32" Padding="14,0"/>
+            </StackPanel>
+          </Grid>
           <Grid Grid.Row="1" Margin="20,7,20,0">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="220"/>
+              <ColumnDefinition Width="260"/>
               <ColumnDefinition Width="*"/>
-              <ColumnDefinition Width="Auto"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0" Height="34" VerticalAlignment="Top">
               <TextBox x:Name="AppSearch" Style="{StaticResource PageSearch}" Height="34" AutomationProperties.Name="Search apps"/>
               <TextBlock x:Name="AppSearchHint" Text="Search apps&#x2026;" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
             </Grid>
-            <!-- One row of chips that never wraps: it scrolls sideways (mouse wheel) when the window is narrow. -->
-            <ScrollViewer x:Name="AppFilterScroll" Grid.Column="1" Margin="12,0,8,0" Height="34" VerticalAlignment="Top" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+            <!-- The chips get the full width on their own row; below about 1280 px they scroll sideways (mouse wheel). -->
+            <ScrollViewer x:Name="AppFilterScroll" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,8,0,0" Height="34" VerticalAlignment="Top" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
               <StackPanel x:Name="AppFilters" Orientation="Horizontal" VerticalAlignment="Center"/>
             </ScrollViewer>
-            <!-- Shown only while apps are ticked; the chips give up the room, so the cards never move. -->
-            <StackPanel x:Name="AppBulkBar" Grid.Column="2" Orientation="Horizontal" Height="34" VerticalAlignment="Top" Margin="0,0,8,0" Visibility="Collapsed">
-              <TextBlock x:Name="AppCount" Text="0 selected" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,8,0"/>
-              <Button x:Name="AppInstall" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushAccent}" Foreground="{DynamicResource BrushOnAccent}" FontWeight="SemiBold"/>
-              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
-              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
-              <Button x:Name="AppClear" Content="Clear" Style="{StaticResource ToolbarButton}" Height="32" Padding="14,0"/>
-            </StackPanel>
-            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
               <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Height="32" Padding="14,0" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
               <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="32" Height="32" Padding="0" FontFamily="Segoe MDL2 Assets" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
             </StackPanel>
