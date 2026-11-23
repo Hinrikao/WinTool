@@ -444,7 +444,7 @@
         </Grid>
 
         <ScrollViewer x:Name="ViewTerminal" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
-          <StackPanel x:Name="TerminalPage" Margin="20,18,20,0">
+          <StackPanel x:Name="TerminalPage" Margin="20,14,20,0">
             <StackPanel.Resources>
               <Style x:Key="TerminalCard" TargetType="Border">
                 <Setter Property="Background" Value="{DynamicResource BrushCard}"/>
@@ -556,7 +556,7 @@
                 </StackPanel>
               </Border>
             </Grid>
-            <Border x:Name="TerminalSummaryCard" Style="{StaticResource TerminalCard}" MinHeight="110" Padding="15,12,15,12" Margin="0,0,0,8">
+            <Border x:Name="TerminalSummaryCard" Style="{StaticResource TerminalCard}" MinHeight="110" Padding="15,12,15,12" Margin="0">
               <Grid>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*"/>
