@@ -541,6 +541,7 @@ function Initialize-WinToolTerminalView {
         $promptList = Get-WinToolUi -Name "TerminalPromptList"
         $promptNow = [string]$script:WinToolTerminalChoice.prompt
         $styleNow = [string]$script:WinToolTerminalChoice.promptStyle
+        $listWas = [string]$styleList.Tag
         $listReady = (
             [string]$styleList.Tag -eq $promptNow -and
             [string]$script:WinToolThemeListKey -eq (Get-WinToolThemeListKey) -and
@@ -558,7 +559,10 @@ function Initialize-WinToolTerminalView {
             Sync-WinToolFontSelection
             Update-WinToolSchemeSelection
             Update-WinToolTerminalSummary
-            Request-WinToolTerminalPreview
+            # A different engine has to show its own sample before the click
+            # returns. The same engine can repaint after the first frame.
+            if ($listWas -ne $promptNow) { Update-WinToolTerminalPreview }
+            else { Request-WinToolTerminalPreview }
         }
         $script:WinToolTerminalScrollPending = $true
     }
