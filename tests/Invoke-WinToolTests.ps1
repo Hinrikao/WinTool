@@ -319,6 +319,10 @@ Invoke-WinToolCase -Name "The console hides unless asked to stay" -Body {
     }
     $source = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Start-WinTool.ps1"))
     Test-WinToolExpectation -Condition ($source.Contains('[switch]$ShowConsole')) -Message "Start-WinTool.ps1 accepts -ShowConsole."
+    $entry = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Entry.ps1"))
+    $hideAt = $entry.IndexOf("Hide-WinToolConsole")
+    $showAt = $entry.IndexOf("Show-WinToolWindow")
+    Test-WinToolExpectation -Condition ($hideAt -gt 0 -and $hideAt -lt $showAt) -Message "The console hides before the window is built."
     $launcher = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "wintool.ps1"))
     Test-WinToolExpectation -Condition ($launcher.Contains('[switch]$ShowConsole')) -Message "wintool.ps1 accepts -ShowConsole."
 }

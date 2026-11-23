@@ -7388,6 +7388,11 @@ function Start-WinTool {
             return
         }
 
+        # Hide the console before the catalogs and XAML load, so it does not
+        # stay on screen while the window is built. Errors bring it back.
+        if ((Get-WinToolCurrentConsoleMode) -eq "hide") {
+            Hide-WinToolConsole
+        }
         Show-WinToolWindow
     }
     catch {
