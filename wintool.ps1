@@ -11266,6 +11266,8 @@ function Find-WinToolInstalledFontFile {
         $score = 0
         if ($text.Contains("regular")) { $score += 2 }
         if (-not $text.Contains("propo")) { $score += 1 }
+        # Mono is the terminal face. Proportional and Propo stay usable, just behind it.
+        if ($text.Contains("mono") -and -not $text.Contains("propo")) { $score += 1 }
         if ($score -gt $bestScore) {
             $best = $item
             $bestScore = $score
@@ -11278,10 +11280,13 @@ function Get-WinToolRegisteredFont {
     if (-not (Test-WinToolWindows)) {
         return @()
     }
+    if ($null -ne $script:WinToolRegisteredFontCache) {
+        return @($script:WinToolRegisteredFontCache)
+    }
     $list = New-Object System.Collections.Generic.List[object]
     $sources = @(
-        @{ Key = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"; Folder = (Join-Path $env:windir "Fonts") },
-        @{ Key = "HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"; Folder = (Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Fonts") }
+        @{ Key = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"; Folder = (Join-Path $env:windir "Fonts"); Source = "HKLM" },
+        @{ Key = "HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"; Folder = (Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Fonts"); Source = "HKCU" }
     )
     foreach ($source in $sources) {
         if (-not (Test-Path -LiteralPath $source.Key)) {
@@ -11296,10 +11301,11 @@ function Get-WinToolRegisteredFont {
             if (-not [string]::IsNullOrWhiteSpace($data) -and -not [System.IO.Path]::IsPathRooted($data)) {
                 $data = Join-Path $source.Folder $data
             }
-            $list.Add([pscustomobject]@{ Name = [string]$name; Data = $data })
+            $list.Add([pscustomobject]@{ Name = [string]$name; Data = $data; Source = [string]$source.Source })
         }
     }
-    return $list.ToArray()
+    $script:WinToolRegisteredFontCache = $list.ToArray()
+    return @($script:WinToolRegisteredFontCache)
 }
 
 function Get-WinToolFontFamilyName {
@@ -11326,6 +11332,622 @@ function Get-WinToolFontFamilyName {
         $null = $_.Exception.Message
     }
     return $null
+}
+
+function Reset-WinToolFontResolution {
+    # Drop cached faces after a font is installed or removed. The theme list
+    # rebuilds its pictures the next time the preview font changes.
+    $script:WinToolRegisteredFontCache = $null
+    $script:WinToolLoadedFontCache = $null
+    $script:WinToolGlyphCache = $null
+    $script:WinToolFileFamilyCache = $null
+    $script:WinToolResolvedFontMap = $null
+    $script:WinToolPreviewFontChain = $null
+    $script:WinToolPreviewFontChainKey = $null
+    $script:WinToolThemePreviewFontKey = $null
+}
+
+function Get-WinToolTextCode {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    # One UTF-32 codepoint per item, so an emoji is not split into surrogates.
+    $codes = New-Object System.Collections.Generic.List[int]
+    $chars = ([string]$Text).ToCharArray()
+    for ($index = 0; $index -lt $chars.Length; $index++) {
+        $char = $chars[$index]
+        if ([char]::IsHighSurrogate($char) -and ($index + 1) -lt $chars.Length -and [char]::IsLowSurrogate($chars[$index + 1])) {
+            $codes.Add([char]::ConvertToUtf32($char, $chars[$index + 1]))
+            $index++
+        }
+        else {
+            $codes.Add([int]$char)
+        }
+    }
+    return $codes.ToArray()
+}
+
+function ConvertTo-WinToolGlyphFallback {
+    param(
+        [int]$Code
+    )
+    # Used only when no loaded face has the codepoint. The result is ASCII,
+    # so Consolas can draw it and the preview never shows an empty box.
+    if ($null -eq $script:WinToolGlyphFallback) {
+        $map = @{}
+        # code=ascii, one row each. A nested array would be flattened by PowerShell.
+        $rows = @"
+00BB=>
+03BB=L
+2039=<
+203A=>
+2261==
+2302=^
+2500=-
+250C=+
+256D=+
+2591=.
+2592=:
+2593=#
+25B3=^
+25B6=>
+25C9=*
+25CE=o
+2665=<3
+276F=>
+279C=>
+27A4=>
+2B22=*
+E0A0=git
+E0B0=>
+E0B1=>
+E0B2=<
+E0B4=>
+E0B6=<
+E0B8=>
+E0BA=<
+E0C4=>
+E0C5=<
+E0C6=>
+E0C7=<
+E0D7=/
+E70F=ps
+E718=js
+E795=>
+E7AD=py
+F07B=/
+F07C=/
+F105=>
+F126=git
+F418=git
+F432=>
+F43A=:
+F489=.
+1F3E0=home
+1F4AC=msg
+1F600=:)
+"@
+        foreach ($row in ($rows -split "`n")) {
+            $line = $row.Trim()
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            $splitAt = $line.IndexOf("=")
+            $map[[Convert]::ToInt32($line.Substring(0, $splitAt), 16)] = $line.Substring($splitAt + 1)
+        }
+        $script:WinToolGlyphFallback = $map
+    }
+    $key = [int]$Code
+    if ($script:WinToolGlyphFallback.ContainsKey($key)) {
+        return [string]$script:WinToolGlyphFallback[$key]
+    }
+    if (($key -ge 0xE000 -and $key -le 0xF8FF) -or $key -gt 0xFFFF) {
+        return ">"
+    }
+    return $null
+}
+
+function Add-WinToolPreviewSampleValue {
+    param(
+        $Value,
+        $List
+    )
+    if ($null -eq $Value -or $Value -is [string] -or $Value -is [ValueType]) { return }
+    if ($Value -is [System.Collections.IEnumerable]) {
+        foreach ($item in @($Value)) {
+            Add-WinToolPreviewSampleValue -Value $item -List $List
+        }
+        return
+    }
+    foreach ($property in @($Value.PSObject.Properties)) {
+        $name = [string]$property.Name
+        if (($name -eq "text" -or $name -eq "Text") -and $property.Value -is [string] -and -not [string]::IsNullOrEmpty([string]$property.Value)) {
+            [void]$List.Add([string]$property.Value)
+        }
+        else {
+            Add-WinToolPreviewSampleValue -Value $property.Value -List $List
+        }
+    }
+}
+
+function Get-WinToolPreviewSampleText {
+    # Every string the prompt previews draw, including the folder and file
+    # icons on the live sample. Callers use this to check glyph coverage.
+    $list = New-Object System.Collections.Generic.List[string]
+    Add-WinToolPreviewSampleValue -Value (Get-WinToolOhMyPoshDocument) -List $list
+    Add-WinToolPreviewSampleValue -Value (Get-WinToolTerminalCatalog) -List $list
+    [void]$list.Add([string][char]0xF07B)
+    [void]$list.Add([string][char]0xF489)
+    [void]$list.Add([string][char]0xE0B0)
+    return $list.ToArray()
+}
+
+function Get-WinToolGlyphFamilyName {
+    param(
+        $Glyph,
+        [string]$Table = "family",
+        [switch]$All
+    )
+    # Every stored family name when -All is set. The file URI has to use the
+    # one WPF accepts, and the two name tables do not always agree.
+    if ($null -eq $Glyph) {
+        if ($All) { return @() }
+        return $null
+    }
+    # The file URI wants the Win32 name more often than the typographic one.
+    if ($All) { $tables = @($Glyph.Win32FamilyNames, $Glyph.FamilyNames) }
+    elseif ($Table -eq "win32") { $tables = @($Glyph.Win32FamilyNames) }
+    else { $tables = @($Glyph.FamilyNames) }
+    $found = New-Object System.Collections.Generic.List[string]
+    foreach ($names in $tables) {
+        if ($null -eq $names) { continue }
+        if (-not $All) {
+            $english = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+            if ($names.ContainsKey($english)) { return [string]$names[$english] }
+            foreach ($value in $names.Values) { return [string]$value }
+            return $null
+        }
+        foreach ($value in @($names.Values)) {
+            $name = [string]$value
+            if ([string]::IsNullOrWhiteSpace($name)) { continue }
+            if (-not $found.Contains($name)) { [void]$found.Add($name) }
+        }
+    }
+    if ($All) { return $found.ToArray() }
+    return $null
+}
+
+function Get-WinToolTypefaceGlyph {
+    param($Typeface)
+    if ($null -eq $Typeface) { return $null }
+    $loaded = $null
+    $ok = $false
+    try {
+        $ok = $Typeface.TryGetGlyphTypeface([ref]$loaded)
+    }
+    catch {
+        $null = $_.Exception.Message
+        return $null
+    }
+    if (-not $ok -or $null -eq $loaded) { return $null }
+    return $loaded
+}
+
+function Initialize-WinToolGlyphMap {
+    # PowerShell's call into CharacterToGlyphMap is unreliable on 5.1.
+    # Glyph 0 is the font's empty box, so a codepoint that maps to it is missing.
+    if ($null -ne ("WinToolGlyphMap" -as [type])) { return }
+    Add-Type -AssemblyName PresentationCore
+    Add-Type -ReferencedAssemblies ([System.Windows.Media.GlyphTypeface].Assembly.Location) -TypeDefinition @"
+using System.Windows.Media;
+public static class WinToolGlyphMap {
+    public static bool Has(GlyphTypeface face, int code) {
+        if (face == null) return false;
+        ushort index;
+        return face.CharacterToGlyphMap.TryGetValue(code, out index) && index > 0;
+    }
+}
+"@
+}
+
+function Test-WinToolGlyphMapped {
+    param(
+        $Glyph,
+        [int]$Code
+    )
+    if ($null -eq $Glyph -or -not (Test-WinToolWindows)) { return $false }
+    Initialize-WinToolGlyphMap
+    return [WinToolGlyphMap]::Has($Glyph, [int]$Code)
+}
+
+function Test-WinToolSameFontFile {
+    param(
+        $Glyph,
+        [string]$Path
+    )
+    # TryGetGlyphTypeface can hand back a different installed face. The preview
+    # only keeps a family whose glyph file is the one that was opened.
+    if ($null -eq $Glyph -or [string]::IsNullOrWhiteSpace($Path)) { return $false }
+    $fontUri = $null
+    try { $fontUri = $Glyph.FontUri } catch { $null = $_.Exception.Message; return $false }
+    if ($null -eq $fontUri -or -not $fontUri.IsFile) { return $false }
+    try {
+        $left = [System.IO.Path]::GetFullPath($fontUri.LocalPath)
+        $right = [System.IO.Path]::GetFullPath($Path)
+        return $left.Equals($right, [System.StringComparison]::OrdinalIgnoreCase)
+    }
+    catch {
+        $null = $_.Exception.Message
+        return $false
+    }
+}
+
+function Test-WinToolFileTypeface {
+    param(
+        [string]$Path,
+        [string]$FamilyName
+    )
+    if ([string]::IsNullOrWhiteSpace($Path) -or [string]::IsNullOrWhiteSpace($FamilyName)) { return $null }
+    if ($null -eq $script:WinToolFileFamilyCache) { $script:WinToolFileFamilyCache = @{} }
+    $uri = New-Object System.Uri -ArgumentList $Path
+    $forms = @(
+        ($uri.AbsoluteUri + "#" + $FamilyName),
+        ("./#" + $FamilyName)
+    )
+    foreach ($form in $forms) {
+        $familyKey = $Path + "|" + $form
+        $family = $null
+        if ($script:WinToolFileFamilyCache.ContainsKey($familyKey)) {
+            $family = $script:WinToolFileFamilyCache[$familyKey]
+        }
+        else {
+            try {
+                if ($form.StartsWith(".")) {
+                    $family = New-Object System.Windows.Media.FontFamily -ArgumentList $uri, $form
+                }
+                else {
+                    $family = [System.Windows.Media.FontFamily]::new($form)
+                }
+            }
+            catch {
+                $null = $_.Exception.Message
+                $family = $null
+            }
+            # FontFamily is not freezable. The object itself is the cache.
+            $script:WinToolFileFamilyCache[$familyKey] = $family
+        }
+        if ($null -eq $family) { continue }
+        $typeface = $null
+        $drawn = $null
+        try {
+            $typeface = New-Object System.Windows.Media.Typeface(
+                $family,
+                [System.Windows.FontStyles]::Normal,
+                [System.Windows.FontWeights]::Normal,
+                [System.Windows.FontStretches]::Normal)
+            $drawn = Get-WinToolTypefaceGlyph -Typeface $typeface
+        }
+        catch {
+            $null = $_.Exception.Message
+            $drawn = $null
+        }
+        if ($null -eq $drawn) { continue }
+        if (-not (Test-WinToolSameFontFile -Glyph $drawn -Path $Path)) { continue }
+        if ($drawn.CanFreeze) {
+            try { $drawn.Freeze() } catch { $null = $_.Exception.Message }
+        }
+        return [pscustomobject]@{ Family = $family; Typeface = $typeface; Glyph = $drawn }
+    }
+    return $null
+}
+
+function New-WinToolLoadedFont {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [bool]$Nerd = $false,
+        [string]$Id = "",
+        [string]$Face = "",
+        [string]$Name = "",
+        [string]$Source = ""
+    )
+    # WPF does not see per-user fonts by family name. A file URI
+    # (file:///.../#Family Name) loads the face from HKCU or HKLM.
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) { return $null }
+    if ($null -eq $script:WinToolLoadedFontCache) { $script:WinToolLoadedFontCache = @{} }
+    $cacheKey = $Path + "|" + $Id
+    if ($script:WinToolLoadedFontCache.ContainsKey($cacheKey)) {
+        return $script:WinToolLoadedFontCache[$cacheKey]
+    }
+    $record = $null
+    try {
+        Add-Type -AssemblyName PresentationCore
+        if ($null -eq $script:WinToolGlyphCache) { $script:WinToolGlyphCache = @{} }
+        $glyph = $null
+        if ($script:WinToolGlyphCache.ContainsKey($Path)) {
+            $glyph = $script:WinToolGlyphCache[$Path]
+        }
+        else {
+            $glyph = New-Object System.Windows.Media.GlyphTypeface ([uri]$Path)
+            $script:WinToolGlyphCache[$Path] = $glyph
+        }
+        if ($glyph.CanFreeze) {
+            try { $glyph.Freeze() } catch { $null = $_.Exception.Message }
+        }
+        $loadedFace = $null
+        foreach ($familyName in @(Get-WinToolGlyphFamilyName -Glyph $glyph -All)) {
+            $loadedFace = Test-WinToolFileTypeface -Path $Path -FamilyName $familyName
+            if ($null -ne $loadedFace) { break }
+        }
+        if ($null -eq $loadedFace) { throw "The font file did not load." }
+        $family = $loadedFace.Family
+        $typeface = $loadedFace.Typeface
+        $drawn = $loadedFace.Glyph
+        $record = [pscustomobject]@{
+            Id = $Id
+            Face = $Face
+            Name = $Name
+            Path = $Path
+            Source = $Source
+            FamilyName = ""
+            Family = $family
+            Typeface = $typeface
+            Glyph = $drawn
+            Nerd = [bool]$Nerd
+        }
+        try {
+            $record.FamilyName = [string](Get-WinToolGlyphFamilyName -Glyph $glyph -Table "win32")
+            if ([string]::IsNullOrWhiteSpace([string]$record.FamilyName)) {
+                $record.FamilyName = [string](Get-WinToolGlyphFamilyName -Glyph $glyph -Table "family")
+            }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+    }
+    catch {
+        $null = $_.Exception.Message
+        $record = $null
+    }
+    $script:WinToolLoadedFontCache[$cacheKey] = $record
+    return $record
+}
+
+function Test-WinToolNerdFontRecord {
+    param(
+        $Record,
+        [string]$RegistryName
+    )
+    if ($null -eq $Record) { return $false }
+    $blob = ConvertTo-WinToolFontToken -Text (([string]$Record.FamilyName) + " " + $RegistryName + " " + [System.IO.Path]::GetFileName([string]$Record.Path))
+    return $blob.Contains("nerd")
+}
+
+function Get-WinToolResolvedFontMap {
+    if ($null -ne $script:WinToolResolvedFontMap) { return $script:WinToolResolvedFontMap }
+    $map = @{}
+    if (Test-WinToolWindows) {
+        $registered = @(Get-WinToolRegisteredFont)
+        $fonts = @(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @())
+        foreach ($extra in @($script:WinToolExtraFont)) {
+            if ($null -ne $extra) { $fonts += $extra }
+        }
+        foreach ($font in $fonts) {
+            $match = [string](Get-WinToolNote -Object $font -Name "match" -Default "")
+            if ([string]::IsNullOrWhiteSpace($match)) { $match = [string]$font.face }
+            $found = Find-WinToolInstalledFontFile -Token $match -Entry $registered
+            if ($null -eq $found) { continue }
+            $nerd = ($null -ne $font.PSObject.Properties["nerd"] -and [bool]$font.nerd)
+            $loaded = New-WinToolLoadedFont -Path ([string]$found.Data) -Nerd $nerd -Id ([string]$font.id) -Face ([string]$font.face) -Name ([string]$font.name) -Source ([string]$found.Source)
+            if ($null -eq $loaded) { continue }
+            if ($nerd -and -not (Test-WinToolNerdFontRecord -Record $loaded -RegistryName ([string]$found.Name))) { continue }
+            $map[[string]$font.id] = $loaded
+        }
+    }
+    $script:WinToolResolvedFontMap = $map
+    return $map
+}
+
+function Get-WinToolResolvableFont {
+    # Catalog rows whose font file opened. The dropdown lists only these.
+    $map = Get-WinToolResolvedFontMap
+    $rows = New-Object System.Collections.Generic.List[object]
+    foreach ($font in @(Get-WinToolActiveFont)) {
+        if ($map.ContainsKey([string]$font.id)) { [void]$rows.Add($font) }
+    }
+    return $rows.ToArray()
+}
+
+function Test-WinToolFontResolve {
+    param(
+        [Parameter(Mandatory = $true)][string]$Id
+    )
+    return (Get-WinToolResolvedFontMap).ContainsKey($Id)
+}
+
+function Get-WinToolSystemFont {
+    param(
+        [Parameter(Mandatory = $true)][string]$Token,
+        [Parameter(Mandatory = $true)][string]$FileName
+    )
+    if (-not (Test-WinToolWindows)) { return $null }
+    $path = ""
+    $source = "HKLM"
+    $found = Find-WinToolInstalledFontFile -Token $Token
+    if ($null -ne $found -and -not [string]::IsNullOrWhiteSpace([string]$found.Data) -and (Test-Path -LiteralPath ([string]$found.Data))) {
+        $path = [string]$found.Data
+        $source = [string]$found.Source
+    }
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        $candidate = Join-Path (Join-Path $env:windir "Fonts") $FileName
+        if (Test-Path -LiteralPath $candidate) { $path = $candidate }
+    }
+    if ([string]::IsNullOrWhiteSpace($path)) { return $null }
+    return (New-WinToolLoadedFont -Path $path -Nerd $false -Id $Token -Face $Token -Name $Token -Source $source)
+}
+
+function Get-WinToolBestNerdFont {
+    # Prefer CaskaydiaCove Nerd Font Mono, then the proportional Cove face,
+    # then any other installed Nerd Font.
+    $map = Get-WinToolResolvedFontMap
+    $best = $null
+    $bestScore = -1
+    foreach ($id in @($map.Keys)) {
+        $record = $map[$id]
+        if ($null -eq $record -or -not $record.Nerd) { continue }
+        $family = [string]$record.FamilyName
+        $score = 1
+        if ($family -eq "CaskaydiaCove Nerd Font Mono") { $score += 100 }
+        elseif ($family -eq "CaskaydiaCove Nerd Font") { $score += 80 }
+        elseif ([string]$id -eq "cascadiacode-nf") { $score += 60 }
+        elseif ([string]$id -eq "cascadiamono-nf") { $score += 40 }
+        if ($family.IndexOf("Mono", [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -and $family.IndexOf("Propo", [System.StringComparison]::OrdinalIgnoreCase) -lt 0) {
+            $score += 10
+        }
+        if ($score -gt $bestScore) {
+            $best = $record
+            $bestScore = $score
+        }
+    }
+    return $best
+}
+
+function Get-WinToolPreviewFontKey {
+    $selectedId = ""
+    if ($null -ne $script:WinToolTerminalChoice) { $selectedId = [string]$script:WinToolTerminalChoice.fontId }
+    $bestPath = ""
+    $best = Get-WinToolBestNerdFont
+    if ($null -ne $best) { $bestPath = [string]$best.Path }
+    return ($selectedId + "|" + $bestPath)
+}
+
+function Get-WinToolPreviewFontChain {
+    # Selected Nerd Font, then the best installed Nerd Font, then faces that
+    # cover symbols, emoji, and ASCII. Missing codepoints are substituted.
+    $key = Get-WinToolPreviewFontKey
+    if ($key -eq [string]$script:WinToolPreviewFontChainKey -and $null -ne $script:WinToolPreviewFontChain) {
+        return @($script:WinToolPreviewFontChain)
+    }
+    $list = New-Object System.Collections.Generic.List[object]
+    $seen = @{}
+    $selectedId = ""
+    if ($null -ne $script:WinToolTerminalChoice) { $selectedId = [string]$script:WinToolTerminalChoice.fontId }
+    $map = Get-WinToolResolvedFontMap
+    $candidates = New-Object System.Collections.Generic.List[object]
+    if (-not [string]::IsNullOrWhiteSpace($selectedId) -and $map.ContainsKey($selectedId)) {
+        [void]$candidates.Add($map[$selectedId])
+    }
+    $bestNerd = Get-WinToolBestNerdFont
+    if ($null -ne $bestNerd) { [void]$candidates.Add($bestNerd) }
+    foreach ($systemFont in @(
+            (Get-WinToolSystemFont -Token "Segoe UI Symbol" -FileName "seguisym.ttf"),
+            (Get-WinToolSystemFont -Token "Segoe UI Emoji" -FileName "seguiemj.ttf"),
+            (Get-WinToolSystemFont -Token "Consolas" -FileName "consola.ttf")
+        )) {
+        if ($null -ne $systemFont) { [void]$candidates.Add($systemFont) }
+    }
+    foreach ($record in $candidates) {
+        $path = [string]$record.Path
+        if ([string]::IsNullOrWhiteSpace($path) -or $seen.ContainsKey($path)) { continue }
+        $seen[$path] = $true
+        [void]$list.Add($record)
+    }
+    if ($list.Count -eq 0 -and (Test-WinToolWindows)) {
+        try {
+            Add-Type -AssemblyName PresentationCore
+            $family = [System.Windows.Media.FontFamily]::new("Consolas")
+            $typeface = New-Object System.Windows.Media.Typeface(
+                $family,
+                [System.Windows.FontStyles]::Normal,
+                [System.Windows.FontWeights]::Normal,
+                [System.Windows.FontStretches]::Normal)
+            $glyph = Get-WinToolTypefaceGlyph -Typeface $typeface
+            if ($null -ne $glyph) {
+                [void]$list.Add([pscustomobject]@{
+                    Id = "Consolas"; Face = "Consolas"; Name = "Consolas"; Path = "Consolas"; Source = "name"
+                    FamilyName = "Consolas"; Family = $family; Typeface = $typeface; Glyph = $glyph; Nerd = $false
+                })
+            }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+    }
+    $script:WinToolPreviewFontChain = $list.ToArray()
+    $script:WinToolPreviewFontChainKey = $key
+    return @($script:WinToolPreviewFontChain)
+}
+
+function Split-WinToolCoveredText {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    # Break the text into runs that each fit one loaded face. A codepoint no
+    # face can draw is replaced with ASCII before it becomes an empty box.
+    $result = New-Object System.Collections.Generic.List[object]
+    if ([string]::IsNullOrEmpty($Text)) { return @() }
+    $chain = @(Get-WinToolPreviewFontChain)
+    $builder = New-Object System.Text.StringBuilder
+    $current = $null
+    foreach ($code in @(Get-WinToolTextCode -Text $Text)) {
+        $face = $null
+        foreach ($item in $chain) {
+            if (Test-WinToolGlyphMapped -Glyph $item.Glyph -Code $code) { $face = $item; break }
+        }
+        $chunk = [char]::ConvertFromUtf32($code)
+        if ($null -eq $face) {
+            $chunk = ConvertTo-WinToolGlyphFallback -Code $code
+            if ([string]::IsNullOrEmpty($chunk)) { $chunk = ">" }
+            foreach ($item in $chain) {
+                $fits = $true
+                foreach ($part in @(Get-WinToolTextCode -Text $chunk)) {
+                    if (-not (Test-WinToolGlyphMapped -Glyph $item.Glyph -Code $part)) { $fits = $false; break }
+                }
+                if ($fits) { $face = $item; break }
+            }
+            if ($null -eq $face -and $chain.Count -gt 0) { $face = $chain[$chain.Count - 1] }
+        }
+        if ($null -eq $face) { continue }
+        $same = ($null -ne $current -and [string]$current.Path -eq [string]$face.Path)
+        if (-not $same) {
+            if ($builder.Length -gt 0 -and $null -ne $current) {
+                [void]$result.Add([pscustomobject]@{
+                    Text = $builder.ToString()
+                    Path = [string]$current.Path
+                    Family = $current.Family
+                    Typeface = $current.Typeface
+                    Glyph = $current.Glyph
+                })
+            }
+            [void]$builder.Clear()
+            $current = $face
+        }
+        [void]$builder.Append($chunk)
+    }
+    if ($builder.Length -gt 0 -and $null -ne $current) {
+        [void]$result.Add([pscustomobject]@{
+            Text = $builder.ToString()
+            Path = [string]$current.Path
+            Family = $current.Family
+            Typeface = $current.Typeface
+            Glyph = $current.Glyph
+        })
+    }
+    return $result.ToArray()
+}
+
+function Test-WinToolPreviewTextCovered {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    if ([string]::IsNullOrEmpty($Text)) { return $true }
+    $pieces = @(Split-WinToolCoveredText -Text $Text)
+    if ($pieces.Count -eq 0) { return $false }
+    foreach ($piece in $pieces) {
+        $pieceText = [string]$piece.Text
+        if ([string]::IsNullOrEmpty($pieceText)) { return $false }
+        foreach ($code in @(Get-WinToolTextCode -Text $pieceText)) {
+            if (-not (Test-WinToolGlyphMapped -Glyph $piece.Glyph -Code $code)) { return $false }
+        }
+    }
+    return $true
 }
 
 function Resolve-WinToolInstalledFontFace {
@@ -17506,12 +18128,7 @@ function Update-WinToolSimplePreview {
     foreach ($font in @(Get-WinToolActiveFont)) {
         if ([string]$font.id -eq [string]$choice.fontId) { $face = [string]$font.face; break }
     }
-    $families = $face + ", Cascadia Mono, Consolas"
-    if ($null -eq $script:WinToolPreviewFonts) { $script:WinToolPreviewFonts = @{} }
-    if (-not $script:WinToolPreviewFonts.ContainsKey($families)) {
-        $script:WinToolPreviewFonts[$families] = [System.Windows.Media.FontFamily]::new($families)
-    }
-    $sample.FontFamily = $script:WinToolPreviewFonts[$families]
+    Set-WinToolPreviewFontFamily -Element $sample
     Set-WinToolLigatureTypography -Element $sample
     $size = 12
     $sizeValue = Get-WinToolNote -Object $choice -Name "fontSize"
@@ -17528,7 +18145,7 @@ function Update-WinToolSimplePreview {
     $addLine = {
         param([object[]]$Parts)
         if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
-        foreach ($part in @($Parts)) { $sample.Inlines.Add((New-WinToolPreviewRun -Segment $part)) }
+        foreach ($part in @($Parts)) { Add-WinToolPreviewRun -Inlines $sample.Inlines -Segment $part }
     }
     & $addLine @((& $text "PowerShell 7" $dim))
     & $addLine @((& $text " " ""))
@@ -17614,6 +18231,7 @@ function Update-WinToolFontSample {
     if ($null -ne $list.SelectedItem) {
         $script:WinToolTerminalChoice.fontId = [string]$list.SelectedItem.Tag
     }
+    Update-WinToolThemePreviewImage
     Request-WinToolTerminalPreview
 }
 
@@ -17739,15 +18357,13 @@ function New-WinToolTerminalPreview {
     $border.Padding = [System.Windows.Thickness]::new(12)
     $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushLog")
     $text = New-Object System.Windows.Controls.TextBlock
-    $text.FontFamily = "Consolas"
+    Set-WinToolPreviewFontFamily -Element $text
     $text.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
     $text.TextWrapping = "Wrap"
     foreach ($segment in @($Segments)) {
-        $run = New-Object System.Windows.Documents.Run
-        $run.Text = [string]$segment.text
-        $runColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString([string]$segment.color))
-        $run.Foreground = [System.Windows.Media.SolidColorBrush]::new($runColor)
-        [void]$text.Inlines.Add($run)
+        $color = [string]$segment.color
+        if ([string]::IsNullOrWhiteSpace($color)) { $color = [string]$segment.fg }
+        Add-WinToolPreviewRun -Inlines $text.Inlines -Segment ([pscustomobject]@{ Text = [string]$segment.text; Foreground = $color; Background = [string]$segment.bg })
     }
     $border.Child = $text
     return $border
@@ -18279,8 +18895,10 @@ function Initialize-WinToolThemeEntryType {
     )
     Add-Type -ReferencedAssemblies $refs -TypeDefinition @"
 using System;
+using System.ComponentModel;
 using System.Windows.Data;
-public class WinToolThemeEntry {
+public class WinToolThemeEntry : INotifyPropertyChanged {
+    public event PropertyChangedEventHandler PropertyChanged;
     public string Tag { get; set; }
     public string Name { get; set; }
     public string Tip { get; set; }
@@ -18289,7 +18907,17 @@ public class WinToolThemeEntry {
     public string Hay { get; set; }
     public int Powerline { get; set; }
     public int NerdFont { get; set; }
-    public object PreviewImage { get; set; }
+    private object previewImage;
+    public object PreviewImage {
+        get { return previewImage; }
+        set {
+            previewImage = value;
+            var changed = PropertyChanged;
+            if (changed != null) {
+                changed(this, new PropertyChangedEventArgs("PreviewImage"));
+            }
+        }
+    }
 }
 public class WinToolThemeFilter {
     public string Mode;
@@ -18315,31 +18943,38 @@ public class WinToolThemeFilter {
 
 function New-WinToolPreviewImage {
     param([object[]]$Segment)
-    # One frozen drawing per theme, built when the catalog is first read.
-    # The list then shows an Image instead of a text block per color.
+    # One frozen drawing per theme. Each run uses a face that actually has
+    # those glyphs, so a missing Nerd Font becomes ASCII instead of an empty box.
     $segments = @($Segment | Where-Object { $null -ne $_ -and -not [string]::IsNullOrEmpty([string]$_.Text) })
     if ($segments.Count -eq 0) { return $null }
-    if ($null -eq $script:WinToolPreviewTypeface) {
-        $family = New-Object System.Windows.Media.FontFamily "Cascadia Mono, Consolas"
-        $script:WinToolPreviewTypeface = New-Object System.Windows.Media.Typeface(
-            $family,
-            [System.Windows.FontStyles]::Normal,
-            [System.Windows.FontWeights]::Normal,
-            [System.Windows.FontStretches]::Normal)
-    }
     $group = New-Object System.Windows.Media.DrawingGroup
     $x = 0.0
     $emSize = 14.0
     $culture = [System.Globalization.CultureInfo]::CurrentUICulture
     foreach ($segment in $segments) {
-        $text = [string]$segment.Text
         $color = [string]$segment.Foreground
         if ([string]::IsNullOrWhiteSpace($color)) { $color = "#E8EDF7" }
         $fg = ConvertTo-WinToolPreviewBrush -Color $color
         if ($null -eq $fg) { continue }
-        $formatted = New-Object System.Windows.Media.FormattedText $text, $culture, ([System.Windows.FlowDirection]::LeftToRight), $script:WinToolPreviewTypeface, $emSize, $fg
-        $width = [Math]::Max(0.0, $formatted.WidthIncludingTrailingWhitespace)
-        $height = [Math]::Max(1.0, $formatted.Height)
+        $pieces = @(Split-WinToolCoveredText -Text ([string]$segment.Text))
+        $drawn = New-Object System.Collections.Generic.List[object]
+        $width = 0.0
+        $height = 1.0
+        foreach ($piece in $pieces) {
+            if ($null -eq $piece.Typeface -or [string]::IsNullOrEmpty([string]$piece.Text)) { continue }
+            try {
+                $formatted = New-Object System.Windows.Media.FormattedText ([string]$piece.Text), $culture, ([System.Windows.FlowDirection]::LeftToRight), $piece.Typeface, $emSize, $fg
+            }
+            catch {
+                $null = $_.Exception.Message
+                continue
+            }
+            $pieceWidth = [Math]::Max(0.0, $formatted.WidthIncludingTrailingWhitespace)
+            $height = [Math]::Max($height, [Math]::Max(1.0, $formatted.Height))
+            [void]$drawn.Add([pscustomobject]@{ Formatted = $formatted; Width = $pieceWidth })
+            $width += $pieceWidth
+        }
+        if ($drawn.Count -eq 0) { continue }
         $fillName = [string]$segment.Background
         if (-not [string]::IsNullOrWhiteSpace($fillName)) {
             $fill = ConvertTo-WinToolPreviewBrush -Color $fillName
@@ -18351,12 +18986,19 @@ function New-WinToolPreviewImage {
                 [void]$group.Children.Add($back)
             }
         }
-        $geo = $formatted.BuildGeometry([System.Windows.Point]::new($x, 0.0))
-        if ($null -ne $geo) {
-            if ($geo.CanFreeze) { $geo.Freeze() }
-            $glyph = New-Object System.Windows.Media.GeometryDrawing $fg, $null, $geo
-            if ($glyph.CanFreeze) { $glyph.Freeze() }
-            [void]$group.Children.Add($glyph)
+        $pieceX = $x
+        for ($pieceIndex = 0; $pieceIndex -lt $drawn.Count; $pieceIndex++) {
+            $item = $drawn[$pieceIndex]
+            $geo = $null
+            try { $geo = $item.Formatted.BuildGeometry([System.Windows.Point]::new($pieceX, 0.0)) }
+            catch { $null = $_.Exception.Message }
+            if ($null -ne $geo) {
+                if ($geo.CanFreeze) { $geo.Freeze() }
+                $glyph = New-Object System.Windows.Media.GeometryDrawing $fg, $null, $geo
+                if ($glyph.CanFreeze) { $glyph.Freeze() }
+                [void]$group.Children.Add($glyph)
+            }
+            $pieceX += [double]$item.Width
         }
         $x += $width
     }
@@ -18398,6 +19040,32 @@ function Get-WinToolCachedThemeEntry {
     if ($null -ne $entry.PreviewImage) { $entry.SampleVisible = "Visible" }
     $script:WinToolThemeItemCache[$id] = $entry
     return $entry
+}
+
+function Update-WinToolThemePreviewImage {
+    # The pictures stay cached until the preview font changes. Rebuilding them
+    # is not part of a Simple / Advanced click.
+    $key = Get-WinToolPreviewFontKey
+    if ($key -eq [string]$script:WinToolThemePreviewFontKey) { return }
+    $script:WinToolThemePreviewFontKey = $key
+    $script:WinToolThemeItemCache = @{}
+    if ($null -eq $script:WinToolThemeEntries) { return }
+    $byId = @{}
+    foreach ($row in @($script:WinToolTerminalRows)) {
+        if ($null -ne $row) { $byId[[string]$row.Id] = $row }
+    }
+    $prompt = ""
+    if ($null -ne $script:WinToolTerminalChoice) { $prompt = [string]$script:WinToolTerminalChoice.prompt }
+    $entries = $script:WinToolThemeEntries
+    for ($index = 0; $index -lt $entries.Count; $index++) {
+        $entry = $entries[$index]
+        $row = $byId[[string]$entry.Tag]
+        if ($null -eq $row) { continue }
+        $image = New-WinToolPreviewImage -Segment @($row.Preview)
+        $entry.PreviewImage = $image
+        if ($null -ne $image) { $entry.SampleVisible = "Visible" }
+        $script:WinToolThemeItemCache[$prompt + "|" + [string]$entry.Tag] = $entry
+    }
 }
 
 function Update-WinToolPromptStyleList {
@@ -18475,6 +19143,9 @@ function Update-WinToolPromptStyleList {
         }
         $list.Tag = $prompt
         $script:WinToolThemeListKey = $key
+        if ([string]::IsNullOrEmpty([string]$script:WinToolThemePreviewFontKey)) {
+            $script:WinToolThemePreviewFontKey = Get-WinToolPreviewFontKey
+        }
         if ($null -ne $list.SelectedItem) {
             $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
         }
@@ -18485,6 +19156,19 @@ function Update-WinToolPromptStyleList {
     $script:WinToolTerminalScrollPending = $true
 }
 
+function Set-WinToolPreviewFontFamily {
+    param($Element)
+    # The base face is the first one that loaded from a file. Runs that need
+    # a different face set their own FontFamily.
+    if ($null -eq $Element) { return }
+    $chain = @(Get-WinToolPreviewFontChain)
+    if ($chain.Count -gt 0 -and $null -ne $chain[0].Family) {
+        $Element.FontFamily = $chain[0].Family
+        return
+    }
+    $Element.FontFamily = [System.Windows.Media.FontFamily]::new("Consolas")
+}
+
 function Set-WinToolLigatureTypography {
     param($Element)
     # Windows Terminal setup always turns ligatures on, so previews draw them too.
@@ -18493,14 +19177,24 @@ function Set-WinToolLigatureTypography {
     [System.Windows.Documents.Typography]::SetContextualAlternates($Element, $true)
 }
 
-function New-WinToolPreviewRun {
-    param($Segment)
-    $run = New-Object System.Windows.Documents.Run -ArgumentList ([string]$Segment.Text)
+function Add-WinToolPreviewRun {
+    param(
+        $Inlines,
+        $Segment
+    )
+    # One run per face, so a glyph the chosen font lacks is drawn by the next
+    # face in the chain, or by an ASCII stand-in.
+    $pieces = @(Split-WinToolCoveredText -Text ([string]$Segment.Text))
+    if ($pieces.Count -eq 0) { return }
     $brush = ConvertTo-WinToolPreviewBrush -Color ([string]$Segment.Foreground)
-    if ($null -ne $brush) { $run.Foreground = $brush }
     $fill = ConvertTo-WinToolPreviewBrush -Color ([string]$Segment.Background)
-    if ($null -ne $fill) { $run.Background = $fill }
-    return $run
+    foreach ($piece in $pieces) {
+        $run = New-Object System.Windows.Documents.Run -ArgumentList ([string]$piece.Text)
+        if ($null -ne $piece.Family) { $run.FontFamily = $piece.Family }
+        if ($null -ne $brush) { $run.Foreground = $brush }
+        if ($null -ne $fill) { $run.Background = $fill }
+        [void]$Inlines.Add($run)
+    }
 }
 
 function Build-WinToolExtraToggle {
@@ -18591,8 +19285,8 @@ function Build-WinToolSchemeCard {
         $mark.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
         $mark.VerticalAlignment = "Center"
         $mark.HorizontalAlignment = "Center"
-        $mark.Inlines.Add((New-WinToolPreviewRun -Segment ([pscustomobject]@{ Text = ([string][char]0x276F + " "); Foreground = [string](Get-WinToolNote -Object $palette -Name "green" -Default ([string]$scheme.cursor)); Background = $null })))
-        $mark.Inlines.Add((New-WinToolPreviewRun -Segment ([pscustomobject]@{ Text = [string]$scheme.name; Foreground = [string]$scheme.foreground; Background = $null })))
+        Add-WinToolPreviewRun -Inlines $mark.Inlines -Segment ([pscustomobject]@{ Text = ([string][char]0x276F + " "); Foreground = [string](Get-WinToolNote -Object $palette -Name "green" -Default ([string]$scheme.cursor)); Background = $null })
+        Add-WinToolPreviewRun -Inlines $mark.Inlines -Segment ([pscustomobject]@{ Text = [string]$scheme.name; Foreground = [string]$scheme.foreground; Background = $null })
         $grid = $mark
         $card.Child = $grid
         Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose color scheme" -Data ([string]$scheme.id) -Action {
@@ -18771,14 +19465,15 @@ function Sync-WinToolFontSelection {
 function Update-WinToolFontList {
     $list = Get-WinToolUi -Name "TerminalFontList"
     $nerdOnly = ((Get-WinToolUi -Name "TerminalFontNerdOnly").IsChecked -eq $true)
-    $allFonts = @(Get-WinToolActiveFont)
-    $fontKey = ([string]$nerdOnly + "|" + [string]$allFonts.Count + "|" + [string]@($script:WinToolExtraFont).Count)
-    if ([string]$script:WinToolFontListKey -eq $fontKey -and $list.Items.Count -gt 0) {
+    $allFonts = @(Get-WinToolResolvableFont)
+    $fonts = @(Select-WinToolFont -Font $allFonts -Query "" -NerdOnly $nerdOnly)
+    $fontIds = (@($allFonts | ForEach-Object { [string]$_.id }) -join ",")
+    $fontKey = ([string]$nerdOnly + "|" + $fontIds)
+    if ([string]$script:WinToolFontListKey -eq $fontKey -and ($list.Items.Count -gt 0 -or $fonts.Count -eq 0)) {
         Sync-WinToolFontSelection
         return
     }
     $script:WinToolFontListKey = ""
-    $fonts = @(Select-WinToolFont -Font $allFonts -Query "" -NerdOnly $nerdOnly)
     $script:WinToolTerminalSyncing = $true
     try {
         if ($null -eq $script:WinToolFontItemCache) { $script:WinToolFontItemCache = @{} }
@@ -18787,8 +19482,8 @@ function Update-WinToolFontList {
             $fontId = [string]$font.id
             if (-not $script:WinToolFontItemCache.ContainsKey($fontId)) {
                 $item = New-Object System.Windows.Controls.ComboBoxItem
-                $badge = "Programming font"
-                if ($font.nerd) { $badge = "Nerd Font" }
+                $badge = "Installed - Programming font"
+                if ($font.nerd) { $badge = "Installed - Nerd Font" }
                 $item.Content = [string]$font.name
                 $item.ToolTip = $badge
                 $item.Tag = $fontId
@@ -18800,12 +19495,23 @@ function Update-WinToolFontList {
                 $list.SelectedItem = $cached
             }
         }
+        if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
+            $best = Get-WinToolBestNerdFont
+            $picked = $false
+            if ($null -ne $best) {
+                for ($index = 0; $index -lt $list.Items.Count; $index++) {
+                    if ([string]$list.Items[$index].Tag -eq [string]$best.Id) {
+                        $list.SelectedIndex = $index
+                        $picked = $true
+                        break
+                    }
+                }
+            }
+            if (-not $picked) { $list.SelectedIndex = 0 }
+        }
     }
     finally {
         $script:WinToolTerminalSyncing = $false
-    }
-    if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
-        $list.SelectedIndex = 0
     }
     if ($null -ne $list.SelectedItem) {
         $script:WinToolTerminalChoice.fontId = [string]$list.SelectedItem.Tag
@@ -18815,7 +19521,7 @@ function Update-WinToolFontList {
     $dot = " " + [string][char]0x00B7 + " "
     $countBlock = Get-WinToolUi -Name "TerminalFontCount"
     if ($null -ne $countBlock) {
-        $countBlock.Text = ([string]$allFonts.Count + " fonts" + $dot + $nerdCount + " Nerd Fonts" + $dot + $schemeCount + " schemes")
+        $countBlock.Text = ([string]$allFonts.Count + " installed" + $dot + $nerdCount + " Nerd Fonts" + $dot + $schemeCount + " schemes")
     }
     $script:WinToolFontListKey = $fontKey
     Update-WinToolFontSizeSelection
@@ -18898,6 +19604,7 @@ function Update-WinToolTerminalPreview {
     if ($null -eq $sample -or $null -eq $border -or $null -eq $script:WinToolTerminalChoice) {
         return
     }
+    Update-WinToolThemePreviewImage
     try {
         $choice = $script:WinToolTerminalChoice
         $promptId = [string]$choice.prompt
@@ -18926,17 +19633,10 @@ function Update-WinToolTerminalPreview {
         foreach ($font in @(Get-WinToolActiveFont)) {
             if ([string]$font.id -eq [string]$choice.fontId) { $face = [string]$font.face; $fontName = [string]$font.name; break }
         }
-        $families = "Cascadia Mono, Consolas"
-        if (-not [string]::IsNullOrWhiteSpace($face)) { $families = $face + ", " + $families }
-        if ($null -eq $script:WinToolPreviewFonts) { $script:WinToolPreviewFonts = @{} }
-        if (-not $script:WinToolPreviewFonts.ContainsKey($families)) {
-            $script:WinToolPreviewFonts[$families] = [System.Windows.Media.FontFamily]::new($families)
-        }
-        $family = $script:WinToolPreviewFonts[$families]
-        $sample.FontFamily = $family
+        Set-WinToolPreviewFontFamily -Element $sample
         Set-WinToolLigatureTypography -Element $sample
         $styleList = Get-WinToolUi -Name "TerminalStyleList"
-        if ($null -ne $styleList) { $styleList.Resources["TerminalPreviewFont"] = $family }
+        if ($null -ne $styleList) { $styleList.Resources["TerminalPreviewFont"] = $sample.FontFamily }
         $size = 12
         $sizeValue = Get-WinToolNote -Object $choice -Name "fontSize"
         if ($null -ne $sizeValue -and [int]$sizeValue -gt 0) { $size = [int]$sizeValue }
@@ -18963,7 +19663,7 @@ function Update-WinToolTerminalPreview {
         $addLine = {
             param([object[]]$Parts)
             if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
-            foreach ($part in @($Parts)) { $sample.Inlines.Add((New-WinToolPreviewRun -Segment $part)) }
+            foreach ($part in @($Parts)) { Add-WinToolPreviewRun -Inlines $sample.Inlines -Segment $part }
         }
         $text = { param([string]$Value, [string]$Color) New-WinToolPreviewSegment -Text $Value -Foreground $Color }
         $header = "PowerShell 7"

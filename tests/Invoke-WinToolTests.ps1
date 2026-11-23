@@ -962,6 +962,9 @@ Invoke-WinToolCase -Name "Font sources and the installed-font check" -Body {
     )
     $found = Find-WinToolInstalledFontFile -Token "CaskaydiaCove Nerd Font" -Entry $entries
     Test-WinToolExpectation -Condition ($null -ne $found -and $found.Name -eq "CaskaydiaCoveNerdFont-Regular (TrueType)") -Message "The installed-font check prefers the regular file."
+    $monoEntries = @($entries) + @([pscustomobject]@{ Name = "CaskaydiaCoveNerdFontMono-Regular (TrueType)"; Data = "C:\f\CaskaydiaCoveNerdFontMono-Regular.ttf" })
+    $mono = Find-WinToolInstalledFontFile -Token "CaskaydiaCove Nerd Font" -Entry $monoEntries
+    Test-WinToolExpectation -Condition ($null -ne $mono -and $mono.Name -eq "CaskaydiaCoveNerdFontMono-Regular (TrueType)") -Message "The installed-font check prefers the Mono file."
     Test-WinToolExpectation -Condition ($null -eq (Find-WinToolInstalledFontFile -Token "FiraCodeNerdFont" -Entry $entries)) -Message "A missing font is reported as missing."
 }
 
@@ -1099,6 +1102,26 @@ Invoke-WinToolCase -Name "Prompt preview follows the theme colors" -Body {
     Test-WinToolExpectation -Condition ($segments[4].Foreground -eq "#3B78FF" -and $segments[4].Background -eq "#95FFA4") -Message "A powerline arrow takes the next segment background."
     Test-WinToolExpectation -Condition ($segments[6].Foreground -eq "#95FFA4" -and $null -eq $segments[6].Background) -Message "The last arrow ends on the terminal background."
     Test-WinToolExpectation -Condition ($segments[7].Foreground -eq "#AABBCC" -and $null -eq $segments[7].Background) -Message "Plain segments have no background."
+}
+
+Invoke-WinToolCase -Name "Prompt glyphs have an ASCII fallback" -Body {
+    Test-WinToolExpectation -Condition ((ConvertTo-WinToolGlyphFallback -Code 0xE0B0) -eq ">") -Message "A powerline arrow falls back to >."
+    Test-WinToolExpectation -Condition ((ConvertTo-WinToolGlyphFallback -Code 0xF418) -eq "git") -Message "A git icon falls back to git."
+    Test-WinToolExpectation -Condition ((ConvertTo-WinToolGlyphFallback -Code 0xF07B) -eq "/") -Message "A folder icon falls back to /."
+    Test-WinToolExpectation -Condition ((ConvertTo-WinToolGlyphFallback -Code 0x2261) -eq "=") -Message "A triple bar falls back to =."
+    Test-WinToolExpectation -Condition ((@(Get-WinToolTextCode -Text ([string][char]0xD83D + [string][char]0xDE00))).Count -eq 1) -Message "An emoji is one codepoint."
+    $samples = @(Get-WinToolPreviewSampleText)
+    $joined = $samples -join ""
+    Test-WinToolExpectation -Condition ($joined.Contains([string][char]0xE0B0) -and $joined.Contains([string][char]0xF418)) -Message "Preview samples include Nerd Font icons."
+    foreach ($code in @(Get-WinToolTextCode -Text $joined)) {
+        if ($code -lt 128) { continue }
+        $fallback = [string](ConvertTo-WinToolGlyphFallback -Code $code)
+        $plain = -not [string]::IsNullOrEmpty($fallback)
+        foreach ($char in $fallback.ToCharArray()) {
+            if ([int]$char -gt 127) { $plain = $false }
+        }
+        Test-WinToolExpectation -Condition $plain -Message ("No ASCII fallback for U+{0:X4}." -f $code)
+    }
 }
 
 Invoke-WinToolCase -Name "Prompt styles: preview, WSL setup, and powerline-go flags" -Body {

@@ -154,12 +154,7 @@ function Update-WinToolSimplePreview {
     foreach ($font in @(Get-WinToolActiveFont)) {
         if ([string]$font.id -eq [string]$choice.fontId) { $face = [string]$font.face; break }
     }
-    $families = $face + ", Cascadia Mono, Consolas"
-    if ($null -eq $script:WinToolPreviewFonts) { $script:WinToolPreviewFonts = @{} }
-    if (-not $script:WinToolPreviewFonts.ContainsKey($families)) {
-        $script:WinToolPreviewFonts[$families] = [System.Windows.Media.FontFamily]::new($families)
-    }
-    $sample.FontFamily = $script:WinToolPreviewFonts[$families]
+    Set-WinToolPreviewFontFamily -Element $sample
     Set-WinToolLigatureTypography -Element $sample
     $size = 12
     $sizeValue = Get-WinToolNote -Object $choice -Name "fontSize"
@@ -176,7 +171,7 @@ function Update-WinToolSimplePreview {
     $addLine = {
         param([object[]]$Parts)
         if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
-        foreach ($part in @($Parts)) { $sample.Inlines.Add((New-WinToolPreviewRun -Segment $part)) }
+        foreach ($part in @($Parts)) { Add-WinToolPreviewRun -Inlines $sample.Inlines -Segment $part }
     }
     & $addLine @((& $text "PowerShell 7" $dim))
     & $addLine @((& $text " " ""))
@@ -262,6 +257,7 @@ function Update-WinToolFontSample {
     if ($null -ne $list.SelectedItem) {
         $script:WinToolTerminalChoice.fontId = [string]$list.SelectedItem.Tag
     }
+    Update-WinToolThemePreviewImage
     Request-WinToolTerminalPreview
 }
 
@@ -387,15 +383,13 @@ function New-WinToolTerminalPreview {
     $border.Padding = [System.Windows.Thickness]::new(12)
     $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushLog")
     $text = New-Object System.Windows.Controls.TextBlock
-    $text.FontFamily = "Consolas"
+    Set-WinToolPreviewFontFamily -Element $text
     $text.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
     $text.TextWrapping = "Wrap"
     foreach ($segment in @($Segments)) {
-        $run = New-Object System.Windows.Documents.Run
-        $run.Text = [string]$segment.text
-        $runColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString([string]$segment.color))
-        $run.Foreground = [System.Windows.Media.SolidColorBrush]::new($runColor)
-        [void]$text.Inlines.Add($run)
+        $color = [string]$segment.color
+        if ([string]::IsNullOrWhiteSpace($color)) { $color = [string]$segment.fg }
+        Add-WinToolPreviewRun -Inlines $text.Inlines -Segment ([pscustomobject]@{ Text = [string]$segment.text; Foreground = $color; Background = [string]$segment.bg })
     }
     $border.Child = $text
     return $border
@@ -927,8 +921,10 @@ function Initialize-WinToolThemeEntryType {
     )
     Add-Type -ReferencedAssemblies $refs -TypeDefinition @"
 using System;
+using System.ComponentModel;
 using System.Windows.Data;
-public class WinToolThemeEntry {
+public class WinToolThemeEntry : INotifyPropertyChanged {
+    public event PropertyChangedEventHandler PropertyChanged;
     public string Tag { get; set; }
     public string Name { get; set; }
     public string Tip { get; set; }
@@ -937,7 +933,17 @@ public class WinToolThemeEntry {
     public string Hay { get; set; }
     public int Powerline { get; set; }
     public int NerdFont { get; set; }
-    public object PreviewImage { get; set; }
+    private object previewImage;
+    public object PreviewImage {
+        get { return previewImage; }
+        set {
+            previewImage = value;
+            var changed = PropertyChanged;
+            if (changed != null) {
+                changed(this, new PropertyChangedEventArgs("PreviewImage"));
+            }
+        }
+    }
 }
 public class WinToolThemeFilter {
     public string Mode;
@@ -963,31 +969,38 @@ public class WinToolThemeFilter {
 
 function New-WinToolPreviewImage {
     param([object[]]$Segment)
-    # One frozen drawing per theme, built when the catalog is first read.
-    # The list then shows an Image instead of a text block per color.
+    # One frozen drawing per theme. Each run uses a face that actually has
+    # those glyphs, so a missing Nerd Font becomes ASCII instead of an empty box.
     $segments = @($Segment | Where-Object { $null -ne $_ -and -not [string]::IsNullOrEmpty([string]$_.Text) })
     if ($segments.Count -eq 0) { return $null }
-    if ($null -eq $script:WinToolPreviewTypeface) {
-        $family = New-Object System.Windows.Media.FontFamily "Cascadia Mono, Consolas"
-        $script:WinToolPreviewTypeface = New-Object System.Windows.Media.Typeface(
-            $family,
-            [System.Windows.FontStyles]::Normal,
-            [System.Windows.FontWeights]::Normal,
-            [System.Windows.FontStretches]::Normal)
-    }
     $group = New-Object System.Windows.Media.DrawingGroup
     $x = 0.0
     $emSize = 14.0
     $culture = [System.Globalization.CultureInfo]::CurrentUICulture
     foreach ($segment in $segments) {
-        $text = [string]$segment.Text
         $color = [string]$segment.Foreground
         if ([string]::IsNullOrWhiteSpace($color)) { $color = "#E8EDF7" }
         $fg = ConvertTo-WinToolPreviewBrush -Color $color
         if ($null -eq $fg) { continue }
-        $formatted = New-Object System.Windows.Media.FormattedText $text, $culture, ([System.Windows.FlowDirection]::LeftToRight), $script:WinToolPreviewTypeface, $emSize, $fg
-        $width = [Math]::Max(0.0, $formatted.WidthIncludingTrailingWhitespace)
-        $height = [Math]::Max(1.0, $formatted.Height)
+        $pieces = @(Split-WinToolCoveredText -Text ([string]$segment.Text))
+        $drawn = New-Object System.Collections.Generic.List[object]
+        $width = 0.0
+        $height = 1.0
+        foreach ($piece in $pieces) {
+            if ($null -eq $piece.Typeface -or [string]::IsNullOrEmpty([string]$piece.Text)) { continue }
+            try {
+                $formatted = New-Object System.Windows.Media.FormattedText ([string]$piece.Text), $culture, ([System.Windows.FlowDirection]::LeftToRight), $piece.Typeface, $emSize, $fg
+            }
+            catch {
+                $null = $_.Exception.Message
+                continue
+            }
+            $pieceWidth = [Math]::Max(0.0, $formatted.WidthIncludingTrailingWhitespace)
+            $height = [Math]::Max($height, [Math]::Max(1.0, $formatted.Height))
+            [void]$drawn.Add([pscustomobject]@{ Formatted = $formatted; Width = $pieceWidth })
+            $width += $pieceWidth
+        }
+        if ($drawn.Count -eq 0) { continue }
         $fillName = [string]$segment.Background
         if (-not [string]::IsNullOrWhiteSpace($fillName)) {
             $fill = ConvertTo-WinToolPreviewBrush -Color $fillName
@@ -999,12 +1012,19 @@ function New-WinToolPreviewImage {
                 [void]$group.Children.Add($back)
             }
         }
-        $geo = $formatted.BuildGeometry([System.Windows.Point]::new($x, 0.0))
-        if ($null -ne $geo) {
-            if ($geo.CanFreeze) { $geo.Freeze() }
-            $glyph = New-Object System.Windows.Media.GeometryDrawing $fg, $null, $geo
-            if ($glyph.CanFreeze) { $glyph.Freeze() }
-            [void]$group.Children.Add($glyph)
+        $pieceX = $x
+        for ($pieceIndex = 0; $pieceIndex -lt $drawn.Count; $pieceIndex++) {
+            $item = $drawn[$pieceIndex]
+            $geo = $null
+            try { $geo = $item.Formatted.BuildGeometry([System.Windows.Point]::new($pieceX, 0.0)) }
+            catch { $null = $_.Exception.Message }
+            if ($null -ne $geo) {
+                if ($geo.CanFreeze) { $geo.Freeze() }
+                $glyph = New-Object System.Windows.Media.GeometryDrawing $fg, $null, $geo
+                if ($glyph.CanFreeze) { $glyph.Freeze() }
+                [void]$group.Children.Add($glyph)
+            }
+            $pieceX += [double]$item.Width
         }
         $x += $width
     }
@@ -1046,6 +1066,32 @@ function Get-WinToolCachedThemeEntry {
     if ($null -ne $entry.PreviewImage) { $entry.SampleVisible = "Visible" }
     $script:WinToolThemeItemCache[$id] = $entry
     return $entry
+}
+
+function Update-WinToolThemePreviewImage {
+    # The pictures stay cached until the preview font changes. Rebuilding them
+    # is not part of a Simple / Advanced click.
+    $key = Get-WinToolPreviewFontKey
+    if ($key -eq [string]$script:WinToolThemePreviewFontKey) { return }
+    $script:WinToolThemePreviewFontKey = $key
+    $script:WinToolThemeItemCache = @{}
+    if ($null -eq $script:WinToolThemeEntries) { return }
+    $byId = @{}
+    foreach ($row in @($script:WinToolTerminalRows)) {
+        if ($null -ne $row) { $byId[[string]$row.Id] = $row }
+    }
+    $prompt = ""
+    if ($null -ne $script:WinToolTerminalChoice) { $prompt = [string]$script:WinToolTerminalChoice.prompt }
+    $entries = $script:WinToolThemeEntries
+    for ($index = 0; $index -lt $entries.Count; $index++) {
+        $entry = $entries[$index]
+        $row = $byId[[string]$entry.Tag]
+        if ($null -eq $row) { continue }
+        $image = New-WinToolPreviewImage -Segment @($row.Preview)
+        $entry.PreviewImage = $image
+        if ($null -ne $image) { $entry.SampleVisible = "Visible" }
+        $script:WinToolThemeItemCache[$prompt + "|" + [string]$entry.Tag] = $entry
+    }
 }
 
 function Update-WinToolPromptStyleList {
@@ -1123,6 +1169,9 @@ function Update-WinToolPromptStyleList {
         }
         $list.Tag = $prompt
         $script:WinToolThemeListKey = $key
+        if ([string]::IsNullOrEmpty([string]$script:WinToolThemePreviewFontKey)) {
+            $script:WinToolThemePreviewFontKey = Get-WinToolPreviewFontKey
+        }
         if ($null -ne $list.SelectedItem) {
             $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
         }
@@ -1133,6 +1182,19 @@ function Update-WinToolPromptStyleList {
     $script:WinToolTerminalScrollPending = $true
 }
 
+function Set-WinToolPreviewFontFamily {
+    param($Element)
+    # The base face is the first one that loaded from a file. Runs that need
+    # a different face set their own FontFamily.
+    if ($null -eq $Element) { return }
+    $chain = @(Get-WinToolPreviewFontChain)
+    if ($chain.Count -gt 0 -and $null -ne $chain[0].Family) {
+        $Element.FontFamily = $chain[0].Family
+        return
+    }
+    $Element.FontFamily = [System.Windows.Media.FontFamily]::new("Consolas")
+}
+
 function Set-WinToolLigatureTypography {
     param($Element)
     # Windows Terminal setup always turns ligatures on, so previews draw them too.
@@ -1141,14 +1203,24 @@ function Set-WinToolLigatureTypography {
     [System.Windows.Documents.Typography]::SetContextualAlternates($Element, $true)
 }
 
-function New-WinToolPreviewRun {
-    param($Segment)
-    $run = New-Object System.Windows.Documents.Run -ArgumentList ([string]$Segment.Text)
+function Add-WinToolPreviewRun {
+    param(
+        $Inlines,
+        $Segment
+    )
+    # One run per face, so a glyph the chosen font lacks is drawn by the next
+    # face in the chain, or by an ASCII stand-in.
+    $pieces = @(Split-WinToolCoveredText -Text ([string]$Segment.Text))
+    if ($pieces.Count -eq 0) { return }
     $brush = ConvertTo-WinToolPreviewBrush -Color ([string]$Segment.Foreground)
-    if ($null -ne $brush) { $run.Foreground = $brush }
     $fill = ConvertTo-WinToolPreviewBrush -Color ([string]$Segment.Background)
-    if ($null -ne $fill) { $run.Background = $fill }
-    return $run
+    foreach ($piece in $pieces) {
+        $run = New-Object System.Windows.Documents.Run -ArgumentList ([string]$piece.Text)
+        if ($null -ne $piece.Family) { $run.FontFamily = $piece.Family }
+        if ($null -ne $brush) { $run.Foreground = $brush }
+        if ($null -ne $fill) { $run.Background = $fill }
+        [void]$Inlines.Add($run)
+    }
 }
 
 function Build-WinToolExtraToggle {
@@ -1239,8 +1311,8 @@ function Build-WinToolSchemeCard {
         $mark.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
         $mark.VerticalAlignment = "Center"
         $mark.HorizontalAlignment = "Center"
-        $mark.Inlines.Add((New-WinToolPreviewRun -Segment ([pscustomobject]@{ Text = ([string][char]0x276F + " "); Foreground = [string](Get-WinToolNote -Object $palette -Name "green" -Default ([string]$scheme.cursor)); Background = $null })))
-        $mark.Inlines.Add((New-WinToolPreviewRun -Segment ([pscustomobject]@{ Text = [string]$scheme.name; Foreground = [string]$scheme.foreground; Background = $null })))
+        Add-WinToolPreviewRun -Inlines $mark.Inlines -Segment ([pscustomobject]@{ Text = ([string][char]0x276F + " "); Foreground = [string](Get-WinToolNote -Object $palette -Name "green" -Default ([string]$scheme.cursor)); Background = $null })
+        Add-WinToolPreviewRun -Inlines $mark.Inlines -Segment ([pscustomobject]@{ Text = [string]$scheme.name; Foreground = [string]$scheme.foreground; Background = $null })
         $grid = $mark
         $card.Child = $grid
         Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose color scheme" -Data ([string]$scheme.id) -Action {
@@ -1419,14 +1491,15 @@ function Sync-WinToolFontSelection {
 function Update-WinToolFontList {
     $list = Get-WinToolUi -Name "TerminalFontList"
     $nerdOnly = ((Get-WinToolUi -Name "TerminalFontNerdOnly").IsChecked -eq $true)
-    $allFonts = @(Get-WinToolActiveFont)
-    $fontKey = ([string]$nerdOnly + "|" + [string]$allFonts.Count + "|" + [string]@($script:WinToolExtraFont).Count)
-    if ([string]$script:WinToolFontListKey -eq $fontKey -and $list.Items.Count -gt 0) {
+    $allFonts = @(Get-WinToolResolvableFont)
+    $fonts = @(Select-WinToolFont -Font $allFonts -Query "" -NerdOnly $nerdOnly)
+    $fontIds = (@($allFonts | ForEach-Object { [string]$_.id }) -join ",")
+    $fontKey = ([string]$nerdOnly + "|" + $fontIds)
+    if ([string]$script:WinToolFontListKey -eq $fontKey -and ($list.Items.Count -gt 0 -or $fonts.Count -eq 0)) {
         Sync-WinToolFontSelection
         return
     }
     $script:WinToolFontListKey = ""
-    $fonts = @(Select-WinToolFont -Font $allFonts -Query "" -NerdOnly $nerdOnly)
     $script:WinToolTerminalSyncing = $true
     try {
         if ($null -eq $script:WinToolFontItemCache) { $script:WinToolFontItemCache = @{} }
@@ -1435,8 +1508,8 @@ function Update-WinToolFontList {
             $fontId = [string]$font.id
             if (-not $script:WinToolFontItemCache.ContainsKey($fontId)) {
                 $item = New-Object System.Windows.Controls.ComboBoxItem
-                $badge = "Programming font"
-                if ($font.nerd) { $badge = "Nerd Font" }
+                $badge = "Installed - Programming font"
+                if ($font.nerd) { $badge = "Installed - Nerd Font" }
                 $item.Content = [string]$font.name
                 $item.ToolTip = $badge
                 $item.Tag = $fontId
@@ -1448,12 +1521,23 @@ function Update-WinToolFontList {
                 $list.SelectedItem = $cached
             }
         }
+        if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
+            $best = Get-WinToolBestNerdFont
+            $picked = $false
+            if ($null -ne $best) {
+                for ($index = 0; $index -lt $list.Items.Count; $index++) {
+                    if ([string]$list.Items[$index].Tag -eq [string]$best.Id) {
+                        $list.SelectedIndex = $index
+                        $picked = $true
+                        break
+                    }
+                }
+            }
+            if (-not $picked) { $list.SelectedIndex = 0 }
+        }
     }
     finally {
         $script:WinToolTerminalSyncing = $false
-    }
-    if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
-        $list.SelectedIndex = 0
     }
     if ($null -ne $list.SelectedItem) {
         $script:WinToolTerminalChoice.fontId = [string]$list.SelectedItem.Tag
@@ -1463,7 +1547,7 @@ function Update-WinToolFontList {
     $dot = " " + [string][char]0x00B7 + " "
     $countBlock = Get-WinToolUi -Name "TerminalFontCount"
     if ($null -ne $countBlock) {
-        $countBlock.Text = ([string]$allFonts.Count + " fonts" + $dot + $nerdCount + " Nerd Fonts" + $dot + $schemeCount + " schemes")
+        $countBlock.Text = ([string]$allFonts.Count + " installed" + $dot + $nerdCount + " Nerd Fonts" + $dot + $schemeCount + " schemes")
     }
     $script:WinToolFontListKey = $fontKey
     Update-WinToolFontSizeSelection
@@ -1546,6 +1630,7 @@ function Update-WinToolTerminalPreview {
     if ($null -eq $sample -or $null -eq $border -or $null -eq $script:WinToolTerminalChoice) {
         return
     }
+    Update-WinToolThemePreviewImage
     try {
         $choice = $script:WinToolTerminalChoice
         $promptId = [string]$choice.prompt
@@ -1574,17 +1659,10 @@ function Update-WinToolTerminalPreview {
         foreach ($font in @(Get-WinToolActiveFont)) {
             if ([string]$font.id -eq [string]$choice.fontId) { $face = [string]$font.face; $fontName = [string]$font.name; break }
         }
-        $families = "Cascadia Mono, Consolas"
-        if (-not [string]::IsNullOrWhiteSpace($face)) { $families = $face + ", " + $families }
-        if ($null -eq $script:WinToolPreviewFonts) { $script:WinToolPreviewFonts = @{} }
-        if (-not $script:WinToolPreviewFonts.ContainsKey($families)) {
-            $script:WinToolPreviewFonts[$families] = [System.Windows.Media.FontFamily]::new($families)
-        }
-        $family = $script:WinToolPreviewFonts[$families]
-        $sample.FontFamily = $family
+        Set-WinToolPreviewFontFamily -Element $sample
         Set-WinToolLigatureTypography -Element $sample
         $styleList = Get-WinToolUi -Name "TerminalStyleList"
-        if ($null -ne $styleList) { $styleList.Resources["TerminalPreviewFont"] = $family }
+        if ($null -ne $styleList) { $styleList.Resources["TerminalPreviewFont"] = $sample.FontFamily }
         $size = 12
         $sizeValue = Get-WinToolNote -Object $choice -Name "fontSize"
         if ($null -ne $sizeValue -and [int]$sizeValue -gt 0) { $size = [int]$sizeValue }
@@ -1611,7 +1689,7 @@ function Update-WinToolTerminalPreview {
         $addLine = {
             param([object[]]$Parts)
             if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
-            foreach ($part in @($Parts)) { $sample.Inlines.Add((New-WinToolPreviewRun -Segment $part)) }
+            foreach ($part in @($Parts)) { Add-WinToolPreviewRun -Inlines $sample.Inlines -Segment $part }
         }
         $text = { param([string]$Value, [string]$Color) New-WinToolPreviewSegment -Text $Value -Foreground $Color }
         $header = "PowerShell 7"

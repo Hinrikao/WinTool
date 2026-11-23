@@ -125,8 +125,24 @@ foreach ($row in $tweakRows) {
 }
 
 $fontList = $window.FindName("TerminalFontList")
-if ($null -eq $fontList -or $fontList.Items.Count -lt 50) {
-    throw "The Terminal tab did not list the font catalog."
+if ($null -eq $fontList) {
+    throw "The Terminal tab did not build the font list."
+}
+foreach ($fontItem in @($fontList.Items)) {
+    $fontId = [string]$fontItem.Tag
+    if (-not (Test-WinToolFontResolve -Id $fontId)) {
+        throw ("The font list includes " + $fontId + ", which did not load.")
+    }
+    if ([string]$fontItem.ToolTip -notlike "Installed*") {
+        throw ($fontId + " is not marked as installed.")
+    }
+}
+$catalogFonts = @(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @())
+if ($catalogFonts.Count -lt 70) {
+    throw "The font catalog shrank."
+}
+if ($fontList.Items.Count -gt $catalogFonts.Count) {
+    throw "The font list is larger than the fonts that loaded."
 }
 $consolas = Find-WinToolInstalledFontFile -Token "Consolas"
 if ($null -eq $consolas) {
@@ -520,8 +536,9 @@ while ($null -ne $script:WinToolState.PreviewJob -and [datetime]::UtcNow -lt $pr
     Start-Sleep -Milliseconds 200
 }
 Update-WinToolTerminalPreview
-if ([string]$window.FindName("TerminalFontList").SelectedItem.Tag -ne "cascadiacode-nf") {
-    throw "The recommended font should be selected in the font list."
+$selectedFont = $window.FindName("TerminalFontList").SelectedItem
+if ($null -ne $selectedFont -and -not (Test-WinToolFontResolve -Id ([string]$selectedFont.Tag))) {
+    throw "The selected font did not load."
 }
 if ([string]$window.FindName("TerminalStyleList").SelectedItem.Tag -ne "jandedobbeleer") {
     throw "The recommended theme should be selected in the theme list."
@@ -775,6 +792,151 @@ function Save-WinToolTerminalShot {
     Write-Output ("Saved " + $path)
 }
 
+function Test-WinToolPrivateUseText {
+    param([AllowEmptyString()][string]$Text)
+    foreach ($code in @(Get-WinToolTextCode -Text $Text)) {
+        if ($code -ge 0xE000 -and $code -le 0xF8FF) { return $true }
+    }
+    return $false
+}
+
+function Assert-WinToolSampleGlyph {
+    param(
+        $Sample,
+        [string]$Label,
+        [switch]$ForbidPrivateUse
+    )
+    if ($null -eq $Sample) { throw ($Label + " sample is missing.") }
+    $drawn = New-Object System.Text.StringBuilder
+    $runCount = 0
+    foreach ($inline in @($Sample.Inlines)) {
+        if ($inline -isnot [System.Windows.Documents.Run]) { continue }
+        $runCount++
+        $runText = [string]$inline.Text
+        [void]$drawn.Append($runText)
+        $family = $inline.FontFamily
+        if ($null -eq $family) { $family = $Sample.FontFamily }
+        $typeface = New-Object System.Windows.Media.Typeface(
+            $family,
+            [System.Windows.FontStyles]::Normal,
+            [System.Windows.FontWeights]::Normal,
+            [System.Windows.FontStretches]::Normal)
+        $glyph = Get-WinToolTypefaceGlyph -Typeface $typeface
+        if ($null -eq $glyph) { throw ($Label + " run has no glyph face for '" + $runText + "'.") }
+        foreach ($code in @(Get-WinToolTextCode -Text $runText)) {
+            if (-not (Test-WinToolGlyphMapped -Glyph $glyph -Code $code)) {
+                throw ($Label + " is missing U+" + $code.ToString("X") + " in " + [string]$family.Source)
+            }
+        }
+    }
+    if ($runCount -eq 0 -or $drawn.Length -eq 0) { throw ($Label + " drew no text.") }
+    if ($ForbidPrivateUse -and (Test-WinToolPrivateUseText -Text $drawn.ToString())) {
+        throw ($Label + " still draws a private-use glyph.")
+    }
+}
+
+function Assert-WinToolCatalogGlyph {
+    param(
+        [switch]$RequireNerd,
+        [switch]$ForbidPrivateUse
+    )
+    $best = Get-WinToolBestNerdFont
+    if ($RequireNerd) {
+        if ($null -eq $best) { throw "No Nerd Font loaded for the preview." }
+        if ([string]$best.Source -ne "HKCU") { throw ("The preview Nerd Font came from " + [string]$best.Source + ", not HKCU.") }
+    }
+    foreach ($sample in @(Get-WinToolPreviewSampleText)) {
+        if (-not (Test-WinToolPreviewTextCovered -Text $sample)) {
+            throw ("A preview string is not covered: " + $sample)
+        }
+        if ($ForbidPrivateUse) {
+            $drawn = ""
+            foreach ($piece in @(Split-WinToolCoveredText -Text $sample)) { $drawn += [string]$piece.Text }
+            if (Test-WinToolPrivateUseText -Text $drawn) {
+                throw ("Fallback kept a private-use glyph in: " + $sample)
+            }
+        }
+    }
+    if ($RequireNerd) {
+        foreach ($code in @(0xE0B0, 0xE0B4, 0xE0B6, 0xF418, 0xE718, 0xF07B, 0xF489, 0xE0A0, 0xF126)) {
+            $probe = [char]::ConvertFromUtf32([int]$code)
+            $pieces = @(Split-WinToolCoveredText -Text $probe)
+            if ($pieces.Count -ne 1 -or [string]$pieces[0].Text -ne $probe -or [string]$pieces[0].Path -ne [string]$best.Path) {
+                throw ("U+" + ([int]$code).ToString("X") + " was not drawn from " + [string]$best.FamilyName + ".")
+            }
+        }
+    }
+}
+
+function Install-WinToolPerUserNerdFont {
+    $zip = Join-Path ([System.IO.Path]::GetTempPath()) "wintool-cascadia-nf.zip"
+    $url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/CascadiaCode.zip"
+    Write-Output "Downloading CaskaydiaCove Nerd Font for the per-user glyph check."
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    $client = New-Object System.Net.WebClient
+    $client.Headers["User-Agent"] = "WinTool"
+    $client.DownloadFile($url, $zip)
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
+    $dest = ""
+    try {
+        $entry = $null
+        foreach ($item in $archive.Entries) {
+            if ($item.Name -eq "CaskaydiaCoveNerdFontMono-Regular.ttf") { $entry = $item; break }
+        }
+        if ($null -eq $entry) { throw "CascadiaCode.zip has no CaskaydiaCove Mono Regular font." }
+        $folder = Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Fonts"
+        New-Item -ItemType Directory -Path $folder -Force | Out-Null
+        $dest = Join-Path $folder $entry.Name
+        $stream = [System.IO.File]::Create($dest)
+        try {
+            $source = $entry.Open()
+            try { $source.CopyTo($stream) } finally { $source.Dispose() }
+        }
+        finally { $stream.Dispose() }
+    }
+    finally { $archive.Dispose() }
+    $reg = "HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+    if (-not (Test-Path -LiteralPath $reg)) { New-Item -Path $reg -Force | Out-Null }
+    New-ItemProperty -LiteralPath $reg -Name "CaskaydiaCove Nerd Font Mono (TrueType)" -Value $dest -PropertyType String -Force | Out-Null
+    Reset-WinToolFontResolution
+    $script:WinToolFontListKey = ""
+    $script:WinToolTerminalChoice.fontId = "cascadiacode-nf"
+    Update-WinToolFontList
+    Update-WinToolThemePreviewImage
+    Update-WinToolTerminalPreview
+    Update-WinToolSimplePreview
+    if (-not (Test-WinToolFontResolve -Id "cascadiacode-nf")) { throw "CaskaydiaCove installed per-user did not resolve." }
+    if ([string]$window.FindName("TerminalFontList").SelectedItem.Tag -ne "cascadiacode-nf") {
+        throw "The installed Nerd Font should be selected."
+    }
+    $record = (Get-WinToolResolvedFontMap)["cascadiacode-nf"]
+    if ([string]$record.Source -ne "HKCU") { throw "CaskaydiaCove was not read from the per-user font registry." }
+    Write-Output ("Loaded " + $record.FamilyName + " from " + $record.Path)
+}
+
+function Hide-WinToolInstalledNerdFont {
+    # The no-font check has to be true on a machine that already has one.
+    $kept = New-Object System.Collections.Generic.List[object]
+    foreach ($item in @(Get-WinToolRegisteredFont)) {
+        $blob = (([string]$item.Name) + " " + [string]$item.Data).ToLowerInvariant()
+        if ($blob.Contains("nerd")) { continue }
+        [void]$kept.Add($item)
+    }
+    Reset-WinToolFontResolution
+    $script:WinToolRegisteredFontCache = $kept.ToArray()
+    $script:WinToolFontListKey = ""
+    $script:WinToolThemeItemCache = @{}
+    Update-WinToolFontList
+    Update-WinToolThemePreviewImage
+    Update-WinToolTerminalPreview
+    Update-WinToolSimplePreview
+    if ($null -ne (Get-WinToolBestNerdFont)) {
+        throw "A Nerd Font was still used after hiding installed Nerd Fonts."
+    }
+    Write-Output "Nerd Fonts are hidden. Previews must use the ASCII fallback."
+}
+
 # Card 2 always matches the checked engine. The old bug: Advanced, pick
 # Starship, go to Simple (the choice resets to Oh My Posh), back to Advanced:
 # Oh My Posh was checked but card 2 still listed the Starship presets.
@@ -821,6 +983,7 @@ function Assert-WinToolTerminalBound {
         if ($after[$key] -ne $Before[$key]) { throw ($Label + " moved or resized " + $key + ": " + $Before[$key] + " -> " + $after[$key]) }
     }
 }
+Hide-WinToolInstalledNerdFont
 Select-WinToolTerminalPrompt -PromptId "oh-my-posh"
 Invoke-WinToolTerminalShotLayout -Width 1280 -Height 800
 $terminalBounds = Get-WinToolTerminalBound
@@ -834,11 +997,15 @@ foreach ($pass in @(1, 2)) {
 }
 Write-Output ("Toggled " + @($script:WinToolTerminalExtraBox).Count + " extras on and off: the cards, the action bar, and Apply never moved; " + $window.FindName("TerminalSummaryHost").Children.Count + " chips on one line.")
 $engines = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "prompts" -Default @())
+Assert-WinToolCatalogGlyph -ForbidPrivateUse
 foreach ($engine in $engines) {
     Select-WinToolTerminalPrompt -PromptId ([string]$engine.id)
     Assert-WinToolThemeCard -Label ("Engine " + [string]$engine.id)
+    Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label ([string]$engine.id) -ForbidPrivateUse
     Assert-WinToolTerminalBound -Before $terminalBounds -Label ("Picking " + [string]$engine.id)
 }
+Update-WinToolSimplePreview
+Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalSimpleSample") -Label "Simple" -ForbidPrivateUse
 Write-Output ("Checked " + $engines.Count + " engines: card 2, its title, count, and the preview match each one, and nothing moved.")
 $script:WinToolState.LogExpanded = $true
 Sync-WinToolLogPanel
@@ -884,6 +1051,33 @@ Update-WinToolTerminalPreview
 $blocks = @($window.FindName("TerminalFontSample").Inlines | Where-Object { $_ -is [System.Windows.Documents.Run] -and $null -ne $_.Background })
 if ($blocks.Count -lt 2) { throw "The Starship Pastel powerline preview should draw colored blocks." }
 Save-WinToolTerminalShot -Name "terminal-starship" -Width 1280 -Height 800
+Save-WinToolTerminalShot -Name "terminal-starship-no-nerd" -Width 1280 -Height 800
+Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label "Starship without a Nerd Font" -ForbidPrivateUse
+Install-WinToolPerUserNerdFont
+Assert-WinToolCatalogGlyph -RequireNerd
+Update-WinToolTerminalPreview
+Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label "Starship with a Nerd Font"
+$withNerd = New-Object System.Text.StringBuilder
+foreach ($inline in @($window.FindName("TerminalFontSample").Inlines)) {
+    if ($inline -is [System.Windows.Documents.Run]) { [void]$withNerd.Append([string]$inline.Text) }
+}
+if (-not (Test-WinToolPrivateUseText -Text $withNerd.ToString())) {
+    throw "The Nerd Font preview substituted the icons instead of drawing them."
+}
+Save-WinToolTerminalShot -Name "terminal-starship-with-nerd" -Width 1280 -Height 800
+foreach ($engine in $engines) {
+    Select-WinToolTerminalPrompt -PromptId ([string]$engine.id)
+    Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label ([string]$engine.id + " with a Nerd Font")
+}
+Update-WinToolSimplePreview
+Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalSimpleSample") -Label "Simple with a Nerd Font"
+$simpleDrawn = New-Object System.Text.StringBuilder
+foreach ($inline in @($window.FindName("TerminalSimpleSample").Inlines)) {
+    if ($inline -is [System.Windows.Documents.Run]) { [void]$simpleDrawn.Append([string]$inline.Text) }
+}
+if (-not (Test-WinToolPrivateUseText -Text $simpleDrawn.ToString())) {
+    throw "The Simple preview substituted the icons instead of drawing them."
+}
 $script:WinToolTerminalChoice.prompt = "oh-my-zsh"
 $script:WinToolTerminalChoice.promptStyle = "agnoster"
 Update-WinToolPromptStyleList
