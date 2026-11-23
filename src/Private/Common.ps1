@@ -66,6 +66,7 @@ function Get-WinToolPayloadText {
         OmpThemes = "data/omp-themes.json"
         Updates = "data/updates.json"
         Fixes = "data/fixes.json"
+        Features = "data/features.json"
         Xaml = "assets/MainWindow.xaml"
         Wsl = "data/wsl-setup.sh"
     }

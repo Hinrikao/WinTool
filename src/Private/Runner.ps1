@@ -29,6 +29,20 @@ function Get-WinToolWingetStepAction {
     return $action
 }
 
+function Test-WinToolStepSuccess {
+    param(
+        [Parameter(Mandatory = $true)]$Step,
+        [int]$ExitCode
+    )
+    $codes = @(Get-WinToolNote -Object $Step -Name "SuccessCodes" -Default @(0))
+    foreach ($code in $codes) {
+        if ([int]$code -eq $ExitCode) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Get-WinToolPlanCommand {
     param(
         [Parameter(Mandatory = $true)]$Step
@@ -204,7 +218,7 @@ function Invoke-WinToolPlan {
                 Write-WinToolLog -Message ("{0}: done." -f [string]$item.Label) -Level "ok"
             }
         }
-        elseif ($result.ExitCode -ne 0) {
+        elseif (-not (Test-WinToolStepSuccess -Step $item -ExitCode $result.ExitCode)) {
             Write-WinToolLog -Message ("{0} exited with code {1}." -f [string]$item.Label, $result.ExitCode) -Level "error"
         }
         else {

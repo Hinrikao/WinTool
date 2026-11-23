@@ -264,6 +264,31 @@ Invoke-WinToolCase -Name "Fixes run known programs and named scripts" -Body {
     Test-WinToolExpectation -Condition ($bad.Count -ge 3) -Message "The fix catalog rejects outside programs and unknown scripts."
 }
 
+Invoke-WinToolCase -Name "Windows features read state and plan DISM changes" -Body {
+    $catalog = Get-WinToolFeatureCatalog
+    $byId = @{}
+    foreach ($feature in @($catalog.features)) { $byId[[string]$feature.id] = $feature }
+    foreach ($id in @("hyper-v", "sandbox", "wsl", "vm-platform", "netfx3")) {
+        Test-WinToolExpectation -Condition ($byId.ContainsKey($id)) -Message "Missing Windows feature $id."
+    }
+    $nfs = $byId["nfs-client"]
+    $state = @{ "ServicesForNFS-ClientOnly" = "Enabled"; "ClientForNFS-Infrastructure" = "Disabled"; "NetFx3" = "Enabled"; "TelnetClient" = "Missing" }
+    Test-WinToolExpectation -Condition ((Get-WinToolFeatureStatus -Feature $nfs -State $state) -eq "Partial") -Message "A half-enabled feature reads as partly on."
+    Test-WinToolExpectation -Condition ((Get-WinToolFeatureStatus -Feature $byId["netfx3"] -State $state) -eq "On") -Message "An enabled feature reads as on."
+    Test-WinToolExpectation -Condition ((Get-WinToolFeatureStatus -Feature $byId["telnet"] -State $state) -eq "Unavailable") -Message "A missing feature reads as unavailable."
+    Test-WinToolExpectation -Condition ((Get-WinToolFeatureStatus -Feature $byId["tftp"] -State $state) -eq "Unavailable") -Message "A feature with no state reads as unavailable."
+    $plan = @(Get-WinToolFeaturePlan -Enable @($byId["wsl"]) -Disable @($nfs))
+    Test-WinToolExpectation -Condition ($plan.Count -eq 3) -Message "One enable and a two-part disable make three steps."
+    Test-WinToolExpectation -Condition ((@($plan[0].Arguments) -join " ") -eq "/Online /Enable-Feature /FeatureName:Microsoft-Windows-Subsystem-Linux /All /NoRestart") -Message "Enable uses DISM with /All and /NoRestart."
+    Test-WinToolExpectation -Condition ((@($plan[1].Arguments) -join " ") -eq "/Online /Disable-Feature /FeatureName:ClientForNFS-Infrastructure /NoRestart") -Message "Disable turns off the dependent part first."
+    Test-WinToolExpectation -Condition ((Test-WinToolStepSuccess -Step $plan[0] -ExitCode 3010) -and -not (Test-WinToolStepSuccess -Step $plan[0] -ExitCode 1)) -Message "DISM's restart-needed code counts as success."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolStepSuccess -Step ([pscustomobject]@{ Type = "process" }) -ExitCode 3010)) -Message "Other steps succeed only with exit code 0."
+    $tokens = $null
+    $errors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseInput((Get-WinToolFeatureStateScript), [ref]$tokens, [ref]$errors)
+    Test-WinToolExpectation -Condition (@($errors).Count -eq 0) -Message "The feature state script parses."
+}
+
 Invoke-WinToolCase -Name "App plan uses the catalog winget id" -Body {
     $catalog = Get-WinToolAppCatalog
     $firefox = $null

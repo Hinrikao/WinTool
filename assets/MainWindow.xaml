@@ -324,6 +324,12 @@
               <TextBlock Text="Fixes" VerticalAlignment="Center"/>
             </StackPanel>
           </RadioButton>
+          <RadioButton x:Name="NavFeatures" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Windows features">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Features" VerticalAlignment="Center"/>
+            </StackPanel>
+          </RadioButton>
           <RadioButton x:Name="NavConfig" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Config">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -515,6 +521,23 @@
             <TextBlock Text="Fixes" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Repairs for common Windows problems. Each one asks first and writes what it does to the log." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
             <StackPanel x:Name="FixList"/>
+          </StackPanel>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="ViewFeatures" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+          <StackPanel Margin="24,22,24,12">
+            <TextBlock Text="Windows features" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock Text="Optional parts of Windows. Ticked means on. Change the ticks and press Apply. Windows needs a restart after a change." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
+            <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                  <Button x:Name="FeatureApply" Content="Apply changes" Style="{StaticResource PrimaryButton}" Margin="0"/>
+                  <Button x:Name="FeatureRefresh" Content="Refresh" Style="{StaticResource SecondaryButton}"/>
+                  <TextBlock x:Name="FeatureStatus" Text="Open this tab to read the current state." Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+                </StackPanel>
+                <StackPanel x:Name="FeatureList"/>
+              </StackPanel>
+            </Border>
           </StackPanel>
         </ScrollViewer>
 

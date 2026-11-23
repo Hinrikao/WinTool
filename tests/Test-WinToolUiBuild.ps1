@@ -108,6 +108,8 @@ $skip = @(
     "Install: uninstall one app",
     "Install: check installed",
     "Check installed apps",
+    "Features: apply changes",
+    "Features: refresh state",
     "Tweaks: apply selected",
     "Tweaks: undo selected",
     "Terminal: apply setup",
@@ -205,6 +207,25 @@ if ($secondApp.UpdateBadge.Visibility -ne "Visible" -or -not $secondApp.Installe
 Select-WinToolInstalledApp
 if ($firstApp.Checkbox.IsChecked -ne $true -or $secondApp.Checkbox.IsChecked -ne $true -or $appRows[2].Checkbox.IsChecked -eq $true) {
     throw "Select installed did not tick exactly the installed apps."
+}
+
+# Feature ticks follow the state Windows reports.
+$featureRows = @($script:WinToolState.FeatureRows)
+if ($featureRows.Count -lt 8) {
+    throw "The Features tab did not list the optional features."
+}
+$fakeState = @{}
+foreach ($name in @($featureRows[0].Feature.names)) { $fakeState[[string]$name] = "Enabled" }
+foreach ($name in @($featureRows[1].Feature.names)) { $fakeState[[string]$name] = "Disabled" }
+Set-WinToolFeatureState -State $fakeState
+if ($featureRows[0].Checkbox.IsChecked -ne $true -or $featureRows[1].Checkbox.IsChecked -ne $false -or $featureRows[2].Checkbox.IsEnabled) {
+    throw "Feature checkboxes did not follow the reported state."
+}
+$featureRows[0].Checkbox.IsChecked = $false
+$featureRows[1].Checkbox.IsChecked = $true
+$featureChange = Get-WinToolFeatureChange
+if (@($featureChange.Enable).Count -ne 1 -or @($featureChange.Disable).Count -ne 1) {
+    throw "Feature changes were not worked out from the ticks."
 }
 
 $uiErrors = Get-WinToolUiError

@@ -15,7 +15,7 @@ function Request-WinToolConfirmation {
 }
 
 function Get-WinToolViewName {
-    return @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Config")
+    return @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config")
 }
 
 function Add-WinToolBusyControl {
@@ -43,6 +43,10 @@ function Switch-WinToolView {
     }
     if ($Name -eq "Config") {
         Update-WinToolProfileSummary
+    }
+    if ($Name -eq "Features" -and -not $script:WinToolState.FeaturesChecked) {
+        $script:WinToolState.FeaturesChecked = $true
+        Start-WinToolFeatureDetection
     }
 }
 
@@ -132,6 +136,7 @@ function Sync-WinToolBusyState {
     $names = @(
         "AppInstall", "AppSelectVisible", "AppClear",
         "AppSelectInstalled", "AppRefreshInstalled", "AppUpdate", "AppUninstall", "AppUpgradeAll",
+        "FeatureApply",
         "TweakApply", "TweakUndo", "TweakClear",
         "TerminalSetup", "ScanDrivers",
         "SaveProfile", "LoadProfile", "ExportWinget", "ImportWinget"
@@ -298,7 +303,7 @@ function Complete-WinToolPlanStep {
             Write-WinToolLog -Message ("{0}: done." -f [string]$step.Label) -Level "ok"
         }
     }
-    elseif ($code -ne 0) {
+    elseif (-not (Test-WinToolStepSuccess -Step $step -ExitCode $code)) {
         Write-WinToolLog -Message ("{0} exited with code {1}." -f [string]$step.Label, $code) -Level "error"
     }
     else {
@@ -415,6 +420,11 @@ function Update-WinToolLogPump {
         Complete-WinToolUpdateScan
     }
 
+    $featureJob = $script:WinToolState.FeatureJob
+    if ($null -ne $featureJob -and $featureJob.Sync.Done) {
+        Complete-WinToolFeatureDetection
+    }
+
     $detect = $script:WinToolState.DetectJob
     if ($null -ne $detect -and $detect.Sync.Done) {
         Complete-WinToolAppDetection
@@ -517,6 +527,8 @@ function New-WinToolWindow {
         InstallJob = $null
         DetectJob = $null
         BusyControls = $null
+        FeatureJob = $null
+        FeatureRows = @()
         PendingTweaks = @()
         PendingDirection = "Apply"
         PendingRestart = $true
@@ -537,6 +549,7 @@ function New-WinToolWindow {
     Initialize-WinToolTerminalView
     Initialize-WinToolUpdateView
     Initialize-WinToolFixView
+    Initialize-WinToolFeatureView
     Initialize-WinToolConfigView
     Initialize-WinToolShellEvent
     Sync-WinToolLogPanel
