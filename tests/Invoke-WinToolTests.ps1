@@ -1058,6 +1058,83 @@ Invoke-WinToolCase -Name "Every prompt has a preview" -Body {
     Test-WinToolExpectation -Condition ($rows.Count -eq 3 -and $rows[0].StartsWith("a ") -and $rows[2].EndsWith(" j")) -Message ("Summary rows: " + ($rows -join " | "))
 }
 
+Invoke-WinToolCase -Name "Terminal style catalogs are complete" -Body {
+    $catalog = Get-WinToolTerminalCatalog
+    $hex = '^#[0-9A-Fa-f]{6}$'
+    $font = [string]@(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @())[0].id
+    $scheme = [string]@(Get-WinToolNote -Object $catalog -Name "schemes" -Default @())[0].id
+
+    # Starship: every official preset, by the name "starship preset <id>" takes.
+    $presets = @(Get-WinToolNote -Object $catalog -Name "starshipPresets" -Default @())
+    $presetIds = @($presets | ForEach-Object { [string]$_.id })
+    foreach ($id in @("nerd-font-symbols", "no-nerd-font", "bracketed-segments", "plain-text-symbols", "no-runtime-versions", "no-empty-icons", "pure-preset", "pastel-powerline", "tokyo-night", "gruvbox-rainbow", "jetpack", "catppuccin-powerline")) {
+        Test-WinToolExpectation -Condition ($presetIds -contains $id) -Message ("The Starship preset " + $id + " is missing.")
+    }
+    Test-WinToolExpectation -Condition (@($presetIds | Select-Object -Unique).Count -eq $presetIds.Count) -Message "Starship preset ids are unique."
+    foreach ($preset in $presets) {
+        $id = [string]$preset.id
+        Test-WinToolExpectation -Condition ($id -match '^[a-z0-9-]+$' -and -not [string]::IsNullOrWhiteSpace([string]$preset.name)) -Message ("Starship preset '" + $id + "' needs a plain id and a name.")
+        foreach ($item in @(Get-WinToolNote -Object $preset -Name "preview" -Default @())) {
+            $bg = [string](Get-WinToolNote -Object $item -Name "bg" -Default "")
+            Test-WinToolExpectation -Condition ([string]$item.color -match $hex -and ([string]::IsNullOrEmpty($bg) -or $bg -match $hex)) -Message ("Starship preset '" + $id + "' has a bad preview color.")
+        }
+        $steps = @(Get-WinToolTerminalPlan -Selection ([pscustomobject]@{ prompt = "starship"; promptStyle = $id; fontId = $font; schemeId = $scheme }))
+        Test-WinToolExpectation -Condition (@($steps | Where-Object { $_.Type -eq "starship-preset" -and $_.Preset -eq $id }).Count -eq 1) -Message ("The plan does not apply the Starship preset " + $id)
+    }
+
+    # Oh My Zsh: the bundled themes, each a name that reaches bash unchanged.
+    $omz = @(Get-WinToolNote -Object $catalog -Name "omzThemes" -Default @() | ForEach-Object { [string]$_ })
+    Test-WinToolExpectation -Condition ($omz.Count -ge 140 -and $omz -contains "robbyrussell" -and $omz -contains "agnoster") -Message ("Oh My Zsh lists " + $omz.Count + " themes.")
+    Test-WinToolExpectation -Condition (@($omz | Select-Object -Unique).Count -eq $omz.Count) -Message "Oh My Zsh theme names are unique."
+    foreach ($name in $omz) {
+        Test-WinToolExpectation -Condition ((ConvertTo-WinToolShellWord -Text $name) -eq $name) -Message ("The Oh My Zsh theme '" + $name + "' would be changed on its way to bash.")
+    }
+    $previews = Get-WinToolNote -Object $catalog -Name "previews"
+    foreach ($property in @($previews.PSObject.Properties | Where-Object { $_.Name -like "oh-my-zsh:*" })) {
+        $theme = $property.Name.Substring(10)
+        Test-WinToolExpectation -Condition ($omz -contains $theme) -Message ("The preview " + $property.Name + " is for a theme that is not listed.")
+        $segments = @(Get-WinToolPromptPreview -PromptId "oh-my-zsh" -PromptStyle $theme -Theme $null)
+        Test-WinToolExpectation -Condition ($segments.Count -gt 0 -and $segments[0].Foreground -match $hex) -Message ("No preview for the Oh My Zsh theme " + $theme)
+    }
+    $omzPlan = @(Get-WinToolTerminalPlan -Selection ([pscustomobject]@{ prompt = "oh-my-zsh"; promptStyle = "af-magic"; fontId = $font; schemeId = $scheme }))
+    Test-WinToolExpectation -Condition (@($omzPlan | Where-Object { $_.Type -eq "wsl-shell" -and $_.OmzTheme -eq "af-magic" }).Count -eq 1) -Message "The plan passes the Oh My Zsh theme to the WSL setup."
+
+    # Oh My Posh: the official .omp.json themes, one row each.
+    $themes = @(Get-WinToolNote -Object (Get-WinToolOhMyPoshDocument) -Name "themes" -Default @())
+    $themeIds = @($themes | ForEach-Object { [string]$_.id })
+    Test-WinToolExpectation -Condition ($themes.Count -ge 120 -and $themeIds -contains "jandedobbeleer") -Message ("Oh My Posh lists " + $themes.Count + " themes.")
+    Test-WinToolExpectation -Condition (@($themeIds | Select-Object -Unique).Count -eq $themeIds.Count) -Message "Oh My Posh theme ids are unique."
+    foreach ($theme in $themes) {
+        $file = Get-WinToolOmpThemeFileName -ThemeId ([string]$theme.id) -Themes $themes
+        Test-WinToolExpectation -Condition ($file -eq ([string]$theme.id + ".omp.json") -and $file -match '^[A-Za-z0-9._-]+$') -Message ("The Oh My Posh theme '" + [string]$theme.id + "' has an unexpected file name.")
+    }
+
+    # Styles of the other prompts, each with a preview in the "previews" format.
+    $promptIds = @(Get-WinToolNote -Object $catalog -Name "prompts" -Default @() | ForEach-Object { [string]$_.id })
+    $variants = Get-WinToolNote -Object $catalog -Name "promptVariants"
+    foreach ($promptId in @("powerlevel10k", "tide", "spaceship", "pure", "powerline-go")) {
+        $rows = @(Get-WinToolNote -Object $variants -Name $promptId -Default @())
+        Test-WinToolExpectation -Condition ($rows.Count -ge 2) -Message ("No styles listed for " + $promptId)
+    }
+    $p10k = @(Get-WinToolNote -Object $variants -Name "powerlevel10k" -Default @() | ForEach-Object { [string]$_.id })
+    foreach ($style in @("lean", "classic", "rainbow", "pure")) {
+        Test-WinToolExpectation -Condition ($p10k -contains $style) -Message ("The Powerlevel10k style " + $style + " is missing.")
+    }
+    foreach ($property in @($variants.PSObject.Properties)) {
+        Test-WinToolExpectation -Condition ($promptIds -contains $property.Name) -Message ("Styles are listed for an unknown prompt " + $property.Name)
+        $ids = @($property.Value | ForEach-Object { [string]$_.id })
+        Test-WinToolExpectation -Condition (@($ids | Select-Object -Unique).Count -eq $ids.Count) -Message ("Style ids for " + $property.Name + " are unique.")
+        foreach ($row in @($property.Value)) {
+            $preview = @(Get-WinToolNote -Object $row -Name "preview" -Default @())
+            Test-WinToolExpectation -Condition ([string]$row.id -match '^[a-z0-9-]+$' -and -not [string]::IsNullOrWhiteSpace([string]$row.name) -and $preview.Count -gt 0) -Message ("The " + $property.Name + " style '" + [string]$row.id + "' needs an id, a name, and a preview.")
+            foreach ($item in $preview) {
+                $bg = [string](Get-WinToolNote -Object $item -Name "bg" -Default "")
+                Test-WinToolExpectation -Condition ([string]$item.fg -match $hex -and ([string]::IsNullOrEmpty($bg) -or $bg -match $hex)) -Message ("The " + $property.Name + " style '" + [string]$row.id + "' has a bad preview color.")
+            }
+        }
+    }
+}
+
 Invoke-WinToolCase -Name "Generated PowerShell profiles never throw" -Body {
     $catalog = Get-WinToolTerminalCatalog
     $hostPath = (Get-Process -Id $PID).Path
