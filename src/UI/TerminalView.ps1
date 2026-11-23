@@ -910,9 +910,9 @@ function Update-WinToolTerminalLayout {
         [double]$Width,
         [double]$Height = -1
     )
-    # Wide: prompt engines | themes | preview with font and colors, and the
-    # extras under the last two. Below 760 px of content (a window under
-    # about 1050 px) the preview, font, and extras move under the lists.
+    # Wide: prompt engines | themes | preview, with font and extras inside the
+    # preview column. Below 760 px of content (a window under about 1050 px)
+    # that whole column moves under the lists.
     # When the body is shorter than the cards need at 14 px text, it gets a
     # fixed height and scrolls instead of squeezing or clipping the cards.
     $grid = Get-WinToolUi -Name "TerminalAdvancedHost"
@@ -926,7 +926,6 @@ function Update-WinToolTerminalLayout {
     $narrow = ($Width -lt 760)
     $side = Get-WinToolUi -Name "TerminalSideColumn"
     $prompt = Get-WinToolUi -Name "TerminalCardPrompt"
-    $extras = Get-WinToolUi -Name "TerminalCardExtras"
     $right = Get-WinToolUi -Name "TerminalColumnRight"
     $gap = Get-WinToolUi -Name "TerminalColumnGap"
     $mainRow = Get-WinToolUi -Name "TerminalRowMain"
@@ -939,21 +938,18 @@ function Update-WinToolTerminalLayout {
             [System.Windows.Controls.Grid]::SetColumnSpan($side, 5)
             $side.Margin = [System.Windows.Thickness]::new(0, 12, 0, 0)
             [System.Windows.Controls.Grid]::SetRowSpan($prompt, 1)
-            [System.Windows.Controls.Grid]::SetColumn($extras, 0)
-            [System.Windows.Controls.Grid]::SetColumnSpan($extras, 5)
             $right.Width = [System.Windows.GridLength]::new(0)
             $gap.Width = [System.Windows.GridLength]::new(0)
             $mainRow.Height = [System.Windows.GridLength]::new(520)
-            $previewRow.Height = [System.Windows.GridLength]::new(300)
+            $previewRow.Height = [System.Windows.GridLength]::new(160)
         }
         else {
+            # Prompt, theme, and preview (with font and extras inside) share one row.
             [System.Windows.Controls.Grid]::SetRow($side, 0)
             [System.Windows.Controls.Grid]::SetColumn($side, 4)
             [System.Windows.Controls.Grid]::SetColumnSpan($side, 1)
             $side.Margin = [System.Windows.Thickness]::new(0)
-            [System.Windows.Controls.Grid]::SetRowSpan($prompt, 3)
-            [System.Windows.Controls.Grid]::SetColumn($extras, 2)
-            [System.Windows.Controls.Grid]::SetColumnSpan($extras, 3)
+            [System.Windows.Controls.Grid]::SetRowSpan($prompt, 1)
             $right.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
             $gap.Width = [System.Windows.GridLength]::new(12)
             $mainRow.Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
@@ -980,22 +976,17 @@ function Update-WinToolTerminalLayout {
 
 function Get-WinToolTerminalBodyMinHeight {
     param([double]$Width)
-    # The tallest of: the whole prompt card (all engines and the note), and
-    # the theme card or the preview with font card, plus the extras below.
+    # The tallest of the three aligned cards. Extras live inside the preview column.
     $prompt = Get-WinToolUi -Name "TerminalCardPrompt"
-    $font = Get-WinToolUi -Name "TerminalCardFont"
-    $extras = Get-WinToolUi -Name "TerminalCardExtras"
+    $side = Get-WinToolUi -Name "TerminalSideColumn"
     $infinite = [double]::PositiveInfinity
     $promptWidth = 230.0
     $restWidth = [Math]::Max(200.0, ($Width - $promptWidth - 24.0) / 2.0)
     $prompt.Measure([System.Windows.Size]::new($promptWidth, $infinite))
-    $font.Measure([System.Windows.Size]::new($restWidth, $infinite))
-    $extras.Measure([System.Windows.Size]::new(($restWidth * 2.0) + 12.0, $infinite))
+    $side.Measure([System.Windows.Size]::new($restWidth, $infinite))
     $promptNeed = $prompt.DesiredSize.Height
-    $previewMin = [double](Get-WinToolUi -Name "TerminalRowPreview").MinHeight
-    $sideNeed = $previewMin + 12.0 + $font.DesiredSize.Height
     $themeNeed = 260.0
-    $restNeed = [Math]::Max($sideNeed, $themeNeed) + $extras.DesiredSize.Height
+    $restNeed = [Math]::Max($side.DesiredSize.Height, $themeNeed)
     return [Math]::Ceiling([Math]::Max([Math]::Max($promptNeed, $restNeed), 420.0))
 }
 

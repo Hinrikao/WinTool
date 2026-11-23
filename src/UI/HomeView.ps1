@@ -55,7 +55,7 @@ function Set-WinToolHomeArc {
         $cap.Visibility = "Hidden"
         return
     }
-    $shape = Get-WinToolHomeArcData -CenterX 118 -CenterY 118 -Radius 94 -Angle $Angle
+    $shape = Get-WinToolHomeArcData -CenterX 98 -CenterY 98 -Radius 78 -Angle $Angle
     $arc.Data = [System.Windows.Media.Geometry]::Parse($shape.Data)
     [System.Windows.Controls.Canvas]::SetLeft($cap, $shape.X - 6)
     [System.Windows.Controls.Canvas]::SetTop($cap, $shape.Y - 6)
@@ -250,71 +250,38 @@ function New-WinToolHomeMini {
     $card = New-Object System.Windows.Controls.Border
     $card.CornerRadius = [System.Windows.CornerRadius]::new(16)
     $card.BorderThickness = [System.Windows.Thickness]::new(1)
-    $card.Padding = [System.Windows.Thickness]::new(18)
+    $card.Padding = [System.Windows.Thickness]::new(16, 14, 16, 12)
     $card.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushCard")
     $card.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
     [System.Windows.Controls.Grid]::SetColumn($card, $Column)
     $grid = New-Object System.Windows.Controls.Grid
-    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::Auto }))
-    $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new(58) }))
+    $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }))
+    $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(98) }))
+    foreach ($height in @(30, 32, 32)) {
+        $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new($height) }))
+    }
     $card.Child = $grid
 
-    $top = New-Object System.Windows.Controls.Grid
-    $top.Height = 64
-    foreach ($width in @(56, 14, -1)) {
-        $colDef = New-Object System.Windows.Controls.ColumnDefinition
-        if ($width -lt 0) { $colDef.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }
-        else { $colDef.Width = [System.Windows.GridLength]::new($width) }
-        $top.ColumnDefinitions.Add($colDef)
-    }
-    $null = $grid.Children.Add($top)
-
-    $ring = New-Object System.Windows.Controls.Canvas
-    $ring.Width = 56
-    $ring.Height = 56
-    $ring.VerticalAlignment = "Center"
-    $track = New-Object System.Windows.Shapes.Ellipse
-    $track.Width = 49
-    $track.Height = 49
-    $track.StrokeThickness = 5
-    $track.SetResourceReference([System.Windows.Shapes.Shape]::StrokeProperty, "BrushProgressTrack")
-    [System.Windows.Controls.Canvas]::SetLeft($track, 3.5)
-    [System.Windows.Controls.Canvas]::SetTop($track, 3.5)
-    $arc = New-Object System.Windows.Shapes.Path
-    $arc.StrokeThickness = 5
-    $arc.StrokeStartLineCap = "Round"
-    $arc.StrokeEndLineCap = "Round"
-    $arc.Stroke = New-WinToolHomeBrush -From $From -To $To
-    $arc.Visibility = "Hidden"
-    $null = $ring.Children.Add($track)
-    $null = $ring.Children.Add($arc)
-    $null = $top.Children.Add($ring)
-
-    $info = New-Object System.Windows.Controls.Grid
-    $info.VerticalAlignment = "Center"
-    [System.Windows.Controls.Grid]::SetColumn($info, 2)
-    foreach ($height in @(24, 20, 20)) {
-        $info.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new($height) }))
-    }
-    $null = $top.Children.Add($info)
     $titleRow = New-Object System.Windows.Controls.Grid
     $titleRow.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }))
     $titleRow.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::Auto }))
-    $null = $info.Children.Add($titleRow)
+    $null = $grid.Children.Add($titleRow)
     $titleText = New-Object System.Windows.Controls.TextBlock
     $titleText.Text = $Title
-    $titleText.FontWeight = "Bold"
+    $titleText.FontWeight = "SemiBold"
     $titleText.VerticalAlignment = "Center"
     $titleText.TextTrimming = "CharacterEllipsis"
-    $titleText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushInk")
+    $titleText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
     $null = $titleRow.Children.Add($titleText)
+
     $tag = New-Object System.Windows.Controls.Border
     $tag.Height = 22
     $tag.Width = 96
     $tag.CornerRadius = [System.Windows.CornerRadius]::new(11)
     $tag.Padding = [System.Windows.Thickness]::new(6, 0, 6, 0)
-    $tag.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
+    $tag.HorizontalAlignment = "Right"
     $tag.VerticalAlignment = "Center"
+    $tag.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
     [System.Windows.Controls.Grid]::SetColumn($tag, 1)
     $tagText = New-Object System.Windows.Controls.TextBlock
     $tagText.FontWeight = "SemiBold"
@@ -324,26 +291,54 @@ function New-WinToolHomeMini {
     $tagText.Text = "Reading"
     $tag.Child = $tagText
     $null = $titleRow.Children.Add($tag)
+
     $value = New-Object System.Windows.Controls.TextBlock
-    $value.FontWeight = "SemiBold"
+    $value.FontWeight = "Bold"
+    $value.VerticalAlignment = "Center"
     $value.TextTrimming = "CharacterEllipsis"
     $value.Text = "Reading" + (Get-WinToolHomeEllipsis)
     $value.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushInk")
     [System.Windows.Controls.Grid]::SetRow($value, 1)
-    $null = $info.Children.Add($value)
+    $null = $grid.Children.Add($value)
     $detail = New-Object System.Windows.Controls.TextBlock
+    $detail.VerticalAlignment = "Center"
     $detail.TextTrimming = "CharacterEllipsis"
     $detail.Text = " "
     $detail.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
     [System.Windows.Controls.Grid]::SetRow($detail, 2)
-    $null = $info.Children.Add($detail)
+    $null = $grid.Children.Add($detail)
 
+    $ring = New-Object System.Windows.Controls.Canvas
+    $ring.Width = 86
+    $ring.Height = 86
+    $ring.HorizontalAlignment = "Right"
+    $ring.VerticalAlignment = "Center"
+    [System.Windows.Controls.Grid]::SetColumn($ring, 1)
+    [System.Windows.Controls.Grid]::SetRow($ring, 0)
+    [System.Windows.Controls.Grid]::SetRowSpan($ring, 3)
+    $track = New-Object System.Windows.Shapes.Ellipse
+    $track.Width = 64
+    $track.Height = 64
+    $track.StrokeThickness = 8
+    $track.SetResourceReference([System.Windows.Shapes.Shape]::StrokeProperty, "BrushProgressTrack")
+    [System.Windows.Controls.Canvas]::SetLeft($track, 11)
+    [System.Windows.Controls.Canvas]::SetTop($track, 11)
+    $arc = New-Object System.Windows.Shapes.Path
+    $arc.StrokeThickness = 8
+    $arc.StrokeStartLineCap = "Round"
+    $arc.StrokeEndLineCap = "Round"
+    $arc.Stroke = New-WinToolHomeBrush -From $From -To $To
+    $arc.Visibility = "Hidden"
+    $null = $ring.Children.Add($track)
+    $null = $ring.Children.Add($arc)
+    $null = $grid.Children.Add($ring)
+
+    # The live trace stays in the tree at a fixed empty size. The approved card shows the ring.
     $spark = New-Object System.Windows.Controls.Grid
-    $spark.Height = 46
-    $spark.Margin = [System.Windows.Thickness]::new(0, 12, 0, 0)
-    $spark.VerticalAlignment = "Stretch"
-    $spark.ClipToBounds = $true
-    [System.Windows.Controls.Grid]::SetRow($spark, 1)
+    $spark.Width = 0
+    $spark.Height = 0
+    $spark.Visibility = "Collapsed"
+    $spark.IsHitTestVisible = $false
     $fill = New-Object System.Windows.Shapes.Path
     $fill.Fill = New-WinToolHomeBrush -From $Line -To $Line -Vertical -Alpha 0.28
     $stroke = New-Object System.Windows.Shapes.Path
@@ -395,7 +390,7 @@ function Set-WinToolHomeMiniRing {
         return
     }
     $angle = [Math]::Min(1.0, $Fraction) * 360
-    $shape = Get-WinToolHomeArcData -CenterX 28 -CenterY 28 -Radius 22 -Angle $angle
+    $shape = Get-WinToolHomeArcData -CenterX 43 -CenterY 43 -Radius 32 -Angle $angle
     $Mini.Arc.Data = [System.Windows.Media.Geometry]::Parse($shape.Data)
     $Mini.Arc.Visibility = "Visible"
 }
@@ -715,7 +710,8 @@ function Update-WinToolHomeAnimation {
         $script:WinToolState.HomeAnimTimer.Stop()
         return
     }
-    Set-WinToolHomeArc -Angle ([double]$hs.Arc + $diff * 0.14)
+    # About 600 ms to draw the ring in (1 - 0.92^38 frames at 16 ms).
+    Set-WinToolHomeArc -Angle ([double]$hs.Arc + $diff * 0.08)
 }
 
 function Start-WinToolHomeCheck {

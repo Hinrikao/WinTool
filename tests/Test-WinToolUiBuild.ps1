@@ -529,6 +529,7 @@ Sync-WinToolLogPanel
 $rootVisual = $window.Content
 function Invoke-WinToolTerminalShotLayout {
     param([double]$Width, [double]$Height)
+    Complete-WinToolMotion
     # Lays the window out at a size, then lets the Terminal body take its
     # real height (fill, or a fixed height that scrolls) and lays out again.
     Update-WinToolTerminalLayout -Width ($Width - 248 - 40) -Height 0
@@ -610,7 +611,7 @@ function Assert-WinToolTerminalText {
     Write-Output ("Terminal text at " + $Label + ": all 14 px, nothing cut off.")
 }
 
-foreach ($size in @(@(1280, 760, "mockup"), @(1280, 900, "wide"), @(1000, 1300, "narrow"))) {
+foreach ($size in @(@(1280, 800, "mockup"), @(1280, 900, "wide"), @(1000, 1300, "narrow"))) {
     $shotWidth = [double]$size[0]
     $shotHeight = [double]$size[1]
     Invoke-WinToolTerminalShotLayout -Width $shotWidth -Height $shotHeight
@@ -668,7 +669,7 @@ if ($null -ne $themeLine -and -not [System.Windows.Documents.Typography]::GetSta
     throw "Theme previews should draw font ligatures."
 }
 # Sizes from the 14 px standard: chips and buttons 32, search 34, engine rows about 36.
-Invoke-WinToolTerminalShotLayout -Width 1280 -Height 760
+Invoke-WinToolTerminalShotLayout -Width 1280 -Height 800
 foreach ($chipName in @("TerminalFilterAll", "TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd", "TerminalSetup", "TerminalRefresh")) {
     $chipControl = $window.FindName($chipName)
     if ([Math]::Abs($chipControl.ActualHeight - 32) -gt 0.5) { throw ($chipName + " should be 32 px tall, not " + $chipControl.ActualHeight) }
@@ -697,15 +698,15 @@ foreach ($terminalBox in $terminalBoxes) {
     $boxPart = $terminalBox.Template.FindName("Box", $terminalBox)
     if ($null -eq $boxPart -or [Math]::Abs($boxPart.ActualWidth - 20) -gt 0.5) { throw "Terminal checkboxes should be the 20 px rounded box." }
 }
-# The action bar stays fully in view at 1280 x 760; a short body scrolls instead of clipping cards.
+# The action bar stays fully in view at 1280 x 800; a short body scrolls instead of clipping cards.
 $summaryCard = $window.FindName("TerminalSummaryCard")
 $summaryBottom = $summaryCard.TranslatePoint([System.Windows.Point]::new(0, $summaryCard.ActualHeight), $rootVisual).Y
-if ($summaryBottom -gt 760) { throw ("The Terminal action bar should stay in view at 1280 x 760: bottom at " + $summaryBottom) }
+if ($summaryBottom -gt 800) { throw ("The Terminal action bar should stay in view at 1280 x 800: bottom at " + $summaryBottom) }
 $bodyScroll = $window.FindName("TerminalBodyScroll")
 $advancedHost = $window.FindName("TerminalAdvancedHost")
 $bodyNeed = Get-WinToolTerminalBodyMinHeight -Width $bodyScroll.ActualWidth
 if ($advancedHost.ActualHeight + 0.5 -lt $bodyNeed) { throw ("The Advanced body should never be squeezed below " + $bodyNeed + " px.") }
-Write-Output ("Terminal body at 1280 x 760: viewport " + [Math]::Round($bodyScroll.ViewportHeight) + " px, cards need " + $bodyNeed + " px, scrolls " + [Math]::Max(0, [Math]::Round($bodyScroll.ExtentHeight - $bodyScroll.ViewportHeight)) + " px.")
+Write-Output ("Terminal body at 1280 x 800: viewport " + [Math]::Round($bodyScroll.ViewportHeight) + " px, cards need " + $bodyNeed + " px, scrolls " + [Math]::Max(0, [Math]::Round($bodyScroll.ExtentHeight - $bodyScroll.ViewportHeight)) + " px.")
 Invoke-WinToolTerminalShotLayout -Width 1000 -Height 1300
 $engineScroll = $null
 foreach ($node in @(Get-WinToolVisualChild -Root $window.FindName("TerminalPromptList"))) { if ($node -is [System.Windows.Controls.ScrollViewer]) { $engineScroll = $node; break } }
@@ -737,6 +738,7 @@ Update-WinToolPromptSelection
 
 function Save-WinToolTerminalShot {
     param([string]$Name, [double]$Width, [double]$Height)
+    Complete-WinToolMotion
     Invoke-WinToolTerminalShotLayout -Width $Width -Height $Height
     Show-WinToolTerminalSelection
     $rootVisual.UpdateLayout()
@@ -795,14 +797,14 @@ function Get-WinToolTerminalBound {
 }
 function Assert-WinToolTerminalBound {
     param($Before, [string]$Label)
-    Invoke-WinToolTerminalShotLayout -Width 1280 -Height 760
+    Invoke-WinToolTerminalShotLayout -Width 1280 -Height 800
     $after = Get-WinToolTerminalBound
     foreach ($key in $Before.Keys) {
         if ($after[$key] -ne $Before[$key]) { throw ($Label + " moved or resized " + $key + ": " + $Before[$key] + " -> " + $after[$key]) }
     }
 }
 Select-WinToolTerminalPrompt -PromptId "oh-my-posh"
-Invoke-WinToolTerminalShotLayout -Width 1280 -Height 760
+Invoke-WinToolTerminalShotLayout -Width 1280 -Height 800
 $terminalBounds = Get-WinToolTerminalBound
 $clickEvent = New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)
 foreach ($pass in @(1, 2)) {
@@ -829,9 +831,9 @@ $script:WinToolTerminalChoice.prompt = "oh-my-posh"
 $script:WinToolTerminalChoice.promptStyle = "jandedobbeleer"
 Select-WinToolTerminalPrompt -PromptId "oh-my-posh"
 foreach ($extraBox in @($script:WinToolTerminalExtraBox)) { $extraBox.IsChecked = $true; $extraBox.RaiseEvent($clickEvent) }
-Save-WinToolTerminalShot -Name "terminal-extras-all-on" -Width 1280 -Height 760
+Save-WinToolTerminalShot -Name "terminal-extras-all-on" -Width 1280 -Height 800
 foreach ($extraBox in @($script:WinToolTerminalExtraBox)) { $extraBox.IsChecked = ([string]$extraBox.Tag -in @("terminal-icons", "psreadline")); $extraBox.RaiseEvent($clickEvent) }
-Save-WinToolTerminalShot -Name "terminal-extras-default" -Width 1280 -Height 760
+Save-WinToolTerminalShot -Name "terminal-extras-default" -Width 1280 -Height 800
 
 # Prompt styles: Powerlevel10k shows its styles in the theme list, and the
 # preview draws the chosen style's colored blocks. Long lists scroll inside
@@ -855,7 +857,7 @@ if ([string]$script:WinToolTerminalChoice.promptStyle -ne [string]$styleList.Ite
     throw "Picking another style should change the Terminal choice."
 }
 $styleList.SelectedIndex = 2
-Save-WinToolTerminalShot -Name "terminal-p10k" -Width 1280 -Height 760
+Save-WinToolTerminalShot -Name "terminal-p10k" -Width 1280 -Height 800
 $script:WinToolTerminalChoice.prompt = "starship"
 $script:WinToolTerminalChoice.promptStyle = "pastel-powerline"
 Update-WinToolPromptStyleList
@@ -863,13 +865,13 @@ Update-WinToolTerminalSummary
 Update-WinToolTerminalPreview
 $blocks = @($window.FindName("TerminalFontSample").Inlines | Where-Object { $_ -is [System.Windows.Documents.Run] -and $null -ne $_.Background })
 if ($blocks.Count -lt 2) { throw "The Starship Pastel powerline preview should draw colored blocks." }
-Save-WinToolTerminalShot -Name "terminal-starship" -Width 1280 -Height 760
+Save-WinToolTerminalShot -Name "terminal-starship" -Width 1280 -Height 800
 $script:WinToolTerminalChoice.prompt = "oh-my-zsh"
 $script:WinToolTerminalChoice.promptStyle = "agnoster"
 Update-WinToolPromptStyleList
 Update-WinToolTerminalSummary
 Update-WinToolTerminalPreview
-Save-WinToolTerminalShot -Name "terminal-omz" -Width 1280 -Height 760
+Save-WinToolTerminalShot -Name "terminal-omz" -Width 1280 -Height 800
 if ($styleList.Items.Count -lt 100 -or $styleList.ActualHeight -gt ($listHeight + 120)) {
     throw ("The Oh My Zsh list should scroll inside its card: " + $styleList.Items.Count + " themes, height " + $styleList.ActualHeight + " vs " + $listHeight)
 }
@@ -882,6 +884,7 @@ Update-WinToolTerminalSummary
 # Install and Tweaks tabs at 1280x760 (the approved mockups) and narrower.
 function Save-WinToolViewShot {
     param([string]$Name, [double]$Width, [double]$Height)
+    Complete-WinToolMotion
     $rootVisual.Measure([System.Windows.Size]::new($Width, $Height))
     $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
     $rootVisual.UpdateLayout()
@@ -923,8 +926,8 @@ if ($chrome.OpenButton.Visibility -ne "Visible" -or $chrome.UninstallButton.Visi
 if ($brave.UpdateButton.Visibility -ne "Visible" -or $brave.OpenButton.Visibility -ne "Collapsed" -or -not $brave.UpdateAvailable -or $brave.UninstallButton.Visibility -ne "Visible") {
     throw "An app with an update should show Update, Uninstall, and the amber border."
 }
-if ($firefox.InstallButton.Visibility -ne "Visible" -or $firefox.UninstallButton.Visibility -ne "Collapsed") {
-    throw "An app that is not installed should show only Install."
+if ($firefox.InstallButton.Visibility -ne "Visible" -or $firefox.UninstallButton.Visibility -ne "Hidden") {
+    throw "An app that is not installed should show only Install, with the second slot kept."
 }
 if ([string]$window.FindName("AppUpgradeAll").Content -ne "Update all (2)") {
     throw ("Update all should count the updates, got " + [string]$window.FindName("AppUpgradeAll").Content)
@@ -948,11 +951,11 @@ $window.FindName("NavInstall").IsChecked = $true
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
 $rootVisual = $window.Content
-Save-WinToolViewShot -Name "install-noselection" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "install-noselection" -Width 1280 -Height 800
 $before = $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
 $firefox.Checkbox.IsChecked = $true
 $chrome.Checkbox.IsChecked = $true
-Save-WinToolViewShot -Name "install-selected" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "install-selected" -Width 1280 -Height 800
 $after = $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
 if ([math]::Abs($after.Y - $before.Y) -gt 0.5) { throw ("Ticking an app moved the cards from " + $before.Y + " to " + $after.Y) }
 if ([string]$window.FindName("AppCount").Text -ne "2 selected") { throw "The selection count should read 2 selected." }
@@ -973,20 +976,20 @@ Write-Output ("Selection actions on the title row; first card stays at y=" + [in
 Sync-WinToolAppCheck -Id @() -OnlyThese
 # A filter chip, the log, and the installed-apps status never change the card size or the columns.
 $installBounds = { "{0:0.0},{1:0.0} {2:0.0}x{3:0.0} cols {4}" -f $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual).X, $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual).Y, $firefox.Panel.ActualWidth, $firefox.Panel.ActualHeight, $script:WinToolState.CategoryRows[0].Grid.Columns }
-Save-WinToolViewShot -Name "install-noselection" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "install-noselection" -Width 1280 -Height 800
 $installBefore = & $installBounds
 $browserChip = @($window.FindName("AppFilters").Children | Where-Object { [string]$_.Tag -like "category:*" })[0]
 $browserChip.IsChecked = $true
-Save-WinToolViewShot -Name "install-filtered" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "install-filtered" -Width 1280 -Height 800
 Update-WinToolInstallLayout -Width (Get-WinToolInstallWidth)
-Save-WinToolViewShot -Name "install-filtered" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "install-filtered" -Width 1280 -Height 800
 $installAfter = & $installBounds
 if ($installAfter -ne $installBefore) { throw ("Clicking the " + $browserChip.Content + " chip moved or resized the cards: " + $installBefore + " -> " + $installAfter) }
 @($window.FindName("AppFilters").Children)[0].IsChecked = $true
 Set-WinToolAppStatus -Text "Checking installed apps..."
 $script:WinToolState.LogExpanded = $true
 Sync-WinToolLogPanel
-Save-WinToolViewShot -Name "install-log-open" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "install-log-open" -Width 1280 -Height 800
 $installAfter = & $installBounds
 if ($installAfter -ne $installBefore) { throw ("The status line or the log moved the cards: " + $installBefore + " -> " + $installAfter) }
 $script:WinToolState.LogExpanded = $false
@@ -999,7 +1002,7 @@ Sync-WinToolLogPanel
 # Sizes in WPF units (DIPs): 1024x576 is what a 1280x720 screen at 125% or a
 # 1536x864 screen at 150% gives; 1264 is a maximized 1280 window.
 $installExpect = @{ "install-1024" = 3; "install-mockup" = 5; "install-1264" = 5; "install-1920" = 8 }
-foreach ($size in @(@(1024, 576, "install-1024"), @(1264, 704, "install-1264"), @(1920, 1080, "install-1920"), @(1280, 760, "install-mockup"))) {
+foreach ($size in @(@(1024, 576, "install-1024"), @(1264, 704, "install-1264"), @(1920, 1080, "install-1920"), @(1280, 800, "install-mockup"))) {
     Update-WinToolInstallLayout -Width ([double]$size[0] - 248 - 40)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
     # After layout the real list width decides the columns, like SizeChanged does.
@@ -1054,7 +1057,7 @@ $script:WinToolTweakRunnerOverride = $null
 $script:WinToolTweakProbeOverride = $null
 Update-WinToolTweakState
 $window.FindName("NavTweaks").IsChecked = $true
-foreach ($size in @(@(1024, 576, "tweaks-1024"), @(1920, 1080, "tweaks-1920"), @(1280, 760, "tweaks-mockup"))) {
+foreach ($size in @(@(1024, 576, "tweaks-1024"), @(1920, 1080, "tweaks-1920"), @(1280, 800, "tweaks-mockup"))) {
     Update-WinToolTweakLayout -Width ([double]$size[0] - 248 - 40)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
     Update-WinToolTweakLayout -Width (Get-WinToolTweakWidth)
@@ -1101,6 +1104,7 @@ for ($i = 0; $i -lt $sampleWave.Count; $i++) {
     Add-WinToolHomeSample -Sample ([pscustomobject]@{ MemoryUsed = [double]32GB * $sampleWave[$i] / 100; MemoryTotal = [double]32GB; DiskFree = [double]148GB; DiskTotal = [double]510GB; DiskBusy = [double](($sampleWave[$i] * 7) % 60); Cpu = [double](($sampleWave[$i] * 3) % 45 + 5) })
 }
 function Get-WinToolHomeBound {
+    Complete-WinToolMotion
     $hs = $script:WinToolState.Home
     $items = New-Object System.Collections.Generic.List[object]
     foreach ($name in @("HomeHero", "HomeRing", "HomeInfo", "HomeHeadline", "HomeLead", "HomeMeta", "HomeCheckCount", "HomeFixAll", "HomeChecks", "HomeMinis", "HomeAgain", "HomeRunText")) {
@@ -1220,6 +1224,7 @@ if ($null -ne $window.FindName("ThemePicker") -or $null -ne $window.FindName("Ac
     throw "Appearance controls should be removed from MainWindow.xaml."
 }
 $window.FindName("NavConfig").IsChecked = $true
+$window.FindName("ConfigTabProfile").IsChecked = $true
 $script:WinToolTerminalChoice.prompt = "powerlevel10k"
 Update-WinToolProfileSummary
 if (-not ([string]$window.FindName("ProfileSummary").Text).Contains("Prompt: Powerlevel10k.")) {
@@ -1230,12 +1235,12 @@ Update-WinToolProfileSummary
 if ($window.FindName("DnsAdapter").Height -ne 34 -or $window.FindName("DnsProvider").Height -ne 34) {
     throw "Config DNS ComboBoxes should be 34 px tall."
 }
-Save-WinToolViewShot -Name "config-1280" -Width 1280 -Height 760
-$configFirstCard = $window.FindName("ConfigBody").Children[2]
+Save-WinToolViewShot -Name "config-1280" -Width 1280 -Height 800
+$configFirstCard = $window.FindName("ConfigProfileCard")
 $cardBefore = $configFirstCard.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
 $script:WinToolState.LogExpanded = $true
 Sync-WinToolLogPanel
-Save-WinToolViewShot -Name "config-log-open" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "config-log-open" -Width 1280 -Height 800
 $cardAfter = $configFirstCard.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
 if ([Math]::Abs($cardAfter.Y - $cardBefore.Y) -gt 0.5 -or $window.FindName("ConfigBody").Margin.Bottom -lt 180) {
     throw "Opening LogPanel on Config should keep cards in place while adding bottom scroll clearance."
@@ -1243,7 +1248,7 @@ if ([Math]::Abs($cardAfter.Y - $cardBefore.Y) -gt 0.5 -or $window.FindName("Conf
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
 $window.FindName("NavUpdates").IsChecked = $true
-Save-WinToolViewShot -Name "updates-1280" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "updates-1280" -Width 1280 -Height 800
 $modeList = $window.FindName("UpdateModeList")
 foreach ($modeRadio in @($modeList.Children)) {
     if ($modeRadio.DesiredSize.Width -gt ($modeList.ActualWidth + 1.0)) {
@@ -1251,10 +1256,10 @@ foreach ($modeRadio in @($modeList.Children)) {
     }
 }
 $window.FindName("NavFixes").IsChecked = $true
-Save-WinToolViewShot -Name "fixes-1280" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "fixes-1280" -Width 1280 -Height 800
 $window.FindName("NavFeatures").IsChecked = $true
 Set-WinToolFeatureState -State $fakeState
-Save-WinToolViewShot -Name "features-1280" -Width 1280 -Height 760
+Save-WinToolViewShot -Name "features-1280" -Width 1280 -Height 800
 $window.FindName("NavHome").IsChecked = $true
 
 if (-not (Initialize-WinToolConsoleApi)) {

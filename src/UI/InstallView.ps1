@@ -363,18 +363,30 @@ function New-WinToolAppRow {
     [System.Windows.Controls.Grid]::SetRow($description, 1)
     [void]$layout.Children.Add($description)
 
-    # The visible buttons share the full row evenly (collapsed ones take no room).
-    $buttons = New-Object System.Windows.Controls.Primitives.UniformGrid
-    $buttons.Rows = 1
-    $buttons.Margin = [System.Windows.Thickness]::new(-2, 0, -2, 0)
+    # Two fixed slots: Install, Update, or Open on the left; Uninstall on the right.
+    # An empty slot stays Hidden so the other button never grows or jumps.
+    $buttons = New-Object System.Windows.Controls.Grid
+    $buttons.Height = 32
+    $buttons.ColumnDefinitions.Add((New-WinToolColumn))
+    $buttons.ColumnDefinitions.Add((New-WinToolColumn))
+    $primarySlot = New-Object System.Windows.Controls.Grid
+    [System.Windows.Controls.Grid]::SetColumn($primarySlot, 0)
     $installButton = New-WinToolCardButton -Text "Install" -Glyph ([string][char]0xE896) -Kind "primary"
     $updateButton = New-WinToolCardButton -Text "Update" -Glyph ([string][char]0xE72C) -Kind "warn"
     $openButton = New-WinToolCardButton -Text "Open" -Kind "neutral"
     $uninstallButton = New-WinToolCardButton -Text "Uninstall" -Kind "danger"
-    foreach ($button in @($installButton, $updateButton, $openButton, $uninstallButton)) {
-        [void]$buttons.Children.Add($button)
+    foreach ($button in @($installButton, $updateButton, $openButton)) {
+        $button.Margin = [System.Windows.Thickness]::new(0)
+        $button.HorizontalAlignment = "Stretch"
+        [void]$primarySlot.Children.Add($button)
         Add-WinToolBusyControl -Control $button
     }
+    $uninstallButton.Margin = [System.Windows.Thickness]::new(6, 0, 0, 0)
+    $uninstallButton.HorizontalAlignment = "Stretch"
+    [System.Windows.Controls.Grid]::SetColumn($uninstallButton, 1)
+    [void]$buttons.Children.Add($primarySlot)
+    [void]$buttons.Children.Add($uninstallButton)
+    Add-WinToolBusyControl -Control $uninstallButton
     [System.Windows.Controls.Grid]::SetRow($buttons, 2)
     [void]$layout.Children.Add($buttons)
     $panel.Child = $layout
@@ -439,13 +451,45 @@ function New-WinToolAppRow {
         }
     }
     $panel.ContextMenu = $menu
+    $lift = New-Object System.Windows.Media.TranslateTransform
+    $panel.RenderTransform = $lift
+    Register-WinToolUiEvent -Control $panel -EventName "MouseEnter" -Name "Install: card hover" -Data $row -Action {
+        param($source, $eventData, $card)
+        $null = $eventData
+        Set-WinToolAppCardBorder -Row $card -Hover
+        $shift = $source.RenderTransform
+        if ($shift -isnot [System.Windows.Media.TranslateTransform]) { return }
+        if (Test-WinToolHomeReduceMotion) {
+            $shift.Y = -2
+            return
+        }
+        $rise = New-Object System.Windows.Media.Animation.DoubleAnimation($shift.Y, -2, [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(150)))
+        $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::YProperty, $rise)
+    }
+    Register-WinToolUiEvent -Control $panel -EventName "MouseLeave" -Name "Install: card hover end" -Data $row -Action {
+        param($source, $eventData, $card)
+        $null = $eventData
+        Set-WinToolAppCardBorder -Row $card
+        $shift = $source.RenderTransform
+        if ($shift -isnot [System.Windows.Media.TranslateTransform]) { return }
+        if (Test-WinToolHomeReduceMotion) {
+            $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::YProperty, $null)
+            $shift.Y = 0
+            return
+        }
+        $drop = New-Object System.Windows.Media.Animation.DoubleAnimation($shift.Y, 0, [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(150)))
+        $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::YProperty, $drop)
+    }
     Sync-WinToolAppBadge -Row $row
     return $row
 }
 
-function Sync-WinToolAppBadge {
-    param($Row)
-    # Border tint and buttons follow the detected state.
+function Set-WinToolAppCardBorder {
+    param($Row, [switch]$Hover)
+    if ($Hover -or $Row.Panel.IsMouseOver) {
+        $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushAccent")
+        return
+    }
     $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
     if ($Row.UpdateAvailable) {
         $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushWarnLine")
@@ -453,13 +497,21 @@ function Sync-WinToolAppBadge {
     elseif ($Row.Installed) {
         $Row.Panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushOkLine")
     }
+}
+
+function Sync-WinToolAppBadge {
+    param($Row)
+    # Border tint and buttons follow the detected state. The right slot stays
+    # Hidden (not Collapsed) when there is nothing to uninstall, so Install
+    # keeps the same width as Update and Open.
+    Set-WinToolAppCardBorder -Row $Row
     if ($Row.Pending) {
         return
     }
     $Row.InstallButton.Visibility = "Collapsed"
     $Row.UpdateButton.Visibility = "Collapsed"
     $Row.OpenButton.Visibility = "Collapsed"
-    $Row.UninstallButton.Visibility = "Collapsed"
+    $Row.UninstallButton.Visibility = "Hidden"
     if (-not $Row.Installed) {
         $Row.InstallButton.Visibility = "Visible"
         return

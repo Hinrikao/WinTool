@@ -1,13 +1,74 @@
 # Copyright (c) 2026 Henrique
 # SPDX-License-Identifier: MIT
 
+function Show-WinToolConfigPanel {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+    foreach ($panel in @("Profile", "Winget", "Tweaks", "Dns", "Power")) {
+        $element = Get-WinToolUi -Name ("ConfigPanel" + $panel)
+        if ($null -eq $element) { continue }
+        if ($panel -eq $Name) { $element.Visibility = "Visible" }
+        else { $element.Visibility = "Collapsed" }
+    }
+}
+
 function Initialize-WinToolConfigView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "SaveProfile") -EventName "Click" -Name "Config: save profile" -Action { Invoke-WinToolSaveProfile }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "LoadProfile") -EventName "Click" -Name "Config: load profile" -Action { Invoke-WinToolLoadProfile }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ExportWinget") -EventName "Click" -Name "Config: export winget list" -Action { Invoke-WinToolExportWinget }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ImportWinget") -EventName "Click" -Name "Config: import winget list" -Action { Invoke-WinToolImportWinget }
+    foreach ($tab in @(
+            [pscustomobject]@{ Name = "ConfigTabProfile"; Panel = "Profile" },
+            [pscustomobject]@{ Name = "ConfigTabWinget"; Panel = "Winget" },
+            [pscustomobject]@{ Name = "ConfigTabTweaks"; Panel = "Tweaks" },
+            [pscustomobject]@{ Name = "ConfigTabDns"; Panel = "Dns" },
+            [pscustomobject]@{ Name = "ConfigTabPower"; Panel = "Power" }
+        )) {
+        Register-WinToolUiEvent -Control (Get-WinToolUi -Name $tab.Name) -EventName "Checked" -Name ("Config: " + $tab.Panel) -Data $tab.Panel -Action {
+            param($source, $eventData, $panelName)
+            $null = $source, $eventData
+            Show-WinToolConfigPanel -Name $panelName
+        }
+    }
+    Show-WinToolConfigPanel -Name "Profile"
     Initialize-WinToolSystemView
     Update-WinToolProfileSummary
+}
+
+function Add-WinToolProfileHeading {
+    param($Parent, [string]$Text)
+    $heading = New-WinToolText -Text $Text -Weight "SemiBold" -Margin ([System.Windows.Thickness]::new(0, 8, 0, 4))
+    [void]$Parent.Children.Add($heading)
+}
+
+function Add-WinToolProfileItem {
+    param($Parent, [string]$Text, [switch]$Muted)
+    $row = New-Object System.Windows.Controls.Border
+    $row.Height = 36
+    $row.BorderThickness = [System.Windows.Thickness]::new(0, 1, 0, 0)
+    $row.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
+    $grid = New-Object System.Windows.Controls.Grid
+    $grid.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+    $grid.ColumnDefinitions.Add((New-WinToolColumn))
+    if (-not $Muted) {
+        $dot = New-Object System.Windows.Shapes.Ellipse
+        $dot.Width = 8
+        $dot.Height = 8
+        $dot.Margin = [System.Windows.Thickness]::new(0, 0, 8, 0)
+        $dot.VerticalAlignment = "Center"
+        $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushOk")
+        [void]$grid.Children.Add($dot)
+    }
+    $brush = "BrushInk"
+    if ($Muted) { $brush = "BrushMuted" }
+    $label = New-WinToolText -Text $Text -Brush $brush
+    $label.VerticalAlignment = "Center"
+    $label.TextTrimming = "CharacterEllipsis"
+    [System.Windows.Controls.Grid]::SetColumn($label, 1)
+    [void]$grid.Children.Add($label)
+    $row.Child = $grid
+    [void]$Parent.Children.Add($row)
 }
 
 function Update-WinToolProfileSummary {
@@ -27,6 +88,49 @@ function Update-WinToolProfileSummary {
     }
     $text = "{0} apps selected, {1} tweaks on. Prompt: {2}. {3}" -f $apps.Count, $tweaks.Count, $prompt, $replay
     (Get-WinToolUi -Name "ProfileSummary").Text = $text
+    $preview = Get-WinToolUi -Name "ProfilePreview"
+    if ($null -eq $preview) { return }
+    $preview.Children.Clear()
+    $shown = 6
+    Add-WinToolProfileHeading -Parent $preview -Text ("Apps | {0}" -f $apps.Count)
+    $appShown = 0
+    foreach ($app in @($apps)) {
+        if ($appShown -ge $shown) { break }
+        Add-WinToolProfileItem -Parent $preview -Text ([string]$app.Name)
+        $appShown++
+    }
+    if ($apps.Count -gt $shown) {
+        Add-WinToolProfileItem -Parent $preview -Text ("+ {0} more" -f ($apps.Count - $shown)) -Muted
+    }
+    elseif ($apps.Count -eq 0) {
+        Add-WinToolProfileItem -Parent $preview -Text "No apps selected" -Muted
+    }
+    Add-WinToolProfileHeading -Parent $preview -Text ("Tweaks | {0}" -f $tweaks.Count)
+    $tweakShown = 0
+    foreach ($tweak in @($tweaks)) {
+        if ($tweakShown -ge $shown) { break }
+        Add-WinToolProfileItem -Parent $preview -Text ([string]$tweak.name)
+        $tweakShown++
+    }
+    if ($tweaks.Count -gt $shown) {
+        Add-WinToolProfileItem -Parent $preview -Text ("+ {0} more" -f ($tweaks.Count - $shown)) -Muted
+    }
+    elseif ($tweaks.Count -eq 0) {
+        Add-WinToolProfileItem -Parent $preview -Text "No tweaks on" -Muted
+    }
+    $theme = [string](Get-WinToolNote -Object $terminal -Name "promptStyle" -Default "")
+    $fontId = [string](Get-WinToolNote -Object $terminal -Name "fontId" -Default "")
+    $schemeId = [string](Get-WinToolNote -Object $terminal -Name "schemeId" -Default "")
+    Add-WinToolProfileHeading -Parent $preview -Text "Terminal"
+    if ($terminal.enabled) {
+        Add-WinToolProfileItem -Parent $preview -Text $prompt
+        if (-not [string]::IsNullOrWhiteSpace($theme)) { Add-WinToolProfileItem -Parent $preview -Text ("Theme: " + $theme) }
+        if (-not [string]::IsNullOrWhiteSpace($fontId)) { Add-WinToolProfileItem -Parent $preview -Text ("Font: " + $fontId) }
+        if (-not [string]::IsNullOrWhiteSpace($schemeId)) { Add-WinToolProfileItem -Parent $preview -Text ("Scheme: " + $schemeId) }
+    }
+    else {
+        Add-WinToolProfileItem -Parent $preview -Text "Not included in saved profiles" -Muted
+    }
 }
 
 function Get-WinToolProfileFromUi {

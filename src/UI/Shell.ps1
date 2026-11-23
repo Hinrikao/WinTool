@@ -28,6 +28,165 @@ function Add-WinToolBusyControl {
     $script:WinToolState.BusyControls.Add($Control)
 }
 
+function Start-WinToolSlide {
+    # Opacity and a horizontal render transform only. Nothing in the layout moves.
+    param(
+        $Element,
+        [double]$FromX,
+        [double]$ToX,
+        [int]$Milliseconds
+    )
+    if ($null -eq $Element) { return }
+    $shift = $Element.RenderTransform
+    if ($shift -isnot [System.Windows.Media.TranslateTransform]) {
+        $shift = New-Object System.Windows.Media.TranslateTransform
+        $Element.RenderTransform = $shift
+    }
+    $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $null)
+    $Element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
+    if ((Test-WinToolHomeReduceMotion)) {
+        $shift.X = $ToX
+        $Element.Opacity = 1
+        return
+    }
+    $shift.X = $FromX
+    $Element.Opacity = 0
+    $duration = [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds($Milliseconds))
+    $slide = New-Object System.Windows.Media.Animation.DoubleAnimation($FromX, $ToX, $duration)
+    $fade = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 1, $duration)
+    $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $slide)
+    $Element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $fade)
+}
+
+function Update-WinToolNavPill {
+    param([bool]$Animate = $true)
+    $list = Get-WinToolUi -Name "NavList"
+    $shift = Get-WinToolUi -Name "NavPillShift"
+    if ($null -eq $list -or $null -eq $shift) { return }
+    $radio = $null
+    foreach ($view in @(Get-WinToolViewName)) {
+        $candidate = Get-WinToolUi -Name ("Nav" + $view)
+        if ($null -ne $candidate -and $candidate.IsChecked -eq $true) {
+            $radio = $candidate
+            break
+        }
+    }
+    if ($null -eq $radio -or $radio.ActualHeight -le 0) { return }
+    $point = $radio.TranslatePoint([System.Windows.Point]::new(0, 0), $list)
+    $target = $point.Y
+    if (-not $Animate -or (Test-WinToolHomeReduceMotion)) {
+        $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::YProperty, $null)
+        $shift.Y = $target
+        return
+    }
+    $slide = New-Object System.Windows.Media.Animation.DoubleAnimation($shift.Y, $target, [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(180)))
+    $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::YProperty, $slide)
+}
+
+function Sync-WinToolProgressShimmer {
+    param([bool]$Busy)
+    $shim = Get-WinToolUi -Name "ProgressShimmer"
+    $shift = Get-WinToolUi -Name "ProgressShimmerShift"
+    if ($null -eq $shim -or $null -eq $shift) { return }
+    $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $null)
+    $shim.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
+    if (-not $Busy -or (Test-WinToolHomeReduceMotion)) {
+        $shim.Opacity = 0
+        $shift.X = -80
+        return
+    }
+    $shim.Opacity = 0.9
+    $slide = New-Object System.Windows.Media.Animation.DoubleAnimation(-80, 720, [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(1400)))
+    $slide.RepeatBehavior = [System.Windows.Media.Animation.RepeatBehavior]::Forever
+    $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $slide)
+}
+
+function Complete-WinToolMotion {
+    # Leaves every storyboard on its resting frame so a screenshot taken on
+    # the same tick shows the settled screen, then real motion can start again.
+    foreach ($view in @(Get-WinToolViewName)) {
+        $element = Get-WinToolUi -Name ("View" + $view)
+        if ($null -eq $element) { continue }
+        $element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
+        if ($element.Visibility -eq "Visible") { $element.Opacity = 1 }
+        $shift = $element.RenderTransform
+        if ($shift -is [System.Windows.Media.TranslateTransform]) {
+            $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $null)
+            $shift.X = 0
+        }
+    }
+    Update-WinToolNavPill -Animate $false
+    $root = $script:WinToolWindow
+    if ($null -eq $root) { return }
+    $queue = New-Object System.Collections.Generic.Queue[object]
+    if ($root.Content -is [System.Windows.Media.Visual]) { $queue.Enqueue($root.Content) }
+    while ($queue.Count -gt 0) {
+        $node = $queue.Dequeue()
+        if ($node -is [System.Windows.UIElement]) {
+            $motion = $node.RenderTransform
+            if ($motion -is [System.Windows.Media.TranslateTransform] -and [string]$node.Name -ne "NavPill") {
+                $motion.BeginAnimation([System.Windows.Media.TranslateTransform]::YProperty, $null)
+                $motion.Y = 0
+            }
+        }
+        if ($node -is [System.Windows.Controls.CheckBox]) {
+            $template = $node.Template
+            if ($null -ne $template) {
+                $fill = $template.FindName("Fill", $node)
+                $mark = $template.FindName("Mark", $node)
+                $dash = $template.FindName("Dash", $node)
+                $knobShift = $template.FindName("KnobShift", $node)
+                $knob = $template.FindName("Knob", $node)
+                if ($null -ne $fill) {
+                    $fill.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
+                    $fill.Opacity = 0
+                }
+                if ($null -ne $mark) {
+                    $mark.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
+                    $mark.Opacity = 0
+                }
+                if ($null -ne $dash) {
+                    $dash.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
+                    $dash.Opacity = 0
+                }
+                if ($node.IsChecked -eq $true) {
+                    if ($null -ne $fill) { $fill.Opacity = 1 }
+                    if ($null -ne $mark) { $mark.Opacity = 1 }
+                }
+                elseif ($null -eq $node.IsChecked) {
+                    if ($null -ne $fill) { $fill.Opacity = 1 }
+                    if ($null -ne $dash) { $dash.Opacity = 1 }
+                }
+                if ($null -ne $knobShift) {
+                    $travel = 20.0
+                    if ($null -ne $knob -and $knob.Width -lt 13) { $travel = 15.0 }
+                    $knobShift.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $null)
+                    if ($node.IsChecked -eq $true) { $knobShift.X = $travel } else { $knobShift.X = 0 }
+                }
+            }
+        }
+        if ($node -isnot [System.Windows.Media.Visual]) { continue }
+        $count = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($node)
+        for ($index = 0; $index -lt $count; $index++) {
+            $queue.Enqueue([System.Windows.Media.VisualTreeHelper]::GetChild($node, $index))
+        }
+    }
+}
+
+function Stop-WinToolMotion {
+    Complete-WinToolMotion
+    Sync-WinToolProgressShimmer -Busy $false
+    if ($null -eq $script:WinToolState -or $null -eq $script:WinToolState.Home) { return }
+    $rows = $script:WinToolState.Home.Rows
+    if ($null -eq $rows) { return }
+    foreach ($row in @($rows.Values)) {
+        try {
+            $row.Spinner.RenderTransform.BeginAnimation([System.Windows.Media.RotateTransform]::AngleProperty, $null)
+        }
+        catch { $null = $_.Exception.Message }
+    }
+}
+
 function Switch-WinToolView {
     param(
         [Parameter(Mandatory = $true)][string]$Name
@@ -35,12 +194,18 @@ function Switch-WinToolView {
     foreach ($view in @(Get-WinToolViewName)) {
         $element = Get-WinToolUi -Name ("View" + $view)
         if ($view -eq $Name) {
+            $show = ($element.Visibility -ne "Visible")
             $element.Visibility = "Visible"
+            if ($show) {
+                Start-WinToolSlide -Element $element -FromX 8 -ToX 0 -Milliseconds 150
+            }
         }
         else {
+            $element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
             $element.Visibility = "Collapsed"
         }
     }
+    Update-WinToolNavPill -Animate $true
     if ($Name -eq "Config") {
         if (-not $script:WinToolState.TweakStateRead) {
             Update-WinToolTweakState
@@ -116,7 +281,7 @@ function Sync-WinToolLogPanel {
         (Get-WinToolUi -Name $listName).Margin = [System.Windows.Thickness]::new(0, 0, 0, $listBottom)
     }
     foreach ($pageName in @("UpdatesBody", "FixesBody", "FeaturesBody", "ConfigBody")) {
-        (Get-WinToolUi -Name $pageName).Margin = [System.Windows.Thickness]::new(24, 22, 24, $pageBottom)
+        (Get-WinToolUi -Name $pageName).Margin = [System.Windows.Thickness]::new(20, 15, 20, $pageBottom)
     }
     if ($busy) {
         $bar.Visibility = "Visible"
@@ -126,6 +291,7 @@ function Sync-WinToolLogPanel {
         $bar.Visibility = "Hidden"
         $bar.IsIndeterminate = $false
     }
+    Sync-WinToolProgressShimmer -Busy $busy
 }
 
 function Switch-WinToolLogPanel {
@@ -546,6 +712,10 @@ function Initialize-WinToolShellEvent {
             Switch-WinToolView -Name $viewName
         }
     }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "NavList") -EventName "SizeChanged" -Name "Place the sidebar pill" -Action {
+        Update-WinToolNavPill -Animate $false
+    }
+    Update-WinToolNavPill -Animate $false
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ClearLogButton") -EventName "Click" -Name "Clear log" -Action {
         (Get-WinToolUi -Name "LogBox").Clear()
     }
@@ -697,6 +867,7 @@ function Stop-WinToolBackgroundWork {
     # Stops the log timer, a running plan, and every background runspace, so
     # nothing keeps powershell.exe alive after the window is gone.
     if ($null -eq $script:WinToolState) { return }
+    try { Stop-WinToolMotion } catch { $null = $_.Exception.Message }
     if ($null -ne $script:WinToolState.Pump) {
         try { $script:WinToolState.Pump.Stop() } catch { $null = $_.Exception.Message }
         $script:WinToolState.Pump = $null

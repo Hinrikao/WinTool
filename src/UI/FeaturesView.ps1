@@ -7,34 +7,53 @@ function Initialize-WinToolFeatureView {
     $rows = New-Object System.Collections.Generic.List[object]
     foreach ($feature in @(Get-WinToolNote -Object (Get-WinToolFeatureCatalog) -Name "features" -Default @())) {
         $panel = New-Object System.Windows.Controls.Grid
-        $panel.Margin = [System.Windows.Thickness]::new(0, 0, 0, 12)
+        $panel.Height = 72
+        $panel.Margin = [System.Windows.Thickness]::new(10, 0, 10, 0)
         $panel.ColumnDefinitions.Add((New-WinToolColumn -Auto))
         $panel.ColumnDefinitions.Add((New-WinToolColumn))
         $panel.ColumnDefinitions.Add((New-WinToolColumn -Auto))
         $checkbox = New-Object System.Windows.Controls.CheckBox
-        $checkbox.VerticalAlignment = "Top"
-        $checkbox.Margin = [System.Windows.Thickness]::new(0, 2, 10, 0)
+        $checkbox.VerticalAlignment = "Center"
+        $checkbox.Margin = [System.Windows.Thickness]::new(0, 0, 12, 0)
         $checkbox.IsEnabled = $false
         [System.Windows.Controls.Grid]::SetColumn($checkbox, 0)
         [void]$panel.Children.Add($checkbox)
         $text = New-Object System.Windows.Controls.StackPanel
-        [void]$text.Children.Add((New-WinToolText -Text ([string]$feature.name) -Weight "SemiBold"))
-        [void]$text.Children.Add((New-WinToolText -Text ([string]$feature.description) -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 16, 0))))
+        $text.VerticalAlignment = "Center"
+        $name = New-WinToolText -Text ([string]$feature.name) -Weight "SemiBold"
+        $name.TextTrimming = "CharacterEllipsis"
+        [void]$text.Children.Add($name)
+        $about = New-WinToolText -Text ([string]$feature.description) -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 2, 12, 0))
+        $about.TextTrimming = "CharacterEllipsis"
+        [void]$text.Children.Add($about)
         [System.Windows.Controls.Grid]::SetColumn($text, 1)
         [void]$panel.Children.Add($text)
+        $pill = New-Object System.Windows.Controls.Border
+        $pill.Width = 176
+        $pill.Height = 28
+        $pill.CornerRadius = [System.Windows.CornerRadius]::new(14)
+        $pill.VerticalAlignment = "Center"
+        $pill.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushNavHover")
         $state = New-WinToolText -Text "Checking..." -Brush "BrushMuted"
-        $state.VerticalAlignment = "Top"
-        # A fixed width: "Checking..." and the final state take the same room,
-        # so the descriptions never re-wrap and the rows never move.
-        $state.Width = 140
-        $state.TextAlignment = "Right"
-        [System.Windows.Controls.Grid]::SetColumn($state, 2)
-        [void]$panel.Children.Add($state)
-        [void]$hostPanel.Children.Add($panel)
+        $state.Width = 160
+        $state.TextAlignment = "Center"
+        $state.HorizontalAlignment = "Center"
+        $state.VerticalAlignment = "Center"
+        $state.TextTrimming = "CharacterEllipsis"
+        $pill.Child = $state
+        [System.Windows.Controls.Grid]::SetColumn($pill, 2)
+        [void]$panel.Children.Add($pill)
+        $rowBorder = New-Object System.Windows.Controls.Border
+        $rowBorder.Height = 72
+        $rowBorder.BorderThickness = [System.Windows.Thickness]::new(0, 0, 0, 1)
+        $rowBorder.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
+        $rowBorder.Child = $panel
+        [void]$hostPanel.Children.Add($rowBorder)
         $rows.Add([pscustomobject]@{
             Feature = $feature
             Checkbox = $checkbox
             StateText = $state
+            Pill = $pill
             Status = "Unknown"
         })
     }
@@ -119,6 +138,15 @@ function Set-WinToolFeatureState {
         }
         $row.Checkbox.IsEnabled = ($status -ne "Unavailable")
         $row.Checkbox.IsChecked = ($status -eq "On")
+        if ($null -ne $row.Pill) {
+            $tone = switch ($status) {
+                "On" { @("BrushOkSoft", "BrushOk") }
+                "Partial" { @("BrushWarnSoft", "BrushWarn") }
+                default { @("BrushNavHover", "BrushMuted") }
+            }
+            $row.Pill.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, $tone[0])
+            $row.StateText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $tone[1])
+        }
     }
     (Get-WinToolUi -Name "FeatureStatus").Text = ("{0} of these features are on. Tick or untick, then apply." -f $on)
 }
