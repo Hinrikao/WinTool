@@ -5,43 +5,43 @@
       "id": "1_shell",
       "file": "1_shell.omp.json",
       "name": "1 shell",
-      "preview": [{"text": "henrique ", "fg": "#FFBEBC"}, {"text": "23:14 ", "fg": "#BC93FF"}, {"text": "main ", "fg": "#EE79D1"}]
+      "preview": [{"text": "user ", "fg": "#FFBEBC"}, {"text": "23:14 ", "fg": "#BC93FF"}, {"text": "main ", "fg": "#EE79D1"}]
     },
     {
       "id": "M365Princess",
       "file": "M365Princess.omp.json",
       "name": "M365Princess",
-      "preview": [{"text": "\ue0b6", "fg": "#9A348E"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#9A348E"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#DA627D"}, {"text": "\ue0b0", "fg": "#DA627D", "bg": "#FCA17D"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#FCA17D"}, {"text": "\ue0b0", "fg": "#FCA17D", "bg": "#86BBD8"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#86BBD8"}, {"text": "\ue0b0", "fg": "#86BBD8"}]
+      "preview": [{"text": "\ue0b6", "fg": "#9A348E"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#9A348E"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#DA627D"}, {"text": "\ue0b0", "fg": "#DA627D", "bg": "#FCA17D"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#FCA17D"}, {"text": "\ue0b0", "fg": "#FCA17D", "bg": "#86BBD8"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#86BBD8"}, {"text": "\ue0b0", "fg": "#86BBD8"}]
     },
     {
       "id": "agnoster.minimal",
       "file": "agnoster.minimal.omp.json",
       "name": "agnoster minimal",
-      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "\ue0b0 ", "fg": "#007ACC"}]
+      "preview": [{"text": "user ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "\ue0b0 ", "fg": "#007ACC"}]
     },
     {
       "id": "agnoster",
       "file": "agnoster.omp.json",
       "name": "agnoster",
-      "preview": [{"text": " henrique ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
+      "preview": [{"text": " user ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
     },
     {
       "id": "agnosterplus",
       "file": "agnosterplus.omp.json",
       "name": "agnosterplus",
-      "preview": [{"text": " henrique ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
+      "preview": [{"text": " user ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
     },
     {
       "id": "aliens",
       "file": "aliens.omp.json",
       "name": "aliens",
-      "preview": [{"text": "\ue0b6", "fg": "#61AFEF"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#61AFEF"}, {"text": "\ue0b0", "fg": "#61AFEF"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#FF6471"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#FF6471"}, {"text": " 3.12 ", "fg": "#FFFFFF", "bg": "#FF6471"}, {"text": "\ue0b4", "fg": "#FF6471"}]
+      "preview": [{"text": "\ue0b6", "fg": "#61AFEF"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#61AFEF"}, {"text": "\ue0b0", "fg": "#61AFEF"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#FF6471"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#FF6471"}, {"text": " 3.12 ", "fg": "#FFFFFF", "bg": "#FF6471"}, {"text": "\ue0b4", "fg": "#FF6471"}]
     },
     {
       "id": "amro",
       "file": "amro.omp.json",
       "name": "amro",
-      "preview": [{"text": "henrique ", "fg": "#45F1C2"}, {"text": "~/src ", "fg": "#0CA0D8"}, {"text": "main ", "fg": "#14A5AE"}]
+      "preview": [{"text": "user ", "fg": "#45F1C2"}, {"text": "~/src ", "fg": "#0CA0D8"}, {"text": "main ", "fg": "#14A5AE"}]
     },
     {
       "id": "atomic",
@@ -53,7 +53,7 @@
       "id": "atomicBit",
       "file": "atomicBit.omp.json",
       "name": "atomicBit",
-      "preview": [{"text": "henrique "}, {"text": "~/src ", "fg": "#FF5555"}]
+      "preview": [{"text": "user "}, {"text": "~/src ", "fg": "#FF5555"}]
     },
     {
       "id": "avit",
@@ -71,7 +71,7 @@
       "id": "blueish",
       "file": "blueish.omp.json",
       "name": "blueish",
-      "preview": [{"text": " henrique ", "fg": "#26C6DA", "bg": "#546E7A"}, {"text": "\ue0b0", "fg": "#546E7A", "bg": "#A2BEEF"}, {"text": " 87% ", "fg": "#193549", "bg": "#A2BEEF"}, {"text": "\ue0b0", "fg": "#A2BEEF", "bg": "#14C2DD"}, {"text": " ~/src ", "fg": "#193549", "bg": "#14C2DD"}, {"text": "\ue0b0", "fg": "#14C2DD", "bg": "#A2C4E0"}, {"text": " main ", "fg": "#193549", "bg": "#A2C4E0"}, {"text": "\ue0b0", "fg": "#A2C4E0"}]
+      "preview": [{"text": " user ", "fg": "#26C6DA", "bg": "#546E7A"}, {"text": "\ue0b0", "fg": "#546E7A", "bg": "#A2BEEF"}, {"text": " 87% ", "fg": "#193549", "bg": "#A2BEEF"}, {"text": "\ue0b0", "fg": "#A2BEEF", "bg": "#14C2DD"}, {"text": " ~/src ", "fg": "#193549", "bg": "#14C2DD"}, {"text": "\ue0b0", "fg": "#14C2DD", "bg": "#A2C4E0"}, {"text": " main ", "fg": "#193549", "bg": "#A2C4E0"}, {"text": "\ue0b0", "fg": "#A2C4E0"}]
     },
     {
       "id": "bubbles",
@@ -89,49 +89,49 @@
       "id": "bubblesline",
       "file": "bubblesline.omp.json",
       "name": "bubblesline",
-      "preview": [{"text": "\ue0b6", "fg": "#424242"}, {"text": " henrique ", "fg": "#9B6BDF", "bg": "#424242"}, {"text": "\ue0b4 ", "fg": "#424242"}]
+      "preview": [{"text": "\ue0b6", "fg": "#424242"}, {"text": " user ", "fg": "#9B6BDF", "bg": "#424242"}, {"text": "\ue0b4 ", "fg": "#424242"}]
     },
     {
       "id": "capr4n",
       "file": "capr4n.omp.json",
       "name": "capr4n",
-      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#61AFEF"}, {"text": "\ue0b0", "fg": "#61AFEF"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
+      "preview": [{"text": " user ", "fg": "#FFFFFF", "bg": "#61AFEF"}, {"text": "\ue0b0", "fg": "#61AFEF"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
     },
     {
       "id": "catppuccin",
       "file": "catppuccin.omp.json",
       "name": "catppuccin",
-      "preview": [{"text": " henrique ", "fg": "#494D64", "bg": "#8AADF4"}, {"text": " ~/src ", "fg": "#494D64", "bg": "#F5BDE6"}, {"text": "\ue0b4", "fg": "#F5BDE6", "bg": "#B7BDF8"}, {"text": " main ", "fg": "#494D64", "bg": "#B7BDF8"}, {"text": "\ue0b4", "fg": "#B7BDF8"}]
+      "preview": [{"text": " user ", "fg": "#494D64", "bg": "#8AADF4"}, {"text": " ~/src ", "fg": "#494D64", "bg": "#F5BDE6"}, {"text": "\ue0b4", "fg": "#F5BDE6", "bg": "#B7BDF8"}, {"text": " main ", "fg": "#494D64", "bg": "#B7BDF8"}, {"text": "\ue0b4", "fg": "#B7BDF8"}]
     },
     {
       "id": "catppuccin_frappe",
       "file": "catppuccin_frappe.omp.json",
       "name": "catppuccin frappe",
-      "preview": [{"text": "henrique ", "fg": "#8CAAEE"}, {"text": "~/src ", "fg": "#F4B8E4"}, {"text": "main ", "fg": "#BABBF1"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
+      "preview": [{"text": "user ", "fg": "#8CAAEE"}, {"text": "~/src ", "fg": "#F4B8E4"}, {"text": "main ", "fg": "#BABBF1"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
     },
     {
       "id": "catppuccin_latte",
       "file": "catppuccin_latte.omp.json",
       "name": "catppuccin latte",
-      "preview": [{"text": "henrique ", "fg": "#1E66F5"}, {"text": "~/src ", "fg": "#EA76CB"}, {"text": "main ", "fg": "#7287FD"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
+      "preview": [{"text": "user ", "fg": "#1E66F5"}, {"text": "~/src ", "fg": "#EA76CB"}, {"text": "main ", "fg": "#7287FD"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
     },
     {
       "id": "catppuccin_macchiato",
       "file": "catppuccin_macchiato.omp.json",
       "name": "catppuccin macchiato",
-      "preview": [{"text": "henrique ", "fg": "#8AADF4"}, {"text": "~/src ", "fg": "#F5BDE6"}, {"text": "main ", "fg": "#B7BDF8"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
+      "preview": [{"text": "user ", "fg": "#8AADF4"}, {"text": "~/src ", "fg": "#F5BDE6"}, {"text": "main ", "fg": "#B7BDF8"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
     },
     {
       "id": "catppuccin_mocha",
       "file": "catppuccin_mocha.omp.json",
       "name": "catppuccin mocha",
-      "preview": [{"text": "henrique ", "fg": "#89B4FA"}, {"text": "~/src ", "fg": "#F5C2E7"}, {"text": "main ", "fg": "#B4BEFE"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
+      "preview": [{"text": "user ", "fg": "#89B4FA"}, {"text": "~/src ", "fg": "#F5C2E7"}, {"text": "main ", "fg": "#B4BEFE"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
     },
     {
       "id": "cert",
       "file": "cert.omp.json",
       "name": "cert",
-      "preview": [{"text": "\ue0b6", "fg": "#E36464"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#E36464"}, {"text": "\ue0c6", "fg": "#E36464"}, {"text": "\ue0c7", "fg": "#13A10E"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#13A10E"}, {"text": "\ue0c6", "fg": "#13A10E"}, {"text": "\ue0c7", "fg": "#61D6D6"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#61D6D6"}, {"text": "\ue0c6", "fg": "#61D6D6"}, {"text": "\ue0c7", "fg": "#B4009E"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": "\ue0c6", "fg": "#B4009E"}]
+      "preview": [{"text": "\ue0b6", "fg": "#E36464"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#E36464"}, {"text": "\ue0c6", "fg": "#E36464"}, {"text": "\ue0c7", "fg": "#13A10E"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#13A10E"}, {"text": "\ue0c6", "fg": "#13A10E"}, {"text": "\ue0c7", "fg": "#61D6D6"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#61D6D6"}, {"text": "\ue0c6", "fg": "#61D6D6"}, {"text": "\ue0c7", "fg": "#B4009E"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": "\ue0c6", "fg": "#B4009E"}]
     },
     {
       "id": "chips",
@@ -143,7 +143,7 @@
       "id": "cinnamon",
       "file": "cinnamon.omp.json",
       "name": "cinnamon",
-      "preview": [{"text": "\ue0b6", "fg": "#07585C"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#07585C"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}]
+      "preview": [{"text": "\ue0b6", "fg": "#07585C"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#07585C"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}]
     },
     {
       "id": "clean-detailed",
@@ -161,7 +161,7 @@
       "id": "cloud-native-azure",
       "file": "cloud-native-azure.omp.json",
       "name": "cloud native azure",
-      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
+      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
     },
     {
       "id": "cobalt2",
@@ -179,19 +179,19 @@
       "id": "darkblood",
       "file": "darkblood.omp.json",
       "name": "darkblood",
-      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}]
+      "preview": [{"text": "user ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}]
     },
     {
       "id": "di4am0nd",
       "file": "di4am0nd.omp.json",
       "name": "di4am0nd",
-      "preview": [{"text": "henrique ", "fg": "#FFBD00"}, {"text": "~/src ", "fg": "#00C6F7"}, {"text": "main ", "fg": "#F62F2E"}, {"text": "20.11 ", "fg": "#98C379"}]
+      "preview": [{"text": "user ", "fg": "#FFBD00"}, {"text": "~/src ", "fg": "#00C6F7"}, {"text": "main ", "fg": "#F62F2E"}, {"text": "20.11 ", "fg": "#98C379"}]
     },
     {
       "id": "dracula",
       "file": "dracula.omp.json",
       "name": "dracula",
-      "preview": [{"text": "\ue0b6", "fg": "#6272A4"}, {"text": " henrique ", "fg": "#F8F8F2", "bg": "#6272A4"}, {"text": " ~/src ", "fg": "#F8F8F2", "bg": "#BD93F9"}, {"text": "\ue0b0", "fg": "#BD93F9", "bg": "#FFB86C"}, {"text": " main ", "fg": "#F8F8F2", "bg": "#FFB86C"}, {"text": "\ue0b0", "fg": "#FFB86C", "bg": "#8BE9FD"}, {"text": " 20.11 ", "fg": "#F8F8F2", "bg": "#8BE9FD"}, {"text": "\ue0b0", "fg": "#8BE9FD"}]
+      "preview": [{"text": "\ue0b6", "fg": "#6272A4"}, {"text": " user ", "fg": "#F8F8F2", "bg": "#6272A4"}, {"text": " ~/src ", "fg": "#F8F8F2", "bg": "#BD93F9"}, {"text": "\ue0b0", "fg": "#BD93F9", "bg": "#FFB86C"}, {"text": " main ", "fg": "#F8F8F2", "bg": "#FFB86C"}, {"text": "\ue0b0", "fg": "#FFB86C", "bg": "#8BE9FD"}, {"text": " 20.11 ", "fg": "#F8F8F2", "bg": "#8BE9FD"}, {"text": "\ue0b0", "fg": "#8BE9FD"}]
     },
     {
       "id": "easy-term",
@@ -215,7 +215,7 @@
       "id": "fish",
       "file": "fish.omp.json",
       "name": "fish",
-      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "\ue0b0 ", "fg": "#007ACC"}]
+      "preview": [{"text": "user ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "\ue0b0 ", "fg": "#007ACC"}]
     },
     {
       "id": "free-ukraine",
@@ -227,13 +227,13 @@
       "id": "froczh",
       "file": "froczh.omp.json",
       "name": "froczh",
-      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#40189C"}, {"text": "\ue0b0", "fg": "#40189C"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#01579B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#01579B"}, {"text": "\ue0b0", "fg": "#01579B"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#00FFFF"}, {"text": " 8.0 ", "fg": "#000000", "bg": "#00FFFF"}, {"text": "\ue0b0", "fg": "#00FFFF"}]
+      "preview": [{"text": " user ", "fg": "#FFFFFF", "bg": "#40189C"}, {"text": "\ue0b0", "fg": "#40189C"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#01579B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#01579B"}, {"text": "\ue0b0", "fg": "#01579B"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#00FFFF"}, {"text": " 8.0 ", "fg": "#000000", "bg": "#00FFFF"}, {"text": "\ue0b0", "fg": "#00FFFF"}]
     },
     {
       "id": "gmay",
       "file": "gmay.omp.json",
       "name": "gmay",
-      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#3A86FF"}, {"text": "\ue0b0", "fg": "#3A86FF", "bg": "#FF479C"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#4CAF50"}, {"text": " 23:14 ", "fg": "#193549", "bg": "#4CAF50"}, {"text": "\ue0b0", "fg": "#4CAF50", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
+      "preview": [{"text": " user ", "fg": "#FFFFFF", "bg": "#3A86FF"}, {"text": "\ue0b0", "fg": "#3A86FF", "bg": "#FF479C"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#4CAF50"}, {"text": " 23:14 ", "fg": "#193549", "bg": "#4CAF50"}, {"text": "\ue0b0", "fg": "#4CAF50", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
     },
     {
       "id": "grandpa-style",
@@ -251,13 +251,13 @@
       "id": "half-life",
       "file": "half-life.omp.json",
       "name": "half life",
-      "preview": [{"text": "henrique ", "fg": "#7E46B6"}, {"text": "in ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#87FF00"}, {"text": "main ", "fg": "#5FD7FF"}]
+      "preview": [{"text": "user ", "fg": "#7E46B6"}, {"text": "in ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#87FF00"}, {"text": "main ", "fg": "#5FD7FF"}]
     },
     {
       "id": "honukai",
       "file": "honukai.omp.json",
       "name": "honukai",
-      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#0973C0"}, {"text": "main ", "fg": "#B8B80A"}]
+      "preview": [{"text": "user ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#0973C0"}, {"text": "main ", "fg": "#B8B80A"}]
     },
     {
       "id": "hotstick.minimal",
@@ -269,7 +269,7 @@
       "id": "hul10",
       "file": "hul10.omp.json",
       "name": "hul10",
-      "preview": [{"text": "\u250c ", "fg": "#F7F7F7"}, {"text": "pwsh ", "fg": "#111111"}, {"text": "henrique ", "fg": "#111111"}, {"text": "main ", "fg": "#111111"}]
+      "preview": [{"text": "\u250c ", "fg": "#F7F7F7"}, {"text": "pwsh ", "fg": "#111111"}, {"text": "user ", "fg": "#111111"}, {"text": "main ", "fg": "#111111"}]
     },
     {
       "id": "hunk",
@@ -281,7 +281,7 @@
       "id": "huvix",
       "file": "huvix.omp.json",
       "name": "huvix",
-      "preview": [{"text": "henrique ", "fg": "#FFE082"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "1.22 ", "fg": "#7FD5EA"}, {"text": "3.12 ", "fg": "#9E7EFF"}]
+      "preview": [{"text": "user ", "fg": "#FFE082"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "1.22 ", "fg": "#7FD5EA"}, {"text": "3.12 ", "fg": "#9E7EFF"}]
     },
     {
       "id": "if_tea",
@@ -293,25 +293,25 @@
       "id": "illusi0n",
       "file": "illusi0n.omp.json",
       "name": "illusi0n",
-      "preview": [{"text": "$ ", "fg": "#FF8800"}, {"text": "henrique ", "fg": "#FF8800"}, {"text": "~/src ", "fg": "#62C0FF"}, {"text": "main ", "fg": "#62C0FF"}]
+      "preview": [{"text": "$ ", "fg": "#FF8800"}, {"text": "user ", "fg": "#FF8800"}, {"text": "~/src ", "fg": "#62C0FF"}, {"text": "main ", "fg": "#62C0FF"}]
     },
     {
       "id": "iterm2",
       "file": "iterm2.omp.json",
       "name": "iterm2",
-      "preview": [{"text": " henrique ", "fg": "#D2FF5E", "bg": "#003543"}, {"text": "\ue0b0", "fg": "#003543", "bg": "#0087D8"}, {"text": " ~/src ", "fg": "#003544", "bg": "#0087D8"}, {"text": "\ue0b0", "fg": "#0087D8", "bg": "#D2FF5E"}, {"text": " main ", "fg": "#193549", "bg": "#D2FF5E"}, {"text": "\ue0b0", "fg": "#D2FF5E"}]
+      "preview": [{"text": " user ", "fg": "#D2FF5E", "bg": "#003543"}, {"text": "\ue0b0", "fg": "#003543", "bg": "#0087D8"}, {"text": " ~/src ", "fg": "#003544", "bg": "#0087D8"}, {"text": "\ue0b0", "fg": "#0087D8", "bg": "#D2FF5E"}, {"text": " main ", "fg": "#193549", "bg": "#D2FF5E"}, {"text": "\ue0b0", "fg": "#D2FF5E"}]
     },
     {
       "id": "jandedobbeleer-accessible",
       "file": "jandedobbeleer-accessible.omp.json",
       "name": "jandedobbeleer accessible",
-      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "|", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "|", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "|", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "|", "fg": "#6CA35E"}]
+      "preview": [{"text": " user ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "|", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "|", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "|", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "|", "fg": "#6CA35E"}]
     },
     {
       "id": "jandedobbeleer",
       "file": "jandedobbeleer.omp.json",
       "name": "jandedobbeleer",
-      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "\ue0b0", "fg": "#6CA35E"}]
+      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "\ue0b0", "fg": "#6CA35E"}]
     },
     {
       "id": "jblab_2021",
@@ -323,7 +323,7 @@
       "id": "jonnychipz",
       "file": "jonnychipz.omp.json",
       "name": "jonnychipz",
-      "preview": [{"text": "\ue0b6", "fg": "#4707A8"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#4707A8"}, {"text": "\ue0b0", "fg": "#4707A8"}, {"text": " dev ", "fg": "#FFFFFF", "bg": "#1A1AF5"}, {"text": "\ue0b0", "fg": "#1A1AF5"}]
+      "preview": [{"text": "\ue0b6", "fg": "#4707A8"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#4707A8"}, {"text": "\ue0b0", "fg": "#4707A8"}, {"text": " dev ", "fg": "#FFFFFF", "bg": "#1A1AF5"}, {"text": "\ue0b0", "fg": "#1A1AF5"}]
     },
     {
       "id": "json",
@@ -335,7 +335,7 @@
       "id": "jtracey93",
       "file": "jtracey93.omp.json",
       "name": "jtracey93",
-      "preview": [{"text": "\ue0b6", "fg": "#EB9654"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#EB9654"}, {"text": "~/src ", "fg": "#3F3F3F"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "23:14 ", "fg": "#FFFFFF"}]
+      "preview": [{"text": "\ue0b6", "fg": "#EB9654"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#EB9654"}, {"text": "~/src ", "fg": "#3F3F3F"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "23:14 ", "fg": "#FFFFFF"}]
     },
     {
       "id": "jv_sitecorian",
@@ -347,7 +347,7 @@
       "id": "kali",
       "file": "kali.omp.json",
       "name": "kali",
-      "preview": [{"text": "henrique ", "fg": "#3B78FF"}, {"text": "3.12 ", "fg": "#C19C00"}, {"text": "~/src "}, {"text": "main "}]
+      "preview": [{"text": "user ", "fg": "#3B78FF"}, {"text": "3.12 ", "fg": "#C19C00"}, {"text": "~/src "}, {"text": "main "}]
     },
     {
       "id": "kushal",
@@ -371,7 +371,7 @@
       "id": "larserikfinholt",
       "file": "larserikfinholt.omp.json",
       "name": "larserikfinholt",
-      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}, {"text": "12ms ", "fg": "#FFFFFF"}]
+      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}, {"text": "12ms ", "fg": "#FFFFFF"}]
     },
     {
       "id": "lightgreen",
@@ -389,7 +389,7 @@
       "id": "markbull",
       "file": "markbull.omp.json",
       "name": "markbull",
-      "preview": [{"text": "\u250c ", "fg": "#FFCE7B"}, {"text": " henrique ", "fg": "#1D1626", "bg": "#FFCE7B"}, {"text": "\ue0b0", "fg": "#FFCE7B", "bg": "#C678DD"}, {"text": " ~/src ", "fg": "#FFFEF9", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#FFFFFB"}, {"text": " main ", "fg": "#100E23", "bg": "#FFFFFB"}, {"text": "\ue0b0", "fg": "#FFFFFB"}]
+      "preview": [{"text": "\u250c ", "fg": "#FFCE7B"}, {"text": " user ", "fg": "#1D1626", "bg": "#FFCE7B"}, {"text": "\ue0b0", "fg": "#FFCE7B", "bg": "#C678DD"}, {"text": " ~/src ", "fg": "#FFFEF9", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#FFFFFB"}, {"text": " main ", "fg": "#100E23", "bg": "#FFFFFB"}, {"text": "\ue0b0", "fg": "#FFFFFB"}]
     },
     {
       "id": "material",
@@ -401,13 +401,13 @@
       "id": "microverse-power",
       "file": "microverse-power.omp.json",
       "name": "microverse power",
-      "preview": [{"text": " henrique ", "fg": "#F1184C", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " 23:14 ", "fg": "#FFBB00", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " ~/src ", "fg": "#33DD2D", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " main ", "fg": "#3A86FF", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424"}]
+      "preview": [{"text": " user ", "fg": "#F1184C", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " 23:14 ", "fg": "#FFBB00", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " ~/src ", "fg": "#33DD2D", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " main ", "fg": "#3A86FF", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424"}]
     },
     {
       "id": "mojada",
       "file": "mojada.omp.json",
       "name": "mojada",
-      "preview": [{"text": " henrique ", "fg": "#0077C2", "bg": "#FBFBFB"}, {"text": "\ue0b0", "fg": "#FBFBFB", "bg": "#0077C2"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#0077C2"}, {"text": "\ue0b0", "fg": "#0077C2", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
+      "preview": [{"text": " user ", "fg": "#0077C2", "bg": "#FBFBFB"}, {"text": "\ue0b0", "fg": "#FBFBFB", "bg": "#0077C2"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#0077C2"}, {"text": "\ue0b0", "fg": "#0077C2", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
     },
     {
       "id": "montys",
@@ -419,7 +419,7 @@
       "id": "mt",
       "file": "mt.omp.json",
       "name": "mt",
-      "preview": [{"text": "\ue0b6", "fg": "#B4009E"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": " ~/src ", "fg": "#000000", "bg": "#FFFF00"}, {"text": "\ue0b0", "fg": "#FFFF00", "bg": "#4E44FF"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#4E44FF"}, {"text": "\ue0b0", "fg": "#4E44FF", "bg": "#4E903D"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#4E903D"}, {"text": "\ue0b0", "fg": "#4E903D"}]
+      "preview": [{"text": "\ue0b6", "fg": "#B4009E"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": " ~/src ", "fg": "#000000", "bg": "#FFFF00"}, {"text": "\ue0b0", "fg": "#FFFF00", "bg": "#4E44FF"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#4E44FF"}, {"text": "\ue0b0", "fg": "#4E44FF", "bg": "#4E903D"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#4E903D"}, {"text": "\ue0b0", "fg": "#4E903D"}]
     },
     {
       "id": "multiverse-neon",
@@ -449,25 +449,25 @@
       "id": "nordtron",
       "file": "nordtron.omp.json",
       "name": "nordtron",
-      "preview": [{"text": "henrique ", "fg": "#88C0D0"}, {"text": "main ", "fg": "#B48EAD"}, {"text": "dev ", "fg": "#B48EAD"}, {"text": "dev ", "fg": "#B48EAD"}]
+      "preview": [{"text": "user ", "fg": "#88C0D0"}, {"text": "main ", "fg": "#B48EAD"}, {"text": "dev ", "fg": "#B48EAD"}, {"text": "dev ", "fg": "#B48EAD"}]
     },
     {
       "id": "nu4a",
       "file": "nu4a.omp.json",
       "name": "nu4a",
-      "preview": [{"text": " henrique ", "fg": "#100E23", "bg": "#CFCFC4"}, {"text": "\ue0b0", "fg": "#CFCFC4", "bg": "#EC9706"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#EC9706"}, {"text": "\ue0b0", "fg": "#EC9706", "bg": "#3FEB56"}, {"text": " main ", "fg": "#193549", "bg": "#3FEB56"}, {"text": "\ue0b0", "fg": "#3FEB56", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
+      "preview": [{"text": " user ", "fg": "#100E23", "bg": "#CFCFC4"}, {"text": "\ue0b0", "fg": "#CFCFC4", "bg": "#EC9706"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#EC9706"}, {"text": "\ue0b0", "fg": "#EC9706", "bg": "#3FEB56"}, {"text": " main ", "fg": "#193549", "bg": "#3FEB56"}, {"text": "\ue0b0", "fg": "#3FEB56", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
     },
     {
       "id": "onehalf.minimal",
       "file": "onehalf.minimal.omp.json",
       "name": "onehalf minimal",
-      "preview": [{"text": "henrique ", "fg": "#E5C07B"}, {"text": "~/src ", "fg": "#61AFEF"}, {"text": "main "}]
+      "preview": [{"text": "user ", "fg": "#E5C07B"}, {"text": "~/src ", "fg": "#61AFEF"}, {"text": "main "}]
     },
     {
       "id": "paradox",
       "file": "paradox.omp.json",
       "name": "paradox",
-      "preview": [{"text": " henrique ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
+      "preview": [{"text": " user ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
     },
     {
       "id": "pararussel",
@@ -485,7 +485,7 @@
       "id": "peru",
       "file": "peru.omp.json",
       "name": "peru",
-      "preview": [{"text": "henrique ", "fg": "#26C6DA"}, {"text": "3.12 ", "fg": "#0FC469"}, {"text": "main ", "fg": "#FFE700"}]
+      "preview": [{"text": "user ", "fg": "#26C6DA"}, {"text": "3.12 ", "fg": "#0FC469"}, {"text": "main ", "fg": "#FFE700"}]
     },
     {
       "id": "pixelrobots",
@@ -497,13 +497,13 @@
       "id": "plague",
       "file": "plague.omp.json",
       "name": "plague",
-      "preview": [{"text": "\ue0b6", "fg": "#333333"}, {"text": " henrique ", "fg": "#FF0000", "bg": "#333333"}, {"text": "\ue0b0", "fg": "#333333"}, {"text": " ~/src ", "fg": "#000000", "bg": "#FF0000"}, {"text": "\ue0b0", "fg": "#FF0000", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "\ue0b0", "fg": "#6CA35E"}]
+      "preview": [{"text": "\ue0b6", "fg": "#333333"}, {"text": " user ", "fg": "#FF0000", "bg": "#333333"}, {"text": "\ue0b0", "fg": "#333333"}, {"text": " ~/src ", "fg": "#000000", "bg": "#FF0000"}, {"text": "\ue0b0", "fg": "#FF0000", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "\ue0b0", "fg": "#6CA35E"}]
     },
     {
       "id": "poshmon",
       "file": "poshmon.omp.json",
       "name": "poshmon",
-      "preview": [{"text": "\ue0b6", "fg": "#2E9599"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#2E9599"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#D51111"}, {"text": "\ue0b0", "fg": "#D51111", "bg": "#C19C00"}, {"text": " main ", "fg": "#000000", "bg": "#C19C00"}, {"text": "\ue0b0", "fg": "#C19C00"}]
+      "preview": [{"text": "\ue0b6", "fg": "#2E9599"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#2E9599"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#D51111"}, {"text": "\ue0b0", "fg": "#D51111", "bg": "#C19C00"}, {"text": " main ", "fg": "#000000", "bg": "#C19C00"}, {"text": "\ue0b0", "fg": "#C19C00"}]
     },
     {
       "id": "powerlevel10k_classic",
@@ -533,31 +533,31 @@
       "id": "powerline",
       "file": "powerline.omp.json",
       "name": "powerline",
-      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
+      "preview": [{"text": "user ", "fg": "#FFFFFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
     },
     {
       "id": "probua.minimal",
       "file": "probua.minimal.omp.json",
       "name": "probua minimal",
-      "preview": [{"text": "henrique ", "fg": "#FFDD86"}, {"text": "~/src ", "fg": "#42A9FF"}, {"text": "main "}]
+      "preview": [{"text": "user ", "fg": "#FFDD86"}, {"text": "~/src ", "fg": "#42A9FF"}, {"text": "main "}]
     },
     {
       "id": "pure",
       "file": "pure.omp.json",
       "name": "pure",
-      "preview": [{"text": "henrique ", "fg": "#BF616A"}, {"text": "~/src ", "fg": "#81A1C1"}]
+      "preview": [{"text": "user ", "fg": "#BF616A"}, {"text": "~/src ", "fg": "#81A1C1"}]
     },
     {
       "id": "quick-term",
       "file": "quick-term.omp.json",
       "name": "quick term",
-      "preview": [{"text": " henrique ", "fg": "#4E4E4E", "bg": "#E4E4E4"}, {"text": "\ue0b0", "fg": "#E4E4E4", "bg": "#0087AF"}, {"text": " ~/src ", "fg": "#F2F3F8", "bg": "#0087AF"}, {"text": "\ue0b0", "fg": "#0087AF", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#378504"}, {"text": " main ", "fg": "#F2F3F8", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#378504"}]
+      "preview": [{"text": " user ", "fg": "#4E4E4E", "bg": "#E4E4E4"}, {"text": "\ue0b0", "fg": "#E4E4E4", "bg": "#0087AF"}, {"text": " ~/src ", "fg": "#F2F3F8", "bg": "#0087AF"}, {"text": "\ue0b0", "fg": "#0087AF", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#378504"}, {"text": " main ", "fg": "#F2F3F8", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#378504"}]
     },
     {
       "id": "remk",
       "file": "remk.omp.json",
       "name": "remk",
-      "preview": [{"text": "\ue0b6", "fg": "#B4009E"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": "~/src ", "fg": "#3F3F3F"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#16C60C"}, {"text": "\ue0b0", "fg": "#16C60C"}]
+      "preview": [{"text": "\ue0b6", "fg": "#B4009E"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": "~/src ", "fg": "#3F3F3F"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#16C60C"}, {"text": "\ue0b0", "fg": "#16C60C"}]
     },
     {
       "id": "robbyrussell",
@@ -569,13 +569,13 @@
       "id": "rudolfs-dark",
       "file": "rudolfs-dark.omp.json",
       "name": "rudolfs dark",
-      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "3.12 ", "fg": "#FFFFFF"}]
+      "preview": [{"text": "user ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "3.12 ", "fg": "#FFFFFF"}]
     },
     {
       "id": "rudolfs-light",
       "file": "rudolfs-light.omp.json",
       "name": "rudolfs light",
-      "preview": [{"text": "henrique ", "fg": "#424242"}, {"text": "main ", "fg": "#424242"}, {"text": "~/src ", "fg": "#424242"}, {"text": "3.12 ", "fg": "#424242"}]
+      "preview": [{"text": "user ", "fg": "#424242"}, {"text": "main ", "fg": "#424242"}, {"text": "~/src ", "fg": "#424242"}, {"text": "3.12 ", "fg": "#424242"}]
     },
     {
       "id": "sim-web",
@@ -587,13 +587,13 @@
       "id": "slim",
       "file": "slim.omp.json",
       "name": "slim",
-      "preview": [{"text": " henrique ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " ~/src ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " main ", "fg": "#FFEB3B", "bg": "#2F2F2F"}]
+      "preview": [{"text": " user ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " ~/src ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " main ", "fg": "#FFEB3B", "bg": "#2F2F2F"}]
     },
     {
       "id": "slimfat",
       "file": "slimfat.omp.json",
       "name": "slimfat",
-      "preview": [{"text": " henrique ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " ~/src ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " main ", "fg": "#FFEB3B", "bg": "#2F2F2F"}]
+      "preview": [{"text": " user ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " ~/src ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " main ", "fg": "#FFEB3B", "bg": "#2F2F2F"}]
     },
     {
       "id": "smoothie",
@@ -617,19 +617,19 @@
       "id": "sorin",
       "file": "sorin.omp.json",
       "name": "sorin",
-      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#0973C0"}, {"text": "main ", "fg": "#C1C106"}, {"text": "3.12 ", "fg": "#100E23"}]
+      "preview": [{"text": "user ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#0973C0"}, {"text": "main ", "fg": "#C1C106"}, {"text": "3.12 ", "fg": "#100E23"}]
     },
     {
       "id": "space",
       "file": "space.omp.json",
       "name": "space",
-      "preview": [{"text": "henrique ", "fg": "#26C6DA"}, {"text": "~/src ", "fg": "#16C60C"}, {"text": "main "}, {"text": "3.12 ", "fg": "#906CFF"}]
+      "preview": [{"text": "user ", "fg": "#26C6DA"}, {"text": "~/src ", "fg": "#16C60C"}, {"text": "main "}, {"text": "3.12 ", "fg": "#906CFF"}]
     },
     {
       "id": "spaceship",
       "file": "spaceship.omp.json",
       "name": "spaceship",
-      "preview": [{"text": "henrique ", "fg": "#F9F1A5"}, {"text": "~/src ", "fg": "#3A96DD"}, {"text": "main ", "fg": "#FF94DF"}]
+      "preview": [{"text": "user ", "fg": "#F9F1A5"}, {"text": "~/src ", "fg": "#3A96DD"}, {"text": "main ", "fg": "#FF94DF"}]
     },
     {
       "id": "star",
@@ -641,13 +641,13 @@
       "id": "stelbent-compact.minimal",
       "file": "stelbent-compact.minimal.omp.json",
       "name": "stelbent compact minimal",
-      "preview": [{"text": "henrique ", "fg": "#757575"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#100E23", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}, {"text": "23:14 ", "fg": "#689F38"}]
+      "preview": [{"text": "user ", "fg": "#757575"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#100E23", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}, {"text": "23:14 ", "fg": "#689F38"}]
     },
     {
       "id": "stelbent.minimal",
       "file": "stelbent.minimal.omp.json",
       "name": "stelbent minimal",
-      "preview": [{"text": "henrique ", "fg": "#757575"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#100E23", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
+      "preview": [{"text": "user ", "fg": "#757575"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#100E23", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
     },
     {
       "id": "takuya",
@@ -665,7 +665,7 @@
       "id": "thecyberden",
       "file": "thecyberden.omp.json",
       "name": "thecyberden",
-      "preview": [{"text": "\ue0b6", "fg": "#2E9599"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#2E9599"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#0080FF"}, {"text": "\ue0b0", "fg": "#0080FF", "bg": "#C19C00"}, {"text": " main ", "fg": "#000000", "bg": "#C19C00"}, {"text": "\ue0b0", "fg": "#C19C00"}]
+      "preview": [{"text": "\ue0b6", "fg": "#2E9599"}, {"text": " user ", "fg": "#FFFFFF", "bg": "#2E9599"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#0080FF"}, {"text": "\ue0b0", "fg": "#0080FF", "bg": "#C19C00"}, {"text": " main ", "fg": "#000000", "bg": "#C19C00"}, {"text": "\ue0b0", "fg": "#C19C00"}]
     },
     {
       "id": "tiwahu",
@@ -677,7 +677,7 @@
       "id": "tokyo",
       "file": "tokyo.omp.json",
       "name": "tokyo",
-      "preview": [{"text": "23:14 ", "fg": "#7EB8DA"}, {"text": "henrique ", "fg": "#7EB8DA"}, {"text": "87% ", "fg": "#F36943"}, {"text": "12ms ", "fg": "#BE9DDF"}]
+      "preview": [{"text": "23:14 ", "fg": "#7EB8DA"}, {"text": "user ", "fg": "#7EB8DA"}, {"text": "87% ", "fg": "#F36943"}, {"text": "12ms ", "fg": "#BE9DDF"}]
     },
     {
       "id": "tokyonight_storm",
@@ -695,7 +695,7 @@
       "id": "uew",
       "file": "uew.omp.json",
       "name": "uew",
-      "preview": [{"text": "henrique ", "fg": "#BBC4B9"}, {"text": "main ", "fg": "#BFA8BF"}, {"text": "pwsh ", "fg": "#BFA8BF"}]
+      "preview": [{"text": "user ", "fg": "#BBC4B9"}, {"text": "main ", "fg": "#BFA8BF"}, {"text": "pwsh ", "fg": "#BFA8BF"}]
     },
     {
       "id": "unicorn",
@@ -725,7 +725,7 @@
       "id": "xtoys",
       "file": "xtoys.omp.json",
       "name": "xtoys",
-      "preview": [{"text": "henrique "}, {"text": "~/src ", "fg": "#7B68EE"}, {"text": "main ", "fg": "#48D1CC"}]
+      "preview": [{"text": "user "}, {"text": "~/src ", "fg": "#7B68EE"}, {"text": "main ", "fg": "#48D1CC"}]
     },
     {
       "id": "ys",
@@ -737,7 +737,7 @@
       "id": "zash",
       "file": "zash.omp.json",
       "name": "zash",
-      "preview": [{"text": "henrique ", "fg": "#E36464"}, {"text": "\u279c ", "fg": "#62ED8B"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D4AAFC"}]
+      "preview": [{"text": "user ", "fg": "#E36464"}, {"text": "\u279c ", "fg": "#62ED8B"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D4AAFC"}]
     }
   ]
 }

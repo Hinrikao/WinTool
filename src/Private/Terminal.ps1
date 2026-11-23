@@ -1040,7 +1040,7 @@ $script:WinToolPreviewNamedColor = @{
 }
 
 $script:WinToolPreviewSampleText = @{
-    path = "~/src"; git = "main"; session = "henrique"; time = "23:14"; executiontime = "12ms"
+    path = "~/src"; git = "main"; session = "user"; time = "23:14"; executiontime = "12ms"
     node = "20.11"; python = "3.12"; go = "1.22"; dotnet = "8.0"; rust = "1.79"; java = "21"
     shell = "pwsh"; battery = "87%"; az = "dev"; aws = "dev"; kubectl = "dev"; docker = "dev"
 }

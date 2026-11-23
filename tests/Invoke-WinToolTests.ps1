@@ -1094,7 +1094,7 @@ Invoke-WinToolCase -Name "Prompt preview follows the theme colors" -Body {
     $theme = ConvertFrom-WinToolJsonText -Text $json
     $segments = @(Get-WinToolOmpPreviewSegment -Theme $theme)
     $texts = ($segments | ForEach-Object { [string]$_.Text }) -join "|"
-    Test-WinToolExpectation -Condition ($texts -eq "<| henrique |>| ~/src |X| main |X|$ ") -Message ("Unexpected preview segments: " + $texts)
+    Test-WinToolExpectation -Condition ($texts -eq "<| user |>| ~/src |X| main |X|$ ") -Message ("Unexpected preview segments: " + $texts)
     Test-WinToolExpectation -Condition ($segments[3].Background -eq "#3B78FF" -and $segments[3].Foreground -eq "#100E23") -Message "Palette colors are resolved."
     Test-WinToolExpectation -Condition ($segments[4].Foreground -eq "#3B78FF" -and $segments[4].Background -eq "#95FFA4") -Message "A powerline arrow takes the next segment background."
     Test-WinToolExpectation -Condition ($segments[6].Foreground -eq "#95FFA4" -and $null -eq $segments[6].Background) -Message "The last arrow ends on the terminal background."
