@@ -27,7 +27,17 @@ jobs:
 
       - name: Build the WPF window with Windows PowerShell 5.1
         shell: powershell
+        env:
+          WINTOOL_SHOT_DIR: ${{ runner.temp }}\wintool-shots
         run: powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolUiBuild.ps1
+
+      - name: Upload window screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: ${{ runner.temp }}\wintool-shots
+          if-no-files-found: ignore
 
   wsl-script:
     runs-on: ubuntu-latest

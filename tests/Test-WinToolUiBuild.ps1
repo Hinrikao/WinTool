@@ -419,6 +419,45 @@ else {
     Write-Output ("Real winget status: " + $window.FindName("AppInstalledStatus").Text)
 }
 
+# Render the Terminal tab (Advanced) to PNG files without showing the window,
+# at a wide and a narrow size, so the layout can be checked from CI artifacts.
+$shotFolder = $env:WINTOOL_SHOT_DIR
+if ([string]::IsNullOrWhiteSpace($shotFolder)) {
+    $shotFolder = Join-Path ([System.IO.Path]::GetTempPath()) "wintool-shots"
+}
+New-Item -ItemType Directory -Path $shotFolder -Force | Out-Null
+$window.FindName("NavTerminal").IsChecked = $true
+$window.FindName("TerminalModeAdvanced").IsChecked = $true
+$rootVisual = $window.Content
+foreach ($size in @(@(1280, 900, "wide"), @(1000, 1300, "narrow"))) {
+    $shotWidth = [double]$size[0]
+    $shotHeight = [double]$size[1]
+    Update-WinToolTerminalLayout -Width ($shotWidth - 248 - 48)
+    $rootVisual.Measure([System.Windows.Size]::new($shotWidth, $shotHeight))
+    $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $shotWidth, $shotHeight))
+    $rootVisual.UpdateLayout()
+    $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]$shotWidth, [int]$shotHeight, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    $bitmap.Render($rootVisual)
+    $encoder = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
+    $encoder.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($bitmap))
+    $shotPath = Join-Path $shotFolder ("terminal-advanced-" + $size[2] + ".png")
+    $stream = [System.IO.File]::Create($shotPath)
+    try { $encoder.Save($stream) } finally { $stream.Dispose() }
+    Write-Output ("Saved " + $shotPath)
+}
+$advancedGrid = $window.FindName("TerminalAdvancedHost")
+Update-WinToolTerminalLayout -Width 1000
+if ([System.Windows.Controls.Grid]::GetColumn($window.FindName("TerminalCardFont")) -ne 2) {
+    throw "The Font card should sit in the right column on a wide window."
+}
+Update-WinToolTerminalLayout -Width 700
+if ([System.Windows.Controls.Grid]::GetRow($window.FindName("TerminalCardFont")) -ne 1 -or [System.Windows.Controls.Grid]::GetColumnSpan($window.FindName("TerminalCardFont")) -ne 3) {
+    throw "The Terminal cards should stack in one column on a narrow window."
+}
+if ($null -eq $advancedGrid -or $window.FindName("TerminalSummaryHost").Children.Count -lt 3) {
+    throw "The Terminal summary did not list the steps."
+}
+
 $uiErrors = Get-WinToolUiError
 if ($uiErrors.Count -gt 0) {
     foreach ($uiError in $uiErrors) {

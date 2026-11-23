@@ -48,6 +48,8 @@ function Initialize-WinToolTerminalView {
         (Get-WinToolUi -Name "TerminalSimpleHost").Visibility = "Collapsed"
         (Get-WinToolUi -Name "TerminalAdvancedHost").Visibility = "Visible"
         Update-WinToolTerminalSummary
+        Update-WinToolPromptSelection
+        Update-WinToolSchemeSelection
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontSearch") -EventName "TextChanged" -Name "Terminal: font search" -Action {
         Sync-WinToolSearchHint -BoxName "TerminalFontSearch" -HintName "TerminalFontSearchHint"
@@ -66,6 +68,9 @@ function Initialize-WinToolTerminalView {
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalStyleList") -EventName "SelectionChanged" -Name "Terminal: choose prompt style" -Action {
         Update-WinToolTerminalSummary
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ViewTerminal") -EventName "SizeChanged" -Name "Terminal: layout" -Action {
+        Update-WinToolTerminalLayout -Width ((Get-WinToolUi -Name "ViewTerminal").ActualWidth - 48)
     }
     Build-WinToolSimpleTerminalCard
     Build-WinToolPromptCard
@@ -92,22 +97,33 @@ function Build-WinToolSimpleTerminalCard {
     [void]$hostPanel.Children.Add($card)
 }
 
+function New-WinToolTerminalTile {
+    $tile = New-Object System.Windows.Controls.Border
+    $tile.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushNavHover")
+    $tile.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
+    $tile.BorderThickness = [System.Windows.Thickness]::new(1)
+    $tile.CornerRadius = [System.Windows.CornerRadius]::new(8)
+    $tile.Padding = [System.Windows.Thickness]::new(10, 6, 10, 6)
+    $tile.Margin = [System.Windows.Thickness]::new(0, 0, 8, 8)
+    $tile.Cursor = [System.Windows.Input.Cursors]::Hand
+    return $tile
+}
+
 function Build-WinToolPromptCard {
     $hostPanel = Get-WinToolUi -Name "TerminalPromptHost"
     $hostPanel.Children.Clear()
     $catalog = Get-WinToolTerminalCatalog
     foreach ($prompt in @(Get-WinToolNote -Object $catalog -Name "prompts" -Default @())) {
-        $card = New-WinToolCard
-        $card.Margin = [System.Windows.Thickness]::new(0, 0, 12, 12)
-        $card.Width = 280
-        $card.Cursor = [System.Windows.Input.Cursors]::Hand
+        # Compact tile, three per row; the details move to the tooltip.
+        $card = New-WinToolTerminalTile
+        $card.Height = 44
         $card.Tag = [string]$prompt.id
-        $stack = New-Object System.Windows.Controls.StackPanel
-        [void]$stack.Children.Add((New-WinToolText -Text ([string]$prompt.name) -Size 16 -Weight "SemiBold"))
-        [void]$stack.Children.Add((New-WinToolText -Text ([string]$prompt.summary) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 4, 0, 8))))
         $installs = @($prompt.installs) -join ", "
-        [void]$stack.Children.Add((New-WinToolText -Text ("Installs: " + $installs) -Size 12 -Brush "BrushMuted" -Wrap))
-        $card.Child = $stack
+        $card.ToolTip = ([string]$prompt.summary) + "`nInstalls: " + $installs
+        $label = New-WinToolText -Text ([string]$prompt.name) -Size 13
+        $label.VerticalAlignment = "Center"
+        $label.TextTrimming = "CharacterEllipsis"
+        $card.Child = $label
         Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose prompt" -Data ([string]$prompt.id) -Action {
             param($source, $eventData, $promptId)
             $null = $source, $eventData
@@ -203,8 +219,9 @@ function Build-WinToolExtraToggle {
     $hostPanel.Children.Clear()
     foreach ($extra in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "extras" -Default @())) {
         $box = New-Object System.Windows.Controls.CheckBox
-        $box.Content = ([string]$extra.name) + "  -  " + ([string]$extra.description)
-        $box.Margin = [System.Windows.Thickness]::new(0, 0, 0, 8)
+        $box.Content = [string]$extra.name
+        $box.ToolTip = [string]$extra.description
+        $box.Margin = [System.Windows.Thickness]::new(0, 0, 12, 10)
         $box.Tag = [string]$extra.id
         $box.IsChecked = $false
         if ([string]$extra.id -eq "terminal-icons" -or [string]$extra.id -eq "psreadline") {
@@ -219,19 +236,18 @@ function Build-WinToolSchemeCard {
     $hostPanel = Get-WinToolUi -Name "TerminalSchemeHost"
     $hostPanel.Children.Clear()
     foreach ($scheme in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "schemes" -Default @())) {
-        $card = New-WinToolCard
-        $card.Width = 180
-        $card.Margin = [System.Windows.Thickness]::new(0, 0, 12, 0)
-        $card.Cursor = [System.Windows.Input.Cursors]::Hand
+        $card = New-WinToolTerminalTile
+        $card.Padding = [System.Windows.Thickness]::new(8)
+        $card.Margin = [System.Windows.Thickness]::new(0, 0, 8, 0)
         $card.Tag = [string]$scheme.id
         $swatch = New-Object System.Windows.Controls.Border
-        $swatch.Height = 36
+        $swatch.Height = 40
         $swatch.CornerRadius = [System.Windows.CornerRadius]::new(8)
         $swatchColor = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString([string]$scheme.background))
         $swatch.Background = [System.Windows.Media.SolidColorBrush]::new($swatchColor)
         $swatch.Margin = [System.Windows.Thickness]::new(0, 8, 0, 0)
         $stack = New-Object System.Windows.Controls.StackPanel
-        [void]$stack.Children.Add((New-WinToolText -Text ([string]$scheme.name) -Weight "SemiBold"))
+        [void]$stack.Children.Add((New-WinToolText -Text ([string]$scheme.name) -Size 12))
         [void]$stack.Children.Add($swatch)
         $card.Child = $stack
         Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose color scheme" -Data ([string]$scheme.id) -Action {
@@ -239,9 +255,83 @@ function Build-WinToolSchemeCard {
             $null = $source, $eventData
             Set-WinToolTerminalChoiceValue -Name "schemeId" -Value $schemeId
             Update-WinToolTerminalSummary
+            Update-WinToolSchemeSelection
         }
         [void]$hostPanel.Children.Add($card)
     }
+    Update-WinToolSchemeSelection
+}
+
+function Update-WinToolSchemeSelection {
+    $selected = [string]$script:WinToolTerminalChoice.schemeId
+    $hostPanel = Get-WinToolUi -Name "TerminalSchemeHost"
+    for ($index = 0; $index -lt $hostPanel.Children.Count; $index++) {
+        $card = $hostPanel.Children[$index]
+        if ([string]$card.Tag -eq $selected) {
+            $card.BorderThickness = [System.Windows.Thickness]::new(2)
+            $card.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushAccent")
+        }
+        else {
+            $card.BorderThickness = [System.Windows.Thickness]::new(1)
+            $card.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
+        }
+    }
+}
+
+function Update-WinToolTerminalLayout {
+    param(
+        [double]$Width
+    )
+    # Two columns as in the approved layout; one column when the content
+    # area is narrower than 800 px (a window under about 1100 px).
+    $grid = Get-WinToolUi -Name "TerminalAdvancedHost"
+    if ($null -eq $grid -or $Width -le 0) {
+        return
+    }
+    $narrow = ($Width -lt 800)
+    if ($narrow -eq [bool]$script:WinToolTerminalNarrow -and $null -ne $script:WinToolTerminalNarrow) {
+        return
+    }
+    $script:WinToolTerminalNarrow = $narrow
+    $places = [ordered]@{
+        TerminalCardPrompt = @(0, 0, 0)
+        TerminalCardFont = @(0, 2, 1)
+        TerminalCardExtras = @(1, 0, 2)
+        TerminalCardScheme = @(1, 2, 3)
+    }
+    foreach ($name in $places.Keys) {
+        $card = Get-WinToolUi -Name $name
+        if ($null -eq $card) { continue }
+        $place = $places[$name]
+        if ($narrow) {
+            [System.Windows.Controls.Grid]::SetRow($card, $place[2])
+            [System.Windows.Controls.Grid]::SetColumn($card, 0)
+            [System.Windows.Controls.Grid]::SetColumnSpan($card, 3)
+        }
+        else {
+            [System.Windows.Controls.Grid]::SetRow($card, $place[0])
+            [System.Windows.Controls.Grid]::SetColumn($card, $place[1])
+            [System.Windows.Controls.Grid]::SetColumnSpan($card, 1)
+        }
+    }
+    $right = Get-WinToolUi -Name "TerminalColumnRight"
+    $gap = Get-WinToolUi -Name "TerminalColumnGap"
+    $left = Get-WinToolUi -Name "TerminalColumnLeft"
+    if ($narrow) {
+        $right.MinWidth = 0
+        $right.Width = [System.Windows.GridLength]::new(0)
+        $gap.Width = [System.Windows.GridLength]::new(0)
+        $left.MinWidth = 0
+    }
+    else {
+        $right.MinWidth = 340
+        $right.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+        $gap.Width = [System.Windows.GridLength]::new(16)
+        $left.MinWidth = 340
+    }
+    $columns = 3
+    if ($narrow -and $Width -lt 560) { $columns = 2 }
+    (Get-WinToolUi -Name "TerminalSummaryHost").Columns = $columns
 }
 
 function Update-WinToolFontList {
@@ -254,7 +344,8 @@ function Update-WinToolFontList {
         $item = New-Object System.Windows.Controls.ListBoxItem
         $badge = "Programming font"
         if ($font.nerd) { $badge = "Nerd Font" }
-        $item.Content = ([string]$font.name) + "   " + $badge
+        $item.Content = [string]$font.name
+        $item.ToolTip = $badge
         $item.Tag = [string]$font.id
         [void]$list.Items.Add($item)
         if ([string]$font.id -eq [string]$script:WinToolTerminalChoice.fontId) {
@@ -316,6 +407,16 @@ function Update-WinToolTerminalSummary {
     }
     $lines = @(Get-WinToolTerminalSummary -Selection $script:WinToolTerminalChoice)
     (Get-WinToolUi -Name "TerminalSummary").Text = ($lines -join "`n")
+    $summaryHost = Get-WinToolUi -Name "TerminalSummaryHost"
+    if ($null -ne $summaryHost) {
+        $summaryHost.Children.Clear()
+        foreach ($line in $lines) {
+            $text = New-WinToolText -Text ([string]$line) -Size 12 -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(0, 0, 12, 4))
+            $text.TextTrimming = "CharacterEllipsis"
+            $text.ToolTip = [string]$line
+            [void]$summaryHost.Children.Add($text)
+        }
+    }
 }
 
 function New-WinToolTerminalPreview {
