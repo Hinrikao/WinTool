@@ -59,7 +59,7 @@ function Initialize-WinToolTweakView {
         $title.VerticalAlignment = "Center"
         $title.Margin = [System.Windows.Thickness]::new(2, 0, 0, 0)
         [void]$header.Children.Add($title)
-        $count = New-WinToolText -Text "" -Size 11 -Brush "BrushMuted"
+        $count = New-WinToolText -Text " " -Size 11 -Brush "BrushMuted"
         $count.VerticalAlignment = "Center"
         $count.Margin = [System.Windows.Thickness]::new(0, 0, 2, 0)
         [System.Windows.Controls.Grid]::SetColumn($count, 1)

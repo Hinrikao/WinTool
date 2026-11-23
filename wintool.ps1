@@ -10342,7 +10342,7 @@ function New-WinToolCardButton {
         "primary" {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushAccent")
             $button.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "BrushOnAccent")
-            $button.FontWeight = "Bold"
+            $button.FontWeight = [System.Windows.FontWeights]::Bold
         }
         "danger" {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushBadSoft")
@@ -10351,7 +10351,7 @@ function New-WinToolCardButton {
         "warn" {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushWarnStrong")
             $button.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "BrushOnWarn")
-            $button.FontWeight = "Bold"
+            $button.FontWeight = [System.Windows.FontWeights]::Bold
         }
         default {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushNavHover")
@@ -10453,7 +10453,7 @@ function New-WinToolAppRow {
     $initial = New-Object System.Windows.Controls.TextBlock
     $initial.Text = Get-WinToolAppInitial -Name ([string]$App.name)
     $initial.FontSize = 16
-    $initial.FontWeight = "Bold"
+    $initial.FontWeight = [System.Windows.FontWeights]::Bold
     $initial.Foreground = [System.Windows.Media.Brushes]::White
     $initial.HorizontalAlignment = "Center"
     $initial.VerticalAlignment = "Center"
@@ -11070,7 +11070,7 @@ function Initialize-WinToolTweakView {
         $title.VerticalAlignment = "Center"
         $title.Margin = [System.Windows.Thickness]::new(2, 0, 0, 0)
         [void]$header.Children.Add($title)
-        $count = New-WinToolText -Text "" -Size 11 -Brush "BrushMuted"
+        $count = New-WinToolText -Text " " -Size 11 -Brush "BrushMuted"
         $count.VerticalAlignment = "Center"
         $count.Margin = [System.Windows.Thickness]::new(0, 0, 2, 0)
         [System.Windows.Controls.Grid]::SetColumn($count, 1)
