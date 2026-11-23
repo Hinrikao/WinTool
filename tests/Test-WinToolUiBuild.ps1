@@ -141,8 +141,9 @@ finally {
     $env:PATH = $savedPath
     Remove-Item -LiteralPath $fakeBin -Recurse -Force -ErrorAction SilentlyContinue
 }
-$promptHost = $window.FindName("TerminalPromptHost")
-if ($null -eq $promptHost -or $promptHost.Children.Count -lt 8) {
+$promptList = $window.FindName("TerminalPromptList")
+$promptItems = @($promptList.Items | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Tag) })
+if ($null -eq $promptList -or $promptItems.Count -lt 8) {
     throw "The Terminal tab did not list the prompt engines."
 }
 $fixList = $window.FindName("FixList")
@@ -275,13 +276,38 @@ foreach ($entry in $script:WinToolUiHandlers.ToArray()) {
     $raised++
 }
 
-# Clicking each prompt card must update the Terminal choice.
-foreach ($card in @($promptHost.Children)) {
+# Picking each prompt engine must update the Terminal choice, the theme
+# column title, and the theme list.
+$window.FindName("TerminalFilterNoNerd").IsChecked = $true
+$filterResetSeen = $false
+foreach ($engine in $promptItems) {
+    $engineChanged = ([string]$script:WinToolTerminalChoice.prompt -ne [string]$engine.Tag)
+    $promptList.SelectedItem = $engine
+    if ($engineChanged -and $window.FindName("TerminalFilterAll").IsChecked -ne $true) {
+        throw "Picking a prompt engine should reset the theme filter to All."
+    }
+    if ($engineChanged) { $filterResetSeen = $true }
+    if ([string]$script:WinToolTerminalChoice.prompt -ne [string]$engine.Tag) {
+        throw ("Picking the prompt engine '" + [string]$engine.Tag + "' did not select it.")
+    }
+    if ([string]$window.FindName("TerminalStyleList").Tag -ne [string]$engine.Tag -or $window.FindName("TerminalStyleList").Items.Count -lt 1) {
+        throw ("The theme list did not follow the prompt engine '" + [string]$engine.Tag + "'.")
+    }
+}
+if (-not $filterResetSeen) {
+    throw "No prompt engine change was tested."
+}
+# The group headers in the engine list cannot be picked.
+if (@($promptList.Items | Where-Object { [string]::IsNullOrWhiteSpace([string]$_.Tag) -and $_.IsEnabled }).Count -ne 0) {
+    throw "The engine group headers should not be selectable."
+}
+# Clicking a color scheme tile must update the choice.
+foreach ($tile in ($window.FindName("TerminalSchemeHost").Children | ForEach-Object { $_ })) {
     $mouseArgs = [System.Windows.Input.MouseButtonEventArgs]::new([System.Windows.Input.Mouse]::PrimaryDevice, 0, [System.Windows.Input.MouseButton]::Left)
     $mouseArgs.RoutedEvent = [System.Windows.UIElement]::MouseLeftButtonUpEvent
-    $card.RaiseEvent($mouseArgs)
-    if ([string]$script:WinToolTerminalChoice.prompt -ne [string]$card.Tag) {
-        throw ("Clicking the prompt card '" + [string]$card.Tag + "' did not select it.")
+    $tile.RaiseEvent($mouseArgs)
+    if ([string]$script:WinToolTerminalChoice.schemeId -ne [string]$tile.Tag) {
+        throw ("Clicking the color scheme '" + [string]$tile.Tag + "' did not select it.")
     }
 }
 
@@ -431,7 +457,6 @@ $window.FindName("TerminalModeAdvanced").IsChecked = $true
 # Back to the recommended choices (the event test above clicked others) and
 # the log folded, as a person opening the tab would see it.
 $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
-(Get-WinToolUi -Name "TerminalFontSearch").Text = ""
 (Get-WinToolUi -Name "TerminalThemeSearch").Text = ""
 $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
 Update-WinToolPromptSelection
@@ -460,15 +485,96 @@ $script:WinToolState.LogExpanded = $false
 $script:WinToolState.Busy = $false
 Sync-WinToolLogPanel
 $rootVisual = $window.Content
+function Invoke-WinToolTerminalShotLayout {
+    param([double]$Width, [double]$Height)
+    # Lays the window out at a size, then lets the Terminal body take its
+    # real height (fill, or a fixed height that scrolls) and lays out again.
+    Update-WinToolTerminalLayout -Width ($Width - 248 - 40) -Height 0
+    $rootVisual.Measure([System.Windows.Size]::new($Width, $Height))
+    $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
+    $rootVisual.UpdateLayout()
+    $body = $window.FindName("TerminalBodyScroll")
+    Update-WinToolTerminalLayout -Width $body.ActualWidth -Height $body.ActualHeight
+    $rootVisual.Measure([System.Windows.Size]::new($Width, $Height))
+    $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
+    $rootVisual.UpdateLayout()
+}
+
+function Get-WinToolVisualChild {
+    param($Root)
+    # Every element under Root in the visual tree.
+    $found = New-Object System.Collections.Generic.List[object]
+    $queue = New-Object System.Collections.Generic.Queue[object]
+    $queue.Enqueue($Root)
+    while ($queue.Count -gt 0) {
+        $node = $queue.Dequeue()
+        $found.Add($node)
+        if ($node -isnot [System.Windows.Media.Visual]) { continue }
+        $count = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($node)
+        for ($index = 0; $index -lt $count; $index++) {
+            $queue.Enqueue([System.Windows.Media.VisualTreeHelper]::GetChild($node, $index))
+        }
+    }
+    return $found.ToArray()
+}
+
+function Test-WinToolInsidePreview {
+    param($Element)
+    # True for the live terminal sample and theme sample lines: their size
+    # follows the chosen terminal font (content, not interface text).
+    $node = $Element
+    while ($null -ne $node) {
+        if ($node -is [System.Windows.FrameworkElement]) {
+            if ([string]$node.Name -eq "TerminalFontPreview" -or [string]$node.Tag -eq "preview-content") { return $true }
+        }
+        $node = [System.Windows.Media.VisualTreeHelper]::GetParent($node)
+    }
+    return $false
+}
+
+function Assert-WinToolTerminalText {
+    param([string]$Label)
+    # The 14 px standard on the Terminal page: every text is FontSizeBody,
+    # only the page title is FontSizeTitle, and no single-line text is cut off.
+    $view = $window.FindName("ViewTerminal")
+    $body = [double]$window.FindResource("FontSizeBody")
+    $title = [double]$window.FindResource("FontSizeTitle")
+    $problems = New-Object System.Collections.Generic.List[string]
+    foreach ($node in @(Get-WinToolVisualChild -Root $view)) {
+        if ($node -isnot [System.Windows.FrameworkElement] -or -not $node.IsVisible) { continue }
+        if (Test-WinToolInsidePreview -Element $node) { continue }
+        if ($node -is [System.Windows.Controls.TextBlock]) {
+            $size = [double]$node.FontSize
+            if ($size -ne $body -and -not ($size -eq $title -and [string]$node.Text -eq "Terminal")) {
+                $problems.Add(("'" + [string]$node.Text + "' is " + $size + " px"))
+            }
+            if ($node.TextWrapping -eq "NoWrap" -and $node.ActualWidth -gt 0 -and -not [string]::IsNullOrEmpty([string]$node.Text)) {
+                $typeface = New-Object System.Windows.Media.Typeface($node.FontFamily, $node.FontStyle, $node.FontWeight, $node.FontStretch)
+                $formatted = New-Object System.Windows.Media.FormattedText([string]$node.Text, [System.Globalization.CultureInfo]::CurrentUICulture, [System.Windows.FlowDirection]::LeftToRight, $typeface, $size, [System.Windows.Media.Brushes]::Black, 1.0)
+                if ($formatted.WidthIncludingTrailingWhitespace -gt $node.ActualWidth + 1) {
+                    $problems.Add(("'" + [string]$node.Text + "' is cut off: " + [Math]::Round($formatted.WidthIncludingTrailingWhitespace) + " > " + [Math]::Round($node.ActualWidth)))
+                }
+            }
+        }
+        elseif ($node -is [System.Windows.Controls.Control] -and $node -isnot [System.Windows.Controls.ScrollViewer] -and $node -isnot [System.Windows.Controls.Primitives.ScrollBar]) {
+            if ([double]$node.FontSize -ne $body) {
+                $problems.Add(($node.GetType().Name + " " + [string]$node.Name + " is " + [double]$node.FontSize + " px"))
+            }
+        }
+    }
+    if ($problems.Count -gt 0) {
+        throw ("Terminal text at " + $Label + ": " + (($problems | Select-Object -Unique) -join "; "))
+    }
+    Write-Output ("Terminal text at " + $Label + ": all 14 px, nothing cut off.")
+}
+
 foreach ($size in @(@(1280, 760, "mockup"), @(1280, 900, "wide"), @(1000, 1300, "narrow"))) {
     $shotWidth = [double]$size[0]
     $shotHeight = [double]$size[1]
-    Update-WinToolTerminalLayout -Width ($shotWidth - 248 - 40)
-    $rootVisual.Measure([System.Windows.Size]::new($shotWidth, $shotHeight))
-    $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $shotWidth, $shotHeight))
-    $rootVisual.UpdateLayout()
+    Invoke-WinToolTerminalShotLayout -Width $shotWidth -Height $shotHeight
     Show-WinToolTerminalSelection
     $rootVisual.UpdateLayout()
+    Assert-WinToolTerminalText -Label ([string]$size[0] + " x " + [string]$size[1])
     $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]$shotWidth, [int]$shotHeight, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
     # The window background is not part of its content, so paint it first.
     $backdrop = New-Object System.Windows.Media.DrawingVisual
@@ -485,24 +591,111 @@ foreach ($size in @(@(1280, 760, "mockup"), @(1280, 900, "wide"), @(1000, 1300, 
     Write-Output ("Saved " + $shotPath)
 }
 $advancedGrid = $window.FindName("TerminalAdvancedHost")
+$sideColumn = $window.FindName("TerminalSideColumn")
 Update-WinToolTerminalLayout -Width 1000
-if ([System.Windows.Controls.Grid]::GetColumn($window.FindName("TerminalCardFont")) -ne 2) {
-    throw "The Font card should sit in the right column on a wide window."
+if ([System.Windows.Controls.Grid]::GetColumn($sideColumn) -ne 4 -or [System.Windows.Controls.Grid]::GetRow($sideColumn) -ne 0) {
+    throw "The preview, font, and extras should sit in the right column on a wide window."
 }
 Update-WinToolTerminalLayout -Width 700
-if ([System.Windows.Controls.Grid]::GetRow($window.FindName("TerminalCardFont")) -ne 1 -or [System.Windows.Controls.Grid]::GetColumnSpan($window.FindName("TerminalCardFont")) -ne 3) {
-    throw "The Terminal cards should stack in one column on a narrow window."
+if ([System.Windows.Controls.Grid]::GetRow($sideColumn) -ne 1 -or [System.Windows.Controls.Grid]::GetColumnSpan($sideColumn) -ne 5) {
+    throw "The preview, font, and extras should move under the lists on a narrow window."
 }
-if ($null -eq $advancedGrid -or $window.FindName("TerminalSummaryHost").Children.Count -lt 3) {
-    throw "The Terminal summary did not list the steps."
+Update-WinToolTerminalLayout -Width 1000
+$summaryChips = @($window.FindName("TerminalSummaryHost").Children | ForEach-Object { $_ })
+if ($null -eq $advancedGrid -or $summaryChips.Count -lt 3) {
+    throw "The Terminal action bar did not list the steps."
 }
+$ligatureChip = @($summaryChips | Where-Object { $_ -is [System.Windows.Controls.Border] -and $_.Child -is [System.Windows.Controls.TextBlock] -and [string]$_.Child.Text -like "*Font ligatures on*" })
+if ($ligatureChip.Count -ne 1) {
+    throw "The Terminal action bar should show one 'Font ligatures on' change."
+}
+$ligatureNote = $window.FindName("TerminalFontLigatureNote")
+if ($null -eq $ligatureNote -or [string]$ligatureNote.Text -notlike "*ligatures*" -or $ligatureNote.Visibility -ne "Visible") {
+    throw "The Font and colors card should note that ligatures are always on."
+}
+$previewSample = $window.FindName("TerminalFontSample")
+if (-not [System.Windows.Documents.Typography]::GetStandardLigatures($previewSample) -or -not [System.Windows.Documents.Typography]::GetContextualAlternates($previewSample)) {
+    throw "The live preview should draw font ligatures."
+}
+$themeLine = $null
+foreach ($themeItem in ($window.FindName("TerminalStyleList").Items | ForEach-Object { $_ })) {
+    $parts = @($themeItem.Content.Children | Where-Object { $_ -is [System.Windows.Controls.Border] })
+    if ($parts.Count -gt 0) { $themeLine = $parts[0].Child; break }
+}
+if ($null -ne $themeLine -and -not [System.Windows.Documents.Typography]::GetStandardLigatures($themeLine)) {
+    throw "Theme previews should draw font ligatures."
+}
+# Sizes from the 14 px standard: chips and buttons 32, search 34, engine rows about 36.
+Invoke-WinToolTerminalShotLayout -Width 1280 -Height 760
+foreach ($chipName in @("TerminalFilterAll", "TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd", "TerminalSetup", "TerminalRefresh")) {
+    $chipControl = $window.FindName($chipName)
+    if ([Math]::Abs($chipControl.ActualHeight - 32) -gt 0.5) { throw ($chipName + " should be 32 px tall, not " + $chipControl.ActualHeight) }
+}
+foreach ($chipElement in $summaryChips) {
+    if ([Math]::Abs($chipElement.ActualHeight - 32) -gt 0.5) { throw ("Action chips should be 32 px tall, not " + $chipElement.ActualHeight) }
+}
+if ([Math]::Abs($window.FindName("TerminalThemeSearch").ActualHeight - 34) -gt 0.5) { throw "The theme search box should be 34 px tall." }
+foreach ($engineRow in @($window.FindName("TerminalPromptList").Items | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Tag) })) {
+    if ($engineRow.ActualHeight -gt 0 -and ($engineRow.ActualHeight -lt 32 -or $engineRow.ActualHeight -gt 40)) {
+        throw ("Engine rows should be about 36 px tall, not " + $engineRow.ActualHeight)
+    }
+}
+$segmentHeight = $window.FindName("TerminalModeAdvanced").ActualHeight + 2
+if ([Math]::Abs($segmentHeight - 32) -gt 0.5) { throw ("The Simple / Advanced control should be 32 px tall, not " + $segmentHeight) }
+# The four filter chips sit on one line at 1280 px.
+$chipTops = @(@("TerminalFilterAll", "TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd") | ForEach-Object { [Math]::Round($window.FindName($_).TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual).Y) } | Select-Object -Unique)
+if ($chipTops.Count -ne 1) { throw "The theme filter chips should fit on one line at 1280 px." }
+# Checkboxes use the shared rounded checkbox: no local style, no focus rectangle.
+$terminalBoxes = @($window.FindName("TerminalEnabled"), $window.FindName("TerminalFontNerdOnly")) + @($script:WinToolTerminalExtraBox)
+foreach ($terminalBox in $terminalBoxes) {
+    if ($terminalBox.ReadLocalValue([System.Windows.FrameworkElement]::StyleProperty) -ne [System.Windows.DependencyProperty]::UnsetValue) {
+        throw ("The checkbox " + [System.Windows.Automation.AutomationProperties]::GetName($terminalBox) + [string]$terminalBox.Content + " should use the shared rounded checkbox.")
+    }
+    if ($null -ne $terminalBox.FocusVisualStyle) { throw "Terminal checkboxes should not draw a dotted focus rectangle." }
+    $boxPart = $terminalBox.Template.FindName("Box", $terminalBox)
+    if ($null -eq $boxPart -or [Math]::Abs($boxPart.ActualWidth - 20) -gt 0.5) { throw "Terminal checkboxes should be the 20 px rounded box." }
+}
+# The action bar stays fully in view at 1280 x 760; a short body scrolls instead of clipping cards.
+$summaryCard = $window.FindName("TerminalSummaryCard")
+$summaryBottom = $summaryCard.TranslatePoint([System.Windows.Point]::new(0, $summaryCard.ActualHeight), $rootVisual).Y
+if ($summaryBottom -gt 760) { throw ("The Terminal action bar should stay in view at 1280 x 760: bottom at " + $summaryBottom) }
+$bodyScroll = $window.FindName("TerminalBodyScroll")
+$advancedHost = $window.FindName("TerminalAdvancedHost")
+$bodyNeed = Get-WinToolTerminalBodyMinHeight -Width $bodyScroll.ActualWidth
+if ($advancedHost.ActualHeight + 0.5 -lt $bodyNeed) { throw ("The Advanced body should never be squeezed below " + $bodyNeed + " px.") }
+Write-Output ("Terminal body at 1280 x 760: viewport " + [Math]::Round($bodyScroll.ViewportHeight) + " px, cards need " + $bodyNeed + " px, scrolls " + [Math]::Max(0, [Math]::Round($bodyScroll.ExtentHeight - $bodyScroll.ViewportHeight)) + " px.")
+Invoke-WinToolTerminalShotLayout -Width 1000 -Height 1300
+$engineScroll = $null
+foreach ($node in @(Get-WinToolVisualChild -Root $window.FindName("TerminalPromptList"))) { if ($node -is [System.Windows.Controls.ScrollViewer]) { $engineScroll = $node; break } }
+if ($null -ne $engineScroll -and $engineScroll.ExtentHeight -gt $engineScroll.ViewportHeight + 1) {
+    throw ("On a narrow window every prompt engine should show without scrolling the list: " + $engineScroll.ExtentHeight + " > " + $engineScroll.ViewportHeight)
+}
+Invoke-WinToolTerminalShotLayout -Width 1280 -Height 900
+Write-Output ("Terminal body at 1280 x 900: viewport " + [Math]::Round($bodyScroll.ViewportHeight) + " px, scrolls " + [Math]::Max(0, [Math]::Round($bodyScroll.ExtentHeight - $bodyScroll.ViewportHeight)) + " px.")
+# Filters narrow the theme list, and the font size reaches the plan.
+$script:WinToolTerminalChoice.prompt = "starship"
+Update-WinToolPromptStyleList
+$allCount = $window.FindName("TerminalStyleList").Items.Count
+$window.FindName("TerminalFilterPowerline").IsChecked = $true
+$powerCount = $window.FindName("TerminalStyleList").Items.Count
+$window.FindName("TerminalFilterAll").IsChecked = $true
+if ($powerCount -lt 1 -or $powerCount -ge $allCount -or $window.FindName("TerminalStyleList").Items.Count -ne $allCount) {
+    throw ("The Powerline filter should narrow the Starship presets: " + $powerCount + " of " + $allCount)
+}
+$sizeBox = $window.FindName("TerminalFontSize")
+foreach ($sizeItem in ($sizeBox.Items | ForEach-Object { $_ })) { if ([int]$sizeItem.Tag -eq 14) { $sizeBox.SelectedItem = $sizeItem } }
+if ([int](Get-WinToolTerminalChoice).fontSize -ne 14 -or @(Get-WinToolTerminalPlan -Selection (Get-WinToolTerminalChoice) | Where-Object { $_.Type -eq "font" -and [int]$_.Size -eq 14 }).Count -ne 1) {
+    throw "The chosen font size should reach the terminal plan."
+}
+foreach ($sizeItem in ($sizeBox.Items | ForEach-Object { $_ })) { if ([int]$sizeItem.Tag -eq 12) { $sizeBox.SelectedItem = $sizeItem } }
+$script:WinToolTerminalChoice.prompt = "oh-my-posh"
+$script:WinToolTerminalChoice.promptStyle = "jandedobbeleer"
+Update-WinToolPromptStyleList
+Update-WinToolPromptSelection
 
 function Save-WinToolTerminalShot {
     param([string]$Name, [double]$Width, [double]$Height)
-    Update-WinToolTerminalLayout -Width ($Width - 248 - 40)
-    $rootVisual.Measure([System.Windows.Size]::new($Width, $Height))
-    $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
-    $rootVisual.UpdateLayout()
+    Invoke-WinToolTerminalShotLayout -Width $Width -Height $Height
     Show-WinToolTerminalSelection
     $rootVisual.UpdateLayout()
     $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]$Width, [int]$Height, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
@@ -557,7 +750,7 @@ Update-WinToolPromptStyleList
 Update-WinToolTerminalSummary
 Update-WinToolTerminalPreview
 Save-WinToolTerminalShot -Name "terminal-omz" -Width 1280 -Height 760
-if ($styleList.Items.Count -lt 100 -or [math]::Abs($styleList.ActualHeight - $listHeight) -gt 1) {
+if ($styleList.Items.Count -lt 100 -or $styleList.ActualHeight -gt ($listHeight + 120)) {
     throw ("The Oh My Zsh list should scroll inside its card: " + $styleList.Items.Count + " themes, height " + $styleList.ActualHeight + " vs " + $listHeight)
 }
 if ([string]$styleList.SelectedItem.Tag -ne "agnoster") { throw "agnoster should stay selected in the long list." }

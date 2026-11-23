@@ -878,7 +878,7 @@ Invoke-WinToolCase -Name "Every plan step type has a runner" -Body {
                 Test-WinToolExpectation -Condition ($null -ne $command) -Message ("Step '" + $type + "' from " + $plan.Name + " has no command.")
             }
         }
-        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "profile", "scheme", "starship-preset", "wsl-profile")) {
+        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "ligatures", "profile", "scheme", "starship-preset", "wsl-profile")) {
             Test-WinToolExpectation -Condition ($seen.ContainsKey($type)) -Message ("No plan produced step type '" + $type + "', so the coverage check is incomplete.")
         }
         Test-WinToolExpectation -Condition (Test-WinToolLocalStepType -Type "scheme") -Message "The color scheme step runs inside WinTool."
@@ -1281,6 +1281,170 @@ Invoke-WinToolCase -Name "WSL shell setup for an existing distro" -Body {
     $ubuntu = @($settings.profiles.list | Where-Object { $_.name -eq "Ubuntu" })[0]
     Test-WinToolExpectation -Condition ($count -eq 1 -and $ubuntu.font.face -eq "CaskaydiaCove Nerd Font" -and $ubuntu.font.size -eq 11 -and $null -eq $ubuntu.PSObject.Properties["fontFace"]) -Message "The Ubuntu profile gets the Nerd Font and keeps its size."
     Test-WinToolExpectation -Condition ($null -eq $settings.profiles.list[0].PSObject.Properties["font"] -and $null -eq $settings.profiles.list[2].PSObject.Properties["font"]) -Message "Other profiles are left alone."
+}
+
+Invoke-WinToolCase -Name "Advanced Terminal page: engines, theme rows, filters, and action chips" -Body {
+    $catalog = Get-WinToolTerminalCatalog
+    $groups = @{}
+    foreach ($prompt in @($catalog.prompts)) {
+        $info = Get-WinToolPromptEngineInfo -Prompt $prompt
+        $groups[[string]$prompt.id] = [string]$info.Group
+        Test-WinToolExpectation -Condition (-not [string]::IsNullOrWhiteSpace([string]$info.Sub) -and [string]$info.Color -match '^#[0-9A-F]{6}$') -Message ("Engine " + [string]$prompt.id + " needs a sub line and a color.")
+        $rows = @(Get-WinToolThemeRow -PromptId ([string]$prompt.id))
+        Test-WinToolExpectation -Condition ($rows.Count -gt 0) -Message ("Engine " + [string]$prompt.id + " has no themes or styles.")
+        $title = Get-WinToolThemeTitle -PromptId ([string]$prompt.id)
+        Test-WinToolExpectation -Condition (-not [string]::IsNullOrWhiteSpace([string]$title.Title)) -Message ("Engine " + [string]$prompt.id + " has no theme column title.")
+    }
+    Test-WinToolExpectation -Condition ($groups["oh-my-posh"] -eq "PowerShell" -and $groups["starship"] -eq "PowerShell" -and $groups["powerline-go"] -eq "PowerShell") -Message "PowerShell engines are grouped together."
+    Test-WinToolExpectation -Condition ($groups["powerlevel10k"] -eq "WSL Ubuntu" -and $groups["tide"] -eq "WSL Ubuntu" -and $groups["oh-my-zsh"] -eq "WSL Ubuntu") -Message "WSL engines are grouped together."
+
+    # Every Oh My Posh theme has a sample in the catalog, so the list and the
+    # preview show colors before any theme file is downloaded.
+    $omp = @(Get-WinToolThemeRow -PromptId "oh-my-posh")
+    Test-WinToolExpectation -Condition (@($omp | Where-Object { @($_.Preview).Count -eq 0 }).Count -eq 0) -Message "Every Oh My Posh theme row has a sample."
+    foreach ($row in $omp) {
+        foreach ($segment in @($row.Preview)) {
+            $sampleText = [string]$segment.Text
+            $raw = ($sampleText.Contains("<#") -or $sampleText.Contains("</>") -or $sampleText.Contains("<transparent") -or $sampleText.Contains("{{"))
+            Test-WinToolExpectation -Condition (-not $raw) -Message ("The Oh My Posh sample for " + [string]$row.Id + " shows raw markup: " + $sampleText)
+        }
+    }
+    $split = @(Split-WinToolOmpMarkup -Text "a<#FF0000> b</><transparent,#26BDBB>c</>" -Foreground "#FFFFFF" -Background "")
+    Test-WinToolExpectation -Condition ($split.Count -eq 3 -and $split[1].Foreground -eq "#FF0000" -and $split[1].Text -eq " b" -and $split[2].Background -eq "#26BDBB" -and $split[2].Text -eq "c") -Message "Oh My Posh color tags become separate colored segments."
+    $themed = @(Get-WinToolOmpPreviewSegment -Theme (ConvertFrom-WinToolJsonText -Text '{"blocks":[{"type":"prompt","alignment":"left","segments":[{"type":"path","style":"diamond","leading_diamond":"<transparent,background>\ue0b0</>","trailing_diamond":"\ue0b4","foreground":"#ffffff","background":"#ff479c"},{"type":"text","style":"plain","template":"<#ff0000> x</> ","foreground":"#ffffff"}]}]}'))
+    Test-WinToolExpectation -Condition (@($themed | Where-Object { ([string]$_.Text).Contains("<") }).Count -eq 0 -and @($themed | Where-Object { $_.Background -eq "#FF479C" }).Count -ge 2) -Message "Diamonds with markup use the segment background."
+    $plain = @(Get-WinToolPromptPreview -PromptId "oh-my-posh" -PromptStyle "jandedobbeleer" -Theme $null)
+    Test-WinToolExpectation -Condition (@($plain | Where-Object { $null -ne $_.Background }).Count -ge 2) -Message "The Oh My Posh preview uses the catalog sample without the theme file."
+
+    $starship = @(Get-WinToolThemeRow -PromptId "starship")
+    $power = @(Select-WinToolThemeRow -Row $starship -Filter "powerline")
+    $minimal = @(Select-WinToolThemeRow -Row $starship -Filter "minimal")
+    $noNerd = @(Select-WinToolThemeRow -Row $starship -Filter "no-nerd")
+    Test-WinToolExpectation -Condition ($power.Count -ge 2 -and ($power.Count + $minimal.Count) -eq $starship.Count) -Message "Powerline and Minimal split the Starship presets."
+    Test-WinToolExpectation -Condition (@($power | Where-Object { $_.Id -eq "tokyo-night" }).Count -eq 1) -Message "Tokyo Night is a Powerline preset."
+    Test-WinToolExpectation -Condition (@($noNerd | Where-Object { $_.Id -eq "no-nerd-font" }).Count -eq 1 -and @($noNerd | Where-Object { $_.Id -eq "nerd-font-symbols" }).Count -eq 0) -Message "No Nerd Font needed follows the preset flag."
+    Test-WinToolExpectation -Condition (@(Select-WinToolThemeRow -Row $starship -Query "tokyo").Count -eq 1) -Message "Search narrows the theme rows."
+    $tokyo = @($starship | Where-Object { $_.Id -eq "tokyo-night" })[0]
+    Test-WinToolExpectation -Condition (@($tokyo.Preview | Where-Object { $null -ne $_.Background }).Count -ge 2) -Message "The Tokyo Night row draws colored blocks."
+    Test-WinToolExpectation -Condition ((Test-WinToolNerdGlyph -Text ([string][char]0xE0B0)) -and -not (Test-WinToolNerdGlyph -Text "~/src main >")) -Message "Nerd Font glyphs are detected."
+
+    $choice = Get-WinToolSimpleTerminalChoice
+    $choice.prompt = "starship"
+    $choice.promptStyle = "tokyo-night"
+    $choice.zoxide = $true
+    $choice.fontSize = 13
+    $steps = @(Get-WinToolTerminalPlan -Selection $choice)
+    $fontStep = @($steps | Where-Object { $_.Type -eq "font" })[0]
+    Test-WinToolExpectation -Condition ([int]$fontStep.Size -eq 13 -and [string]$fontStep.Label -like "*13 pt") -Message "The font size goes into the font step."
+    $chips = @(Get-WinToolSummaryChip -Step $steps)
+    $adds = @($chips | Where-Object { $_.Kind -eq "add" } | ForEach-Object { [string]$_.Text })
+    $changes = @($chips | Where-Object { $_.Kind -eq "change" } | ForEach-Object { [string]$_.Text })
+    Test-WinToolExpectation -Condition ($adds -contains "Windows Terminal" -and $adds -contains "Starship" -and $adds -contains "zoxide" -and $adds -contains "Terminal-Icons") -Message ("Install chips: " + ($adds -join ", "))
+    Test-WinToolExpectation -Condition (@($adds | Where-Object { $_ -eq "Terminal-Icons" }).Count -eq 1) -Message "Terminal-Icons shows once."
+    Test-WinToolExpectation -Condition ($changes -contains "Starship preset tokyo-night" -and $changes -contains "Scheme Night" -and $changes -contains "Terminal font 13 pt") -Message ("Change chips: " + ($changes -join ", "))
+    $wslChips = @(Get-WinToolSummaryChip -Step @(Get-WinToolTerminalPlan -Selection ([pscustomobject]@{ prompt = "powerlevel10k"; promptStyle = "rainbow"; fontId = $choice.fontId; schemeId = $choice.schemeId })))
+    Test-WinToolExpectation -Condition (@($wslChips | Where-Object { $_.Text -eq "Rainbow style" -and $_.Kind -eq "change" }).Count -eq 1) -Message "The chosen WSL style shows as a change."
+
+    $font = 12
+    $simple = Get-WinToolSimpleTerminalChoice
+    Test-WinToolExpectation -Condition ([int]$simple.fontSize -eq $font) -Message "The recommended setup uses 12 pt."
+}
+
+Invoke-WinToolCase -Name "Terminal setup always turns on font ligatures for every profile" -Body {
+    $text = @'
+{
+  // user comment
+  "profiles": {
+    "defaults": { "font": { "face": "Fira Code", "weight": "light", "features": { "ss01": 1, "calt": 0, "zero": 1 } } },
+    "list": [
+      { "name": "PowerShell", "source": "Windows.Terminal.PowershellCore" },
+      { "name": "Windows PowerShell", "font": { "size": 11 } },
+      { "name": "Ubuntu", "source": "Windows.Terminal.Wsl", "font": { "face": "Hack", "features": { "ss02": 1, "liga": 0 } } },
+      { "name": "Command Prompt", "commandline": "cmd.exe" }
+    ]
+  }
+}
+'@
+    $settings = ConvertFrom-WinToolJsonText -Text $text
+    $own = Add-WinToolTerminalLigature -Settings $settings
+    $features = $settings.profiles.defaults.font.features
+    Test-WinToolExpectation -Condition ([int]$features.calt -eq 1 -and [int]$features.liga -eq 1) -Message "Defaults get calt=1 and liga=1."
+    Test-WinToolExpectation -Condition ([int]$features.ss01 -eq 1 -and [int]$features.zero -eq 1) -Message "Other default font features are kept."
+    Test-WinToolExpectation -Condition ($settings.profiles.defaults.font.face -eq "Fira Code" -and $settings.profiles.defaults.font.weight -eq "light") -Message "The default font face and weight are kept."
+    $ubuntu = @($settings.profiles.list | Where-Object { $_.name -eq "Ubuntu" })[0]
+    Test-WinToolExpectation -Condition ($own -eq 1 -and [int]$ubuntu.font.features.calt -eq 1 -and [int]$ubuntu.font.features.liga -eq 1 -and [int]$ubuntu.font.features.ss02 -eq 1) -Message "A profile with its own features list also gets ligatures and keeps its features."
+    $windowsPs = @($settings.profiles.list | Where-Object { $_.name -eq "Windows PowerShell" })[0]
+    Test-WinToolExpectation -Condition ($null -eq $windowsPs.font.PSObject.Properties["features"] -and [int]$windowsPs.font.size -eq 11) -Message "Profiles without their own features inherit the defaults untouched."
+    $cmd = @($settings.profiles.list | Where-Object { $_.name -eq "Command Prompt" })[0]
+    Test-WinToolExpectation -Condition ($null -eq $cmd.PSObject.Properties["font"]) -Message "Command Prompt inherits the default ligatures."
+    $again = ConvertFrom-WinToolJsonText -Text (ConvertTo-WinToolJsonText -Value $settings)
+    Add-WinToolTerminalLigature -Settings $again | Out-Null
+    Test-WinToolExpectation -Condition (@($again.profiles.defaults.font.features.PSObject.Properties).Count -eq 4) -Message "Running it again does not add duplicate features."
+
+    Add-WinToolTerminalFont -Settings $settings -Face "JetBrainsMono Nerd Font" -Size 14 | Out-Null
+    $font = $settings.profiles.defaults.font
+    Test-WinToolExpectation -Condition ($font.face -eq "JetBrainsMono Nerd Font" -and [int]$font.size -eq 14 -and [int]$font.features.liga -eq 1 -and [int]$font.features.ss01 -eq 1) -Message "Setting the font keeps the font features."
+
+    $empty = [pscustomobject]@{}
+    Add-WinToolTerminalLigature -Settings $empty | Out-Null
+    Test-WinToolExpectation -Condition ([int]$empty.profiles.defaults.font.features.calt -eq 1 -and [int]$empty.profiles.defaults.font.features.liga -eq 1) -Message "Ligatures are added to empty settings."
+    $legacy = ConvertFrom-WinToolJsonText -Text '{ "profiles": [ { "name": "cmd" } ] }'
+    Add-WinToolTerminalLigature -Settings $legacy | Out-Null
+    Test-WinToolExpectation -Condition ([int]$legacy.profiles.defaults.font.features.liga -eq 1 -and @($legacy.profiles.list).Count -eq 1) -Message "Old list-style profiles move under profiles.list."
+
+    $choices = @((Get-WinToolSimpleTerminalChoice))
+    $wslChoice = Get-WinToolSimpleTerminalChoice
+    $wslChoice.prompt = "powerlevel10k"
+    $wslChoice.promptStyle = "rainbow"
+    $choices += $wslChoice
+    foreach ($item in $choices) {
+        $plan = @(Get-WinToolTerminalPlan -Selection $item)
+        $steps = @($plan | Where-Object { $_.Type -eq "ligatures" })
+        Test-WinToolExpectation -Condition ($steps.Count -eq 1) -Message ("The " + [string]$item.prompt + " plan turns on ligatures once.")
+        $chips = @(Get-WinToolSummaryChip -Step $plan | Where-Object { $_.Kind -eq "change" -and $_.Text -eq "Font ligatures on" })
+        Test-WinToolExpectation -Condition ($chips.Count -eq 1) -Message ("The " + [string]$item.prompt + " plan shows a Font ligatures on chip.")
+        Test-WinToolExpectation -Condition ($null -eq (Get-WinToolPlanCommand -Step $steps[0])) -Message "The ligature step runs inside WinTool."
+    }
+    Test-WinToolExpectation -Condition (Test-WinToolLocalStepType -Type "ligatures") -Message "The ligature step has a local handler."
+
+    $oldLocal = $env:LOCALAPPDATA
+    $root = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-wt-" + [guid]::NewGuid().ToString())
+    try {
+        $folder = Join-Path $root "Microsoft/Windows Terminal"
+        New-Item -ItemType Directory -Path $folder -Force | Out-Null
+        $path = Join-Path $folder "settings.json"
+        [System.IO.File]::WriteAllText($path, $text)
+        $env:LOCALAPPDATA = $root
+        Invoke-WinToolLocalStep -Step ([pscustomobject]@{ Type = "ligatures"; Label = "Turn on font ligatures" })
+        $written = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($path))
+        $saved = $written.profiles.defaults.font.features
+        Test-WinToolExpectation -Condition ([int]$saved.calt -eq 1 -and [int]$saved.liga -eq 1 -and [int]$saved.ss01 -eq 1 -and @($written.profiles.list).Count -eq 4) -Message "The ligature step writes settings.json and keeps the profiles."
+        Test-WinToolExpectation -Condition (Test-Path -LiteralPath ($path + ".wintool-backup")) -Message "The ligature step backs up settings.json first."
+    }
+    finally {
+        $env:LOCALAPPDATA = $oldLocal
+        Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+Invoke-WinToolCase -Name "Terminal page follows the 14 px text standard" -Body {
+    $xaml = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "assets/MainWindow.xaml"))
+    $start = $xaml.IndexOf('x:Name="ViewTerminal"')
+    $end = $xaml.IndexOf('x:Name="ViewUpdates"')
+    Test-WinToolExpectation -Condition ($start -gt 0 -and $end -gt $start) -Message "The Terminal view is in the window markup."
+    $terminal = $xaml.Substring($start, $end - $start)
+    $literal = @([regex]::Matches($terminal, 'FontSize"?\s*(=|Value=)\s*"[0-9.]+"') | ForEach-Object { $_.Value })
+    Test-WinToolExpectation -Condition ($literal.Count -eq 0) -Message ("Terminal markup uses the shared text sizes, not numbers: " + ($literal -join ", "))
+    $titles = @([regex]::Matches($terminal, 'FontSizeTitle')).Count
+    Test-WinToolExpectation -Condition ($titles -eq 1) -Message "Only the Terminal page title uses FontSizeTitle."
+    Test-WinToolExpectation -Condition ($terminal -notmatch 'SwitchToggle' -and $terminal -notmatch 'LayoutTransform') -Message "Terminal checkboxes use the shared rounded checkbox, unscaled."
+    Test-WinToolExpectation -Condition ($terminal -notmatch '<Style[^>]*TargetType="CheckBox"') -Message "The Terminal page does not define its own checkbox style."
+    $view = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/TerminalView.ps1"))
+    $sizes = @([regex]::Matches($view, '(FontSize\s*=\s*[0-9]|-Size\s+[0-9])') | ForEach-Object { $_.Value })
+    Test-WinToolExpectation -Condition ($sizes.Count -eq 0) -Message ("Terminal code uses FontSizeBody, not fixed sizes: " + ($sizes -join ", "))
+    Test-WinToolExpectation -Condition ($view -notmatch 'SwitchToggle') -Message "Terminal extras use the shared rounded checkbox."
+    # The live sample is the one exception: it follows the chosen terminal font size.
+    Test-WinToolExpectation -Condition ($view -match '\$sample\.FontSize = \[Math\]::Round\(\$size') -Message "The live preview follows the chosen terminal font size."
 }
 
 if ($script:WinToolFailures.Count -gt 0) {

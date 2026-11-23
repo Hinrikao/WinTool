@@ -638,141 +638,393 @@
           </ScrollViewer>
         </Grid>
 
-        <ScrollViewer x:Name="ViewTerminal" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
-          <StackPanel x:Name="TerminalPage" Margin="20,14,20,0">
-            <StackPanel.Resources>
-              <Style x:Key="TerminalCard" TargetType="Border">
-                <Setter Property="Background" Value="{DynamicResource BrushCard}"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource BrushLine}"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="CornerRadius" Value="10"/>
-                <Setter Property="Padding" Value="15,12,15,0"/>
-              </Style>
-              <Style x:Key="TerminalCardTitle" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="14"/>
-                <Setter Property="FontWeight" Value="Bold"/>
-                <Setter Property="Height" Value="22"/>
-                <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-              </Style>
-              <Style x:Key="TerminalLabel" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="FontWeight" Value="Bold"/>
-                <Setter Property="Height" Value="18"/>
-                <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-              </Style>
-              <Style x:Key="TerminalSearch" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                <Setter Property="Height" Value="24"/>
-                <Setter Property="FontSize" Value="11"/>
-                <Setter Property="Padding" Value="8,0"/>
-              </Style>
-              <Style x:Key="TerminalHint" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="11"/>
-                <Setter Property="Margin" Value="10,0,0,0"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="IsHitTestVisible" Value="False"/>
-                <Setter Property="Foreground" Value="{DynamicResource BrushHint}"/>
-              </Style>
-              <Style x:Key="TerminalThemeItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                <Setter Property="FontSize" Value="11"/>
-                <Setter Property="Height" Value="18"/>
-                <Setter Property="Padding" Value="9,1"/>
-              </Style>
-              <Style x:Key="TerminalFontItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                <Setter Property="FontSize" Value="11"/>
-                <Setter Property="Height" Value="20"/>
-                <Setter Property="Padding" Value="9,2"/>
-              </Style>
-            </StackPanel.Resources>
-            <TextBlock Text="Terminal" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-            <StackPanel Orientation="Horizontal" Margin="0,4,0,11" TextElement.FontSize="12" TextElement.Foreground="{DynamicResource BrushMuted}">
-              <RadioButton x:Name="TerminalModeSimple" GroupName="TerminalMode" Content="Simple" IsChecked="True" Margin="0,0,16,0" Foreground="{DynamicResource BrushMuted}" ToolTip="A recommended setup in one click."/>
-              <RadioButton x:Name="TerminalModeAdvanced" GroupName="TerminalMode" Content="Advanced" Foreground="{DynamicResource BrushMuted}" ToolTip="Choose the prompt, font, extras, and color scheme."/>
-            </StackPanel>
+        <Grid x:Name="ViewTerminal" Visibility="Collapsed" TextElement.FontSize="{DynamicResource FontSizeBody}">
+          <Grid.Resources>
+            <Style x:Key="TerminalCard" TargetType="Border">
+              <Setter Property="Background" Value="{DynamicResource BrushCard}"/>
+              <Setter Property="BorderBrush" Value="{DynamicResource BrushLine}"/>
+              <Setter Property="BorderThickness" Value="1"/>
+              <Setter Property="CornerRadius" Value="8"/>
+              <Setter Property="Padding" Value="12"/>
+            </Style>
+            <Style x:Key="TerminalStep" TargetType="TextBlock">
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="FontWeight" Value="Bold"/>
+              <Setter Property="Margin" Value="0,0,8,0"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushAccent}"/>
+            </Style>
+            <Style x:Key="TerminalCardTitle" TargetType="TextBlock">
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="FontWeight" Value="Bold"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+            </Style>
+            <Style x:Key="TerminalCount" TargetType="TextBlock">
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Margin" Value="8,0,0,0"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+            </Style>
+            <Style x:Key="TerminalSearch" TargetType="TextBox" BasedOn="{StaticResource PageSearch}">
+              <Setter Property="Padding" Value="30,0,9,0"/>
+            </Style>
+            <Style x:Key="TerminalHint" TargetType="TextBlock">
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Margin" Value="32,0,0,0"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="IsHitTestVisible" Value="False"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushHint}"/>
+            </Style>
+            <Style x:Key="TerminalGlyph" TargetType="TextBlock">
+              <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <!-- Simple / Advanced as one segmented control, 32 px tall. -->
+            <Style x:Key="TerminalSegment" TargetType="RadioButton">
+              <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Height" Value="30"/>
+              <Setter Property="Cursor" Value="Hand"/>
+              <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="7" Padding="16,0">
+                      <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+                      </Trigger>
+                      <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+            <!-- Rows in the prompt and theme lists: the accent border marks the choice. -->
+            <Style x:Key="TerminalRow" TargetType="ListBoxItem">
+              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Padding" Value="8,7"/>
+              <Setter Property="Cursor" Value="Hand"/>
+              <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+              <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                      <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+                      </Trigger>
+                      <Trigger Property="IsSelected" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                      </Trigger>
+                      <Trigger Property="IsEnabled" Value="False">
+                        <Setter TargetName="Bd" Property="Background" Value="Transparent"/>
+                        <Setter Property="Cursor" Value="Arrow"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+            <Style x:Key="TerminalList" TargetType="ListBox">
+              <Setter Property="Background" Value="Transparent"/>
+              <Setter Property="BorderThickness" Value="0"/>
+              <Setter Property="Padding" Value="0"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+              <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+              <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+              <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+              <Setter Property="VirtualizingStackPanel.IsVirtualizing" Value="True"/>
+              <Setter Property="VirtualizingStackPanel.VirtualizationMode" Value="Recycling"/>
+            </Style>
+            <!-- A dark drop-down for the font and the size, as tall as a search box. -->
+            <Style x:Key="TerminalComboToggle" TargetType="ToggleButton">
+              <Setter Property="Focusable" Value="False"/>
+              <Setter Property="Cursor" Value="Hand"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Bd" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushInputBorder}" BorderThickness="1" CornerRadius="6">
+                      <TextBlock Text="&#xE70D;" Style="{StaticResource TerminalGlyph}" Margin="0,0,10,0" HorizontalAlignment="Right" Foreground="{DynamicResource BrushMuted}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+            <Style x:Key="TerminalCombo" TargetType="ComboBox">
+              <Setter Property="Height" Value="34"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+              <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+              <Setter Property="IsTextSearchEnabled" Value="True"/>
+              <Setter Property="ItemsPanel">
+                <Setter.Value>
+                  <ItemsPanelTemplate>
+                    <VirtualizingStackPanel/>
+                  </ItemsPanelTemplate>
+                </Setter.Value>
+              </Setter>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                      <ToggleButton Style="{StaticResource TerminalComboToggle}" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                      <ContentPresenter Margin="10,0,30,0" IsHitTestVisible="False" VerticalAlignment="Center" HorizontalAlignment="Left" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
+                      <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade" IsOpen="{TemplateBinding IsDropDownOpen}">
+                        <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="6" Padding="2" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                          <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                          </ScrollViewer>
+                        </Border>
+                      </Popup>
+                    </Grid>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+            <Style x:Key="TerminalComboItem" TargetType="ComboBoxItem">
+              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Cursor" Value="Hand"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="10,8">
+                      <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsHighlighted" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+                      </Trigger>
+                      <Trigger Property="IsSelected" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+          </Grid.Resources>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <!-- Header: title, Simple / Advanced, and the promise that nothing changes yet. -->
+          <DockPanel Grid.Row="0" Margin="20,15,20,0" LastChildFill="False">
+            <TextBlock DockPanel.Dock="Left" Text="Terminal" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+            <Border DockPanel.Dock="Left" Margin="16,0,0,0" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="TerminalModeSimple" GroupName="TerminalMode" Content="Simple" IsChecked="True" Style="{StaticResource TerminalSegment}" ToolTip="A recommended setup in one click."/>
+                <RadioButton x:Name="TerminalModeAdvanced" GroupName="TerminalMode" Content="Advanced" Style="{StaticResource TerminalSegment}" ToolTip="Choose the prompt, theme, font, color scheme, and extras."/>
+              </StackPanel>
+            </Border>
+            <TextBlock DockPanel.Dock="Right" Text="Nothing changes until you press Apply" VerticalAlignment="Center" Foreground="{DynamicResource BrushMuted}"/>
+          </DockPanel>
+          <TextBlock x:Name="TerminalSubtitle" Grid.Row="1" Margin="20,6,20,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="A recommended setup in one click. Switch to Advanced to choose each part."/>
+
+          <ScrollViewer x:Name="TerminalSimpleScroll" Grid.Row="2" Margin="20,12,20,10" VerticalScrollBarVisibility="Auto">
             <StackPanel x:Name="TerminalSimpleHost"/>
-            <Grid x:Name="TerminalAdvancedHost" Visibility="Collapsed">
+          </ScrollViewer>
+
+          <!-- Advanced: prompt engines | themes | preview with font and colors; extras under the last two.
+               When the window is short the body scrolls instead of squeezing the cards. -->
+          <ScrollViewer x:Name="TerminalBodyScroll" Grid.Row="2" Margin="20,12,20,10" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid x:Name="TerminalAdvancedHost">
               <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="TerminalColumnLeft" Width="520*" MinWidth="330"/>
-                <ColumnDefinition x:Name="TerminalColumnGap" Width="15"/>
-                <ColumnDefinition x:Name="TerminalColumnRight" Width="540*" MinWidth="330"/>
+                <ColumnDefinition x:Name="TerminalColumnLeft" Width="230"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition x:Name="TerminalColumnMiddle" Width="*"/>
+                <ColumnDefinition x:Name="TerminalColumnGap" Width="12"/>
+                <ColumnDefinition x:Name="TerminalColumnRight" Width="*"/>
               </Grid.ColumnDefinitions>
               <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition x:Name="TerminalRowMain" Height="*"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
 
-              <Border x:Name="TerminalCardPrompt" Grid.Row="0" Grid.Column="0" Style="{StaticResource TerminalCard}" Height="330" Margin="0,0,0,15">
-                <StackPanel>
-                  <TextBlock Text="1. Prompt" Style="{StaticResource TerminalCardTitle}"/>
-                  <UniformGrid x:Name="TerminalPromptHost" Columns="3" Margin="0,0,-8,0"/>
-                  <Grid Margin="0,0,0,2">
-                    <TextBlock Text="Theme" Style="{StaticResource TerminalLabel}" HorizontalAlignment="Left"/>
-                    <Button x:Name="TerminalRefresh" Content="Refresh from GitHub" Style="{StaticResource QuietButton}" FontSize="10" Padding="4,0" Margin="0" Height="18" HorizontalAlignment="Right" Foreground="{DynamicResource BrushMuted}" ToolTip="Refresh the Nerd Fonts and Oh My Posh lists from GitHub."/>
-                  </Grid>
-                  <Grid Margin="0,0,0,6">
-                    <TextBox x:Name="TerminalThemeSearch" Style="{StaticResource TerminalSearch}" AutomationProperties.Name="Search prompt themes"/>
-                    <TextBlock x:Name="TerminalThemeSearchHint" Text="Search themes&#x2026;" Style="{StaticResource TerminalHint}"/>
-                  </Grid>
-                  <Grid>
-                    <ListBox x:Name="TerminalStyleList" Height="78" ItemContainerStyle="{StaticResource TerminalThemeItem}" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-                    <TextBlock x:Name="TerminalStyleNote" Text="Themes" FontSize="11" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16,0" IsHitTestVisible="False"/>
-                  </Grid>
-                </StackPanel>
-              </Border>
-
-              <Border x:Name="TerminalCardFont" Grid.Row="0" Grid.Column="2" Style="{StaticResource TerminalCard}" Height="330" Margin="0,0,0,15">
-                <StackPanel>
-                  <TextBlock Text="2. Font" Style="{StaticResource TerminalCardTitle}"/>
-                  <Grid Margin="0,0,0,6">
-                    <TextBox x:Name="TerminalFontSearch" Style="{StaticResource TerminalSearch}" Padding="8,0,130,0" AutomationProperties.Name="Search fonts"/>
-                    <TextBlock x:Name="TerminalFontSearchHint" Text="Search fonts&#x2026;" Style="{StaticResource TerminalHint}"/>
-                    <CheckBox x:Name="TerminalFontNerdOnly" Content="Nerd Fonts only" IsChecked="True" FontSize="11" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" LayoutTransform="0.85,0,0,0.85,0,0"/>
-                  </Grid>
-                  <ListBox x:Name="TerminalFontList" Height="150" ItemContainerStyle="{StaticResource TerminalFontItem}" ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
-                  <TextBlock Text="Preview" Style="{StaticResource TerminalLabel}" Margin="0,0,0,2"/>
-                  <Border x:Name="TerminalFontPreview" Background="{DynamicResource BrushLog}" CornerRadius="5" Padding="13,8" Height="70" ClipToBounds="True">
-                    <TextBlock x:Name="TerminalFontSample" Text="Font preview" FontSize="13" Foreground="{DynamicResource BrushLogText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+              <!-- 1. Prompt engine, grouped by the shell it runs in. -->
+              <Border x:Name="TerminalCardPrompt" Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Style="{StaticResource TerminalCard}">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MinHeight="108"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Left" Text="1" Style="{StaticResource TerminalStep}"/>
+                    <TextBlock x:Name="TerminalPromptCount" DockPanel.Dock="Right" Text="8 engines" Style="{StaticResource TerminalCount}"/>
+                    <TextBlock Text="Prompt" Style="{StaticResource TerminalCardTitle}"/>
+                  </DockPanel>
+                  <ListBox x:Name="TerminalPromptList" Grid.Row="1" Style="{StaticResource TerminalList}" AutomationProperties.Name="Prompt engine"/>
+                  <Border Grid.Row="2" BorderBrush="{DynamicResource BrushLine}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0">
+                    <StackPanel>
+                      <TextBlock x:Name="TerminalPromptName" FontWeight="Bold" TextWrapping="Wrap" Foreground="{DynamicResource BrushInk}"/>
+                      <TextBlock x:Name="TerminalPromptAbout" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}"/>
+                    </StackPanel>
                   </Border>
-                </StackPanel>
+                </Grid>
               </Border>
 
-              <Border x:Name="TerminalCardExtras" Grid.Row="1" Grid.Column="0" Style="{StaticResource TerminalCard}" Height="150" Margin="0,0,0,15">
-                <StackPanel>
-                  <TextBlock Text="3. Extras" Style="{StaticResource TerminalCardTitle}"/>
-                  <UniformGrid x:Name="TerminalExtrasHost" Columns="2" Margin="0,6,0,0"/>
-                </StackPanel>
+              <!-- 2. Theme, preset, or style of the chosen engine. -->
+              <Border x:Name="TerminalCardTheme" Grid.Row="0" Grid.Column="2" Style="{StaticResource TerminalCard}">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MinHeight="132"/>
+                  </Grid.RowDefinitions>
+                  <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Left" Text="2" Style="{StaticResource TerminalStep}"/>
+                    <TextBlock x:Name="TerminalThemeCount" DockPanel.Dock="Right" Text="" Style="{StaticResource TerminalCount}"/>
+                    <TextBlock x:Name="TerminalThemeTitle" Text="Theme" Style="{StaticResource TerminalCardTitle}"/>
+                  </DockPanel>
+                  <Grid Grid.Row="1" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="TerminalThemeSearch" Grid.Column="0" Style="{StaticResource TerminalSearch}" AutomationProperties.Name="Search prompt themes"/>
+                    <TextBlock Grid.Column="0" Text="&#xE721;" Style="{StaticResource TerminalGlyph}" Margin="10,0,0,0" IsHitTestVisible="False" Foreground="{DynamicResource BrushHint}"/>
+                    <TextBlock x:Name="TerminalThemeSearchHint" Grid.Column="0" Text="Search themes&#x2026;" Style="{StaticResource TerminalHint}" TextTrimming="CharacterEllipsis"/>
+                    <Button x:Name="TerminalRefresh" Grid.Column="1" Style="{StaticResource ChipButton}" Width="32" Margin="6,0,0,0" ToolTip="Refresh the Nerd Fonts and Oh My Posh lists from GitHub." AutomationProperties.Name="Refresh lists from GitHub">
+                      <TextBlock Text="&#xE72C;" Style="{StaticResource TerminalGlyph}" Margin="-6,0"/>
+                    </Button>
+                  </Grid>
+                  <WrapPanel Grid.Row="2" Margin="0,0,0,2">
+                    <RadioButton x:Name="TerminalFilterAll" GroupName="TerminalThemeFilter" Content="All" IsChecked="True" Style="{StaticResource ChipRadio}" Margin="0,0,6,6" Tag="all"/>
+                    <RadioButton x:Name="TerminalFilterPowerline" GroupName="TerminalThemeFilter" Content="Powerline" Style="{StaticResource ChipRadio}" Margin="0,0,6,6" Tag="powerline" ToolTip="Themes drawn as colored blocks."/>
+                    <RadioButton x:Name="TerminalFilterMinimal" GroupName="TerminalThemeFilter" Content="Minimal" Style="{StaticResource ChipRadio}" Margin="0,0,6,6" Tag="minimal" ToolTip="Plain colored text, no blocks."/>
+                    <RadioButton x:Name="TerminalFilterNoNerd" GroupName="TerminalThemeFilter" Content="No Nerd Font" Style="{StaticResource ChipRadio}" Margin="0,0,0,6" Tag="no-nerd" ToolTip="No Nerd Font needed: themes that look right with any font."/>
+                  </WrapPanel>
+                  <Border Grid.Row="3" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="6" Background="{DynamicResource BrushInput}" ClipToBounds="True">
+                    <Grid>
+                      <ListBox x:Name="TerminalStyleList" Style="{StaticResource TerminalList}" AutomationProperties.Name="Prompt theme"/>
+                      <TextBlock x:Name="TerminalStyleNote" Text="Themes" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16,0" IsHitTestVisible="False"/>
+                    </Grid>
+                  </Border>
+                </Grid>
               </Border>
 
-              <Border x:Name="TerminalCardScheme" Grid.Row="1" Grid.Column="2" Style="{StaticResource TerminalCard}" Height="150" Margin="0,0,0,15">
+              <!-- Right column: live preview, then font and colors. -->
+              <Grid x:Name="TerminalSideColumn" Grid.Row="0" Grid.Column="4">
+                <Grid.RowDefinitions>
+                  <RowDefinition x:Name="TerminalRowPreview" Height="*" MinHeight="190"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Border x:Name="TerminalCardPreview" Grid.Row="0" Style="{StaticResource TerminalCard}" Padding="0" ClipToBounds="True" ToolTip="Live preview: sample output, not a real shell.">
+                  <Grid>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="*"/>
+                      <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Height="36" Background="{DynamicResource BrushSidebar}" CornerRadius="8,8,0,0" Padding="8,0,10,0">
+                      <DockPanel LastChildFill="False">
+                        <Border x:Name="TerminalPreviewTab" DockPanel.Dock="Left" Height="30" VerticalAlignment="Bottom" CornerRadius="6,6,0,0" Padding="12,0" Background="#1B2230">
+                          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE756;" Style="{StaticResource TerminalGlyph}" Margin="0,0,8,0" Foreground="{DynamicResource BrushInk}"/>
+                            <TextBlock x:Name="TerminalPreviewTabText" Text="PowerShell" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+                          </StackPanel>
+                        </Border>
+                        <TextBlock DockPanel.Dock="Left" Text="+   &#x2304;" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushMuted}"/>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" TextElement.Foreground="{DynamicResource BrushHint}">
+                          <TextBlock Text="&#xE921;" Style="{StaticResource TerminalGlyph}" Margin="0,0,16,0"/>
+                          <TextBlock Text="&#xE922;" Style="{StaticResource TerminalGlyph}" Margin="0,0,16,0"/>
+                          <TextBlock Text="&#xE8BB;" Style="{StaticResource TerminalGlyph}"/>
+                        </StackPanel>
+                      </DockPanel>
+                    </Border>
+                    <!-- The sample text uses the chosen terminal font size: it is content, not interface text. -->
+                    <Border x:Name="TerminalFontPreview" Grid.Row="1" Background="#1B2230" Padding="14,10" ClipToBounds="True">
+                      <TextBlock x:Name="TerminalFontSample" Text="Font preview" Typography.StandardLigatures="True" Typography.ContextualAlternates="True" LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource BrushLogText}" TextWrapping="NoWrap" VerticalAlignment="Bottom"/>
+                    </Border>
+                    <Border Grid.Row="2" BorderBrush="{DynamicResource BrushLine}" BorderThickness="0,1,0,0" Padding="12,8">
+                      <TextBlock x:Name="TerminalPreviewInfo" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}"/>
+                    </Border>
+                  </Grid>
+                </Border>
+
+                <!-- 3. Font and colors. -->
+                <Border x:Name="TerminalCardFont" Grid.Row="1" Style="{StaticResource TerminalCard}" Margin="0,12,0,0">
+                  <StackPanel>
+                    <DockPanel Margin="0,0,0,8">
+                      <TextBlock DockPanel.Dock="Left" Text="3" Style="{StaticResource TerminalStep}"/>
+                      <CheckBox x:Name="TerminalFontNerdOnly" DockPanel.Dock="Right" Content="Nerd Fonts only" IsChecked="True" Margin="8,0,0,0" AutomationProperties.Name="Nerd Fonts only" ToolTip="Nerd Fonts carry the icons that most prompt themes use."/>
+                      <TextBlock Text="Font and colors" Style="{StaticResource TerminalCardTitle}"/>
+                    </DockPanel>
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="88"/>
+                      </Grid.ColumnDefinitions>
+                      <ComboBox x:Name="TerminalFontList" Grid.Column="0" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" MaxDropDownHeight="360" AutomationProperties.Name="Terminal font" ToolTip="Type a name to jump to it."/>
+                      <ComboBox x:Name="TerminalFontSize" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" AutomationProperties.Name="Font size"/>
+                    </Grid>
+                    <TextBlock x:Name="TerminalFontCount" Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text=""/>
+                    <UniformGrid x:Name="TerminalSchemeHost" Columns="4" Rows="1" Margin="0,0,-6,0"/>
+                    <TextBlock x:Name="TerminalFontLigatureNote" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="Font ligatures are always on in every Terminal profile." ToolTip="WinTool sets calt and liga in profiles.defaults.font.features in the Windows Terminal settings.json and keeps your other font features."/>
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <!-- 4. Extras, under the theme list and the preview. -->
+              <Border x:Name="TerminalCardExtras" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Style="{StaticResource TerminalCard}" Margin="0,12,0,0">
                 <StackPanel>
-                  <TextBlock Text="4. Color scheme" Style="{StaticResource TerminalCardTitle}"/>
-                  <UniformGrid x:Name="TerminalSchemeHost" Columns="4" Margin="0,3,-10,0"/>
+                  <DockPanel Margin="0,0,0,4">
+                    <TextBlock DockPanel.Dock="Left" Text="4" Style="{StaticResource TerminalStep}"/>
+                    <TextBlock x:Name="TerminalExtrasCount" DockPanel.Dock="Right" Text="" Style="{StaticResource TerminalCount}"/>
+                    <TextBlock Text="Extras" Style="{StaticResource TerminalCardTitle}"/>
+                  </DockPanel>
+                  <UniformGrid x:Name="TerminalExtrasHost" Columns="2" Margin="0,0,-16,0"/>
                 </StackPanel>
               </Border>
             </Grid>
-            <Border x:Name="TerminalSummaryCard" Style="{StaticResource TerminalCard}" MinHeight="110" Padding="15,12,15,12" Margin="0">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="*"/>
-                  <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="What will be installed and changed" Style="{StaticResource TerminalCardTitle}"/>
-                <UniformGrid x:Name="TerminalSummaryHost" Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Columns="1" Margin="0,2,16,0" VerticalAlignment="Top"/>
-                <TextBlock x:Name="TerminalSummary" Grid.Row="1" Grid.Column="0" Visibility="Collapsed" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}"/>
-                <StackPanel Grid.Row="1" Grid.RowSpan="2" Grid.Column="1" VerticalAlignment="Bottom" HorizontalAlignment="Right">
-                  <CheckBox x:Name="TerminalEnabled" Content="Replay with a saved profile" IsChecked="True" FontSize="11" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" Margin="0,0,0,8" LayoutTransform="0.85,0,0,0.85,0,0" ToolTip="Include this terminal setup when a saved WinTool profile is replayed."/>
-                  <Button x:Name="TerminalSetup" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="12" FontWeight="Bold" Width="145" Height="34" Padding="0" Margin="0" HorizontalAlignment="Right"/>
-                </StackPanel>
-              </Grid>
-            </Border>
-          </StackPanel>
-        </ScrollViewer>
+          </ScrollViewer>
+
+          <!-- Fixed action bar: what will be installed (+) and changed (~), then Apply. -->
+          <Border x:Name="TerminalSummaryCard" Grid.Row="3" Margin="20,0,20,10" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="What will happen" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+              <CheckBox x:Name="TerminalEnabled" Grid.Row="0" Grid.Column="1" Content="Include in saved profiles" IsChecked="True" Margin="14,0,16,0" ToolTip="Include this terminal setup when a saved WinTool profile is replayed."/>
+              <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="2" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" Height="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
+              <WrapPanel x:Name="TerminalSummaryHost" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,8,0,0"/>
+              <TextBlock x:Name="TerminalSummary" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Visibility="Collapsed" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}"/>
+            </Grid>
+          </Border>
+        </Grid>
 
         <ScrollViewer x:Name="ViewUpdates" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
           <StackPanel Margin="24,22,24,12">

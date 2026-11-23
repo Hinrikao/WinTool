@@ -160,6 +160,7 @@ function Get-WinToolPlanCommand {
 # $null answer means "run it here", so every type listed here needs a handler.
 $script:WinToolLocalStepHandlers = [ordered]@{
     "font" = "Invoke-WinToolFontStep"
+    "ligatures" = "Invoke-WinToolLigatureStep"
     "profile" = "Invoke-WinToolProfileStep"
     "scheme" = "Invoke-WinToolSchemeStep"
     "starship-preset" = "Invoke-WinToolStarshipPresetStep"
@@ -175,7 +176,15 @@ function Test-WinToolLocalStepType {
 
 function Invoke-WinToolFontStep {
     param($Step)
-    Invoke-WinToolTerminalFont -Face ([string]$Step.Face) -Match ([string]$Step.Match)
+    $size = 12
+    if ($null -ne $Step.PSObject.Properties["Size"] -and [int]$Step.Size -gt 0) { $size = [int]$Step.Size }
+    Invoke-WinToolTerminalFont -Face ([string]$Step.Face) -Match ([string]$Step.Match) -Size $size
+}
+
+function Invoke-WinToolLigatureStep {
+    param($Step)
+    $null = $Step
+    Invoke-WinToolTerminalLigature
 }
 
 function Invoke-WinToolProfileStep {

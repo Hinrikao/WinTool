@@ -4,753 +4,740 @@
     {
       "id": "1_shell",
       "file": "1_shell.omp.json",
-      "name": "1 shell"
+      "name": "1 shell",
+      "preview": [{"text": "henrique ", "fg": "#FFBEBC"}, {"text": "23:14 ", "fg": "#BC93FF"}, {"text": "main ", "fg": "#EE79D1"}]
     },
     {
       "id": "M365Princess",
       "file": "M365Princess.omp.json",
-      "name": "M365Princess"
+      "name": "M365Princess",
+      "preview": [{"text": "\ue0b6", "fg": "#9A348E"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#9A348E"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#DA627D"}, {"text": "\ue0b0", "fg": "#DA627D", "bg": "#FCA17D"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#FCA17D"}, {"text": "\ue0b0", "fg": "#FCA17D", "bg": "#86BBD8"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#86BBD8"}, {"text": "\ue0b0", "fg": "#86BBD8"}]
     },
     {
       "id": "agnoster.minimal",
       "file": "agnoster.minimal.omp.json",
-      "name": "agnoster minimal"
+      "name": "agnoster minimal",
+      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "\ue0b0 ", "fg": "#007ACC"}]
     },
     {
       "id": "agnoster",
       "file": "agnoster.omp.json",
       "name": "agnoster",
-      "preview": [
-        {
-          "text": " # ",
-          "color": "#1B2230"
-        },
-        {
-          "text": " ~/src ",
-          "color": "#0E8F78"
-        },
-        {
-          "text": " main ",
-          "color": "#2F6FED"
-        }
-      ]
+      "preview": [{"text": " henrique ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
     },
     {
       "id": "agnosterplus",
       "file": "agnosterplus.omp.json",
-      "name": "agnosterplus"
+      "name": "agnosterplus",
+      "preview": [{"text": " henrique ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
     },
     {
       "id": "aliens",
       "file": "aliens.omp.json",
-      "name": "aliens"
+      "name": "aliens",
+      "preview": [{"text": "\ue0b6", "fg": "#61AFEF"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#61AFEF"}, {"text": "\ue0b0", "fg": "#61AFEF"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#FF6471"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#FF6471"}, {"text": " 3.12 ", "fg": "#FFFFFF", "bg": "#FF6471"}, {"text": "\ue0b4", "fg": "#FF6471"}]
     },
     {
       "id": "amro",
       "file": "amro.omp.json",
-      "name": "amro"
+      "name": "amro",
+      "preview": [{"text": "henrique ", "fg": "#45F1C2"}, {"text": "~/src ", "fg": "#0CA0D8"}, {"text": "main ", "fg": "#14A5AE"}]
     },
     {
       "id": "atomic",
       "file": "atomic.omp.json",
       "name": "atomic",
-      "preview": [
-        {
-          "text": "\u276f ",
-          "color": "#F07178"
-        },
-        {
-          "text": "~/src",
-          "color": "#A7B3C9"
-        },
-        {
-          "text": " git",
-          "color": "#3DDC97"
-        }
-      ]
+      "preview": [{"text": "\u256d\u2500\ue0b6", "fg": "#0077C2"}, {"text": " pwsh ", "fg": "#FFFFFF", "bg": "#0077C2"}, {"text": " ~/src ", "fg": "#2D3436", "bg": "#FF9248"}, {"text": "\ue0b0", "fg": "#FF9248", "bg": "#FFFB38"}, {"text": " main ", "fg": "#011627", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38", "bg": "#83769C"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#83769C"}, {"text": "\ue0b4", "fg": "#83769C"}]
     },
     {
       "id": "atomicBit",
       "file": "atomicBit.omp.json",
-      "name": "atomicBit"
+      "name": "atomicBit",
+      "preview": [{"text": "henrique "}, {"text": "~/src ", "fg": "#FF5555"}]
     },
     {
       "id": "avit",
       "file": "avit.omp.json",
-      "name": "avit"
+      "name": "avit",
+      "preview": [{"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#C2C206"}]
     },
     {
       "id": "blue-owl",
       "file": "blue-owl.omp.json",
-      "name": "blue owl"
+      "name": "blue owl",
+      "preview": [{"text": "\ue0b0", "fg": "#121826", "bg": "#01579B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#01579B"}, {"text": "\ue0b0", "fg": "#01579B"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#49404F"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#49404F"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#49404F"}, {"text": "\ue0b0", "fg": "#49404F"}]
     },
     {
       "id": "blueish",
       "file": "blueish.omp.json",
-      "name": "blueish"
+      "name": "blueish",
+      "preview": [{"text": " henrique ", "fg": "#26C6DA", "bg": "#546E7A"}, {"text": "\ue0b0", "fg": "#546E7A", "bg": "#A2BEEF"}, {"text": " 87% ", "fg": "#193549", "bg": "#A2BEEF"}, {"text": "\ue0b0", "fg": "#A2BEEF", "bg": "#14C2DD"}, {"text": " ~/src ", "fg": "#193549", "bg": "#14C2DD"}, {"text": "\ue0b0", "fg": "#14C2DD", "bg": "#A2C4E0"}, {"text": " main ", "fg": "#193549", "bg": "#A2C4E0"}, {"text": "\ue0b0", "fg": "#A2C4E0"}]
     },
     {
       "id": "bubbles",
       "file": "bubbles.omp.json",
-      "name": "bubbles"
+      "name": "bubbles",
+      "preview": [{"text": "\ue0b6", "fg": "#29315A"}, {"text": " 12ms ", "fg": "#AEA4BF", "bg": "#29315A"}, {"text": "\ue0b4 ", "fg": "#29315A"}, {"text": "\ue0b6", "fg": "#29315A"}, {"text": " \u276f ", "fg": "#7FD5EA", "bg": "#29315A"}, {"text": "\ue0b4", "fg": "#29315A"}]
     },
     {
       "id": "bubblesextra",
       "file": "bubblesextra.omp.json",
-      "name": "bubblesextra"
+      "name": "bubblesextra",
+      "preview": [{"text": "\ue0b6", "fg": "#29315A"}, {"text": " 12ms ", "fg": "#AEA4BF", "bg": "#29315A"}, {"text": "\ue0b4 ", "fg": "#29315A"}]
     },
     {
       "id": "bubblesline",
       "file": "bubblesline.omp.json",
-      "name": "bubblesline"
+      "name": "bubblesline",
+      "preview": [{"text": "\ue0b6", "fg": "#424242"}, {"text": " henrique ", "fg": "#9B6BDF", "bg": "#424242"}, {"text": "\ue0b4 ", "fg": "#424242"}]
     },
     {
       "id": "capr4n",
       "file": "capr4n.omp.json",
-      "name": "capr4n"
+      "name": "capr4n",
+      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#61AFEF"}, {"text": "\ue0b0", "fg": "#61AFEF"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
     },
     {
       "id": "catppuccin",
       "file": "catppuccin.omp.json",
-      "name": "catppuccin"
+      "name": "catppuccin",
+      "preview": [{"text": " henrique ", "fg": "#494D64", "bg": "#8AADF4"}, {"text": " ~/src ", "fg": "#494D64", "bg": "#F5BDE6"}, {"text": "\ue0b4", "fg": "#F5BDE6", "bg": "#B7BDF8"}, {"text": " main ", "fg": "#494D64", "bg": "#B7BDF8"}, {"text": "\ue0b4", "fg": "#B7BDF8"}]
     },
     {
       "id": "catppuccin_frappe",
       "file": "catppuccin_frappe.omp.json",
-      "name": "catppuccin frappe"
+      "name": "catppuccin frappe",
+      "preview": [{"text": "henrique ", "fg": "#8CAAEE"}, {"text": "~/src ", "fg": "#F4B8E4"}, {"text": "main ", "fg": "#BABBF1"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
     },
     {
       "id": "catppuccin_latte",
       "file": "catppuccin_latte.omp.json",
-      "name": "catppuccin latte"
+      "name": "catppuccin latte",
+      "preview": [{"text": "henrique ", "fg": "#1E66F5"}, {"text": "~/src ", "fg": "#EA76CB"}, {"text": "main ", "fg": "#7287FD"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
     },
     {
       "id": "catppuccin_macchiato",
       "file": "catppuccin_macchiato.omp.json",
-      "name": "catppuccin macchiato"
+      "name": "catppuccin macchiato",
+      "preview": [{"text": "henrique ", "fg": "#8AADF4"}, {"text": "~/src ", "fg": "#F5BDE6"}, {"text": "main ", "fg": "#B7BDF8"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
     },
     {
       "id": "catppuccin_mocha",
       "file": "catppuccin_mocha.omp.json",
       "name": "catppuccin mocha",
-      "preview": [
-        {
-          "text": "~/src",
-          "color": "#CBA6F7"
-        },
-        {
-          "text": " main",
-          "color": "#A6E3A1"
-        },
-        {
-          "text": "\n\u276f ",
-          "color": "#89B4FA"
-        }
-      ]
+      "preview": [{"text": "henrique ", "fg": "#89B4FA"}, {"text": "~/src ", "fg": "#F5C2E7"}, {"text": "main ", "fg": "#B4BEFE"}, {"text": "\uf105 ", "fg": "#ACB0BE"}]
     },
     {
       "id": "cert",
       "file": "cert.omp.json",
-      "name": "cert"
+      "name": "cert",
+      "preview": [{"text": "\ue0b6", "fg": "#E36464"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#E36464"}, {"text": "\ue0c6", "fg": "#E36464"}, {"text": "\ue0c7", "fg": "#13A10E"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#13A10E"}, {"text": "\ue0c6", "fg": "#13A10E"}, {"text": "\ue0c7", "fg": "#61D6D6"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#61D6D6"}, {"text": "\ue0c6", "fg": "#61D6D6"}, {"text": "\ue0c7", "fg": "#B4009E"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": "\ue0c6", "fg": "#B4009E"}]
     },
     {
       "id": "chips",
       "file": "chips.omp.json",
-      "name": "chips"
+      "name": "chips",
+      "preview": [{"text": "~/src "}, {"text": " \ue0b6", "fg": "#66FFA6"}, {"text": " main ", "fg": "#212121", "bg": "#66FFA6"}, {"text": "\ue0b4", "fg": "#66FFA6"}]
     },
     {
       "id": "cinnamon",
       "file": "cinnamon.omp.json",
-      "name": "cinnamon"
+      "name": "cinnamon",
+      "preview": [{"text": "\ue0b6", "fg": "#07585C"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#07585C"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}]
     },
     {
       "id": "clean-detailed",
       "file": "clean-detailed.omp.json",
-      "name": "clean detailed"
+      "name": "clean detailed",
+      "preview": [{"text": "\ue0b2", "fg": "#FEF5ED"}, {"text": " pwsh ", "fg": "#011627", "bg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#121826", "bg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#575656"}, {"text": " 12ms ", "fg": "#D6DEEB", "bg": "#575656"}, {"text": "\ue0b0", "fg": "#575656"}]
     },
     {
       "id": "cloud-context",
       "file": "cloud-context.omp.json",
-      "name": "cloud context"
+      "name": "cloud context",
+      "preview": [{"text": "23:14 ", "fg": "#DD0033"}, {"text": "dev ", "fg": "#FFBB00"}, {"text": "dev ", "fg": "#4285F4"}, {"text": "dev ", "fg": "#4285F4"}]
     },
     {
       "id": "cloud-native-azure",
       "file": "cloud-native-azure.omp.json",
-      "name": "cloud native azure"
+      "name": "cloud native azure",
+      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
     },
     {
       "id": "cobalt2",
       "file": "cobalt2.omp.json",
-      "name": "cobalt2"
+      "name": "cobalt2",
+      "preview": [{"text": "\ue0b6", "fg": "#1478DB"}, {"text": " ~/src ", "fg": "#000000", "bg": "#1478DB"}, {"text": "\ue0b0", "fg": "#1478DB"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#3AD900"}, {"text": " main ", "fg": "#000000", "bg": "#3AD900"}, {"text": "\ue0b4", "fg": "#3AD900"}]
     },
     {
       "id": "craver",
       "file": "craver.omp.json",
-      "name": "craver"
+      "name": "craver",
+      "preview": [{"text": " 23:14 ", "fg": "#FFBB00", "bg": "#242424"}, {"text": "\ue0c4", "fg": "#242424", "bg": "#242424"}, {"text": " ~/src ", "fg": "#33DD2D", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " main ", "fg": "#3A86FF", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#0184BC"}, {"text": " 8.0 ", "fg": "#FFFFFF", "bg": "#0184BC"}, {"text": "\ue0c4", "fg": "#0184BC"}]
     },
     {
       "id": "darkblood",
       "file": "darkblood.omp.json",
-      "name": "darkblood"
+      "name": "darkblood",
+      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}]
     },
     {
       "id": "di4am0nd",
       "file": "di4am0nd.omp.json",
-      "name": "di4am0nd"
+      "name": "di4am0nd",
+      "preview": [{"text": "henrique ", "fg": "#FFBD00"}, {"text": "~/src ", "fg": "#00C6F7"}, {"text": "main ", "fg": "#F62F2E"}, {"text": "20.11 ", "fg": "#98C379"}]
     },
     {
       "id": "dracula",
       "file": "dracula.omp.json",
       "name": "dracula",
-      "preview": [
-        {
-          "text": "\u276f ",
-          "color": "#FF79C6"
-        },
-        {
-          "text": "~/src",
-          "color": "#8BE9FD"
-        },
-        {
-          "text": " main",
-          "color": "#50FA7B"
-        }
-      ]
+      "preview": [{"text": "\ue0b6", "fg": "#6272A4"}, {"text": " henrique ", "fg": "#F8F8F2", "bg": "#6272A4"}, {"text": " ~/src ", "fg": "#F8F8F2", "bg": "#BD93F9"}, {"text": "\ue0b0", "fg": "#BD93F9", "bg": "#FFB86C"}, {"text": " main ", "fg": "#F8F8F2", "bg": "#FFB86C"}, {"text": "\ue0b0", "fg": "#FFB86C", "bg": "#8BE9FD"}, {"text": " 20.11 ", "fg": "#F8F8F2", "bg": "#8BE9FD"}, {"text": "\ue0b0", "fg": "#8BE9FD"}]
     },
     {
       "id": "easy-term",
       "file": "easy-term.omp.json",
-      "name": "easy term"
+      "name": "easy term",
+      "preview": [{"text": " \ud83c\udfe0 ", "fg": "#FFFFFF", "bg": "#DA627D"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#8A62DA"}, {"text": "\ue0b0", "fg": "#8A62DA", "bg": "#191F48"}, {"text": " main ", "fg": "#43CCEA", "bg": "#191F48"}, {"text": "\ue0b0", "fg": "#191F48"}]
     },
     {
       "id": "emodipt-extend",
       "file": "emodipt-extend.omp.json",
-      "name": "emodipt extend"
+      "name": "emodipt extend",
+      "preview": [{"text": "23:14 ", "fg": "#E5C07B"}, {"text": "pwsh ", "fg": "#E06C75"}, {"text": "main ", "fg": "#F3C267"}]
     },
     {
       "id": "emodipt",
       "file": "emodipt.omp.json",
-      "name": "emodipt"
+      "name": "emodipt",
+      "preview": [{"text": "23:14 ", "fg": "#E5C07B"}, {"text": "~/src ", "fg": "#61AFEF"}, {"text": "main ", "fg": "#F3C267"}, {"text": "\u276f ", "fg": "#E06C75"}]
     },
     {
       "id": "fish",
       "file": "fish.omp.json",
-      "name": "fish"
+      "name": "fish",
+      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "\ue0b0 ", "fg": "#007ACC"}]
     },
     {
       "id": "free-ukraine",
       "file": "free-ukraine.omp.json",
-      "name": "free ukraine"
+      "name": "free ukraine",
+      "preview": [{"text": "\ue0c5 ", "fg": "#0057B7"}, {"text": " \ue795 ", "fg": "#FBD951", "bg": "#0057B7"}, {"text": "\ue0c4", "fg": "#0057B7", "bg": "#0057B7"}, {"text": " ~/src ", "fg": "#FBD951", "bg": "#0057B7"}, {"text": "\ue0b0", "fg": "#0057B7"}, {"text": " main ", "fg": "#FFD700", "bg": "#0057B7"}, {"text": "\ue0b0", "fg": "#0057B7"}]
     },
     {
       "id": "froczh",
       "file": "froczh.omp.json",
-      "name": "froczh"
+      "name": "froczh",
+      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#40189C"}, {"text": "\ue0b0", "fg": "#40189C"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#01579B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#01579B"}, {"text": "\ue0b0", "fg": "#01579B"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#00FFFF"}, {"text": " 8.0 ", "fg": "#000000", "bg": "#00FFFF"}, {"text": "\ue0b0", "fg": "#00FFFF"}]
     },
     {
       "id": "gmay",
       "file": "gmay.omp.json",
-      "name": "gmay"
+      "name": "gmay",
+      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#3A86FF"}, {"text": "\ue0b0", "fg": "#3A86FF", "bg": "#FF479C"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#4CAF50"}, {"text": " 23:14 ", "fg": "#193549", "bg": "#4CAF50"}, {"text": "\ue0b0", "fg": "#4CAF50", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
     },
     {
       "id": "grandpa-style",
       "file": "grandpa-style.omp.json",
-      "name": "grandpa style"
+      "name": "grandpa style",
+      "preview": [{"text": "~/src ", "fg": "#43CCEA"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#00C853"}, {"text": " main ", "fg": "#000000", "bg": "#00C853"}, {"text": "\ue0b0", "fg": "#00C853", "bg": "#2BA1BB"}, {"text": " 12ms ", "fg": "#5A3D29", "bg": "#2BA1BB"}]
     },
     {
       "id": "gruvbox",
       "file": "gruvbox.omp.json",
-      "name": "gruvbox"
+      "name": "gruvbox",
+      "preview": [{"text": " ~/src ", "fg": "#282828", "bg": "#458588"}, {"text": "\ue0b0", "fg": "#458588", "bg": "#98971A"}, {"text": " main ", "fg": "#282828", "bg": "#98971A"}, {"text": "\ue0b0", "fg": "#98971A", "bg": "#8ED1F7"}, {"text": " 1.22 ", "fg": "#111111", "bg": "#8ED1F7"}, {"text": "\ue0b0", "fg": "#8ED1F7", "bg": "#FFDE57"}, {"text": " 3.12 ", "fg": "#111111", "bg": "#FFDE57"}, {"text": "\ue0b0", "fg": "#FFDE57"}]
     },
     {
       "id": "half-life",
       "file": "half-life.omp.json",
-      "name": "half life"
+      "name": "half life",
+      "preview": [{"text": "henrique ", "fg": "#7E46B6"}, {"text": "in ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#87FF00"}, {"text": "main ", "fg": "#5FD7FF"}]
     },
     {
       "id": "honukai",
       "file": "honukai.omp.json",
-      "name": "honukai"
+      "name": "honukai",
+      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#0973C0"}, {"text": "main ", "fg": "#B8B80A"}]
     },
     {
       "id": "hotstick.minimal",
       "file": "hotstick.minimal.omp.json",
-      "name": "hotstick minimal"
+      "name": "hotstick minimal",
+      "preview": [{"text": "\ue0b6", "fg": "#3B78FF"}, {"text": " ~/src ", "fg": "#0C0C0C", "bg": "#3B78FF"}, {"text": "\ue0b0", "fg": "#3B78FF"}, {"text": " main ", "fg": "#0C0C0C", "bg": "#13A10E"}, {"text": "\ue0b0", "fg": "#13A10E"}]
     },
     {
       "id": "hul10",
       "file": "hul10.omp.json",
-      "name": "hul10"
+      "name": "hul10",
+      "preview": [{"text": "\u250c ", "fg": "#F7F7F7"}, {"text": "pwsh ", "fg": "#111111"}, {"text": "henrique ", "fg": "#111111"}, {"text": "main ", "fg": "#111111"}]
     },
     {
       "id": "hunk",
       "file": "hunk.omp.json",
-      "name": "hunk"
+      "name": "hunk",
+      "preview": [{"text": " ~/src ", "fg": "#FFFFFF", "bg": "#C44569"}, {"text": "\ue0b0", "fg": "#C44569", "bg": "#F78FB3"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#F78FB3"}, {"text": "\ue0b0", "fg": "#F78FB3", "bg": "#F78FB3"}, {"text": " 3.12 ", "fg": "#FFFFFF", "bg": "#F78FB3"}, {"text": "\ue0b0", "fg": "#F78FB3", "bg": "#CAFFBF"}, {"text": " main ", "fg": "#333333", "bg": "#CAFFBF"}, {"text": "\ue0b0", "fg": "#CAFFBF"}]
     },
     {
       "id": "huvix",
       "file": "huvix.omp.json",
-      "name": "huvix"
+      "name": "huvix",
+      "preview": [{"text": "henrique ", "fg": "#FFE082"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "1.22 ", "fg": "#7FD5EA"}, {"text": "3.12 ", "fg": "#9E7EFF"}]
     },
     {
       "id": "if_tea",
       "file": "if_tea.omp.json",
-      "name": "if tea"
+      "name": "if tea",
+      "preview": [{"text": "\ue0b2", "fg": "#2343E2"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#2343E2"}, {"text": "\ue0b0", "fg": "#2343E2"}]
     },
     {
       "id": "illusi0n",
       "file": "illusi0n.omp.json",
-      "name": "illusi0n"
+      "name": "illusi0n",
+      "preview": [{"text": "$ ", "fg": "#FF8800"}, {"text": "henrique ", "fg": "#FF8800"}, {"text": "~/src ", "fg": "#62C0FF"}, {"text": "main ", "fg": "#62C0FF"}]
     },
     {
       "id": "iterm2",
       "file": "iterm2.omp.json",
-      "name": "iterm2"
+      "name": "iterm2",
+      "preview": [{"text": " henrique ", "fg": "#D2FF5E", "bg": "#003543"}, {"text": "\ue0b0", "fg": "#003543", "bg": "#0087D8"}, {"text": " ~/src ", "fg": "#003544", "bg": "#0087D8"}, {"text": "\ue0b0", "fg": "#0087D8", "bg": "#D2FF5E"}, {"text": " main ", "fg": "#193549", "bg": "#D2FF5E"}, {"text": "\ue0b0", "fg": "#D2FF5E"}]
     },
     {
       "id": "jandedobbeleer-accessible",
       "file": "jandedobbeleer-accessible.omp.json",
-      "name": "jandedobbeleer accessible"
+      "name": "jandedobbeleer accessible",
+      "preview": [{"text": " henrique ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "|", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "|", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "|", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "|", "fg": "#6CA35E"}]
     },
     {
       "id": "jandedobbeleer",
       "file": "jandedobbeleer.omp.json",
       "name": "jandedobbeleer",
-      "preview": [
-        {
-          "text": "~/src",
-          "color": "#5B8DEF"
-        },
-        {
-          "text": " main",
-          "color": "#3DDC97"
-        },
-        {
-          "text": "\n\u276f ",
-          "color": "#E8EDF7"
-        }
-      ]
+      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "\ue0b0", "fg": "#6CA35E"}]
     },
     {
       "id": "jblab_2021",
       "file": "jblab_2021.omp.json",
-      "name": "jblab 2021"
+      "name": "jblab 2021",
+      "preview": [{"text": "\ue0b0", "fg": "#121826", "bg": "#26BDBB"}, {"text": " ~/src ", "fg": "#0C212F", "bg": "#26BDBB"}, {"text": "\ue0b0", "fg": "#26BDBB"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#280C2E"}, {"text": "\ue0b0", "fg": "#280C2E", "bg": "#0C212F"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#0C212F"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#0C212F"}, {"text": "\ue0b0", "fg": "#0C212F"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#26BDBB"}, {"text": " 12ms ", "fg": "#0C212F", "bg": "#26BDBB"}, {"text": "\ue0b0", "fg": "#26BDBB"}]
     },
     {
       "id": "jonnychipz",
       "file": "jonnychipz.omp.json",
-      "name": "jonnychipz"
+      "name": "jonnychipz",
+      "preview": [{"text": "\ue0b6", "fg": "#4707A8"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#4707A8"}, {"text": "\ue0b0", "fg": "#4707A8"}, {"text": " dev ", "fg": "#FFFFFF", "bg": "#1A1AF5"}, {"text": "\ue0b0", "fg": "#1A1AF5"}]
     },
     {
       "id": "json",
       "file": "json.omp.json",
-      "name": "json"
+      "name": "json",
+      "preview": [{"text": "~/src ", "fg": "#F1FA8C"}, {"text": "main ", "fg": "#43CCEA"}, {"text": " \u25c9", "fg": "#FF0000"}, {"text": " ", "fg": "#FF0000"}]
     },
     {
       "id": "jtracey93",
       "file": "jtracey93.omp.json",
-      "name": "jtracey93"
+      "name": "jtracey93",
+      "preview": [{"text": "\ue0b6", "fg": "#EB9654"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#EB9654"}, {"text": "~/src ", "fg": "#3F3F3F"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "23:14 ", "fg": "#FFFFFF"}]
     },
     {
       "id": "jv_sitecorian",
       "file": "jv_sitecorian.omp.json",
-      "name": "jv sitecorian"
+      "name": "jv sitecorian",
+      "preview": [{"text": "\ue0c5 ", "fg": "#185F7B"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#185F7B"}, {"text": "\ue0b0", "fg": "#185F7B"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#6F42C1"}, {"text": "\ue0b0", "fg": "#6F42C1"}]
     },
     {
       "id": "kali",
       "file": "kali.omp.json",
-      "name": "kali"
+      "name": "kali",
+      "preview": [{"text": "henrique ", "fg": "#3B78FF"}, {"text": "3.12 ", "fg": "#C19C00"}, {"text": "~/src "}, {"text": "main "}]
     },
     {
       "id": "kushal",
       "file": "kushal.omp.json",
-      "name": "kushal"
+      "name": "kushal",
+      "preview": [{"text": " pwsh ", "fg": "#011627", "bg": "#00C7FC"}, {"text": "\ue0b0", "fg": "#00C7FC", "bg": "#FFDE57"}, {"text": " 3.12 ", "fg": "#011627", "bg": "#FFDE57"}, {"text": "\ue0b0", "fg": "#FFDE57", "bg": "#7FD5EA"}, {"text": " 1.22 ", "fg": "#FFFFFF", "bg": "#7FD5EA"}, {"text": "\ue0b0", "fg": "#7FD5EA", "bg": "#99908A"}, {"text": " 1.79 ", "fg": "#193549", "bg": "#99908A"}, {"text": "\ue0b0", "fg": "#99908A"}]
     },
     {
       "id": "lambda",
       "file": "lambda.omp.json",
-      "name": "lambda"
+      "name": "lambda",
+      "preview": [{"text": "\ue7ad ", "fg": "#F5F5F5"}, {"text": "~/src ", "fg": "#B80101"}, {"text": "main ", "fg": "#B80101"}]
     },
     {
       "id": "lambdageneration",
       "file": "lambdageneration.omp.json",
-      "name": "lambdageneration"
+      "name": "lambdageneration",
+      "preview": [{"text": " 12ms ", "fg": "#FB7E14", "bg": "#292929"}, {"text": "\ue0b0", "fg": "#292929", "bg": "#292929"}, {"text": " ~/src ", "fg": "#FB7E14", "bg": "#292929"}, {"text": "\ue0c6", "fg": "#292929"}, {"text": "main ", "fg": "#D4E157"}, {"text": " 87% ", "fg": "#26C6DA", "bg": "#292929"}, {"text": "\ue0b0", "fg": "#292929"}]
     },
     {
       "id": "larserikfinholt",
       "file": "larserikfinholt.omp.json",
-      "name": "larserikfinholt"
+      "name": "larserikfinholt",
+      "preview": [{"text": "\ue0b6", "fg": "#C386F1"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#C386F1"}, {"text": "\ue0b0", "fg": "#C386F1"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#FF479C"}, {"text": "\ue0b0", "fg": "#FF479C", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}, {"text": "12ms ", "fg": "#FFFFFF"}]
     },
     {
       "id": "lightgreen",
       "file": "lightgreen.omp.json",
-      "name": "lightgreen"
+      "name": "lightgreen",
+      "preview": [{"text": "\ue0b6", "fg": "#272727"}, {"text": " ~/src ", "fg": "#3EC669", "bg": "#272727"}, {"text": "\ue0b4", "fg": "#272727"}, {"text": "main ", "fg": "#00FF0D"}, {"text": "\ue0b6", "fg": "#306998"}, {"text": " 3.12 ", "fg": "#FFE873", "bg": "#306998"}, {"text": "\ue0b4 ", "fg": "#306998"}, {"text": "\ue0b6", "fg": "#FFFFFF"}, {"text": " 1.22 ", "fg": "#06AAD5", "bg": "#FFFFFF"}, {"text": "\ue0b4 ", "fg": "#FFFFFF"}]
     },
     {
       "id": "marcduiker",
       "file": "marcduiker.omp.json",
-      "name": "marcduiker"
+      "name": "marcduiker",
+      "preview": [{"text": "\ue0b6", "fg": "#FEAE34"}, {"text": " ~/src ", "fg": "#262B44", "bg": "#FEAE34"}, {"text": "\ue0b0", "fg": "#FEAE34"}, {"text": " main ", "fg": "#262B44", "bg": "#FEE761"}, {"text": "\ue0b0", "fg": "#FEE761"}]
     },
     {
       "id": "markbull",
       "file": "markbull.omp.json",
-      "name": "markbull"
+      "name": "markbull",
+      "preview": [{"text": "\u250c ", "fg": "#FFCE7B"}, {"text": " henrique ", "fg": "#1D1626", "bg": "#FFCE7B"}, {"text": "\ue0b0", "fg": "#FFCE7B", "bg": "#C678DD"}, {"text": " ~/src ", "fg": "#FFFEF9", "bg": "#C678DD"}, {"text": "\ue0b0", "fg": "#C678DD", "bg": "#FFFFFB"}, {"text": " main ", "fg": "#100E23", "bg": "#FFFFFB"}, {"text": "\ue0b0", "fg": "#FFFFFB"}]
     },
     {
       "id": "material",
       "file": "material.omp.json",
-      "name": "material"
+      "name": "material",
+      "preview": [{"text": "\u276f", "fg": "#C591E8"}, {"text": "\u276f", "fg": "#69FF94"}, {"text": " ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D0666F"}, {"text": "23:14 ", "fg": "#66F68F"}]
     },
     {
       "id": "microverse-power",
       "file": "microverse-power.omp.json",
-      "name": "microverse power"
+      "name": "microverse power",
+      "preview": [{"text": " henrique ", "fg": "#F1184C", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " 23:14 ", "fg": "#FFBB00", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " ~/src ", "fg": "#33DD2D", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424", "bg": "#242424"}, {"text": " main ", "fg": "#3A86FF", "bg": "#242424"}, {"text": "\ue0b0", "fg": "#242424"}]
     },
     {
       "id": "mojada",
       "file": "mojada.omp.json",
-      "name": "mojada"
+      "name": "mojada",
+      "preview": [{"text": " henrique ", "fg": "#0077C2", "bg": "#FBFBFB"}, {"text": "\ue0b0", "fg": "#FBFBFB", "bg": "#0077C2"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#0077C2"}, {"text": "\ue0b0", "fg": "#0077C2", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
     },
     {
       "id": "montys",
       "file": "montys.omp.json",
-      "name": "montys"
+      "name": "montys",
+      "preview": [{"text": " ~/src ", "fg": "#FFFFFF", "bg": "#DA627D"}, {"text": "\ue0b0", "fg": "#DA627D", "bg": "#FCA17D"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#FCA17D"}, {"text": "\ue0b0", "fg": "#FCA17D", "bg": "#76B367"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#76B367"}, {"text": "\ue0b0", "fg": "#76B367", "bg": "#83769C"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#83769C"}, {"text": "\ue0b0", "fg": "#83769C"}]
     },
     {
       "id": "mt",
       "file": "mt.omp.json",
-      "name": "mt"
+      "name": "mt",
+      "preview": [{"text": "\ue0b6", "fg": "#B4009E"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": " ~/src ", "fg": "#000000", "bg": "#FFFF00"}, {"text": "\ue0b0", "fg": "#FFFF00", "bg": "#4E44FF"}, {"text": " main ", "fg": "#FFFFFF", "bg": "#4E44FF"}, {"text": "\ue0b0", "fg": "#4E44FF", "bg": "#4E903D"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#4E903D"}, {"text": "\ue0b0", "fg": "#4E903D"}]
     },
     {
       "id": "multiverse-neon",
       "file": "multiverse-neon.omp.json",
-      "name": "multiverse neon"
+      "name": "multiverse neon",
+      "preview": [{"text": "\ue0b6", "fg": "#29315A"}, {"text": " ~/src ", "fg": "#3EC669", "bg": "#29315A"}, {"text": "\ue0b4", "fg": "#29315A"}, {"text": " \ue0b6", "fg": "#29315A"}, {"text": " main ", "fg": "#43CCEA", "bg": "#29315A"}, {"text": "\ue0b4", "fg": "#29315A"}]
     },
     {
       "id": "negligible",
       "file": "negligible.omp.json",
-      "name": "negligible"
+      "name": "negligible",
+      "preview": [{"text": "~/src ", "fg": "#3A96DD"}, {"text": "main ", "fg": "#F1502F"}]
     },
     {
       "id": "neko",
       "file": "neko.omp.json",
-      "name": "neko"
+      "name": "neko",
+      "preview": [{"text": "\ud83d\ude00\ud83d\udcac", "fg": "#FF8000"}, {"text": " ~ ", "fg": "#FF8000"}, {"text": " ", "fg": "#FF8000"}]
     },
     {
       "id": "night-owl",
       "file": "night-owl.omp.json",
       "name": "night owl",
-      "preview": [
-        {
-          "text": "~/src",
-          "color": "#82AAFF"
-        },
-        {
-          "text": " main",
-          "color": "#C3E88D"
-        },
-        {
-          "text": "\n\u276f ",
-          "color": "#F78C6C"
-        }
-      ]
+      "preview": [{"text": " ~/src ", "fg": "#011627", "bg": "#82AAFF"}, {"text": "\ue0b0", "fg": "#82AAFF", "bg": "#ADDB67"}, {"text": " main ", "fg": "#011627", "bg": "#ADDB67"}, {"text": "\ue0b0", "fg": "#ADDB67", "bg": "#575656"}, {"text": "\ue0d7", "fg": "#575656"}, {"text": " 12ms ", "fg": "#D6DEEB", "bg": "#575656"}, {"text": "\ue0b4", "fg": "#575656"}]
     },
     {
       "id": "nordtron",
       "file": "nordtron.omp.json",
-      "name": "nordtron"
+      "name": "nordtron",
+      "preview": [{"text": "henrique ", "fg": "#88C0D0"}, {"text": "main ", "fg": "#B48EAD"}, {"text": "dev ", "fg": "#B48EAD"}, {"text": "dev ", "fg": "#B48EAD"}]
     },
     {
       "id": "nu4a",
       "file": "nu4a.omp.json",
-      "name": "nu4a"
+      "name": "nu4a",
+      "preview": [{"text": " henrique ", "fg": "#100E23", "bg": "#CFCFC4"}, {"text": "\ue0b0", "fg": "#CFCFC4", "bg": "#EC9706"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#EC9706"}, {"text": "\ue0b0", "fg": "#EC9706", "bg": "#3FEB56"}, {"text": " main ", "fg": "#193549", "bg": "#3FEB56"}, {"text": "\ue0b0", "fg": "#3FEB56", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
     },
     {
       "id": "onehalf.minimal",
       "file": "onehalf.minimal.omp.json",
-      "name": "onehalf minimal"
+      "name": "onehalf minimal",
+      "preview": [{"text": "henrique ", "fg": "#E5C07B"}, {"text": "~/src ", "fg": "#61AFEF"}, {"text": "main "}]
     },
     {
       "id": "paradox",
       "file": "paradox.omp.json",
       "name": "paradox",
-      "preview": [
-        {
-          "text": "WS ",
-          "color": "#E0B15A"
-        },
-        {
-          "text": "~/src",
-          "color": "#6C9BFF"
-        },
-        {
-          "text": "\n\u276f ",
-          "color": "#F08AA8"
-        }
-      ]
+      "preview": [{"text": " henrique ", "fg": "#100E23", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#91DDFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
     },
     {
       "id": "pararussel",
       "file": "pararussel.omp.json",
-      "name": "pararussel"
+      "name": "pararussel",
+      "preview": [{"text": "\u276f", "fg": "#C591E8"}, {"text": "\u276f", "fg": "#69FF94"}, {"text": " ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D0666F"}]
     },
     {
       "id": "patriksvensson",
       "file": "patriksvensson.omp.json",
-      "name": "patriksvensson"
+      "name": "patriksvensson",
+      "preview": [{"text": "~/src ", "fg": "#0037DA"}, {"text": "main ", "fg": "#13A10E"}, {"text": "8.0 ", "fg": "#881798"}]
     },
     {
       "id": "peru",
       "file": "peru.omp.json",
-      "name": "peru"
+      "name": "peru",
+      "preview": [{"text": "henrique ", "fg": "#26C6DA"}, {"text": "3.12 ", "fg": "#0FC469"}, {"text": "main ", "fg": "#FFE700"}]
     },
     {
       "id": "pixelrobots",
       "file": "pixelrobots.omp.json",
-      "name": "pixelrobots"
+      "name": "pixelrobots",
+      "preview": [{"text": " dev ", "fg": "#000000", "bg": "#FFEA00"}, {"text": "\ue0b0", "fg": "#FFEA00", "bg": "#008AD7"}, {"text": " dev ", "fg": "#000000", "bg": "#008AD7"}, {"text": "\ue0b0", "fg": "#008AD7", "bg": "#012456"}, {"text": " dev ", "fg": "#FFFFFF", "bg": "#012456"}, {"text": "\ue0b0", "fg": "#012456", "bg": "#FFA400"}, {"text": " dev ", "fg": "#000000", "bg": "#FFA400"}, {"text": "\ue0b0", "fg": "#FFA400"}]
     },
     {
       "id": "plague",
       "file": "plague.omp.json",
-      "name": "plague"
+      "name": "plague",
+      "preview": [{"text": "\ue0b6", "fg": "#333333"}, {"text": " henrique ", "fg": "#FF0000", "bg": "#333333"}, {"text": "\ue0b0", "fg": "#333333"}, {"text": " ~/src ", "fg": "#000000", "bg": "#FF0000"}, {"text": "\ue0b0", "fg": "#FF0000", "bg": "#FFFB38"}, {"text": " main ", "fg": "#193549", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38", "bg": "#6CA35E"}, {"text": " 20.11 ", "fg": "#FFFFFF", "bg": "#6CA35E"}, {"text": "\ue0b0", "fg": "#6CA35E"}]
     },
     {
       "id": "poshmon",
       "file": "poshmon.omp.json",
-      "name": "poshmon"
+      "name": "poshmon",
+      "preview": [{"text": "\ue0b6", "fg": "#2E9599"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#2E9599"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#D51111"}, {"text": "\ue0b0", "fg": "#D51111", "bg": "#C19C00"}, {"text": " main ", "fg": "#000000", "bg": "#C19C00"}, {"text": "\ue0b0", "fg": "#C19C00"}]
     },
     {
       "id": "powerlevel10k_classic",
       "file": "powerlevel10k_classic.omp.json",
       "name": "powerlevel10k classic",
-      "preview": [
-        {
-          "text": "~/src",
-          "color": "#E0B15A"
-        },
-        {
-          "text": " main",
-          "color": "#6C9BFF"
-        },
-        {
-          "text": "\n\u276f ",
-          "color": "#3DDC97"
-        }
-      ]
+      "preview": [{"text": "~/src ", "fg": "#26C6DA"}, {"text": "main ", "fg": "#D4E157"}, {"text": "\ue0b0 ", "fg": "#546E7A"}]
     },
     {
       "id": "powerlevel10k_lean",
       "file": "powerlevel10k_lean.omp.json",
-      "name": "powerlevel10k lean"
+      "name": "powerlevel10k lean",
+      "preview": [{"text": "~/src ", "fg": "#77E4F7"}, {"text": "main ", "fg": "#FFE700"}, {"text": "\u276f ", "fg": "#43D426"}]
     },
     {
       "id": "powerlevel10k_modern",
       "file": "powerlevel10k_modern.omp.json",
-      "name": "powerlevel10k modern"
+      "name": "powerlevel10k modern",
+      "preview": [{"text": " ~/src ", "fg": "#FFFFFF", "bg": "#0000FF"}, {"text": "\ue0b4", "fg": "#0000FF", "bg": "#D4E157"}, {"text": " main ", "fg": "#000000", "bg": "#D4E157"}, {"text": "\ue0b4", "fg": "#D4E157"}]
     },
     {
       "id": "powerlevel10k_rainbow",
       "file": "powerlevel10k_rainbow.omp.json",
-      "name": "powerlevel10k rainbow"
+      "name": "powerlevel10k rainbow",
+      "preview": [{"text": " ~/src ", "fg": "#E4E4E4", "bg": "#3465A4"}, {"text": "\ue0b0", "fg": "#3465A4", "bg": "#4E9A06"}, {"text": " main ", "fg": "#000000", "bg": "#4E9A06"}, {"text": "\ue0b0", "fg": "#4E9A06"}]
     },
     {
       "id": "powerline",
       "file": "powerline.omp.json",
-      "name": "powerline"
+      "name": "powerline",
+      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#193549", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4", "bg": "#906CFF"}, {"text": " 3.12 ", "fg": "#100E23", "bg": "#906CFF"}, {"text": "\ue0b0", "fg": "#906CFF"}]
     },
     {
       "id": "probua.minimal",
       "file": "probua.minimal.omp.json",
-      "name": "probua minimal"
+      "name": "probua minimal",
+      "preview": [{"text": "henrique ", "fg": "#FFDD86"}, {"text": "~/src ", "fg": "#42A9FF"}, {"text": "main "}]
     },
     {
       "id": "pure",
       "file": "pure.omp.json",
-      "name": "pure"
+      "name": "pure",
+      "preview": [{"text": "henrique ", "fg": "#BF616A"}, {"text": "~/src ", "fg": "#81A1C1"}]
     },
     {
       "id": "quick-term",
       "file": "quick-term.omp.json",
-      "name": "quick term"
+      "name": "quick term",
+      "preview": [{"text": " henrique ", "fg": "#4E4E4E", "bg": "#E4E4E4"}, {"text": "\ue0b0", "fg": "#E4E4E4", "bg": "#0087AF"}, {"text": " ~/src ", "fg": "#F2F3F8", "bg": "#0087AF"}, {"text": "\ue0b0", "fg": "#0087AF", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#121826", "bg": "#378504"}, {"text": " main ", "fg": "#F2F3F8", "bg": "#378504"}, {"text": "\ue0b0", "fg": "#378504"}]
     },
     {
       "id": "remk",
       "file": "remk.omp.json",
-      "name": "remk"
+      "name": "remk",
+      "preview": [{"text": "\ue0b6", "fg": "#B4009E"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#B4009E"}, {"text": "~/src ", "fg": "#3F3F3F"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#16C60C"}, {"text": "\ue0b0", "fg": "#16C60C"}]
     },
     {
       "id": "robbyrussell",
       "file": "robbyrussell.omp.json",
-      "name": "robbyrussell"
+      "name": "robbyrussell",
+      "preview": [{"text": "\u279c ", "fg": "#98C379"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D0666F"}]
     },
     {
       "id": "rudolfs-dark",
       "file": "rudolfs-dark.omp.json",
-      "name": "rudolfs dark"
+      "name": "rudolfs dark",
+      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#FFFFFF"}, {"text": "main ", "fg": "#FFFFFF"}, {"text": "3.12 ", "fg": "#FFFFFF"}]
     },
     {
       "id": "rudolfs-light",
       "file": "rudolfs-light.omp.json",
-      "name": "rudolfs light"
+      "name": "rudolfs light",
+      "preview": [{"text": "henrique ", "fg": "#424242"}, {"text": "main ", "fg": "#424242"}, {"text": "~/src ", "fg": "#424242"}, {"text": "3.12 ", "fg": "#424242"}]
     },
     {
       "id": "sim-web",
       "file": "sim-web.omp.json",
-      "name": "sim web"
+      "name": "sim web",
+      "preview": [{"text": "~/src ", "fg": "#FFAFD2"}, {"text": "main ", "fg": "#F14E32"}]
     },
     {
       "id": "slim",
       "file": "slim.omp.json",
-      "name": "slim"
+      "name": "slim",
+      "preview": [{"text": " henrique ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " ~/src ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " main ", "fg": "#FFEB3B", "bg": "#2F2F2F"}]
     },
     {
       "id": "slimfat",
       "file": "slimfat.omp.json",
-      "name": "slimfat"
+      "name": "slimfat",
+      "preview": [{"text": " henrique ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " ~/src ", "fg": "#FAFAFA", "bg": "#2F2F2F"}, {"text": " main ", "fg": "#FFEB3B", "bg": "#2F2F2F"}]
     },
     {
       "id": "smoothie",
       "file": "smoothie.omp.json",
-      "name": "smoothie"
+      "name": "smoothie",
+      "preview": [{"text": "3.12 ", "fg": "#B1FF4F"}, {"text": "~/src ", "fg": "#FFAED8"}, {"text": "main ", "fg": "#62BEFF"}, {"text": "20.11 ", "fg": "#98C379"}]
     },
     {
       "id": "sonicboom_dark",
       "file": "sonicboom_dark.omp.json",
-      "name": "sonicboom dark"
+      "name": "sonicboom dark",
+      "preview": [{"text": "~/src ", "fg": "#43CCEA"}, {"text": "main ", "fg": "#00FF0D"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#272727"}, {"text": "\ue0b0", "fg": "#272727"}]
     },
     {
       "id": "sonicboom_light",
       "file": "sonicboom_light.omp.json",
-      "name": "sonicboom light"
+      "name": "sonicboom light",
+      "preview": [{"text": "~/src ", "fg": "#43CCEA"}, {"text": "main ", "fg": "#00FF0D"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#4D4D4D"}, {"text": "\ue0b0", "fg": "#4D4D4D"}]
     },
     {
       "id": "sorin",
       "file": "sorin.omp.json",
-      "name": "sorin"
+      "name": "sorin",
+      "preview": [{"text": "henrique ", "fg": "#FFFFFF"}, {"text": "~/src ", "fg": "#0973C0"}, {"text": "main ", "fg": "#C1C106"}, {"text": "3.12 ", "fg": "#100E23"}]
     },
     {
       "id": "space",
       "file": "space.omp.json",
-      "name": "space"
+      "name": "space",
+      "preview": [{"text": "henrique ", "fg": "#26C6DA"}, {"text": "~/src ", "fg": "#16C60C"}, {"text": "main "}, {"text": "3.12 ", "fg": "#906CFF"}]
     },
     {
       "id": "spaceship",
       "file": "spaceship.omp.json",
-      "name": "spaceship"
+      "name": "spaceship",
+      "preview": [{"text": "henrique ", "fg": "#F9F1A5"}, {"text": "~/src ", "fg": "#3A96DD"}, {"text": "main ", "fg": "#FF94DF"}]
     },
     {
       "id": "star",
       "file": "star.omp.json",
-      "name": "star"
+      "name": "star",
+      "preview": [{"text": "~/src ", "fg": "#55B9C4"}, {"text": "main ", "fg": "#C678DD"}, {"text": "20.11 ", "fg": "#98C379"}]
     },
     {
       "id": "stelbent-compact.minimal",
       "file": "stelbent-compact.minimal.omp.json",
       "name": "stelbent compact minimal",
-      "preview": [
-        {
-          "text": "~/src",
-          "color": "#E8EDF7"
-        },
-        {
-          "text": " \u276f ",
-          "color": "#6C9BFF"
-        }
-      ]
+      "preview": [{"text": "henrique ", "fg": "#757575"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#100E23", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}, {"text": "23:14 ", "fg": "#689F38"}]
     },
     {
       "id": "stelbent.minimal",
       "file": "stelbent.minimal.omp.json",
-      "name": "stelbent minimal"
+      "name": "stelbent minimal",
+      "preview": [{"text": "henrique ", "fg": "#757575"}, {"text": " ~/src ", "fg": "#100E23", "bg": "#91DDFF"}, {"text": "\ue0b0", "fg": "#91DDFF", "bg": "#95FFA4"}, {"text": " main ", "fg": "#100E23", "bg": "#95FFA4"}, {"text": "\ue0b0", "fg": "#95FFA4"}]
     },
     {
       "id": "takuya",
       "file": "takuya.omp.json",
-      "name": "takuya"
+      "name": "takuya",
+      "preview": [{"text": "\u256d\u2500\ue0b6", "fg": "#0077C2"}, {"text": " pwsh ", "fg": "#FFFFFF", "bg": "#0077C2"}, {"text": " ~/src ", "fg": "#E4E4E4", "bg": "#444444"}, {"text": "\ue0b0", "fg": "#444444", "bg": "#FFFB38"}, {"text": " main ", "fg": "#011627", "bg": "#FFFB38"}, {"text": "\ue0b0", "fg": "#FFFB38"}]
     },
     {
       "id": "the-unnamed",
       "file": "the-unnamed.omp.json",
-      "name": "the unnamed"
+      "name": "the unnamed",
+      "preview": [{"text": "~/src ", "fg": "#15C2CB"}, {"text": "main ", "fg": "#F141A8"}, {"text": "20.11 ", "fg": "#44FFD2"}]
     },
     {
       "id": "thecyberden",
       "file": "thecyberden.omp.json",
-      "name": "thecyberden"
+      "name": "thecyberden",
+      "preview": [{"text": "\ue0b6", "fg": "#2E9599"}, {"text": " henrique ", "fg": "#FFFFFF", "bg": "#2E9599"}, {"text": " ~/src ", "fg": "#FFFFFF", "bg": "#0080FF"}, {"text": "\ue0b0", "fg": "#0080FF", "bg": "#C19C00"}, {"text": " main ", "fg": "#000000", "bg": "#C19C00"}, {"text": "\ue0b0", "fg": "#C19C00"}]
     },
     {
       "id": "tiwahu",
       "file": "tiwahu.omp.json",
-      "name": "tiwahu"
+      "name": "tiwahu",
+      "preview": [{"text": "\ue0ba", "fg": "#0078D4"}, {"text": " dev ", "fg": "#FFFFFF", "bg": "#0078D4"}, {"text": "\ue0b8", "fg": "#0078D4"}]
     },
     {
       "id": "tokyo",
       "file": "tokyo.omp.json",
       "name": "tokyo",
-      "preview": [
-        {
-          "text": "~/src",
-          "color": "#7AA2F7"
-        },
-        {
-          "text": " main",
-          "color": "#9ECE6A"
-        },
-        {
-          "text": "\n\u276f ",
-          "color": "#BB9AF7"
-        }
-      ]
+      "preview": [{"text": "23:14 ", "fg": "#7EB8DA"}, {"text": "henrique ", "fg": "#7EB8DA"}, {"text": "87% ", "fg": "#F36943"}, {"text": "12ms ", "fg": "#BE9DDF"}]
     },
     {
       "id": "tokyonight_storm",
       "file": "tokyonight_storm.omp.json",
-      "name": "tokyonight storm"
+      "name": "tokyonight storm",
+      "preview": [{"text": "\u279c ", "fg": "#7AA2F7"}, {"text": "~/src ", "fg": "#BB9AF7"}, {"text": "main ", "fg": "#7DCFFF"}]
     },
     {
       "id": "tonybaloney",
       "file": "tonybaloney.omp.json",
-      "name": "tonybaloney"
+      "name": "tonybaloney",
+      "preview": [{"text": "\ue0b6", "fg": "#18354C"}, {"text": " ~/src ", "fg": "#FFC107", "bg": "#18354C"}, {"text": "\ue0b0", "fg": "#18354C"}, {"text": " main ", "fg": "#FFC107", "bg": "#18354C"}, {"text": "\ue0b0", "fg": "#18354C", "bg": "#FFC107"}, {"text": " 3.12 ", "fg": "#18354C", "bg": "#FFC107"}, {"text": "\ue0b0", "fg": "#FFC107"}]
     },
     {
       "id": "uew",
       "file": "uew.omp.json",
-      "name": "uew"
+      "name": "uew",
+      "preview": [{"text": "henrique ", "fg": "#BBC4B9"}, {"text": "main ", "fg": "#BFA8BF"}, {"text": "pwsh ", "fg": "#BFA8BF"}]
     },
     {
       "id": "unicorn",
       "file": "unicorn.omp.json",
-      "name": "unicorn"
+      "name": "unicorn",
+      "preview": [{"text": " ~/src ", "fg": "#003544", "bg": "#0087D8"}, {"text": "\ue0b0", "fg": "#0087D8", "bg": "#D2FF5E"}, {"text": " main ", "fg": "#193549", "bg": "#D2FF5E"}, {"text": "\ue0b0", "fg": "#D2FF5E", "bg": "#003543"}, {"text": " 23:14 ", "fg": "#FFFFFF", "bg": "#003543"}, {"text": "\ue0b0", "fg": "#003543", "bg": "#83769C"}, {"text": " 12ms ", "fg": "#FFFFFF", "bg": "#83769C"}, {"text": "\ue0b4", "fg": "#83769C"}]
     },
     {
       "id": "velvet",
       "file": "velvet.omp.json",
-      "name": "velvet"
+      "name": "velvet",
+      "preview": [{"text": " ~/src ", "fg": "#EFDCF9", "bg": "#170B3B"}, {"text": "\ue0b4", "fg": "#170B3B", "bg": "#341948"}, {"text": " main ", "fg": "#EFDCF9", "bg": "#341948"}, {"text": "\ue0b4", "fg": "#341948", "bg": "#4C1F5E"}, {"text": " 12ms ", "fg": "#EFDCF9", "bg": "#4C1F5E"}, {"text": "\ue0b4", "fg": "#4C1F5E"}]
     },
     {
       "id": "wholespace",
       "file": "wholespace.omp.json",
-      "name": "wholespace"
+      "name": "wholespace",
+      "preview": [{"text": "\ue0b2", "fg": "#FEF5ED"}, {"text": " 23:14 ", "fg": "#011627", "bg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#121826", "bg": "#FEF5ED"}, {"text": "\ue0b2", "fg": "#575656"}, {"text": " 12ms ", "fg": "#D6DEEB", "bg": "#575656"}, {"text": "\ue0b0", "fg": "#575656"}]
     },
     {
       "id": "wopian",
       "file": "wopian.omp.json",
-      "name": "wopian"
+      "name": "wopian",
+      "preview": [{"text": "~/src ", "fg": "#3A96DD"}, {"text": "main ", "fg": "#F9F1A5"}]
     },
     {
       "id": "xtoys",
       "file": "xtoys.omp.json",
-      "name": "xtoys"
+      "name": "xtoys",
+      "preview": [{"text": "henrique "}, {"text": "~/src ", "fg": "#7B68EE"}, {"text": "main ", "fg": "#48D1CC"}]
     },
     {
       "id": "ys",
       "file": "ys.omp.json",
-      "name": "ys"
+      "name": "ys",
+      "preview": [{"text": "3.12 ", "fg": "#CCCCCC"}]
     },
     {
       "id": "zash",
       "file": "zash.omp.json",
-      "name": "zash"
+      "name": "zash",
+      "preview": [{"text": "henrique ", "fg": "#E36464"}, {"text": "\u279c ", "fg": "#62ED8B"}, {"text": "~/src ", "fg": "#56B6C2"}, {"text": "main ", "fg": "#D4AAFC"}]
     }
   ]
 }
