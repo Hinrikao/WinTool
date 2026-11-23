@@ -11,6 +11,7 @@
           "name": "Firefox",
           "description": "A fast browser from Mozilla, with strong tracking protection.",
           "wingetId": "Mozilla.Firefox",
+          "detectNames": ["Mozilla Firefox"],
           "tags": ["web", "privacy"]
         },
         {
@@ -109,6 +110,7 @@
           "name": "Telegram",
           "description": "A cloud messenger with desktop apps for personal chats.",
           "wingetId": "Telegram.TelegramDesktop",
+          "detectNames": ["Telegram Desktop", "TelegramMessengerLLP.TelegramDesktop"],
           "tags": ["chat"]
         },
         {
@@ -130,6 +132,7 @@
           "name": "Microsoft Teams",
           "description": "Meetings and work chat from Microsoft.",
           "wingetId": "Microsoft.Teams",
+          "detectNames": ["MSTeams"],
           "tags": ["work", "meetings"]
         },
         {
@@ -151,6 +154,7 @@
           "name": "Thunderbird",
           "description": "Mozilla's free email, calendar, and contacts app.",
           "wingetId": "Mozilla.Thunderbird",
+          "detectNames": ["Mozilla Thunderbird"],
           "tags": ["email"]
         },
         {
@@ -298,6 +302,7 @@
           "name": "Windows Terminal",
           "description": "A tabbed terminal. The Terminal tab can also set this up.",
           "wingetId": "Microsoft.WindowsTerminal",
+          "detectNames": ["Microsoft.WindowsTerminal"],
           "tags": ["terminal"]
         },
         {
@@ -732,6 +737,7 @@
           "name": "Spotify",
           "description": "Music streaming. Playback needs a Spotify account.",
           "wingetId": "Spotify.Spotify",
+          "detectNames": ["SpotifyAB.SpotifyMusic"],
           "tags": ["music"]
         },
         {

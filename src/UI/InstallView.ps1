@@ -143,6 +143,7 @@ function New-WinToolAppRow {
         Id = [string]$App.id
         Name = [string]$App.name
         WingetId = [string]$App.wingetId
+        DetectNames = @(Get-WinToolNote -Object $App -Name "detectNames" -Default @())
         Scope = [string](Get-WinToolNote -Object $App -Name "scope" -Default "")
         SearchText = $search
         Panel = $panel
@@ -246,6 +247,10 @@ function Complete-WinToolAppDetection {
     $listText = [string]$job.Sync.ListText
     $upgradeText = [string]$job.Sync.UpgradeText
     $winget = [string]$job.Sync.Winget
+    $displayNames = @()
+    if ($null -ne $job.Sync.DisplayNames) {
+        $displayNames = [string[]]$job.Sync.DisplayNames
+    }
     Write-WinToolDetectionLog -Job $job
     Stop-WinToolThread -Job $job
     $script:WinToolState.DetectJob = $null
@@ -266,7 +271,10 @@ function Complete-WinToolAppDetection {
         Write-WinToolLog -Message ("Installed apps: could not read the winget export file. {0}" -f $_.Exception.Message) -Level "warn" -Diagnostic
     }
     Write-WinToolLog -Message ("Installed apps: winget export listed {0} packages." -f $installedIds.Count) -Level "info" -Diagnostic
-    $counts = Set-WinToolAppState -InstalledId $installedIds -UpgradeText $upgradeText -ListText $listText
+    $counts = Set-WinToolAppState -InstalledId $installedIds -UpgradeText $upgradeText -ListText $listText -DisplayName $displayNames
+    if (@($counts.ByName).Count -gt 0) {
+        Write-WinToolLog -Message ("Installed apps: found by name, outside winget: " + (@($counts.ByName) -join ", ")) -Level "info" -Diagnostic
+    }
     Write-WinToolLog -Message ("Installed apps: {0} catalog apps installed, {1} with an update." -f $counts.Installed, $counts.Updates) -Level "ok" -Diagnostic
     if ($counts.Installed -eq 0 -and $installedIds.Count -eq 0 -and [string]::IsNullOrWhiteSpace($listText)) {
         $status.Text = "winget returned nothing. See the log."
@@ -277,13 +285,21 @@ function Set-WinToolAppState {
     param(
         [string[]]$InstalledId,
         [AllowEmptyString()][string]$UpgradeText,
-        [AllowEmptyString()][string]$ListText
+        [AllowEmptyString()][string]$ListText,
+        [string[]]$DisplayName = @()
     )
     $catalogIds = New-Object System.Collections.Generic.List[string]
     foreach ($row in @($script:WinToolState.AppRows)) {
         $catalogIds.Add([string]$row.WingetId)
     }
     $state = Resolve-WinToolAppState -CatalogId $catalogIds.ToArray() -InstalledId $InstalledId -UpgradeText $UpgradeText -ListText $ListText
+    $byName = New-Object System.Collections.Generic.List[string]
+    foreach ($id in @(Find-WinToolAppByName -DisplayName $DisplayName -App @($script:WinToolState.AppRows))) {
+        if (-not $state.Installed.ContainsKey($id)) {
+            $state.Installed[$id] = $true
+            $byName.Add($id)
+        }
+    }
     $installedCount = 0
     $updateCount = 0
     foreach ($row in @($script:WinToolState.AppRows)) {
@@ -294,7 +310,7 @@ function Set-WinToolAppState {
         Sync-WinToolAppBadge -Row $row
     }
     (Get-WinToolUi -Name "AppInstalledStatus").Text = ("{0} installed, {1} with an update." -f $installedCount, $updateCount)
-    return [pscustomobject]@{ Installed = $installedCount; Updates = $updateCount }
+    return [pscustomobject]@{ Installed = $installedCount; Updates = $updateCount; ByName = $byName.ToArray() }
 }
 
 function Select-WinToolInstalledApp {

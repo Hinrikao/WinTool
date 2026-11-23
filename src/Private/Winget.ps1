@@ -225,6 +225,33 @@ try {
     $Sync.ListText = (& $winget @listArgs 2>&1 | ForEach-Object { [string]$_ }) -join "`n"
     $log.Add(("winget list exited with {0}." -f $LASTEXITCODE))
 
+    # Names of everything in Apps and features plus Store packages, for apps
+    # winget cannot match to its source.
+    $names = New-Object System.Collections.Generic.List[string]
+    $keys = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*",
+        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    )
+    foreach ($key in $keys) {
+        foreach ($entry in @(Get-ItemProperty -Path $key -ErrorAction SilentlyContinue)) {
+            $displayName = [string]$entry.DisplayName
+            if (-not [string]::IsNullOrWhiteSpace($displayName)) {
+                $names.Add($displayName)
+            }
+        }
+    }
+    try {
+        foreach ($package in @(Get-AppxPackage -ErrorAction Stop)) {
+            $names.Add([string]$package.Name)
+        }
+    }
+    catch {
+        $log.Add("Could not list Store apps: " + $_.Exception.Message)
+    }
+    $Sync.DisplayNames = $names.ToArray()
+    $log.Add(("Read {0} names from Apps and features and the Store." -f $names.Count))
+
     $upgradeArgs = @("upgrade") + $common
     $Sync.UpgradeText = (& $winget @upgradeArgs 2>&1 | ForEach-Object { [string]$_ }) -join "`n"
     $log.Add(("winget upgrade exited with {0}." -f $LASTEXITCODE))
@@ -277,6 +304,61 @@ function Find-WinToolWingetIdInText {
             if ($null -ne $match -and -not $seen.ContainsKey($match)) {
                 $seen[$match] = $true
                 $found.Add($match)
+            }
+        }
+    }
+    return $found.ToArray()
+}
+
+$script:WinToolNameNoise = @("x64", "x86", "arm64", "amd64", "win64", "win32", "64", "32", "bit", "64bit", "32bit", "user", "machine", "version", "v")
+
+function ConvertTo-WinToolAppNameKey {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    # "WinRAR 7.01 (64-bit)" and "WinRAR" give the same key: lower-case words
+    # with version numbers and architecture words dropped from the end.
+    $tokens = New-Object System.Collections.Generic.List[string]
+    foreach ($token in ([regex]::Split(([string]$Text).ToLowerInvariant(), '[^\p{L}\p{N}]+'))) {
+        if (-not [string]::IsNullOrWhiteSpace($token)) {
+            $tokens.Add($token)
+        }
+    }
+    while ($tokens.Count -gt 1) {
+        $last = $tokens[$tokens.Count - 1]
+        if ($last -match '^\d+$' -or $script:WinToolNameNoise -contains $last) {
+            $tokens.RemoveAt($tokens.Count - 1)
+            continue
+        }
+        break
+    }
+    return ($tokens.ToArray() -join " ")
+}
+
+function Find-WinToolAppByName {
+    param(
+        [string[]]$DisplayName,
+        $App
+    )
+    # Apps installed outside winget (a vendor installer or the Store) are
+    # missing from winget export. Match them by the name Windows lists in
+    # Apps and features, or by the Store package name, against the catalog
+    # name and its detectNames. Names must match as whole words.
+    $seen = @{}
+    foreach ($name in @($DisplayName)) {
+        $key = ConvertTo-WinToolAppNameKey -Text $name
+        if (-not [string]::IsNullOrWhiteSpace($key)) {
+            $seen[$key] = $true
+        }
+    }
+    $found = New-Object System.Collections.Generic.List[string]
+    foreach ($item in @($App)) {
+        $names = @([string]$item.Name) + @($item.DetectNames)
+        foreach ($name in $names) {
+            $key = ConvertTo-WinToolAppNameKey -Text ([string]$name)
+            if (-not [string]::IsNullOrWhiteSpace($key) -and $seen.ContainsKey($key)) {
+                $found.Add([string]$item.WingetId)
+                break
             }
         }
     }

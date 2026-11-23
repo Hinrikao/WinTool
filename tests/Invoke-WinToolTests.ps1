@@ -295,6 +295,25 @@ esac
     }
 }
 
+Invoke-WinToolCase -Name "Apps installed outside winget are found by name" -Body {
+    Test-WinToolExpectation -Condition ((ConvertTo-WinToolAppNameKey -Text "WinRAR 7.01 (64-bit)") -eq "winrar") -Message "Version and architecture words are dropped."
+    Test-WinToolExpectation -Condition ((ConvertTo-WinToolAppNameKey -Text "7-Zip 24.08 (x64)") -eq "7 zip") -Message "A leading number stays in the name."
+    $names = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot "fixtures/installed-names.txt") -Encoding UTF8)
+    $apps = New-Object System.Collections.Generic.List[object]
+    foreach ($category in @((Get-WinToolAppCatalog).categories)) {
+        foreach ($app in @($category.apps)) {
+            $apps.Add([pscustomobject]@{ Name = [string]$app.name; WingetId = [string]$app.wingetId; DetectNames = @(Get-WinToolNote -Object $app -Name "detectNames" -Default @()) })
+        }
+    }
+    $found = @(Find-WinToolAppByName -DisplayName $names -App $apps.ToArray())
+    foreach ($id in @("Discord.Discord", "Telegram.TelegramDesktop", "Spotify.Spotify", "7zip.7zip", "vim.vim", "Microsoft.WindowsTerminal", "GitHub.GitHubDesktop")) {
+        Test-WinToolExpectation -Condition ($found -contains $id) -Message "$id should be found by name. Found: $($found -join ', ')"
+    }
+    foreach ($id in @("Git.Git", "Zoom.Zoom", "Microsoft.Edge", "Python.Python.3.13")) {
+        Test-WinToolExpectation -Condition (-not ($found -contains $id)) -Message "$id must not match a longer or different name."
+    }
+}
+
 Invoke-WinToolCase -Name "Fixes run known programs and named scripts" -Body {
     $catalog = Get-WinToolFixCatalog
     $fixes = @{}

@@ -1,0 +1,11 @@
+Discord
+Telegram Desktop
+WinRAR 7.01 (64-bit)
+SpotifyAB.SpotifyMusic
+GitHub Desktop
+Zoom Outlook Plugin
+Microsoft Edge WebView2 Runtime
+7-Zip 24.08 (x64)
+Vim 9.1 (x64)
+Microsoft.WindowsTerminal
+Python Launcher

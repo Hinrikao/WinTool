@@ -234,6 +234,15 @@ if ($firstApp.InstalledBadge.Visibility -ne "Visible" -or $firstApp.UpdateBadge.
 if ($secondApp.UpdateBadge.Visibility -ne "Visible" -or -not $secondApp.Installed) {
     throw "The Update available badge did not follow the upgrade list."
 }
+$thirdApp = $appRows[2]
+$byNameState = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0") -DisplayName @(($thirdApp.Name + " 1.2.3 (64-bit)"))
+if ($thirdApp.InstalledBadge.Visibility -ne "Visible" -or @($byNameState.ByName) -notcontains $thirdApp.WingetId) {
+    throw "An app found by its Apps and features name did not get the Installed badge."
+}
+$null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
+if (-not ($window.FindName("AppInstalledStatus").Parent -is [System.Windows.Controls.WrapPanel])) {
+    throw "The Install toolbar row should wrap so no button is cut off."
+}
 Select-WinToolInstalledApp
 if ($firstApp.Checkbox.IsChecked -ne $true -or $secondApp.Checkbox.IsChecked -ne $true -or $appRows[2].Checkbox.IsChecked -eq $true) {
     throw "Select installed did not tick exactly the installed apps."

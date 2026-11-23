@@ -367,14 +367,15 @@
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,12,0,0">
-              <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-              <Button x:Name="AppRefreshInstalled" Content="Refresh" ToolTip="Check again which apps are installed and which have updates" Style="{StaticResource SecondaryButton}" Margin="0"/>
-              <Button x:Name="AppSelectInstalled" Content="Select installed" Style="{StaticResource SecondaryButton}"/>
-              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource SecondaryButton}"/>
-              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource SecondaryButton}"/>
-              <Button x:Name="AppUpgradeAll" Content="Update all" Style="{StaticResource SecondaryButton}" ToolTip="Runs winget upgrade --all"/>
-            </StackPanel>
+            <!-- Wraps onto a second line when the window is narrow, so no button is cut off. -->
+            <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,12,0,0">
+              <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,16,6"/>
+              <Button x:Name="AppRefreshInstalled" Content="Refresh" ToolTip="Check again which apps are installed and which have updates" Style="{StaticResource SecondaryButton}" Margin="0,0,8,6"/>
+              <Button x:Name="AppSelectInstalled" Content="Select installed" Style="{StaticResource SecondaryButton}" Margin="0,0,8,6"/>
+              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource SecondaryButton}" Margin="0,0,8,6"/>
+              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource SecondaryButton}" Margin="0,0,8,6"/>
+              <Button x:Name="AppUpgradeAll" Content="Update all" Style="{StaticResource SecondaryButton}" ToolTip="Runs winget upgrade --all" Margin="0,0,8,6"/>
+            </WrapPanel>
             <Grid Grid.Column="0">
               <TextBox x:Name="AppSearch" AutomationProperties.Name="Search apps"/>
               <TextBlock x:Name="AppSearchHint" Text="Search apps" IsHitTestVisible="False" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>

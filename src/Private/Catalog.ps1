@@ -197,6 +197,11 @@ function Test-WinToolDataFile {
             if (-not [string]::IsNullOrWhiteSpace($scope) -and @("user", "machine") -notcontains $scope) {
                 Add-WinToolDataError -Errors $errors -Message "App '$id' has an unknown scope."
             }
+            foreach ($detectName in @(Get-WinToolNote -Object $app -Name "detectNames" -Default @())) {
+                if ([string]::IsNullOrWhiteSpace([string]$detectName) -or [string]$detectName -match '[\r\n]') {
+                    Add-WinToolDataError -Errors $errors -Message "App '$id' has an empty or multi-line detect name."
+                }
+            }
         }
     }
 
