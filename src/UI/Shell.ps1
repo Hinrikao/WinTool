@@ -104,7 +104,8 @@ function Sync-WinToolLogPanel {
         $bar.Visibility = "Visible"
     }
     else {
-        $bar.Visibility = "Collapsed"
+        # Hidden, not Collapsed: the bar keeps its room, so nothing moves when a task starts.
+        $bar.Visibility = "Hidden"
         $bar.IsIndeterminate = $false
     }
 }

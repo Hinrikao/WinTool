@@ -463,6 +463,11 @@
                 </Track.Thumb>
               </Track>
             </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="PART_Track" Property="Visibility" Value="Hidden"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -581,15 +586,16 @@
             <ScrollViewer x:Name="AppFilterScroll" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,8,0,0" Height="34" VerticalAlignment="Top" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
               <StackPanel x:Name="AppFilters" Orientation="Horizontal" VerticalAlignment="Center"/>
             </ScrollViewer>
+            <!-- Status of the installed-apps check, in the free space of the search row, so it never pushes the cards. -->
+            <TextBlock x:Name="AppInstalledStatus" Grid.Column="1" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" Visibility="Hidden" Margin="12,0,12,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
               <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Height="32" Padding="14,0" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
               <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="32" Height="32" Padding="0" FontFamily="Segoe MDL2 Assets" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
             </StackPanel>
           </Grid>
           <StackPanel Grid.Row="2" Margin="20,6,20,0">
-            <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" Visibility="Collapsed" Margin="0,0,0,4"/>
           </StackPanel>
-          <ScrollViewer x:Name="AppScroll" Grid.Row="3" Margin="20,0,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ScrollViewer x:Name="AppScroll" Grid.Row="3" Margin="20,0,20,8" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
               <TextBlock x:Name="AppEmpty" Text="No apps match that search." Foreground="{DynamicResource BrushMuted}" Margin="0,8,0,0" Visibility="Collapsed"/>
               <StackPanel x:Name="AppCategories"/>
@@ -629,7 +635,7 @@
               <TextBlock x:Name="TweakRestoreNote" Text="Restore point is created before the first change" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
             </DockPanel>
           </Grid>
-          <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,10,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,10,20,8" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
               <TextBlock x:Name="TweakEmpty" Text="No tweaks match that search." Foreground="{DynamicResource BrushMuted}" Margin="0,8,0,0" Visibility="Collapsed"/>
               <!-- Masonry columns, built in code from the available width. -->
@@ -844,13 +850,13 @@
           </DockPanel>
           <TextBlock x:Name="TerminalSubtitle" Grid.Row="1" Margin="20,6,20,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="A recommended setup in one click. Switch to Advanced to choose each part."/>
 
-          <ScrollViewer x:Name="TerminalSimpleScroll" Grid.Row="2" Margin="20,12,20,10" VerticalScrollBarVisibility="Auto">
+          <ScrollViewer x:Name="TerminalSimpleScroll" Grid.Row="2" Margin="20,12,20,10" VerticalScrollBarVisibility="Visible">
             <StackPanel x:Name="TerminalSimpleHost"/>
           </ScrollViewer>
 
           <!-- Advanced: prompt engines | themes | preview with font and colors; extras under the last two.
                When the window is short the body scrolls instead of squeezing the cards. -->
-          <ScrollViewer x:Name="TerminalBodyScroll" Grid.Row="2" Margin="20,12,20,10" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ScrollViewer x:Name="TerminalBodyScroll" Grid.Row="2" Margin="20,12,20,10" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
             <Grid x:Name="TerminalAdvancedHost">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="TerminalColumnLeft" Width="230"/>
@@ -875,14 +881,15 @@
                   </Grid.RowDefinitions>
                   <DockPanel Grid.Row="0" Margin="0,0,0,8">
                     <TextBlock DockPanel.Dock="Left" Text="1" Style="{StaticResource TerminalStep}"/>
-                    <TextBlock x:Name="TerminalPromptCount" DockPanel.Dock="Right" Text="8 engines" Style="{StaticResource TerminalCount}"/>
+                    <TextBlock x:Name="TerminalPromptCount" DockPanel.Dock="Right" MinWidth="90" TextAlignment="Right" Text="8 engines" Style="{StaticResource TerminalCount}"/>
                     <TextBlock Text="Prompt" Style="{StaticResource TerminalCardTitle}"/>
                   </DockPanel>
                   <ListBox x:Name="TerminalPromptList" Grid.Row="1" Style="{StaticResource TerminalList}" AutomationProperties.Name="Prompt engine"/>
-                  <Border Grid.Row="2" BorderBrush="{DynamicResource BrushLine}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0">
+                  <!-- Fixed height (name plus three lines), so picking an engine never resizes the list above. -->
+                  <Border Grid.Row="2" BorderBrush="{DynamicResource BrushLine}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0" Height="99">
                     <StackPanel>
-                      <TextBlock x:Name="TerminalPromptName" FontWeight="Bold" TextWrapping="Wrap" Foreground="{DynamicResource BrushInk}"/>
-                      <TextBlock x:Name="TerminalPromptAbout" Margin="0,2,0,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}"/>
+                      <TextBlock x:Name="TerminalPromptName" FontWeight="Bold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" LineStackingStrategy="BlockLineHeight" LineHeight="20" Height="20" Foreground="{DynamicResource BrushInk}"/>
+                      <TextBlock x:Name="TerminalPromptAbout" Margin="0,2,0,0" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" LineStackingStrategy="BlockLineHeight" LineHeight="20" Height="60" Foreground="{DynamicResource BrushMuted}"/>
                     </StackPanel>
                   </Border>
                 </Grid>
@@ -899,7 +906,7 @@
                   </Grid.RowDefinitions>
                   <DockPanel Grid.Row="0" Margin="0,0,0,8">
                     <TextBlock DockPanel.Dock="Left" Text="2" Style="{StaticResource TerminalStep}"/>
-                    <TextBlock x:Name="TerminalThemeCount" DockPanel.Dock="Right" Text="" Style="{StaticResource TerminalCount}"/>
+                    <TextBlock x:Name="TerminalThemeCount" DockPanel.Dock="Right" MinWidth="90" TextAlignment="Right" Text="" Style="{StaticResource TerminalCount}"/>
                     <TextBlock x:Name="TerminalThemeTitle" Text="Theme" Style="{StaticResource TerminalCardTitle}"/>
                   </DockPanel>
                   <Grid Grid.Row="1" Margin="0,0,0,8">
@@ -963,7 +970,7 @@
                       <TextBlock x:Name="TerminalFontSample" Text="Font preview" Typography.StandardLigatures="True" Typography.ContextualAlternates="True" LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource BrushLogText}" TextWrapping="NoWrap" VerticalAlignment="Bottom"/>
                     </Border>
                     <Border Grid.Row="2" BorderBrush="{DynamicResource BrushLine}" BorderThickness="0,1,0,0" Padding="12,8">
-                      <TextBlock x:Name="TerminalPreviewInfo" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}"/>
+                      <TextBlock x:Name="TerminalPreviewInfo" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}"/>
                     </Border>
                   </Grid>
                 </Border>
@@ -996,7 +1003,7 @@
                 <StackPanel>
                   <DockPanel Margin="0,0,0,4">
                     <TextBlock DockPanel.Dock="Left" Text="4" Style="{StaticResource TerminalStep}"/>
-                    <TextBlock x:Name="TerminalExtrasCount" DockPanel.Dock="Right" Text="" Style="{StaticResource TerminalCount}"/>
+                    <TextBlock x:Name="TerminalExtrasCount" DockPanel.Dock="Right" MinWidth="90" TextAlignment="Right" Text="" Style="{StaticResource TerminalCount}"/>
                     <TextBlock Text="Extras" Style="{StaticResource TerminalCardTitle}"/>
                   </DockPanel>
                   <UniformGrid x:Name="TerminalExtrasHost" Columns="2" Margin="0,0,-16,0"/>
@@ -1019,14 +1026,17 @@
               </Grid.ColumnDefinitions>
               <TextBlock Grid.Row="0" Grid.Column="0" Text="What will happen" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
               <CheckBox x:Name="TerminalEnabled" Grid.Row="0" Grid.Column="1" Content="Include in saved profiles" IsChecked="True" Margin="14,0,16,0" ToolTip="Include this terminal setup when a saved WinTool profile is replayed."/>
-              <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="2" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" Height="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
-              <WrapPanel x:Name="TerminalSummaryHost" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,8,0,0"/>
-              <TextBlock x:Name="TerminalSummary" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Visibility="Collapsed" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}"/>
+              <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="2" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" Width="190" Height="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
+              <!-- One line of chips, always 32 px tall: more chips scroll sideways (mouse wheel), the tooltip lists every step. -->
+              <ScrollViewer x:Name="TerminalSummaryScroll" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,8,0,0" Height="32" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="TerminalSummaryHost" Orientation="Horizontal"/>
+              </ScrollViewer>
+              <TextBlock x:Name="TerminalSummary" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Visibility="Collapsed" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}"/>
             </Grid>
           </Border>
         </Grid>
 
-        <ScrollViewer x:Name="ViewUpdates" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="ViewUpdates" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
           <StackPanel Margin="24,22,24,12">
             <TextBlock Text="Drivers and updates" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
@@ -1070,7 +1080,7 @@
           </StackPanel>
         </ScrollViewer>
 
-        <ScrollViewer x:Name="ViewFixes" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="ViewFixes" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
           <StackPanel Margin="24,22,24,12">
             <TextBlock Text="Fixes" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Repairs for common Windows problems. Each one asks first and writes what it does to the log." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
@@ -1078,7 +1088,7 @@
           </StackPanel>
         </ScrollViewer>
 
-        <ScrollViewer x:Name="ViewFeatures" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="ViewFeatures" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
           <StackPanel Margin="24,22,24,12">
             <TextBlock Text="Windows features" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Optional parts of Windows. Ticked means on. Change the ticks and press Apply. Windows needs a restart after a change." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
@@ -1095,7 +1105,7 @@
           </StackPanel>
         </ScrollViewer>
 
-        <ScrollViewer x:Name="ViewConfig" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="ViewConfig" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
           <StackPanel Margin="24,22,24,12">
             <TextBlock Text="Config" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Save what you picked and use it again after the next format." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
@@ -1174,6 +1184,10 @@
         </ScrollViewer>
       </Grid>
 
+      <!-- The log opens over the bottom of the page, so showing it never moves or resizes anything. -->
+      <Border x:Name="LogPanel" Grid.Row="0" Height="180" Margin="20,0,20,8" Padding="14,8" VerticalAlignment="Bottom" Panel.ZIndex="10" Background="{StaticResource BrushLog}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Visibility="Collapsed">
+        <TextBox x:Name="LogBox" IsReadOnly="True" IsReadOnlyCaretVisible="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AcceptsReturn="True" Background="Transparent" Foreground="{DynamicResource BrushLogText}" CaretBrush="{DynamicResource BrushLogText}" BorderThickness="0" FontFamily="Consolas" Padding="0"/>
+      </Border>
       <Border x:Name="StatusBar" Grid.Row="1" Background="{StaticResource BrushLog}" CornerRadius="12" Margin="20,0,20,16" Padding="14,8">
         <DockPanel>
           <DockPanel DockPanel.Dock="Top" LastChildFill="False">
@@ -1181,13 +1195,10 @@
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
               <Button x:Name="CancelRun" Content="Cancel" Style="{StaticResource QuietButton}" Visibility="Collapsed"/>
               <Button x:Name="ClearLogButton" Content="Clear log" Style="{StaticResource QuietButton}" Visibility="Collapsed"/>
-              <Button x:Name="ToggleLogButton" Content="Show log" Style="{StaticResource QuietButton}" AutomationProperties.Name="Show log"/>
+              <Button x:Name="ToggleLogButton" Content="Show log" Style="{StaticResource QuietButton}" MinWidth="84" AutomationProperties.Name="Show log"/>
             </StackPanel>
           </DockPanel>
-          <ProgressBar x:Name="MainProgress" Height="8" Minimum="0" Maximum="100" Value="0" Foreground="{DynamicResource BrushProgress}" Background="{DynamicResource BrushProgressTrack}" BorderThickness="0" Margin="0,10,0,0" DockPanel.Dock="Top" Visibility="Collapsed"/>
-          <Border x:Name="LogPanel" Height="168" Margin="0,10,0,0" Visibility="Collapsed">
-            <TextBox x:Name="LogBox" IsReadOnly="True" IsReadOnlyCaretVisible="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AcceptsReturn="True" Background="Transparent" Foreground="{DynamicResource BrushLogText}" CaretBrush="{DynamicResource BrushLogText}" BorderThickness="0" FontFamily="Consolas" Padding="0"/>
-          </Border>
+          <ProgressBar x:Name="MainProgress" Height="8" Minimum="0" Maximum="100" Value="0" Foreground="{DynamicResource BrushProgress}" Background="{DynamicResource BrushProgressTrack}" BorderThickness="0" Margin="0,10,0,0" DockPanel.Dock="Top" Visibility="Hidden"/>
         </DockPanel>
       </Border>
     </Grid>

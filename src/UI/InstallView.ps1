@@ -401,7 +401,7 @@ function Set-WinToolAppStatus {
         $status.Visibility = "Visible"
     }
     else {
-        $status.Visibility = "Collapsed"
+        $status.Visibility = "Hidden"
     }
     (Get-WinToolUi -Name "AppRefreshInstalled").ToolTip = $Text + " Press to check again."
 }

@@ -304,6 +304,12 @@ function Initialize-WinToolTerminalView {
         $script:WinToolTerminalMode = "advanced"
         Set-WinToolTerminalModeView
         Update-WinToolExtraToggle
+        # Simple resets the choice to the recommended setup, so the theme list,
+        # fonts, and sizes are rebuilt for that choice here, before anything
+        # reads them. Without this the theme list kept the last engine's rows.
+        Update-WinToolFontSizeSelection
+        Update-WinToolFontList
+        Update-WinToolPromptStyleList
         Update-WinToolTerminalSummary
         Update-WinToolPromptSelection
         Update-WinToolSchemeSelection
@@ -351,6 +357,14 @@ function Initialize-WinToolTerminalView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalBodyScroll") -EventName "SizeChanged" -Name "Terminal: layout" -Action {
         $bodyScroll = Get-WinToolUi -Name "TerminalBodyScroll"
         Update-WinToolTerminalLayout -Width $bodyScroll.ActualWidth -Height $bodyScroll.ActualHeight
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalSummaryScroll") -EventName "PreviewMouseWheel" -Name "Terminal: scroll the summary" -Action {
+        param($source, $eventData)
+        # One line of chips; the wheel moves it sideways when it is longer than the bar.
+        if ($null -ne $eventData -and $source.ScrollableWidth -gt 0) {
+            $source.ScrollToHorizontalOffset($source.HorizontalOffset - [double]$eventData.Delta / 2.0)
+            $eventData.Handled = $true
+        }
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "NavTerminal") -EventName "Checked" -Name "Terminal: show the selection" -Action {
         Show-WinToolTerminalSelection
@@ -509,6 +523,11 @@ function Update-WinToolPromptSelection {
     finally {
         $script:WinToolTerminalSyncing = $false
     }
+    # Card 2 always shows the list of the checked engine.
+    $styleList = Get-WinToolUi -Name "TerminalStyleList"
+    if ($null -ne $styleList -and [string]$styleList.Tag -ne $selected -and -not [string]::IsNullOrWhiteSpace($selected)) {
+        Update-WinToolPromptStyleList
+    }
     if ($null -ne $script:WinToolPromptCheck) {
         foreach ($key in $script:WinToolPromptCheck.Keys) {
             if ($key -eq $selected) { $script:WinToolPromptCheck[$key].Visibility = "Visible" }
@@ -532,7 +551,7 @@ function Update-WinToolPromptSelection {
     $nameBlock.Text = [string]$prompt.name
     # What it installs is listed in the action bar, so the note stays short.
     $aboutBlock.Text = ([string]$info.Sub + ". " + [string]$prompt.summary).Trim()
-    $aboutBlock.ToolTip = ("Installs: " + (@($prompt.installs) -join ", ") + "`n" + [string]$info.Runs).Trim()
+    $aboutBlock.ToolTip = ($aboutBlock.Text + "`n`nInstalls: " + (@($prompt.installs) -join ", ") + "`n" + [string]$info.Runs).Trim()
 }
 
 function New-WinToolTerminalChip {
@@ -546,7 +565,7 @@ function New-WinToolTerminalChip {
     $chip.CornerRadius = [System.Windows.CornerRadius]::new(16)
     $chip.Height = 32
     $chip.Padding = [System.Windows.Thickness]::new(12, 0, 12, 0)
-    $chip.Margin = [System.Windows.Thickness]::new(0, 0, 6, 6)
+    $chip.Margin = [System.Windows.Thickness]::new(0, 0, 6, 0)
     $chip.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, $Background)
     $label = New-WinToolTerminalLabel -Text $Text -Brush $Foreground
     $label.TextTrimming = "None"

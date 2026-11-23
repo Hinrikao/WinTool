@@ -713,6 +713,84 @@ function Save-WinToolTerminalShot {
     Write-Output ("Saved " + $path)
 }
 
+# Card 2 always matches the checked engine. The old bug: Advanced, pick
+# Starship, go to Simple (the choice resets to Oh My Posh), back to Advanced:
+# Oh My Posh was checked but card 2 still listed the Starship presets.
+$window.FindName("NavTerminal").IsChecked = $true
+$window.FindName("TerminalModeAdvanced").IsChecked = $true
+$themeList = $window.FindName("TerminalStyleList")
+function Assert-WinToolThemeCard {
+    param([string]$Label)
+    $engine = [string]$script:WinToolTerminalChoice.prompt
+    $want = Get-WinToolThemeTitle -PromptId $engine
+    $rows = @(Get-WinToolThemeRow -PromptId $engine -OhMyPoshTheme @(Get-WinToolActiveOhMyPoshTheme))
+    if ([string]$themeList.Tag -ne $engine) { throw ($Label + ": card 2 was built for '" + [string]$themeList.Tag + "' but '" + $engine + "' is checked.") }
+    if ([string]$window.FindName("TerminalThemeTitle").Text -ne [string]$want.Title) { throw ($Label + ": card 2 is titled '" + $window.FindName("TerminalThemeTitle").Text + "', expected '" + $want.Title + "'.") }
+    if ($themeList.Items.Count -ne $rows.Count) { throw ($Label + ": card 2 lists " + $themeList.Items.Count + " items, the " + $engine + " catalog has " + $rows.Count + ".") }
+    for ($i = 0; $i -lt $rows.Count; $i++) {
+        if ([string]$themeList.Items[$i].Tag -ne [string]$rows[$i].Id) { throw ($Label + ": item " + $i + " is '" + [string]$themeList.Items[$i].Tag + "', expected '" + [string]$rows[$i].Id + "'.") }
+    }
+    if ([string]$window.FindName("TerminalThemeCount").Text -ne ([string]$rows.Count + " of " + [string]$rows.Count)) { throw ($Label + ": the count reads '" + $window.FindName("TerminalThemeCount").Text + "'.") }
+    $engineName = [string]$window.FindName("TerminalPromptName").Text
+    if (-not ([string]$window.FindName("TerminalPreviewInfo").Text).StartsWith($engineName)) { throw ($Label + ": the preview describes '" + $window.FindName("TerminalPreviewInfo").Text + "', not " + $engineName + ".") }
+    if ($rows.Count -gt 0 -and [string]$script:WinToolTerminalChoice.promptStyle -notin @($rows | ForEach-Object { [string]$_.Id })) { throw ($Label + ": the chosen style '" + $script:WinToolTerminalChoice.promptStyle + "' is not in the " + $engine + " list.") }
+}
+Select-WinToolTerminalPrompt -PromptId "starship"
+$window.FindName("TerminalModeSimple").IsChecked = $true
+$window.FindName("TerminalModeAdvanced").IsChecked = $true
+Assert-WinToolThemeCard -Label "Simple then Advanced"
+Write-Output ("Simple then Advanced: card 2 is '" + $window.FindName("TerminalThemeTitle").Text + "' for " + $script:WinToolTerminalChoice.prompt)
+
+# Strict rule: clicking never moves or resizes the main Terminal panels.
+function Get-WinToolTerminalBound {
+    $bounds = @{}
+    foreach ($panelName in @("TerminalCardPrompt", "TerminalCardTheme", "TerminalCardPreview", "TerminalCardFont", "TerminalCardExtras", "TerminalSummaryCard", "TerminalSummaryScroll", "TerminalSetup", "TerminalPromptList", "TerminalStyleList")) {
+        $element = $window.FindName($panelName)
+        $origin = $element.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+        $bounds[$panelName] = ("{0:0.0},{1:0.0} {2:0.0}x{3:0.0}" -f $origin.X, $origin.Y, $element.ActualWidth, $element.ActualHeight)
+    }
+    return $bounds
+}
+function Assert-WinToolTerminalBound {
+    param($Before, [string]$Label)
+    Invoke-WinToolTerminalShotLayout -Width 1280 -Height 760
+    $after = Get-WinToolTerminalBound
+    foreach ($key in $Before.Keys) {
+        if ($after[$key] -ne $Before[$key]) { throw ($Label + " moved or resized " + $key + ": " + $Before[$key] + " -> " + $after[$key]) }
+    }
+}
+Select-WinToolTerminalPrompt -PromptId "oh-my-posh"
+Invoke-WinToolTerminalShotLayout -Width 1280 -Height 760
+$terminalBounds = Get-WinToolTerminalBound
+$clickEvent = New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)
+foreach ($pass in @(1, 2)) {
+    foreach ($extraBox in @($script:WinToolTerminalExtraBox)) {
+        $extraBox.IsChecked = -not ($extraBox.IsChecked -eq $true)
+        $extraBox.RaiseEvent($clickEvent)
+        Assert-WinToolTerminalBound -Before $terminalBounds -Label ("Toggling the extra " + [string]$extraBox.Tag)
+    }
+}
+Write-Output ("Toggled " + @($script:WinToolTerminalExtraBox).Count + " extras on and off: the cards, the action bar, and Apply never moved; " + $window.FindName("TerminalSummaryHost").Children.Count + " chips on one line.")
+$engines = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "prompts" -Default @())
+foreach ($engine in $engines) {
+    Select-WinToolTerminalPrompt -PromptId ([string]$engine.id)
+    Assert-WinToolThemeCard -Label ("Engine " + [string]$engine.id)
+    Assert-WinToolTerminalBound -Before $terminalBounds -Label ("Picking " + [string]$engine.id)
+}
+Write-Output ("Checked " + $engines.Count + " engines: card 2, its title, count, and the preview match each one, and nothing moved.")
+$script:WinToolState.LogExpanded = $true
+Sync-WinToolLogPanel
+Assert-WinToolTerminalBound -Before $terminalBounds -Label "Opening the log"
+$script:WinToolState.LogExpanded = $false
+Sync-WinToolLogPanel
+$script:WinToolTerminalChoice.prompt = "oh-my-posh"
+$script:WinToolTerminalChoice.promptStyle = "jandedobbeleer"
+Select-WinToolTerminalPrompt -PromptId "oh-my-posh"
+foreach ($extraBox in @($script:WinToolTerminalExtraBox)) { $extraBox.IsChecked = $true; $extraBox.RaiseEvent($clickEvent) }
+Save-WinToolTerminalShot -Name "terminal-extras-all-on" -Width 1280 -Height 760
+foreach ($extraBox in @($script:WinToolTerminalExtraBox)) { $extraBox.IsChecked = ([string]$extraBox.Tag -in @("terminal-icons", "psreadline")); $extraBox.RaiseEvent($clickEvent) }
+Save-WinToolTerminalShot -Name "terminal-extras-default" -Width 1280 -Height 760
+
 # Prompt styles: Powerlevel10k shows its styles in the theme list, and the
 # preview draws the chosen style's colored blocks. Long lists scroll inside
 # their fixed-height card.
@@ -851,6 +929,28 @@ $chipRight = $lastChip.TranslatePoint([System.Windows.Point]::new($lastChip.Actu
 if ($chipRight -gt $chipScroll.ActualWidth + 0.5) { throw ("Filter chips are cut off at 1280: the last ends at " + [int]$chipRight + " of " + [int]$chipScroll.ActualWidth) }
 Write-Output ("Selection actions on the title row; first card stays at y=" + [int]$after.Y + "; chips end at " + [int]$chipRight + " of " + [int]$chipScroll.ActualWidth)
 Sync-WinToolAppCheck -Id @() -OnlyThese
+# A filter chip, the log, and the installed-apps status never change the card size or the columns.
+$installBounds = { "{0:0.0},{1:0.0} {2:0.0}x{3:0.0} cols {4}" -f $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual).X, $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual).Y, $firefox.Panel.ActualWidth, $firefox.Panel.ActualHeight, $script:WinToolState.CategoryRows[0].Grid.Columns }
+Save-WinToolViewShot -Name "install-noselection" -Width 1280 -Height 760
+$installBefore = & $installBounds
+$browserChip = @($window.FindName("AppFilters").Children | Where-Object { [string]$_.Tag -like "category:*" })[0]
+$browserChip.IsChecked = $true
+Save-WinToolViewShot -Name "install-filtered" -Width 1280 -Height 760
+Update-WinToolInstallLayout -Width (Get-WinToolInstallWidth)
+Save-WinToolViewShot -Name "install-filtered" -Width 1280 -Height 760
+$installAfter = & $installBounds
+if ($installAfter -ne $installBefore) { throw ("Clicking the " + $browserChip.Content + " chip moved or resized the cards: " + $installBefore + " -> " + $installAfter) }
+@($window.FindName("AppFilters").Children)[0].IsChecked = $true
+Set-WinToolAppStatus -Text "Checking installed apps..."
+$script:WinToolState.LogExpanded = $true
+Sync-WinToolLogPanel
+Save-WinToolViewShot -Name "install-log-open" -Width 1280 -Height 760
+$installAfter = & $installBounds
+if ($installAfter -ne $installBefore) { throw ("The status line or the log moved the cards: " + $installBefore + " -> " + $installAfter) }
+$script:WinToolState.LogExpanded = $false
+Sync-WinToolLogPanel
+Set-WinToolAppStatus -Text "Installed apps checked." -Show $false
+Write-Output ("Install: a filter chip, the status line, and the log leave the cards in place (" + $installBefore + ")")
 $window.FindName("NavInstall").IsChecked = $true
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel

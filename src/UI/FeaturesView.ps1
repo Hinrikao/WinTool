@@ -24,6 +24,10 @@ function Initialize-WinToolFeatureView {
         [void]$panel.Children.Add($text)
         $state = New-WinToolText -Text "Checking..." -Brush "BrushMuted"
         $state.VerticalAlignment = "Top"
+        # A fixed width: "Checking..." and the final state take the same room,
+        # so the descriptions never re-wrap and the rows never move.
+        $state.Width = 140
+        $state.TextAlignment = "Right"
         [System.Windows.Controls.Grid]::SetColumn($state, 2)
         [void]$panel.Children.Add($state)
         [void]$hostPanel.Children.Add($panel)
