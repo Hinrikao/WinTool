@@ -4556,10 +4556,10 @@ ICAgICAgICAgICA8VGV4dEJsb2NrIHg6TmFtZT0iVGVybWluYWxQcm9tcHROYW1lIiBGb250U2l6ZT0i
 MTEiIEZvbnRXZWlnaHQ9IkJvbGQiIEZvcmVncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hJbmt9
 IiBUZXh0VHJpbW1pbmc9IkNoYXJhY3RlckVsbGlwc2lzIi8+CiAgICAgICAgICAgICAgICAgICAgICA8
 VGV4dEJsb2NrIHg6TmFtZT0iVGVybWluYWxQcm9tcHRBYm91dCIgRm9udFNpemU9IjEwLjUiIE1hcmdp
-bj0iMCwyLDAsMCIgVGV4dFdyYXBwaW5nPSJXcmFwIiBNYXhIZWlnaHQ9IjU4IiBUZXh0VHJpbW1pbmc9
+bj0iMCwyLDAsMCIgVGV4dFdyYXBwaW5nPSJXcmFwIiBNYXhIZWlnaHQ9IjI4IiBUZXh0VHJpbW1pbmc9
 IkNoYXJhY3RlckVsbGlwc2lzIiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTXV0ZWR9
 Ii8+CiAgICAgICAgICAgICAgICAgICAgICA8V3JhcFBhbmVsIHg6TmFtZT0iVGVybWluYWxQcm9tcHRD
-aGlwcyIgTWFyZ2luPSIwLDYsMCwwIiBNYXhIZWlnaHQ9IjQ0IiBDbGlwVG9Cb3VuZHM9IlRydWUiLz4K
+aGlwcyIgTWFyZ2luPSIwLDUsMCwwIiBNYXhIZWlnaHQ9IjIyIiBDbGlwVG9Cb3VuZHM9IlRydWUiLz4K
 ICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgIDwvQm9yZGVy
 PgogICAgICAgICAgICAgICAgPC9HcmlkPgogICAgICAgICAgICAgIDwvQm9yZGVyPgoKICAgICAgICAg
 ICAgICA8IS0tIDIuIFRoZW1lLCBwcmVzZXQsIG9yIHN0eWxlIG9mIHRoZSBjaG9zZW4gZW5naW5lLiAt
@@ -13318,7 +13318,7 @@ function Build-WinToolPromptCard {
             $header.Style = $rowStyle
             $header.IsEnabled = $false
             $header.Focusable = $false
-            $header.Padding = [System.Windows.Thickness]::new(8, 6, 8, 2)
+            $header.Padding = [System.Windows.Thickness]::new(8, 4, 8, 1)
             $header.Content = New-WinToolTerminalLabel -Text $group.ToUpperInvariant() -Size 9 -Brush "BrushHint"
             [void]$list.Items.Add($header)
             for ($index = 0; $index -lt $prompts.Count; $index++) {
@@ -13342,8 +13342,8 @@ function New-WinToolPromptRow {
     $item.Style = $Style
     $item.Tag = [string]$Prompt.id
     $item.BorderThickness = [System.Windows.Thickness]::new(1)
-    $item.Margin = [System.Windows.Thickness]::new(0, 0, 0, 3)
-    $item.Padding = [System.Windows.Thickness]::new(8, 6, 8, 6)
+    $item.Margin = [System.Windows.Thickness]::new(0, 0, 0, 1)
+    $item.Padding = [System.Windows.Thickness]::new(7, 3, 7, 3)
     $item.ToolTip = [string]$Prompt.summary
     [System.Windows.Automation.AutomationProperties]::SetName($item, [string]$Prompt.name)
     $grid = New-Object System.Windows.Controls.Grid
@@ -13354,8 +13354,8 @@ function New-WinToolPromptRow {
         $grid.ColumnDefinitions.Add($column)
     }
     $icon = New-Object System.Windows.Controls.Border
-    $icon.Width = 22
-    $icon.Height = 22
+    $icon.Width = 20
+    $icon.Height = 20
     $icon.CornerRadius = [System.Windows.CornerRadius]::new(5)
     $icon.HorizontalAlignment = "Left"
     $fill = ConvertTo-WinToolPreviewBrush -Color ([string]$Info.Color)
@@ -13787,6 +13787,7 @@ function Update-WinToolFontList {
     if ($null -ne $countBlock) {
         $countBlock.Text = ([string]$allFonts.Count + " fonts" + $dot + $nerdCount + " Nerd Fonts" + $dot + $schemeCount + " schemes")
     }
+    Update-WinToolFontSizeSelection
     Update-WinToolFontSample
 }
 
