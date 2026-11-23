@@ -916,8 +916,12 @@ function Initialize-WinToolThemeEntryType {
     # Plain objects, not ListBoxItems. A C# predicate filters them, so the
     # click does not walk the catalog in PowerShell or build a row visual.
     if ($null -ne ("WinToolThemeEntry" -as [type])) { return }
-    $framework = [System.Windows.Data.ListCollectionView].Assembly.Location
-    Add-Type -ReferencedAssemblies $framework -TypeDefinition @"
+    $refs = @(
+        [System.Windows.Threading.DispatcherObject].Assembly.Location,
+        [System.Windows.Media.Visual].Assembly.Location,
+        [System.Windows.Data.ListCollectionView].Assembly.Location
+    )
+    Add-Type -ReferencedAssemblies $refs -TypeDefinition @"
 using System;
 using System.Windows.Data;
 public class WinToolThemeEntry {
