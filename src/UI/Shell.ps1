@@ -15,7 +15,7 @@ function Request-WinToolConfirmation {
 }
 
 function Get-WinToolViewName {
-    return @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config")
+    return @("Home", "Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config")
 }
 
 function Add-WinToolBusyControl {
@@ -564,6 +564,13 @@ function New-WinToolWindow {
         AppCardAction = $null
         LogExpanded = $false
         LogPinned = $false
+        Home = $null
+        HomeTimer = $null
+        HomeAnimTimer = $null
+        HomeSampler = $null
+        HomeInfoJob = $null
+        HomeCleanJob = $null
+        TweakRequestStarted = $false
     }
 
     $xaml = Get-WinToolPayloadText -Name "Xaml"
@@ -574,6 +581,7 @@ function New-WinToolWindow {
     $script:WinToolLogBox = $window.FindName("LogBox")
 
     Initialize-WinToolAppearance
+    Initialize-WinToolHomeView
     Initialize-WinToolInstallView
     Initialize-WinToolTweakView
     Initialize-WinToolTerminalView
@@ -612,6 +620,16 @@ function Stop-WinToolBackgroundWork {
     if ($null -ne $script:WinToolState.Pump) {
         try { $script:WinToolState.Pump.Stop() } catch { $null = $_.Exception.Message }
         $script:WinToolState.Pump = $null
+    }
+    foreach ($timerKey in @("HomeTimer", "HomeAnimTimer")) {
+        if ($null -ne $script:WinToolState[$timerKey]) {
+            try { $script:WinToolState[$timerKey].Stop() } catch { $null = $_.Exception.Message }
+            $script:WinToolState[$timerKey] = $null
+        }
+    }
+    if ($null -ne $script:WinToolState.HomeSampler) {
+        # Lets the sampler loop end on its own as well.
+        try { $script:WinToolState.HomeSampler.Sync.Stop = $true } catch { $null = $_.Exception.Message }
     }
     $run = $script:WinToolState.Run
     if ($null -ne $run -and $null -ne $run.Process) {

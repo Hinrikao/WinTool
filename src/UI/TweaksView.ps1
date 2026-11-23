@@ -515,7 +515,8 @@ function Request-WinToolTweakOn {
     # Turns on the given tweaks that are off, after one confirmation.
     param(
         [string[]]$Id,
-        [Parameter(Mandatory = $true)][string]$Label
+        [Parameter(Mandatory = $true)][string]$Label,
+        [switch]$NoConfirm
     )
     $wanted = @{}
     foreach ($item in @($Id)) {
@@ -532,7 +533,10 @@ function Request-WinToolTweakOn {
     }
     $names = @($rows | Select-Object -First 10 | ForEach-Object { "- " + [string]$_.Tweak.name }) -join "`n"
     if ($rows.Count -gt 10) { $names += "`n- ..." }
-    $ok = Request-WinToolConfirmation -Message ("Turn on {0} tweak(s) from {1}?`n`n{2}`n`nWinTool creates a restore point before the first change." -f $rows.Count, $Label, $names) -Title "Tweaks"
+    $ok = $true
+    if (-not $NoConfirm) {
+        $ok = Request-WinToolConfirmation -Message ("Turn on {0} tweak(s) from {1}?`n`n{2}`n`nWinTool creates a restore point before the first change." -f $rows.Count, $Label, $names) -Title "Tweaks"
+    }
     if (-not $ok) {
         return
     }
@@ -542,6 +546,8 @@ function Request-WinToolTweakOn {
         $items.Add([pscustomobject]@{ Row = $row; Direction = "Apply"; Previous = $false })
     }
     Write-WinToolLog -Message ("Turning on {0} tweak(s) from {1}." -f $rows.Count, $Label) -Level "info"
+    # Home watches this flag to know the queue started.
+    $script:WinToolState.TweakRequestStarted = $true
     Start-WinToolTweakQueue -Item $items.ToArray()
 }
 

@@ -327,6 +327,90 @@
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
+    <!-- Home: the gradient call to action, the row Fix/Review buttons and a text link. -->
+    <LinearGradientBrush x:Key="BrushHomeGradient" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#4C8DFF" Offset="0"/>
+      <GradientStop Color="#8B5CF6" Offset="1"/>
+    </LinearGradientBrush>
+    <Style x:Key="HomeGradientButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Border x:Name="Bd" Background="{StaticResource BrushHomeGradient}" CornerRadius="9"/>
+              <Border x:Name="Off" Background="{DynamicResource BrushCanvas}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="9" Visibility="Collapsed"/>
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Off" Property="Visibility" Value="Visible"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushHint}"/>
+                <Setter Property="Cursor" Value="Arrow"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="HomeRowButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BrushLine}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Width" Value="76"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="9">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                <Setter Property="Cursor" Value="Arrow"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="HomeLinkButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushAccent}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="Transparent" Padding="0">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource BrushAccentHover}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource BrushHint}"/>
+                <Setter Property="Cursor" Value="Arrow"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <Style x:Key="PageSearch" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
       <Setter Property="Height" Value="34"/>
       <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
@@ -497,7 +581,13 @@
           <TextBlock Text="WinTool" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarText}"/>
           <TextBlock Text="A calm setup helper for a fresh Windows 11 PC." Foreground="{DynamicResource BrushSidebarMuted}" TextWrapping="Wrap" Margin="0,8,0,22"/>
 
-          <RadioButton x:Name="NavInstall" GroupName="WinToolNav" Style="{StaticResource NavButton}" IsChecked="True" AutomationProperties.Name="Install">
+          <RadioButton x:Name="NavHome" GroupName="WinToolNav" Style="{StaticResource NavButton}" IsChecked="True" AutomationProperties.Name="Home">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE80F;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
+              <TextBlock Text="Home" VerticalAlignment="Center"/>
+            </StackPanel>
+          </RadioButton>
+          <RadioButton x:Name="NavInstall" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Install">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="&#xE7B8;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
               <TextBlock Text="Install" VerticalAlignment="Center"/>
@@ -550,7 +640,111 @@
       </Grid.RowDefinitions>
 
       <Grid Grid.Row="0">
-        <Grid x:Name="ViewInstall">
+        <!-- Home: one fixed layout for analyzing, done and fixing. Only the
+             content inside each slot changes; no state moves or resizes anything. -->
+        <Grid x:Name="ViewHome">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <Grid Grid.Row="0" Margin="20,15,20,0">
+            <TextBlock Text="Home" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+              <TextBlock x:Name="HomeRunText" Width="150" TextAlignment="Right" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text=" "/>
+              <Button x:Name="HomeAgain" Content="Analyze again" Style="{StaticResource HomeLinkButton}" Width="104" Height="32" Margin="16,0,0,0"/>
+            </StackPanel>
+          </Grid>
+          <ScrollViewer x:Name="HomeScroll" Grid.Row="1" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid x:Name="HomeBody" Margin="20,0,20,20">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="474"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="*" MinHeight="172"/>
+              </Grid.RowDefinitions>
+              <Border x:Name="HomeHero" Grid.Row="0" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="22">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="280"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <Grid x:Name="HomeRing" Grid.Column="0" Width="236" Height="236" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Canvas Width="236" Height="236" IsHitTestVisible="False">
+                      <Ellipse Canvas.Left="-22" Canvas.Top="-22" Width="280" Height="280">
+                        <Ellipse.Fill>
+                          <RadialGradientBrush>
+                            <GradientStop Color="#404C8DFF" Offset="0"/>
+                            <GradientStop Color="#004C8DFF" Offset="1"/>
+                          </RadialGradientBrush>
+                        </Ellipse.Fill>
+                      </Ellipse>
+                      <Ellipse Canvas.Left="15" Canvas.Top="5" Width="250" Height="250">
+                        <Ellipse.Fill>
+                          <RadialGradientBrush>
+                            <GradientStop Color="#308B5CF6" Offset="0"/>
+                            <GradientStop Color="#008B5CF6" Offset="1"/>
+                          </RadialGradientBrush>
+                        </Ellipse.Fill>
+                      </Ellipse>
+                      <Ellipse Canvas.Left="19" Canvas.Top="19" Width="198" Height="198" StrokeThickness="10" Stroke="{DynamicResource BrushProgressTrack}"/>
+                      <Ellipse Canvas.Left="40" Canvas.Top="40" Width="156" Height="156" Fill="{DynamicResource BrushCanvas}" Stroke="{DynamicResource BrushLine}" StrokeThickness="1"/>
+                      <Path x:Name="HomeArc" StrokeThickness="10" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{StaticResource BrushHomeGradient}"/>
+                      <Ellipse x:Name="HomeArcCap" Width="12" Height="12" Fill="#FFFFFF">
+                        <Ellipse.Effect>
+                          <DropShadowEffect Color="#8B5CF6" BlurRadius="14" ShadowDepth="0" Opacity="0.9"/>
+                        </Ellipse.Effect>
+                      </Ellipse>
+                    </Canvas>
+                    <StackPanel x:Name="HomeRingBusy" HorizontalAlignment="Center" VerticalAlignment="Center">
+                      <Path Width="22" Height="22" HorizontalAlignment="Center" Stroke="{DynamicResource BrushAccent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 9,2 A 7,7 0 1 1 8.99,2 M 14,14 L 20,20"/>
+                      <TextBlock Text="ANALYZING" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                      <TextBlock x:Name="HomeRingProgress" Text="0 of 5 checks" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel x:Name="HomeRingDone" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                      <TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource BrushInk}">
+                        <Run x:Name="HomeScore" Text="0" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold"/><Run Text=" / 100" Foreground="{DynamicResource BrushMuted}"/>
+                      </TextBlock>
+                      <Border x:Name="HomeVerdict" Height="24" CornerRadius="12" Padding="10,0" Margin="0,6,0,0" HorizontalAlignment="Center" Background="{DynamicResource BrushWarnSoft}">
+                        <TextBlock x:Name="HomeVerdictText" Text="Needs attention" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushWarn}"/>
+                      </Border>
+                    </StackPanel>
+                  </Grid>
+                  <StackPanel x:Name="HomeInfo" Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock x:Name="HomeHeadline" Height="20" Text="Analyzing your PC..." FontWeight="Bold" Foreground="{DynamicResource BrushInk}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="HomeLead" Height="20" Margin="0,4,0,0" Text="Takes less than a minute. Nothing is changed during the analysis." Foreground="{DynamicResource BrushMuted}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="HomeMeta" Height="20" Margin="0,10,0,0" Foreground="{DynamicResource BrushHint}" TextTrimming="CharacterEllipsis"><Run x:Name="HomeMetaText" Text="No earlier analysis on this PC"/><Run Text=" &#183; "/><Hyperlink x:Name="HomeHistoryLink" Foreground="{DynamicResource BrushAccent}" TextDecorations="{x:Null}">View history</Hyperlink></TextBlock>
+                    <Grid Height="32" Margin="0,12,0,0">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="88"/>
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Needs attention" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+                        <TextBlock x:Name="HomeCheckCount" Text="0 of 5 complete" Margin="10,0,0,0" Foreground="{DynamicResource BrushMuted}"/>
+                      </StackPanel>
+                      <Button x:Name="HomeFixAll" Grid.Column="2" Content="Fix all" Width="88" Height="32" Style="{StaticResource HomeGradientButton}" IsEnabled="False"/>
+                    </Grid>
+                    <Border Height="282" Margin="0,8,0,0" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BrushLine}" Background="{DynamicResource BrushCanvas}">
+                      <StackPanel x:Name="HomeChecks"/>
+                    </Border>
+                  </StackPanel>
+                </Grid>
+              </Border>
+              <Grid x:Name="HomeMinis" Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="14"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="14"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+              </Grid>
+            </Grid>
+          </ScrollViewer>
+        </Grid>
+
+        <Grid x:Name="ViewInstall" Visibility="Collapsed">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>

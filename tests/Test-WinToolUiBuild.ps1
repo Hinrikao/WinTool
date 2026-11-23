@@ -40,6 +40,9 @@ foreach ($relative in [System.IO.File]::ReadAllLines($listPath)) {
     . $path
 }
 
+# Home checks are fed by the test, without motion, until the real run at the end.
+$script:WinToolHomeNoJobs = $true
+$script:WinToolHomeReduceMotion = $true
 $results = @(New-WinToolWindow)
 if ($results.Count -ne 1) {
     throw "WinTool startup produced $($results.Count) outputs. A collection method is leaking its return value."
@@ -221,10 +224,13 @@ $skip = @(
     "Window closed",
     "Keyboard shortcut",
     "Appearance: accent color",
-    "Appearance: theme"
+    "Appearance: theme",
+    "View history",
+    "Fix all",
+    "Start the Home analysis"
 )
 # Every handler whose name starts with one of these changes the system.
-$skipPrefix = @("Fixes: ")
+$skipPrefix = @("Fixes: ", "Home: ")
 $raised = 0
 foreach ($entry in $script:WinToolUiHandlers.ToArray()) {
     if ($skip -contains [string]$entry.Name) {
@@ -1038,6 +1044,125 @@ if ($rowsShown -ne @($tweakRows).Count) { throw ("Every tweak row should sit in 
 $spread = ($real | Measure-Object -Maximum).Maximum - ($real | Measure-Object -Minimum).Minimum
 if ($spread -gt 450) { throw ("The tweak columns are unbalanced: " + (($real | ForEach-Object { [int]$_ }) -join "/")) }
 Update-WinToolTweakLayout -Width 992
+
+# Home: analyzing, done and fixing share one layout. Stub results stand in
+# for the checks so the shots match the mockups; then the real checks run.
+$window.FindName("NavHome").IsChecked = $true
+if ($window.FindName("ViewHome").Visibility -ne "Visible") { throw "The Home tab did not open." }
+$script:WinToolState.LogExpanded = $false
+$script:WinToolState.Busy = $false
+Sync-WinToolLogPanel
+$homeStub = @{
+    junk = @([pscustomobject]@{ Id = "temp"; Name = "Your temporary files"; Bytes = [double]12GB }, [pscustomobject]@{ Id = "recycle"; Name = "Recycle Bin"; Bytes = [double]6.7GB })
+    tweaks = @(1..10 | ForEach-Object { $tweakState = "on"; if ($_ -le 8) { $tweakState = "off" }; [pscustomobject]@{ Id = "t$_"; Name = "Tweak $_"; State = $tweakState } })
+    startup = @("OneDrive", "Discord", "Steam", "Spotify" | ForEach-Object { [pscustomobject]@{ Name = $_; Source = "Run, this user"; Approved = -1 } })
+    drivers = @()
+    disk = @([pscustomobject]@{ Name = "NVMe SSD"; MediaType = "SSD"; Health = "Healthy" })
+}
+$script:WinToolState.Home.Info = [pscustomobject]@{ Os = "Windows 11 Pro"; Version = "24H2"; Cpu = "AMD Ryzen 7 7700 8-Core Processor"; MemoryTotal = [double]32GB; MemoryType = 34; DiskSize = [double]512e9; DiskMedia = "SSD" }
+$sampleWave = @(38, 44, 41, 52, 47, 58, 50, 46, 55, 49, 61, 51)
+for ($i = 0; $i -lt $sampleWave.Count; $i++) {
+    Add-WinToolHomeSample -Sample ([pscustomobject]@{ MemoryUsed = [double]32GB * $sampleWave[$i] / 100; MemoryTotal = [double]32GB; DiskFree = [double]148GB; DiskTotal = [double]510GB; DiskBusy = [double](($sampleWave[$i] * 7) % 60); Cpu = [double](($sampleWave[$i] * 3) % 45 + 5) })
+}
+function Get-WinToolHomeBound {
+    $hs = $script:WinToolState.Home
+    $items = New-Object System.Collections.Generic.List[object]
+    foreach ($name in @("HomeHero", "HomeRing", "HomeInfo", "HomeHeadline", "HomeLead", "HomeMeta", "HomeCheckCount", "HomeFixAll", "HomeChecks", "HomeMinis", "HomeAgain", "HomeRunText")) {
+        $items.Add([pscustomobject]@{ Name = $name; Element = $window.FindName($name) })
+    }
+    foreach ($check in @(Get-WinToolHomeCheckList)) {
+        $items.Add([pscustomobject]@{ Name = ("row " + $check.Id); Element = $hs.Rows[$check.Id].Border })
+        $items.Add([pscustomobject]@{ Name = ("button " + $check.Id); Element = $hs.Rows[$check.Id].Button })
+        $items.Add([pscustomobject]@{ Name = ("text " + $check.Id); Element = $hs.Rows[$check.Id].Result })
+    }
+    foreach ($key in @("memory", "disk", "pc")) {
+        $items.Add([pscustomobject]@{ Name = ("card " + $key); Element = $hs.Minis[$key].Card })
+        $items.Add([pscustomobject]@{ Name = ("tag " + $key); Element = $hs.Minis[$key].Tag })
+        $items.Add([pscustomobject]@{ Name = ("spark " + $key); Element = $hs.Minis[$key].Spark })
+    }
+    $out = @{}
+    foreach ($item in $items) {
+        $point = $item.Element.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+        $out[$item.Name] = "{0:0.#},{1:0.#} {2:0.#}x{3:0.#}" -f $point.X, $point.Y, $item.Element.ActualWidth, $item.Element.ActualHeight
+    }
+    return $out
+}
+function Compare-WinToolHomeBound {
+    param([hashtable]$Before, [hashtable]$After, [string]$Label)
+    $moved = @()
+    foreach ($key in $Before.Keys) {
+        if ($Before[$key] -ne $After[$key]) { $moved += ("{0}: {1} -> {2}" -f $key, $Before[$key], $After[$key]) }
+    }
+    if ($moved.Count -gt 0) { throw ("Home " + $Label + " moved or resized: " + ($moved -join "; ")) }
+}
+foreach ($size in @(@(1280, 800), @(1920, 1080), @(1024, 640))) {
+    $w = [double]$size[0]
+    $h = [double]$size[1]
+    $script:WinToolState.Home.Phase = "idle"
+    Start-WinToolHomeAnalysis
+    foreach ($id in @("junk", "tweaks", "startup", "drivers")) { Complete-WinToolHomeCheck -Id $id -Data $homeStub[$id] }
+    $script:WinToolState.Home.Started = [DateTime]::Now.AddSeconds(-18)
+    Sync-WinToolHomeRunText
+    $hsRows = $script:WinToolState.Home.Rows
+    if ($window.FindName("HomeFixAll").IsEnabled -or $window.FindName("HomeAgain").IsEnabled) { throw "Fix all and Analyze again must be off while analyzing." }
+    if ($hsRows["drivers"].Button.Visibility -ne "Hidden" -or $hsRows["disk"].Button.Visibility -ne "Visible" -or $hsRows["disk"].Button.IsEnabled) { throw "While analyzing: a clean row hides its button, a busy row shows Fix greyed out." }
+    if ($window.FindName("HomeCheckCount").Text -ne "4 of 5 complete" -or $window.FindName("HomeRingProgress").Text -ne "4 of 5 checks") { throw ("The progress counts are wrong: " + $window.FindName("HomeCheckCount").Text) }
+    Save-WinToolViewShot -Name ("home-analyzing-" + $size[0]) -Width $w -Height $h
+    Save-WinToolViewShot -Name ("home-analyzing-" + $size[0]) -Width $w -Height $h
+    $analyzing = Get-WinToolHomeBound
+    Complete-WinToolHomeCheck -Id "disk" -Data $homeStub["disk"]
+    $script:WinToolState.Home.Seconds = 31
+    Sync-WinToolHomeRunText
+    if ($script:WinToolState.Home.Phase -ne "done") { throw "Home should be done after five checks." }
+    if ([string]$window.FindName("HomeScore").Text -ne "72" -or [string]$window.FindName("HomeVerdictText").Text -ne "Needs attention") { throw ("The stub results should score 72, got " + $window.FindName("HomeScore").Text) }
+    if (-not $window.FindName("HomeFixAll").IsEnabled -or -not $window.FindName("HomeAgain").IsEnabled) { throw "Fix all and Analyze again turn on when the analysis is done." }
+    if ([string]$hsRows["junk"].Button.Content -ne "Fix" -or [string]$hsRows["startup"].Button.Content -ne "Review" -or $hsRows["disk"].Button.Visibility -ne "Hidden") { throw "Done rows show Fix, Review or an empty slot as in the mockup." }
+    if ($window.FindName("HomeCheckCount").Text -ne "2 of 5 can be fixed" -or $window.FindName("HomeRunText").Text -ne "Finished in 31s") { throw ("The done header is wrong: " + $window.FindName("HomeCheckCount").Text + " / " + $window.FindName("HomeRunText").Text) }
+    Save-WinToolViewShot -Name ("home-done-" + $size[0]) -Width $w -Height $h
+    $done = Get-WinToolHomeBound
+    Compare-WinToolHomeBound -Before $analyzing -After $done -Label ("done at " + $size[0])
+    Start-WinToolHomeClean
+    if ($script:WinToolState.Home.Phase -ne "fixing") { throw "Fixing junk should enter the fixing state." }
+    Save-WinToolViewShot -Name ("home-fixing-" + $size[0]) -Width $w -Height $h
+    $fixing = Get-WinToolHomeBound
+    Compare-WinToolHomeBound -Before $analyzing -After $fixing -Label ("fixing at " + $size[0])
+    Complete-WinToolHomeCheck -Id "junk" -Data @([pscustomobject]@{ Name = "Temp"; Bytes = [double]0 })
+    if ($script:WinToolState.Home.Phase -ne "done" -or [string]$window.FindName("HomeScore").Text -ne "84") { throw ("After the junk fix the score should be 84, got " + $window.FindName("HomeScore").Text) }
+    # The page fills the width: the hero and the cards end at the same right edge.
+    $hero = $window.FindName("HomeHero")
+    $right = $hero.TranslatePoint([System.Windows.Point]::new($hero.ActualWidth, 0), $rootVisual).X
+    $cards = $window.FindName("HomeMinis")
+    $cardsRight = $cards.TranslatePoint([System.Windows.Point]::new($cards.ActualWidth, 0), $rootVisual).X
+    if ([Math]::Abs($right - $cardsRight) -gt 0.5 -or $right -lt ($w - 30)) { throw ("Home should fill the width at " + $size[0] + ": hero ends at " + $right + ", cards at " + $cardsRight) }
+    Write-Output ("Home at {0}x{1}: analyzing, done and fixing share the same bounds (hero {2:0}x{3:0})." -f $size[0], $size[1], $hero.ActualWidth, $hero.ActualHeight)
+}
+
+# The real checks on this runner, in background runspaces.
+$script:WinToolHomeNoJobs = $false
+$script:WinToolState.Home.Phase = "idle"
+$script:WinToolState.Home.Info = $null
+Start-WinToolHomeSampler
+Start-WinToolHomeAnalysis
+$homeWait = [datetime]::UtcNow.AddSeconds(180)
+while ([datetime]::UtcNow -lt $homeWait) {
+    Update-WinToolHomePoll
+    if ($script:WinToolState.Home.Phase -eq "done" -and $null -ne $script:WinToolState.Home.Info -and $null -ne $script:WinToolState.Home.LastSample -and $script:WinToolState.Home.LastSample.PSObject.Properties["Time"]) { break }
+    Start-Sleep -Milliseconds 250
+}
+if ($script:WinToolState.Home.Phase -ne "done") { throw "The real Home checks did not finish in 180 seconds." }
+foreach ($check in @(Get-WinToolHomeCheckList)) {
+    $real = $script:WinToolState.Home.Results[$check.Id]
+    Write-Output ("Home real check {0}: {1} '{2}' ({3}) {4}" -f $check.Id, $real.Status, $real.Text, $real.Action, (@($real.Detail | Select-Object -First 3) -join " | "))
+    if ($check.Id -ne "disk" -and $check.Id -ne "drivers" -and $real.Status -eq "unknown") { throw ("The real " + $check.Id + " check failed: " + (@($real.Detail) -join " ")) }
+}
+Write-Output ("Home real score {0}, info: {1} / {2} / {3}" -f $window.FindName("HomeScore").Text, $script:WinToolState.Home.Info.Os, $script:WinToolState.Home.Info.Version, $script:WinToolState.Home.Info.Cpu)
+Save-WinToolViewShot -Name "home-real-1280" -Width 1280 -Height 800
+$script:WinToolState.HomeSampler.Sync.Stop = $true
+Stop-WinToolThread -Job $script:WinToolState.HomeSampler
+$script:WinToolState.HomeSampler = $null
+Stop-WinToolThread -Job $script:WinToolState.HomeInfoJob
+$script:WinToolState.HomeInfoJob = $null
+$script:WinToolHomeNoJobs = $true
 
 $uiErrors = Get-WinToolUiError
 if ($uiErrors.Count -gt 0) {

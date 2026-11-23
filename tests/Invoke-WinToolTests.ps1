@@ -1520,6 +1520,136 @@ Invoke-WinToolCase -Name "Terminal page follows the 14 px text standard" -Body {
     Test-WinToolExpectation -Condition ($view -match '\$sample\.FontSize = \[Math\]::Round\(\$size') -Message "The live preview follows the chosen terminal font size."
 }
 
+Invoke-WinToolCase -Name "Home checks parse stubbed results" -Body {
+    $order = @(Get-WinToolHomeCheckList | ForEach-Object { $_.Id }) -join ","
+    Test-WinToolExpectation -Condition ($order -eq "junk,tweaks,startup,drivers,disk") -Message "Home checks keep their fixed order, got $order."
+
+    $junk = ConvertTo-WinToolHomeResult -Id "junk" -Data @(
+        [pscustomobject]@{ Id = "temp"; Name = "Your temporary files"; Bytes = [double]12GB },
+        [pscustomobject]@{ Id = "recycle"; Name = "Recycle Bin"; Bytes = [double]6.7GB },
+        [pscustomobject]@{ Id = "thumbs"; Name = "Thumbnail cache"; Bytes = [double]0 })
+    Test-WinToolExpectation -Condition ($junk.Status -eq "bad" -and $junk.Text -eq "18.7 GB can be deleted" -and $junk.Action -eq "fix" -and $junk.Fixable) -Message ("Junk over 1 GB is a red Fix row, got {0} '{1}' {2}." -f $junk.Status, $junk.Text, $junk.Action)
+    $clean = ConvertTo-WinToolHomeJunkResult -Data @([pscustomobject]@{ Name = "Temp"; Bytes = [double]10MB })
+    Test-WinToolExpectation -Condition ($clean.Status -eq "ok" -and $clean.Action -eq "none" -and $clean.Penalty -eq 0) -Message "A few MB of junk needs no Fix."
+
+    $tweakData = @()
+    for ($i = 0; $i -lt 10; $i++) {
+        $state = "on"
+        if ($i -lt 8) { $state = "off" }
+        $tweakData += [pscustomobject]@{ Id = "t$i"; Name = "Tweak $i"; State = $state }
+    }
+    $tweakData += [pscustomobject]@{ Id = "u"; Name = "Unknown"; State = "unknown" }
+    $tweaks = ConvertTo-WinToolHomeResult -Id "tweaks" -Data $tweakData
+    Test-WinToolExpectation -Condition ($tweaks.Status -eq "warn" -and $tweaks.Text -eq "8 tweaks not applied yet" -and $tweaks.Action -eq "fix" -and $tweaks.Penalty -eq 16) -Message ("Eight off tweaks show a Fix row, got '{0}' penalty {1}." -f $tweaks.Text, $tweaks.Penalty)
+    $allOn = ConvertTo-WinToolHomeTweakResult -Data @([pscustomobject]@{ Id = "a"; Name = "A"; State = "on" })
+    Test-WinToolExpectation -Condition ($allOn.Status -eq "ok" -and -not $allOn.Fixable) -Message "All tweaks on is a green row without Fix."
+    $unread = ConvertTo-WinToolHomeTweakResult -Data @([pscustomobject]@{ Id = "a"; Name = "A"; State = "unknown" })
+    Test-WinToolExpectation -Condition ($unread.Status -eq "unknown") -Message "Unreadable tweaks are reported as unknown."
+
+    $startup = ConvertTo-WinToolHomeResult -Id "startup" -Data @(
+        [pscustomobject]@{ Name = "OneDrive"; Source = "Run, this user"; Approved = -1 },
+        [pscustomobject]@{ Name = "Discord"; Source = "Run, this user"; Approved = 2 },
+        [pscustomobject]@{ Name = "Spotify"; Source = "Run, this user"; Approved = 3 },
+        [pscustomobject]@{ Name = "Steam"; Source = "Run, this user"; Approved = 6 },
+        [pscustomobject]@{ Name = "Teams"; Source = "Startup folder"; Approved = 7 },
+        [pscustomobject]@{ Name = "Notes"; Source = "Startup folder"; Approved = -1 },
+        [pscustomobject]@{ Name = "OneDrive"; Source = "Run, this user"; Approved = -1 })
+    Test-WinToolExpectation -Condition ($startup.Status -eq "ok" -and $startup.Text -eq "4 programs start with Windows" -and $startup.Action -eq "review") -Message ("Disabled StartupApproved entries are not counted, got '{0}'." -f $startup.Text)
+    $many = ConvertTo-WinToolHomeStartupResult -Data @(1..10 | ForEach-Object { [pscustomobject]@{ Name = "App$_"; Source = "Run"; Approved = -1 } })
+    Test-WinToolExpectation -Condition ($many.Status -eq "warn" -and $many.Penalty -gt 0) -Message "Ten startup programs are a warning."
+
+    $drivers = ConvertTo-WinToolHomeResult -Id "drivers" -Data @()
+    Test-WinToolExpectation -Condition ($drivers.Status -eq "ok" -and $drivers.Text -eq "No device with problems" -and $drivers.Action -eq "none") -Message "No problem devices is a green row with a hidden slot."
+    $broken = ConvertTo-WinToolHomeResult -Id "drivers" -Data @([pscustomobject]@{ Name = "PCI Device"; Class = "System"; Status = "Error" })
+    Test-WinToolExpectation -Condition ($broken.Status -eq "bad" -and $broken.Text -eq "1 device has a problem" -and $broken.Action -eq "review") -Message "A device in error is a red Review row."
+
+    $disk = ConvertTo-WinToolHomeResult -Id "disk" -Data @(
+        [pscustomobject]@{ Name = "NVMe SSD"; MediaType = "SSD"; Health = "Healthy" },
+        [pscustomobject]@{ Name = "Backup HDD"; MediaType = "HDD"; Health = "Healthy" })
+    Test-WinToolExpectation -Condition ($disk.Status -eq "ok" -and $disk.Text -eq "All drives report healthy") -Message "Healthy drives read as healthy."
+    $failing = ConvertTo-WinToolHomeDiskResult -Data @([pscustomobject]@{ Name = "Old HDD"; MediaType = "HDD"; Health = "Warning" })
+    Test-WinToolExpectation -Condition ($failing.Status -eq "bad" -and $failing.Penalty -eq 30 -and $failing.Text -eq "Old HDD reports warning") -Message ("A warning drive is red, got '{0}'." -f $failing.Text)
+    $none = ConvertTo-WinToolHomeDiskResult -Data @()
+    Test-WinToolExpectation -Condition ($none.Status -eq "unknown") -Message "No disk data is unknown, not healthy."
+
+    $failed = ConvertTo-WinToolHomeResult -Id "disk" -ErrorMessage "Access denied"
+    Test-WinToolExpectation -Condition ($failed.Status -eq "unknown" -and $failed.Text -eq "Could not check" -and $failed.Penalty -eq 0) -Message "A failed check shows Could not check."
+
+    $score = Get-WinToolHomeScore -Result @($junk, $tweaks, $startup, $drivers, $disk)
+    Test-WinToolExpectation -Condition ($score -eq 72) -Message "The mockup results score 72, got $score."
+    $verdict = Get-WinToolHomeVerdict -Score $score
+    Test-WinToolExpectation -Condition ($verdict.Text -eq "Needs attention" -and $verdict.Tone -eq "warn") -Message "Score 72 needs attention."
+    Test-WinToolExpectation -Condition ((Get-WinToolHomeVerdict -Score 95).Text -eq "Healthy") -Message "Score 95 is healthy."
+    $lead = Get-WinToolHomeLead -Result @($junk, $tweaks, $startup, $drivers, $disk)
+    Test-WinToolExpectation -Condition ($lead -eq "Two items can be fixed. Nothing was changed during the analysis.") -Message "The lead counts fixable items, got '$lead'."
+
+    $now = [datetime]::new(2026, 11, 23, 20, 0, 0)
+    Test-WinToolExpectation -Condition ((Format-WinToolHomeWhen -Time ([datetime]::new(2026, 11, 23, 19, 31, 0)) -Now $now) -eq "today 19:31") -Message "Same-day analyses read 'today'."
+    Test-WinToolExpectation -Condition ((Format-WinToolHomeWhen -Time ([datetime]::new(2026, 11, 22, 8, 5, 0)) -Now $now) -eq "yesterday 08:05") -Message "Yesterday's analyses read 'yesterday'."
+    $meta = Format-WinToolHomeMeta -Last ([pscustomobject]@{ Time = [datetime]::new(2026, 11, 23, 19, 31, 0); Score = 72 }) -Now $now
+    Test-WinToolExpectation -Condition ($meta -eq ("Last analysis: today 19:31 " + [char]0x00B7 + " Score 72")) -Message "The meta line names time and score, got '$meta'."
+
+    Test-WinToolExpectation -Condition ((Test-WinToolStartupApproved -FirstByte 2) -and -not (Test-WinToolStartupApproved -FirstByte 3) -and (Test-WinToolStartupApproved -FirstByte $null)) -Message "StartupApproved bytes decode."
+    Test-WinToolExpectation -Condition ((Get-WinToolMemoryTypeName -Code 34) -eq "DDR5" -and (Get-WinToolMemoryTypeName -Code 26) -eq "DDR4") -Message "SMBIOS memory types decode."
+    $cpu = Format-WinToolCpuName -Name "AMD Ryzen 7 7700 8-Core Processor           "
+    Test-WinToolExpectation -Condition ($cpu -eq "AMD Ryzen 7 7700") -Message "CPU names are shortened, got '$cpu'."
+    $intel = Format-WinToolCpuName -Name "Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz"
+    Test-WinToolExpectation -Condition ($intel -eq "Intel Core i7-8700") -Message "Intel names are shortened, got '$intel'."
+    Test-WinToolExpectation -Condition ((Get-WinToolHomeDiskTone -FreePercent 29) -eq "warn" -and (Get-WinToolHomeDiskTone -FreePercent 45) -eq "ok") -Message "Disk free tones match the mockup."
+
+    $folder = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-home-" + [guid]::NewGuid().ToString("N"))
+    $historyPath = Join-Path $folder "home-history.json"
+    try {
+        for ($i = 0; $i -lt 22; $i++) { Add-WinToolHomeHistory -Time $now.AddMinutes($i) -Score (50 + $i) -Seconds 30 -Path $historyPath }
+        $history = @(Read-WinToolHomeHistory -Path $historyPath)
+        Test-WinToolExpectation -Condition ($history.Count -eq 20 -and $history[-1].Score -eq 71 -and $history[-1].Time -eq $now.AddMinutes(21)) -Message "History keeps the last 20 analyses with their time."
+    }
+    finally {
+        Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    foreach ($id in @("junk", "clean", "tweaks", "startup", "drivers", "disk", "info", "sampler")) {
+        $text = Get-WinToolHomeCheckScript -Id $id
+        $tokens = $null
+        $parseErrors = $null
+        $null = [System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$parseErrors)
+        Test-WinToolExpectation -Condition (@($parseErrors).Count -eq 0) -Message ("The {0} check script parses: {1}" -f $id, (@($parseErrors) -join "; "))
+    }
+    # The junk collector runs anywhere: a stub folder with an old and a new file.
+    $stub = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-junk-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $stub -Force | Out-Null
+    try {
+        $old = Join-Path $stub "old.tmp"
+        [System.IO.File]::WriteAllBytes($old, (New-Object byte[] 4096))
+        [System.IO.File]::SetLastWriteTime($old, (Get-Date).AddDays(-3))
+        [System.IO.File]::WriteAllBytes((Join-Path $stub "new.tmp"), (New-Object byte[] 1024))
+        $sync = [hashtable]::Synchronized(@{ Done = $false; Ok = $false; Error = $null; Data = $null })
+        $location = [pscustomobject]@{ Id = "temp"; Name = "Stub"; Path = $stub; Filter = "*"; Recurse = $true; MinAgeHours = 24 }
+        & ([scriptblock]::Create((Get-WinToolHomeCheckScript -Id "junk"))) $sync @($location)
+        $measured = @($sync.Data)
+        Test-WinToolExpectation -Condition ($sync.Done -and $sync.Ok -and $measured.Count -eq 1 -and [double]$measured[0].Bytes -eq 4096) -Message ("The junk check counts only files older than a day, got {0}." -f (@($measured | ForEach-Object { $_.Bytes }) -join ","))
+    }
+    finally {
+        Remove-Item -LiteralPath $stub -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+Invoke-WinToolCase -Name "Home page follows the text standard and fixed slots" -Body {
+    $xaml = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "assets/MainWindow.xaml"))
+    $start = $xaml.IndexOf('x:Name="ViewHome"')
+    $end = $xaml.IndexOf('x:Name="ViewInstall"')
+    Test-WinToolExpectation -Condition ($start -gt 0 -and $end -gt $start) -Message "The Home view is in the window markup."
+    $homeXaml = $xaml.Substring($start, $end - $start)
+    $literal = @([regex]::Matches($homeXaml, 'FontSize"?\s*(=|Value=)\s*"[0-9.]+"') | ForEach-Object { $_.Value })
+    Test-WinToolExpectation -Condition ($literal.Count -eq 0) -Message ("Home markup uses the shared text sizes: " + ($literal -join ", "))
+    $nav = $xaml.IndexOf('x:Name="NavHome"')
+    Test-WinToolExpectation -Condition ($nav -gt 0 -and $nav -lt $xaml.IndexOf('x:Name="NavInstall"')) -Message "Home is the first sidebar item."
+    Test-WinToolExpectation -Condition ($xaml -match 'x:Name="NavHome"[^>]*IsChecked="True"' -and $xaml -notmatch 'x:Name="NavInstall"[^>]*IsChecked="True"') -Message "Home is the default page."
+    $view = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/HomeView.ps1"))
+    Test-WinToolExpectation -Condition ($view -notmatch 'FontSize\s*=') -Message "Home code does not set font sizes."
+    Test-WinToolExpectation -Condition ($view -match '\$button\.Visibility = "Hidden"') -Message "Home rows hide buttons with Hidden so their slot stays."
+}
+
 if ($script:WinToolFailures.Count -gt 0) {
     Write-Output ""
     Write-Output ("{0} test(s) failed." -f $script:WinToolFailures.Count)
