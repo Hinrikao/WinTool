@@ -243,6 +243,26 @@ $null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Na
 if (-not ($window.FindName("AppInstalledStatus").Parent -is [System.Windows.Controls.WrapPanel])) {
     throw "The Install toolbar row should wrap so no button is cut off."
 }
+# Notepad++ has plus signs in its id and name. It must get the badge from the
+# export, from winget list alone, and from a shortened list id.
+$notepadRow = @($appRows | Where-Object { [string]$_.WingetId -eq "Notepad++.Notepad++" })[0]
+if ($null -eq $notepadRow) {
+    throw "The catalog row for Notepad++ is missing."
+}
+$notepadCases = @(
+    @{ Ids = @("Notepad++.Notepad++"); List = "" },
+    @{ Ids = @(); List = "Notepad++ (x64)  Notepad++.Notepad++ 8.9.9.1 winget" },
+    @{ Ids = @(); List = ("Notepad++ (x64)  Notepad++.Notep" + [char]0x2026 + " 8.9.9.1 winget") }
+)
+foreach ($case in $notepadCases) {
+    $null = Set-WinToolAppState -InstalledId @() -UpgradeText "" -ListText ""
+    $result = Set-WinToolAppState -InstalledId $case.Ids -UpgradeText "" -ListText $case.List
+    if ($notepadRow.InstalledBadge.Visibility -ne "Visible" -or @($result.InstalledIds) -notcontains "Notepad++.Notepad++") {
+        throw ("Notepad++ did not get the Installed badge for: " + (@($case.Ids) -join ",") + " / " + $case.List)
+    }
+}
+Write-Output "Notepad++ gets the Installed badge from export, list, and a shortened id."
+$null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
 Select-WinToolInstalledApp
 if ($firstApp.Checkbox.IsChecked -ne $true -or $secondApp.Checkbox.IsChecked -ne $true -or $appRows[2].Checkbox.IsChecked -eq $true) {
     throw "Select installed did not tick exactly the installed apps."

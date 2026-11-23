@@ -4802,6 +4802,32 @@ finally {
     return $scriptText
 }
 
+function Get-WinToolTruncatedIdPrefix {
+    param(
+        [AllowEmptyString()][string]$Token
+    )
+    # Returns the id part of a token that winget cut short, or $null when the
+    # token does not look cut. Plain character checks, no patterns built from ids.
+    $allowed = "abcdefghijklmnopqrstuvwxyz0123456789._+-"
+    $end = 0
+    while ($end -lt $Token.Length -and $allowed.IndexOf([char]::ToLowerInvariant($Token[$end])) -ge 0) {
+        $end++
+    }
+    $head = $Token.Substring(0, $end).TrimEnd(".")
+    $tail = $Token.Substring($end)
+    $cut = $false
+    if ($tail.Length -gt 0) {
+        $cut = $true
+    }
+    elseif ($Token.EndsWith("...", [System.StringComparison]::Ordinal)) {
+        $cut = $true
+    }
+    if (-not $cut -or $head.Length -lt 6 -or $head.IndexOf(".") -lt 1) {
+        return $null
+    }
+    return $head.ToLowerInvariant()
+}
+
 function Find-WinToolWingetIdInText {
     param(
         [AllowEmptyString()][string]$Text,
@@ -4828,12 +4854,22 @@ function Find-WinToolWingetIdInText {
             if ($lookup.ContainsKey($key)) {
                 $match = $lookup[$key]
             }
-            elseif ($key.EndsWith([string][char]0x2026) -and $key.Length -gt 4) {
-                # winget shortens long ids with an ellipsis. Accept a unique prefix.
-                $prefix = $key.Substring(0, $key.Length - 1)
-                $candidates = @($lookup.Keys | Where-Object { $_.StartsWith($prefix) })
-                if ($candidates.Count -eq 1) {
-                    $match = $lookup[$candidates[0]]
+            else {
+                # winget shortens long ids with an ellipsis. Depending on the
+                # console code page the ellipsis can arrive as "...", "?", or
+                # mojibake, so take the id characters before it and accept a
+                # unique catalog id that starts with them. Ids always have a dot.
+                $prefix = Get-WinToolTruncatedIdPrefix -Token $key
+                if ($null -ne $prefix) {
+                    $candidates = New-Object System.Collections.Generic.List[string]
+                    foreach ($candidate in $lookup.Keys) {
+                        if ($candidate.StartsWith($prefix, [System.StringComparison]::Ordinal)) {
+                            $candidates.Add($candidate)
+                        }
+                    }
+                    if ($candidates.Count -eq 1) {
+                        $match = $lookup[$candidates[0]]
+                    }
                 }
             }
             if ($null -ne $match -and -not $seen.ContainsKey($match)) {
@@ -8606,6 +8642,10 @@ function Complete-WinToolAppDetection {
         Write-WinToolLog -Message ("Installed apps: found by name, outside winget: " + (@($counts.ByName) -join ", ")) -Level "info" -Diagnostic
     }
     Write-WinToolLog -Message ("Installed apps: {0} catalog apps installed, {1} with an update." -f $counts.Installed, $counts.Updates) -Level "ok" -Diagnostic
+    Write-WinToolLog -Message ("Installed apps: marked installed: " + (@($counts.InstalledIds) -join ", ")) -Level "info" -Diagnostic
+    if (@($counts.UpdateIds).Count -gt 0) {
+        Write-WinToolLog -Message ("Installed apps: update available: " + (@($counts.UpdateIds) -join ", ")) -Level "info" -Diagnostic
+    }
     if ($counts.Installed -eq 0 -and $installedIds.Count -eq 0 -and [string]::IsNullOrWhiteSpace($listText)) {
         $status.Text = "winget returned nothing. See the log."
     }
@@ -8632,15 +8672,17 @@ function Set-WinToolAppState {
     }
     $installedCount = 0
     $updateCount = 0
+    $installedIds = New-Object System.Collections.Generic.List[string]
+    $updateIds = New-Object System.Collections.Generic.List[string]
     foreach ($row in @($script:WinToolState.AppRows)) {
         $row.Installed = $state.Installed.ContainsKey([string]$row.WingetId)
         $row.UpdateAvailable = $state.Updates.ContainsKey([string]$row.WingetId)
-        if ($row.Installed) { $installedCount++ }
-        if ($row.UpdateAvailable) { $updateCount++ }
+        if ($row.Installed) { $installedCount++; $installedIds.Add([string]$row.WingetId) }
+        if ($row.UpdateAvailable) { $updateCount++; $updateIds.Add([string]$row.WingetId) }
         Sync-WinToolAppBadge -Row $row
     }
     (Get-WinToolUi -Name "AppInstalledStatus").Text = ("{0} installed, {1} with an update." -f $installedCount, $updateCount)
-    return [pscustomobject]@{ Installed = $installedCount; Updates = $updateCount; ByName = $byName.ToArray() }
+    return [pscustomobject]@{ Installed = $installedCount; Updates = $updateCount; ByName = $byName.ToArray(); InstalledIds = $installedIds.ToArray(); UpdateIds = $updateIds.ToArray() }
 }
 
 function Select-WinToolInstalledApp {

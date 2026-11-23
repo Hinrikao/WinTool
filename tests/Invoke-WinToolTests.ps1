@@ -295,6 +295,42 @@ esac
     }
 }
 
+Invoke-WinToolCase -Name "Ids with plus signs, dots, and brackets are matched literally" -Body {
+    $known = @("Notepad++.Notepad++", "Microsoft.VCRedist.2015+.x64", "Test(1).App[x]", "Notepad.Notes", "Git.Git")
+    $ellipsis = [string][char]0x2026
+    $mojibake = [string][char]0x00D4 + [char]0x00C7 + [char]0x00AA
+    $lines = @(
+        "Notepad++ (x64)  Notepad++.Notepad++ 8.9.9.1 winget",
+        ("Microsoft Visual C++ 2015-2022 Redistributable (x64)  Microsoft.VCRedist.2015+" + $ellipsis + " 14.40 winget"),
+        "Bracket app  Test(1).App[x]  1.0 winget"
+    )
+    $found = @(Find-WinToolWingetIdInText -Text ($lines -join "`n") -KnownId $known)
+    foreach ($id in @("Notepad++.Notepad++", "Microsoft.VCRedist.2015+.x64", "Test(1).App[x]")) {
+        Test-WinToolExpectation -Condition ($found -contains $id) -Message "$id should be found as written. Found: $($found -join ', ')"
+    }
+    Test-WinToolExpectation -Condition (-not ($found -contains "Notepad.Notes")) -Message "Notepad++ must not match a similar id."
+    foreach ($cut in @(("Notepad++.Notep" + $ellipsis), "Notepad++.Notep...", ("Notepad++.Notep" + $mojibake), "Notepad++.Notep?")) {
+        $hit = @(Find-WinToolWingetIdInText -Text ("Notepad++ (x64)  " + $cut + "  8.9.9.1 winget") -KnownId $known)
+        Test-WinToolExpectation -Condition ($hit.Count -eq 1 -and $hit[0] -eq "Notepad++.Notepad++") -Message "A shortened Notepad++ id ($cut) should still match. Got: $($hit -join ', ')"
+    }
+    $ambiguous = @(Find-WinToolWingetIdInText -Text ("Notepad  Notepad" + $ellipsis) -KnownId $known)
+    Test-WinToolExpectation -Condition ($ambiguous.Count -eq 0) -Message "A short or shared prefix matches nothing."
+    $plain = @(Find-WinToolWingetIdInText -Text "Notepad++ (x64) 8.9.9.1 Inc. (x64)" -KnownId $known)
+    Test-WinToolExpectation -Condition ($plain.Count -eq 0) -Message "Names and versions are not taken for ids."
+
+    $state = Resolve-WinToolAppState -CatalogId $known -InstalledId @("notepad++.notepad++") -UpgradeText "" -ListText ""
+    Test-WinToolExpectation -Condition ($state.Installed.ContainsKey("Notepad++.Notepad++")) -Message "The export id for Notepad++ marks it installed."
+    $export = '{"Sources":[{"Packages":[{"PackageIdentifier":"Notepad++.Notepad++"},{"PackageIdentifier":"Microsoft.VCRedist.2015+.x64"}]}]}'
+    $exportIds = @(ConvertFrom-WinToolWingetExport -Text $export)
+    Test-WinToolExpectation -Condition (($exportIds -join "|") -eq "Notepad++.Notepad++|Microsoft.VCRedist.2015+.x64") -Message "Export ids keep their plus signs."
+    Test-WinToolExpectation -Condition ((ConvertTo-WinToolAppNameKey -Text "Notepad++ (x64)") -eq (ConvertTo-WinToolAppNameKey -Text "Notepad++")) -Message "Notepad++ (x64) and Notepad++ have the same name key."
+    $byName = @(Find-WinToolAppByName -DisplayName @("Notepad++ (64-bit x64)") -App @([pscustomobject]@{ Name = "Notepad++"; WingetId = "Notepad++.Notepad++"; DetectNames = @() }))
+    Test-WinToolExpectation -Condition ($byName -contains "Notepad++.Notepad++") -Message "The Apps and features name of Notepad++ matches."
+    Test-WinToolExpectation -Condition (Test-WinToolWingetId -Id "Notepad++.Notepad++") -Message "Notepad++.Notepad++ is a valid catalog id."
+    $catalogIds = @((Get-WinToolAppCatalog).categories | ForEach-Object { $_.apps } | ForEach-Object { [string]$_.wingetId })
+    Test-WinToolExpectation -Condition ($catalogIds -contains "Notepad++.Notepad++") -Message "The catalog lists Notepad++ with its winget id."
+}
+
 Invoke-WinToolCase -Name "Apps installed outside winget are found by name" -Body {
     Test-WinToolExpectation -Condition ((ConvertTo-WinToolAppNameKey -Text "WinRAR 7.01 (64-bit)") -eq "winrar") -Message "Version and architecture words are dropped."
     Test-WinToolExpectation -Condition ((ConvertTo-WinToolAppNameKey -Text "7-Zip 24.08 (x64)") -eq "7 zip") -Message "A leading number stays in the name."

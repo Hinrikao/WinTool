@@ -276,6 +276,10 @@ function Complete-WinToolAppDetection {
         Write-WinToolLog -Message ("Installed apps: found by name, outside winget: " + (@($counts.ByName) -join ", ")) -Level "info" -Diagnostic
     }
     Write-WinToolLog -Message ("Installed apps: {0} catalog apps installed, {1} with an update." -f $counts.Installed, $counts.Updates) -Level "ok" -Diagnostic
+    Write-WinToolLog -Message ("Installed apps: marked installed: " + (@($counts.InstalledIds) -join ", ")) -Level "info" -Diagnostic
+    if (@($counts.UpdateIds).Count -gt 0) {
+        Write-WinToolLog -Message ("Installed apps: update available: " + (@($counts.UpdateIds) -join ", ")) -Level "info" -Diagnostic
+    }
     if ($counts.Installed -eq 0 -and $installedIds.Count -eq 0 -and [string]::IsNullOrWhiteSpace($listText)) {
         $status.Text = "winget returned nothing. See the log."
     }
@@ -302,15 +306,17 @@ function Set-WinToolAppState {
     }
     $installedCount = 0
     $updateCount = 0
+    $installedIds = New-Object System.Collections.Generic.List[string]
+    $updateIds = New-Object System.Collections.Generic.List[string]
     foreach ($row in @($script:WinToolState.AppRows)) {
         $row.Installed = $state.Installed.ContainsKey([string]$row.WingetId)
         $row.UpdateAvailable = $state.Updates.ContainsKey([string]$row.WingetId)
-        if ($row.Installed) { $installedCount++ }
-        if ($row.UpdateAvailable) { $updateCount++ }
+        if ($row.Installed) { $installedCount++; $installedIds.Add([string]$row.WingetId) }
+        if ($row.UpdateAvailable) { $updateCount++; $updateIds.Add([string]$row.WingetId) }
         Sync-WinToolAppBadge -Row $row
     }
     (Get-WinToolUi -Name "AppInstalledStatus").Text = ("{0} installed, {1} with an update." -f $installedCount, $updateCount)
-    return [pscustomobject]@{ Installed = $installedCount; Updates = $updateCount; ByName = $byName.ToArray() }
+    return [pscustomobject]@{ Installed = $installedCount; Updates = $updateCount; ByName = $byName.ToArray(); InstalledIds = $installedIds.ToArray(); UpdateIds = $updateIds.ToArray() }
 }
 
 function Select-WinToolInstalledApp {
