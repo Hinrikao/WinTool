@@ -8,6 +8,7 @@ src/Private/Tweaks.ps1
 src/Private/Terminal.ps1
 src/Private/Updates.ps1
 src/Private/UpdateModes.ps1
+src/Private/System.ps1
 src/Private/Config.ps1
 src/Private/Theme.ps1
 src/Private/Runner.ps1

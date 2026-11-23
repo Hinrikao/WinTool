@@ -6,6 +6,7 @@ function Initialize-WinToolConfigView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "LoadProfile") -EventName "Click" -Name "Config: load profile" -Action { Invoke-WinToolLoadProfile }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ExportWinget") -EventName "Click" -Name "Config: export winget list" -Action { Invoke-WinToolExportWinget }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ImportWinget") -EventName "Click" -Name "Config: import winget list" -Action { Invoke-WinToolImportWinget }
+    Initialize-WinToolSystemView
     Update-WinToolProfileSummary
 }
 
@@ -143,4 +144,144 @@ function Invoke-WinToolImportWinget {
         Arguments = @("import", "-i", $dialog.FileName, "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity")
     }
     Invoke-WinToolPlanAsync -Step @($step) -DoneMessage "winget import finished."
+}
+
+function Initialize-WinToolSystemView {
+    $catalog = Get-WinToolSystemCatalog
+    $providerBox = Get-WinToolUi -Name "DnsProvider"
+    $providerBox.Items.Clear()
+    foreach ($provider in (Get-WinToolDnsProvider -Catalog $catalog)) {
+        $item = New-Object System.Windows.Controls.ComboBoxItem
+        $item.Content = [string]$provider.name
+        $item.Tag = [string]$provider.id
+        $item.ToolTip = [string](Get-WinToolNote -Object $provider -Name "description" -Default "")
+        [void]$providerBox.Items.Add($item)
+    }
+    $providerBox.SelectedIndex = 0
+    $plan = Get-WinToolNote -Object $catalog -Name "powerPlan"
+    (Get-WinToolUi -Name "PowerPlanDescription").Text = [string]$plan.description
+
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "DnsAdapter") -EventName "SelectionChanged" -Name "Config: pick adapter" -Action { Sync-WinToolDnsSummary }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "RefreshDns") -EventName "Click" -Name "Config: refresh adapters" -Action { Update-WinToolSystemView }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ApplyDns") -EventName "Click" -Name "Config: apply DNS" -Action { Invoke-WinToolDnsClick }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AddUltimatePlan") -EventName "Click" -Name "Config: add Ultimate Performance" -Action { Invoke-WinToolPowerPlanClick -Action "add" }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "RemoveUltimatePlan") -EventName "Click" -Name "Config: remove Ultimate Performance" -Action { Invoke-WinToolPowerPlanClick -Action "remove" }
+}
+
+function Update-WinToolSystemView {
+    $adapters = @()
+    try {
+        $adapters = @(Get-WinToolDnsAdapter)
+    }
+    catch {
+        Write-WinToolLog -Message ("Could not read network adapters. " + $_.Exception.Message) -Level "warn"
+    }
+    $script:WinToolState.DnsAdapters = $adapters
+    $box = Get-WinToolUi -Name "DnsAdapter"
+    $box.Items.Clear()
+    if ($adapters.Count -gt 1) {
+        $all = New-Object System.Windows.Controls.ComboBoxItem
+        $all.Content = "All connected adapters"
+        $all.Tag = -1
+        [void]$box.Items.Add($all)
+    }
+    foreach ($adapter in $adapters) {
+        $item = New-Object System.Windows.Controls.ComboBoxItem
+        $item.Content = ("{0}  -  {1}" -f [string]$adapter.Name, [string]$adapter.Description)
+        $item.Tag = [int]$adapter.Index
+        [void]$box.Items.Add($item)
+    }
+    if ($box.Items.Count -gt 0) {
+        $box.SelectedIndex = 0
+    }
+    Sync-WinToolDnsSummary
+    Sync-WinToolPowerPlanStatus
+}
+
+function Get-WinToolSelectedDnsAdapter {
+    $item = (Get-WinToolUi -Name "DnsAdapter").SelectedItem
+    if ($null -eq $item) {
+        return @()
+    }
+    $index = [int]$item.Tag
+    $list = New-Object System.Collections.Generic.List[object]
+    foreach ($adapter in @($script:WinToolState.DnsAdapters)) {
+        if ($index -eq -1 -or [int]$adapter.Index -eq $index) {
+            $list.Add($adapter)
+        }
+    }
+    return $list.ToArray()
+}
+
+function Sync-WinToolDnsSummary {
+    $selected = @(Get-WinToolSelectedDnsAdapter)
+    $text = "No connected network adapter found."
+    if ($selected.Count -gt 0) {
+        $lines = New-Object System.Collections.Generic.List[string]
+        foreach ($adapter in $selected) {
+            $lines.Add((Format-WinToolDnsSummary -Adapter $adapter))
+        }
+        $text = "Now: " + ($lines -join [Environment]::NewLine)
+    }
+    (Get-WinToolUi -Name "DnsCurrent").Text = $text
+}
+
+function Sync-WinToolPowerPlanStatus {
+    $text = "Power plans are only on Windows."
+    if (Test-WinToolWindows) {
+        try {
+            $schemes = ConvertFrom-WinToolPowerList -Text ((& powercfg.exe /list) | Out-String)
+            $catalog = Get-WinToolSystemCatalog
+            $state = Get-WinToolPowerPlanState -Scheme $schemes -Catalog $catalog
+            $text = Format-WinToolPowerPlanStatus -State $state -Name ([string]$catalog.powerPlan.name)
+            (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = [bool]$state.Added
+        }
+        catch {
+            $text = "Could not read power plans. " + $_.Exception.Message
+        }
+    }
+    (Get-WinToolUi -Name "PowerPlanStatus").Text = $text
+}
+
+function Invoke-WinToolDnsClick {
+    $adapters = @(Get-WinToolSelectedDnsAdapter)
+    if ($adapters.Count -eq 0) {
+        Write-WinToolLog -Message "Pick a network adapter first." -Level "warn"
+        return
+    }
+    $item = (Get-WinToolUi -Name "DnsProvider").SelectedItem
+    if ($null -eq $item) {
+        Write-WinToolLog -Message "Pick a DNS provider first." -Level "warn"
+        return
+    }
+    $provider = Find-WinToolDnsProvider -Id ([string]$item.Tag)
+    $ipv6 = ((Get-WinToolUi -Name "DnsIncludeIpv6").IsChecked -eq $true)
+    $servers = @(Get-WinToolDnsServerList -Provider $provider -IncludeIpv6 $ipv6)
+    $what = "automatic (DHCP)"
+    if ($servers.Count -gt 0) {
+        $what = [string]$provider.name + " (" + ($servers -join ", ") + ")"
+    }
+    $names = (@($adapters | ForEach-Object { [string]$_.Name })) -join ", "
+    $ok = Request-WinToolConfirmation -Message ("Set DNS on {0} to {1}?" -f $names, $what) -Title "DNS servers"
+    if (-not $ok) {
+        return
+    }
+    $steps = @(Get-WinToolDnsPlan -Adapter $adapters -Provider $provider -IncludeIpv6 $ipv6)
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage "DNS servers changed." -AfterDone "Update-WinToolSystemView"
+}
+
+function Invoke-WinToolPowerPlanClick {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet("add", "remove")][string]$Action
+    )
+    $message = "Add the Ultimate Performance power plan and switch to it?"
+    if ($Action -eq "remove") {
+        $message = "Remove the Ultimate Performance plan WinTool added? If it is active, Windows goes back to Balanced."
+    }
+    $ok = Request-WinToolConfirmation -Message $message -Title "Power plan"
+    if (-not $ok) {
+        return
+    }
+    $steps = @(Get-WinToolPowerPlanPlan -Action $Action)
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage "Power plan updated." -AfterDone "Sync-WinToolPowerPlanStatus"
 }

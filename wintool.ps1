@@ -2791,6 +2791,34 @@ ewogICAgICAiaWQiOiAidGZ0cCIsCiAgICAgICJuYW1lIjogIlRGVFAgY2xpZW50IiwKICAgICAgImRl
 c2NyaXB0aW9uIjogIlRoZSB0ZnRwIGNvbW1hbmQsIHVzZWQgdG8gZmxhc2ggcm91dGVycyBhbmQgbmV0
 d29yayBnZWFyLiIsCiAgICAgICJuYW1lcyI6IFsiVEZUUCJdCiAgICB9CiAgXQp9Cg==
 '@
+    System = @'
+ewogICJzY2hlbWFWZXJzaW9uIjogMSwKICAiZG5zIjogWwogICAgewogICAgICAiaWQiOiAiZGhjcCIs
+CiAgICAgICJuYW1lIjogIkF1dG9tYXRpYyAoREhDUCkiLAogICAgICAiZGVzY3JpcHRpb24iOiAiVXNl
+IHRoZSBETlMgc2VydmVycyB5b3VyIHJvdXRlciBvciBuZXR3b3JrIGhhbmRzIG91dC4iLAogICAgICAi
+aXB2NCI6IFtdLAogICAgICAiaXB2NiI6IFtdCiAgICB9LAogICAgewogICAgICAiaWQiOiAiY2xvdWRm
+bGFyZSIsCiAgICAgICJuYW1lIjogIkNsb3VkZmxhcmUiLAogICAgICAiZGVzY3JpcHRpb24iOiAiRmFz
+dCBwdWJsaWMgRE5TIHdpdGggYSBwcml2YWN5IHBvbGljeSB0aGF0IGRyb3BzIGxvZ3Mgd2l0aGluIDI0
+IGhvdXJzLiIsCiAgICAgICJpcHY0IjogWyIxLjEuMS4xIiwgIjEuMC4wLjEiXSwKICAgICAgImlwdjYi
+OiBbIjI2MDY6NDcwMDo0NzAwOjoxMTExIiwgIjI2MDY6NDcwMDo0NzAwOjoxMDAxIl0KICAgIH0sCiAg
+ICB7CiAgICAgICJpZCI6ICJnb29nbGUiLAogICAgICAibmFtZSI6ICJHb29nbGUiLAogICAgICAiZGVz
+Y3JpcHRpb24iOiAiR29vZ2xlIFB1YmxpYyBETlMuIiwKICAgICAgImlwdjQiOiBbIjguOC44LjgiLCAi
+OC44LjQuNCJdLAogICAgICAiaXB2NiI6IFsiMjAwMTo0ODYwOjQ4NjA6Ojg4ODgiLCAiMjAwMTo0ODYw
+OjQ4NjA6Ojg4NDQiXQogICAgfSwKICAgIHsKICAgICAgImlkIjogInF1YWQ5IiwKICAgICAgIm5hbWUi
+OiAiUXVhZDkiLAogICAgICAiZGVzY3JpcHRpb24iOiAiUHVibGljIEROUyB0aGF0IGJsb2NrcyBrbm93
+biBtYWx3YXJlIGRvbWFpbnMuIiwKICAgICAgImlwdjQiOiBbIjkuOS45LjkiLCAiMTQ5LjExMi4xMTIu
+MTEyIl0sCiAgICAgICJpcHY2IjogWyIyNjIwOmZlOjpmZSIsICIyNjIwOmZlOjo5Il0KICAgIH0sCiAg
+ICB7CiAgICAgICJpZCI6ICJhZGd1YXJkIiwKICAgICAgIm5hbWUiOiAiQWRHdWFyZCIsCiAgICAgICJk
+ZXNjcmlwdGlvbiI6ICJQdWJsaWMgRE5TIHRoYXQgYmxvY2tzIGFkcyBhbmQgdHJhY2tlcnMuIiwKICAg
+ICAgImlwdjQiOiBbIjk0LjE0MC4xNC4xNCIsICI5NC4xNDAuMTUuMTUiXSwKICAgICAgImlwdjYiOiBb
+IjJhMTA6NTBjMDo6YWQxOmZmIiwgIjJhMTA6NTBjMDo6YWQyOmZmIl0KICAgIH0KICBdLAogICJwb3dl
+clBsYW4iOiB7CiAgICAibmFtZSI6ICJVbHRpbWF0ZSBQZXJmb3JtYW5jZSIsCiAgICAiYmFzZUd1aWQi
+OiAiZTlhNDJiMDItZDVkZi00NDhkLWFhMDAtMDNmMTQ3NDllYjYxIiwKICAgICJjb3B5R3VpZCI6ICI5
+MzU4Y2IxNi05NzM0LTQzY2ItOTMwMS0wZmRmZjJmNDUzNDUiLAogICAgImZhbGxiYWNrR3VpZCI6ICIz
+ODFiNDIyMi1mNjk0LTQxZjAtOTY4NS1mZjViYjI2MGRmMmUiLAogICAgImRlc2NyaXB0aW9uIjogIkEg
+V2luZG93cyBwbGFuIHRoYXQga2VlcHMgdGhlIENQVSBhbmQgZGV2aWNlcyBhdCBmdWxsIHNwZWVkLiBH
+b29kIGZvciBkZXNrdG9wczsgaXQgdXNlcyBtb3JlIHBvd2VyIGFuZCBpcyBhIHBvb3IgZml0IGZvciBs
+YXB0b3BzIG9uIGJhdHRlcnkuIgogIH0KfQo=
+'@
     Xaml = @'
 PFdpbmRvdwogICAgeG1sbnM9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94
 YW1sL3ByZXNlbnRhdGlvbiIKICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20v
@@ -3407,36 +3435,86 @@ dGVudD0iRXhwb3J0IHdpbmdldCBsaXN0IiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFNlY29uZGFyeUJ1
 dHRvbn0iIE1hcmdpbj0iMCIvPgogICAgICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iSW1wb3J0
 V2luZ2V0IiBDb250ZW50PSJJbXBvcnQgd2luZ2V0IGxpc3QiIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2Ug
 U2Vjb25kYXJ5QnV0dG9ufSIvPgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAg
-ICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Cb3JkZXI+CiAgICAgICAgICA8L1N0YWNrUGFu
-ZWw+CiAgICAgICAgPC9TY3JvbGxWaWV3ZXI+CiAgICAgIDwvR3JpZD4KCiAgICAgIDxCb3JkZXIgeDpO
-YW1lPSJTdGF0dXNCYXIiIEdyaWQuUm93PSIxIiBCYWNrZ3JvdW5kPSJ7U3RhdGljUmVzb3VyY2UgQnJ1
-c2hMb2d9IiBDb3JuZXJSYWRpdXM9IjEyIiBNYXJnaW49IjIwLDAsMjAsMTYiIFBhZGRpbmc9IjE0LDgi
-PgogICAgICAgIDxEb2NrUGFuZWw+CiAgICAgICAgICA8RG9ja1BhbmVsIERvY2tQYW5lbC5Eb2NrPSJU
-b3AiIExhc3RDaGlsZEZpbGw9IkZhbHNlIj4KICAgICAgICAgICAgPFRleHRCbG9jayB4Ok5hbWU9IlN0
-YXR1c1RleHQiIFRleHQ9IlJlYWR5IiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTG9n
-VGV4dH0iIEZvbnRXZWlnaHQ9IlNlbWlCb2xkIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIi8+CiAg
-ICAgICAgICAgIDxTdGFja1BhbmVsIERvY2tQYW5lbC5Eb2NrPSJSaWdodCIgT3JpZW50YXRpb249Ikhv
-cml6b250YWwiPgogICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJDYW5jZWxSdW4iIENvbnRlbnQ9
-IkNhbmNlbCIgU3R5bGU9IntTdGF0aWNSZXNvdXJjZSBRdWlldEJ1dHRvbn0iIFZpc2liaWxpdHk9IkNv
-bGxhcHNlZCIvPgogICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJDbGVhckxvZ0J1dHRvbiIgQ29u
-dGVudD0iQ2xlYXIgbG9nIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFF1aWV0QnV0dG9ufSIgVmlzaWJp
-bGl0eT0iQ29sbGFwc2VkIi8+CiAgICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9IlRvZ2dsZUxvZ0J1
-dHRvbiIgQ29udGVudD0iU2hvdyBsb2ciIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2UgUXVpZXRCdXR0b259
-IiBBdXRvbWF0aW9uUHJvcGVydGllcy5OYW1lPSJTaG93IGxvZyIvPgogICAgICAgICAgICA8L1N0YWNr
-UGFuZWw+CiAgICAgICAgICA8L0RvY2tQYW5lbD4KICAgICAgICAgIDxQcm9ncmVzc0JhciB4Ok5hbWU9
-Ik1haW5Qcm9ncmVzcyIgSGVpZ2h0PSI4IiBNaW5pbXVtPSIwIiBNYXhpbXVtPSIxMDAiIFZhbHVlPSIw
-IiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoUHJvZ3Jlc3N9IiBCYWNrZ3JvdW5kPSJ7
-RHluYW1pY1Jlc291cmNlIEJydXNoUHJvZ3Jlc3NUcmFja30iIEJvcmRlclRoaWNrbmVzcz0iMCIgTWFy
-Z2luPSIwLDEwLDAsMCIgRG9ja1BhbmVsLkRvY2s9IlRvcCIgVmlzaWJpbGl0eT0iQ29sbGFwc2VkIi8+
-CiAgICAgICAgICA8Qm9yZGVyIHg6TmFtZT0iTG9nUGFuZWwiIEhlaWdodD0iMTY4IiBNYXJnaW49IjAs
-MTAsMCwwIiBWaXNpYmlsaXR5PSJDb2xsYXBzZWQiPgogICAgICAgICAgICA8VGV4dEJveCB4Ok5hbWU9
-IkxvZ0JveCIgSXNSZWFkT25seT0iVHJ1ZSIgSXNSZWFkT25seUNhcmV0VmlzaWJsZT0iVHJ1ZSIgVGV4
-dFdyYXBwaW5nPSJXcmFwIiBWZXJ0aWNhbFNjcm9sbEJhclZpc2liaWxpdHk9IkF1dG8iIEFjY2VwdHNS
-ZXR1cm49IlRydWUiIEJhY2tncm91bmQ9IlRyYW5zcGFyZW50IiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jl
-c291cmNlIEJydXNoTG9nVGV4dH0iIENhcmV0QnJ1c2g9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hMb2dU
-ZXh0fSIgQm9yZGVyVGhpY2tuZXNzPSIwIiBGb250RmFtaWx5PSJDb25zb2xhcyIgRm9udFNpemU9IjEy
-IiBQYWRkaW5nPSIwIi8+CiAgICAgICAgICA8L0JvcmRlcj4KICAgICAgICA8L0RvY2tQYW5lbD4KICAg
-ICAgPC9Cb3JkZXI+CiAgICA8L0dyaWQ+CiAgPC9HcmlkPgo8L1dpbmRvdz4K
+ICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Cb3JkZXI+CgogICAgICAgICAgICA8Qm9yZGVy
+IEJhY2tncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hDYXJkfSIgQm9yZGVyQnJ1c2g9IntEeW5h
+bWljUmVzb3VyY2UgQnJ1c2hMaW5lfSIgQm9yZGVyVGhpY2tuZXNzPSIxIiBDb3JuZXJSYWRpdXM9IjEy
+IiBQYWRkaW5nPSIxNiIgTWFyZ2luPSIwLDEyLDAsMCI+CiAgICAgICAgICAgICAgPFN0YWNrUGFuZWw+
+CiAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IkROUyBzZXJ2ZXJzIiBGb250V2VpZ2h0PSJT
+ZW1pQm9sZCIgRm9udFNpemU9IjE2Ii8+CiAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IlBp
+Y2sgd2hpY2ggRE5TIHNlcnZlcnMgYSBuZXR3b3JrIGFkYXB0ZXIgdXNlcy4gQXV0b21hdGljIGdvZXMg
+YmFjayB0byB3aGF0IHlvdXIgcm91dGVyIGhhbmRzIG91dC4iIEZvcmVncm91bmQ9IntEeW5hbWljUmVz
+b3VyY2UgQnJ1c2hNdXRlZH0iIFRleHRXcmFwcGluZz0iV3JhcCIgTWFyZ2luPSIwLDYsMCwxMiIvPgog
+ICAgICAgICAgICAgICAgPEdyaWQgTWFyZ2luPSIwLDAsMCw4Ij4KICAgICAgICAgICAgICAgICAgPEdy
+aWQuQ29sdW1uRGVmaW5pdGlvbnM+CiAgICAgICAgICAgICAgICAgICAgPENvbHVtbkRlZmluaXRpb24g
+V2lkdGg9IkF1dG8iLz4KICAgICAgICAgICAgICAgICAgICA8Q29sdW1uRGVmaW5pdGlvbiBXaWR0aD0i
+KiIvPgogICAgICAgICAgICAgICAgICA8L0dyaWQuQ29sdW1uRGVmaW5pdGlvbnM+CiAgICAgICAgICAg
+ICAgICAgIDxHcmlkLlJvd0RlZmluaXRpb25zPgogICAgICAgICAgICAgICAgICAgIDxSb3dEZWZpbml0
+aW9uIEhlaWdodD0iQXV0byIvPgogICAgICAgICAgICAgICAgICAgIDxSb3dEZWZpbml0aW9uIEhlaWdo
+dD0iQXV0byIvPgogICAgICAgICAgICAgICAgICA8L0dyaWQuUm93RGVmaW5pdGlvbnM+CiAgICAgICAg
+ICAgICAgICAgIDxUZXh0QmxvY2sgVGV4dD0iQWRhcHRlciIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRl
+ciIgTWFyZ2luPSIwLDAsMTIsOCIvPgogICAgICAgICAgICAgICAgICA8Q29tYm9Cb3ggeDpOYW1lPSJE
+bnNBZGFwdGVyIiBHcmlkLkNvbHVtbj0iMSIgTWFyZ2luPSIwLDAsMCw4IiBBdXRvbWF0aW9uUHJvcGVy
+dGllcy5OYW1lPSJOZXR3b3JrIGFkYXB0ZXIiLz4KICAgICAgICAgICAgICAgICAgPFRleHRCbG9jayBU
+ZXh0PSJETlMiIEdyaWQuUm93PSIxIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIiBNYXJnaW49IjAs
+MCwxMiwwIi8+CiAgICAgICAgICAgICAgICAgIDxDb21ib0JveCB4Ok5hbWU9IkRuc1Byb3ZpZGVyIiBH
+cmlkLlJvdz0iMSIgR3JpZC5Db2x1bW49IjEiIEF1dG9tYXRpb25Qcm9wZXJ0aWVzLk5hbWU9IkROUyBw
+cm92aWRlciIvPgogICAgICAgICAgICAgICAgPC9HcmlkPgogICAgICAgICAgICAgICAgPENoZWNrQm94
+IHg6TmFtZT0iRG5zSW5jbHVkZUlwdjYiIENvbnRlbnQ9IkFsc28gc2V0IElQdjYgRE5TIHNlcnZlcnMi
+IElzQ2hlY2tlZD0iVHJ1ZSIgTWFyZ2luPSIwLDQsMCw4Ii8+CiAgICAgICAgICAgICAgICA8VGV4dEJs
+b2NrIHg6TmFtZT0iRG5zQ3VycmVudCIgVGV4dD0iT3BlbiB0aGlzIHRhYiB0byByZWFkIHRoZSBjdXJy
+ZW50IEROUyBzZXJ2ZXJzLiIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIg
+VGV4dFdyYXBwaW5nPSJXcmFwIiBNYXJnaW49IjAsMCwwLDEyIi8+CiAgICAgICAgICAgICAgICA8U3Rh
+Y2tQYW5lbCBPcmllbnRhdGlvbj0iSG9yaXpvbnRhbCI+CiAgICAgICAgICAgICAgICAgIDxCdXR0b24g
+eDpOYW1lPSJBcHBseURucyIgQ29udGVudD0iQXBwbHkgRE5TIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNl
+IFByaW1hcnlCdXR0b259IiBNYXJnaW49IjAiLz4KICAgICAgICAgICAgICAgICAgPEJ1dHRvbiB4Ok5h
+bWU9IlJlZnJlc2hEbnMiIENvbnRlbnQ9IlJlZnJlc2ggYWRhcHRlcnMiIFN0eWxlPSJ7U3RhdGljUmVz
+b3VyY2UgU2Vjb25kYXJ5QnV0dG9ufSIvPgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAg
+ICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Cb3JkZXI+CgogICAgICAgICAgICA8
+Qm9yZGVyIEJhY2tncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hDYXJkfSIgQm9yZGVyQnJ1c2g9
+IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hMaW5lfSIgQm9yZGVyVGhpY2tuZXNzPSIxIiBDb3JuZXJSYWRp
+dXM9IjEyIiBQYWRkaW5nPSIxNiIgTWFyZ2luPSIwLDEyLDAsMCI+CiAgICAgICAgICAgICAgPFN0YWNr
+UGFuZWw+CiAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IlVsdGltYXRlIFBlcmZvcm1hbmNl
+IHBvd2VyIHBsYW4iIEZvbnRXZWlnaHQ9IlNlbWlCb2xkIiBGb250U2l6ZT0iMTYiLz4KICAgICAgICAg
+ICAgICAgIDxUZXh0QmxvY2sgeDpOYW1lPSJQb3dlclBsYW5EZXNjcmlwdGlvbiIgRm9yZWdyb3VuZD0i
+e0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIgVGV4dFdyYXBwaW5nPSJXcmFwIiBNYXJnaW49IjAs
+NiwwLDgiLz4KICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgeDpOYW1lPSJQb3dlclBsYW5TdGF0dXMi
+IFRleHQ9IkNoZWNraW5nLi4uIiBGb250V2VpZ2h0PSJTZW1pQm9sZCIgTWFyZ2luPSIwLDAsMCwxMiIv
+PgogICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRpb249Ikhvcml6b250YWwiPgogICAg
+ICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iQWRkVWx0aW1hdGVQbGFuIiBDb250ZW50PSJBZGQg
+YW5kIHN3aXRjaCB0byBpdCIgU3R5bGU9IntTdGF0aWNSZXNvdXJjZSBTZWNvbmRhcnlCdXR0b259IiBN
+YXJnaW49IjAiLz4KICAgICAgICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9IlJlbW92ZVVsdGltYXRl
+UGxhbiIgQ29udGVudD0iUmVtb3ZlIGl0IiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFNlY29uZGFyeUJ1
+dHRvbn0iLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgICA8L1N0YWNr
+UGFuZWw+CiAgICAgICAgICAgIDwvQm9yZGVyPgogICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAg
+IDwvU2Nyb2xsVmlld2VyPgogICAgICA8L0dyaWQ+CgogICAgICA8Qm9yZGVyIHg6TmFtZT0iU3RhdHVz
+QmFyIiBHcmlkLlJvdz0iMSIgQmFja2dyb3VuZD0ie1N0YXRpY1Jlc291cmNlIEJydXNoTG9nfSIgQ29y
+bmVyUmFkaXVzPSIxMiIgTWFyZ2luPSIyMCwwLDIwLDE2IiBQYWRkaW5nPSIxNCw4Ij4KICAgICAgICA8
+RG9ja1BhbmVsPgogICAgICAgICAgPERvY2tQYW5lbCBEb2NrUGFuZWwuRG9jaz0iVG9wIiBMYXN0Q2hp
+bGRGaWxsPSJGYWxzZSI+CiAgICAgICAgICAgIDxUZXh0QmxvY2sgeDpOYW1lPSJTdGF0dXNUZXh0IiBU
+ZXh0PSJSZWFkeSIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaExvZ1RleHR9IiBGb250
+V2VpZ2h0PSJTZW1pQm9sZCIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRlciIvPgogICAgICAgICAgICA8
+U3RhY2tQYW5lbCBEb2NrUGFuZWwuRG9jaz0iUmlnaHQiIE9yaWVudGF0aW9uPSJIb3Jpem9udGFsIj4K
+ICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iQ2FuY2VsUnVuIiBDb250ZW50PSJDYW5jZWwiIFN0
+eWxlPSJ7U3RhdGljUmVzb3VyY2UgUXVpZXRCdXR0b259IiBWaXNpYmlsaXR5PSJDb2xsYXBzZWQiLz4K
+ICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iQ2xlYXJMb2dCdXR0b24iIENvbnRlbnQ9IkNsZWFy
+IGxvZyIgU3R5bGU9IntTdGF0aWNSZXNvdXJjZSBRdWlldEJ1dHRvbn0iIFZpc2liaWxpdHk9IkNvbGxh
+cHNlZCIvPgogICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJUb2dnbGVMb2dCdXR0b24iIENvbnRl
+bnQ9IlNob3cgbG9nIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFF1aWV0QnV0dG9ufSIgQXV0b21hdGlv
+blByb3BlcnRpZXMuTmFtZT0iU2hvdyBsb2ciLz4KICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAg
+ICAgICAgPC9Eb2NrUGFuZWw+CiAgICAgICAgICA8UHJvZ3Jlc3NCYXIgeDpOYW1lPSJNYWluUHJvZ3Jl
+c3MiIEhlaWdodD0iOCIgTWluaW11bT0iMCIgTWF4aW11bT0iMTAwIiBWYWx1ZT0iMCIgRm9yZWdyb3Vu
+ZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaFByb2dyZXNzfSIgQmFja2dyb3VuZD0ie0R5bmFtaWNSZXNv
+dXJjZSBCcnVzaFByb2dyZXNzVHJhY2t9IiBCb3JkZXJUaGlja25lc3M9IjAiIE1hcmdpbj0iMCwxMCww
+LDAiIERvY2tQYW5lbC5Eb2NrPSJUb3AiIFZpc2liaWxpdHk9IkNvbGxhcHNlZCIvPgogICAgICAgICAg
+PEJvcmRlciB4Ok5hbWU9IkxvZ1BhbmVsIiBIZWlnaHQ9IjE2OCIgTWFyZ2luPSIwLDEwLDAsMCIgVmlz
+aWJpbGl0eT0iQ29sbGFwc2VkIj4KICAgICAgICAgICAgPFRleHRCb3ggeDpOYW1lPSJMb2dCb3giIElz
+UmVhZE9ubHk9IlRydWUiIElzUmVhZE9ubHlDYXJldFZpc2libGU9IlRydWUiIFRleHRXcmFwcGluZz0i
+V3JhcCIgVmVydGljYWxTY3JvbGxCYXJWaXNpYmlsaXR5PSJBdXRvIiBBY2NlcHRzUmV0dXJuPSJUcnVl
+IiBCYWNrZ3JvdW5kPSJUcmFuc3BhcmVudCIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVz
+aExvZ1RleHR9IiBDYXJldEJydXNoPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTG9nVGV4dH0iIEJvcmRl
+clRoaWNrbmVzcz0iMCIgRm9udEZhbWlseT0iQ29uc29sYXMiIEZvbnRTaXplPSIxMiIgUGFkZGluZz0i
+MCIvPgogICAgICAgICAgPC9Cb3JkZXI+CiAgICAgICAgPC9Eb2NrUGFuZWw+CiAgICAgIDwvQm9yZGVy
+PgogICAgPC9HcmlkPgogIDwvR3JpZD4KPC9XaW5kb3c+Cg==
 '@
     Wsl = @'
 IyEvYmluL2Jhc2gKIyBXaW5Ub29sIG9wdGlvbmFsIHNoZWxsIHNldHVwIGluc2lkZSBXU0wuIFNhZmUg
@@ -3561,6 +3639,7 @@ function Get-WinToolPayloadText {
         Updates = "data/updates.json"
         Fixes = "data/fixes.json"
         Features = "data/features.json"
+        System = "data/system.json"
         Xaml = "assets/MainWindow.xaml"
         Wsl = "data/wsl-setup.sh"
     }
@@ -4399,6 +4478,7 @@ function Test-WinToolDataFile {
     Test-WinToolFixCatalog -Catalog (Get-WinToolFixCatalog) -Errors $errors
     Test-WinToolFeatureCatalog -Catalog (Get-WinToolFeatureCatalog) -Errors $errors
     Test-WinToolUpdateModeCatalog -Catalog $updates -Errors $errors
+    Test-WinToolSystemCatalog -Catalog (Get-WinToolSystemCatalog) -Errors $errors
 
     return $errors.ToArray()
 }
@@ -6162,6 +6242,355 @@ function Test-WinToolUpdateModeCatalog {
     }
     elseif (@(Get-WinToolNote -Object $default -Name "policies" -Default @()).Count -ne 0) {
         $Errors.Add("The default update mode must not set policies.")
+    }
+}
+# endregion
+
+# region src/Private/System.ps1
+# Copyright (c) 2026 Henrique
+# SPDX-License-Identifier: MIT
+
+# DNS servers per network adapter and the Ultimate Performance power plan,
+# both from data/system.json. Changes run as Windows PowerShell scripts through
+# the plan runner so they are logged and never block the window.
+
+function Get-WinToolSystemCatalog {
+    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "System"))
+}
+
+function Get-WinToolDnsProvider {
+    param(
+        $Catalog = (Get-WinToolSystemCatalog)
+    )
+    return @(Get-WinToolNote -Object $Catalog -Name "dns" -Default @())
+}
+
+function Find-WinToolDnsProvider {
+    param(
+        [Parameter(Mandatory = $true)][string]$Id,
+        $Catalog = (Get-WinToolSystemCatalog)
+    )
+    foreach ($provider in (Get-WinToolDnsProvider -Catalog $Catalog)) {
+        if ([string]$provider.id -eq $Id) {
+            return $provider
+        }
+    }
+    return $null
+}
+
+function Get-WinToolDnsServerList {
+    param(
+        [Parameter(Mandatory = $true)]$Provider,
+        [bool]$IncludeIpv6 = $true
+    )
+    $list = New-Object System.Collections.Generic.List[string]
+    foreach ($address in @(Get-WinToolNote -Object $Provider -Name "ipv4" -Default @())) {
+        $list.Add([string]$address)
+    }
+    if ($IncludeIpv6) {
+        foreach ($address in @(Get-WinToolNote -Object $Provider -Name "ipv6" -Default @())) {
+            $list.Add([string]$address)
+        }
+    }
+    return $list.ToArray()
+}
+
+function Resolve-WinToolDnsProvider {
+    param(
+        [string[]]$Server = @(),
+        $Catalog = (Get-WinToolSystemCatalog)
+    )
+    # Name the provider when every IPv4 server an adapter uses belongs to it.
+    $ipv4 = @($Server | Where-Object { [string]$_ -match '^\d+\.\d+\.\d+\.\d+$' })
+    if ($ipv4.Count -eq 0) {
+        return $null
+    }
+    foreach ($provider in (Get-WinToolDnsProvider -Catalog $Catalog)) {
+        $known = @(Get-WinToolNote -Object $provider -Name "ipv4" -Default @())
+        if ($known.Count -eq 0) {
+            continue
+        }
+        $all = $true
+        foreach ($address in $ipv4) {
+            if ($known -notcontains [string]$address) {
+                $all = $false
+            }
+        }
+        if ($all) {
+            return $provider
+        }
+    }
+    return $null
+}
+
+function Get-WinToolDnsAdapter {
+    if (-not (Test-WinToolWindows)) {
+        return @()
+    }
+    $list = New-Object System.Collections.Generic.List[object]
+    foreach ($adapter in @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { [string]$_.Status -eq "Up" } | Sort-Object -Property Name)) {
+        $servers = New-Object System.Collections.Generic.List[string]
+        foreach ($entry in @(Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue)) {
+            foreach ($address in @($entry.ServerAddresses)) {
+                $servers.Add([string]$address)
+            }
+        }
+        $list.Add([pscustomobject]@{
+            Index = [int]$adapter.ifIndex
+            Name = [string]$adapter.Name
+            Description = [string]$adapter.InterfaceDescription
+            Servers = $servers.ToArray()
+        })
+    }
+    return $list.ToArray()
+}
+
+function Format-WinToolDnsSummary {
+    param(
+        [Parameter(Mandatory = $true)]$Adapter,
+        $Catalog = (Get-WinToolSystemCatalog)
+    )
+    $servers = @($Adapter.Servers)
+    if ($servers.Count -eq 0) {
+        return ("{0}: no DNS servers reported" -f [string]$Adapter.Name)
+    }
+    $text = "{0}: {1}" -f [string]$Adapter.Name, ($servers -join ", ")
+    $provider = Resolve-WinToolDnsProvider -Server $servers -Catalog $Catalog
+    if ($null -ne $provider) {
+        $text += "  (" + [string]$provider.name + ")"
+    }
+    return $text
+}
+
+function ConvertTo-WinToolSingleQuoted {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    return "'" + $Text.Replace("'", "''") + "'"
+}
+
+function Get-WinToolDnsScript {
+    param(
+        [Parameter(Mandatory = $true)][int[]]$InterfaceIndex,
+        [Parameter(Mandatory = $true)]$Provider,
+        [bool]$IncludeIpv6 = $true
+    )
+    $servers = @(Get-WinToolDnsServerList -Provider $Provider -IncludeIpv6 $IncludeIpv6)
+    foreach ($address in $servers) {
+        $parsed = $null
+        if (-not [System.Net.IPAddress]::TryParse([string]$address, [ref]$parsed)) {
+            throw "DNS provider '$([string]$Provider.id)' has an invalid address '$address'."
+        }
+    }
+    $indexText = (@($InterfaceIndex | ForEach-Object { [string][int]$_ })) -join ", "
+    $serverText = (@($servers | ForEach-Object { ConvertTo-WinToolSingleQuoted -Text ([string]$_) })) -join ", "
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add('$ErrorActionPreference = "Stop"')
+    $lines.Add('$failed = 0')
+    $lines.Add('$servers = @(' + $serverText + ')')
+    $lines.Add('foreach ($index in @(' + $indexText + ')) {')
+    $lines.Add('    $name = [string](Get-NetAdapter -InterfaceIndex $index).Name')
+    $lines.Add('    try {')
+    $lines.Add('        if ($servers.Count -eq 0) {')
+    $lines.Add('            Set-DnsClientServerAddress -InterfaceIndex $index -ResetServerAddresses')
+    $lines.Add('            Write-Output ($name + ": DNS is automatic again")')
+    $lines.Add('        }')
+    $lines.Add('        else {')
+    $lines.Add('            Set-DnsClientServerAddress -InterfaceIndex $index -ServerAddresses $servers')
+    $lines.Add('            Write-Output ($name + ": DNS set to " + ($servers -join ", "))')
+    $lines.Add('        }')
+    $lines.Add('    }')
+    $lines.Add('    catch {')
+    $lines.Add('        $failed++')
+    $lines.Add('        Write-Output ($name + ": " + $_.Exception.Message)')
+    $lines.Add('    }')
+    $lines.Add('}')
+    $lines.Add('Clear-DnsClientCache')
+    $lines.Add('if ($failed -gt 0) { exit 2 }')
+    return ($lines -join [Environment]::NewLine)
+}
+
+function Get-WinToolDnsPlan {
+    param(
+        [Parameter(Mandatory = $true)]$Adapter,
+        [Parameter(Mandatory = $true)]$Provider,
+        [bool]$IncludeIpv6 = $true
+    )
+    $adapters = @($Adapter)
+    if ($adapters.Count -eq 0) {
+        throw "Pick a network adapter first."
+    }
+    $names = (@($adapters | ForEach-Object { [string]$_.Name })) -join ", "
+    return @([pscustomobject]@{
+        Type = "inline-script"
+        Label = ("Set DNS to {0} on {1}" -f [string]$Provider.name, $names)
+        Name = "dns"
+        Text = (Get-WinToolDnsScript -InterfaceIndex @($adapters | ForEach-Object { [int]$_.Index }) -Provider $Provider -IncludeIpv6 $IncludeIpv6)
+    })
+}
+
+function ConvertFrom-WinToolPowerList {
+    param(
+        [string]$Text
+    )
+    # powercfg /list is translated, so read only the GUID, the name in
+    # parentheses, and the trailing * that marks the active plan.
+    $list = New-Object System.Collections.Generic.List[object]
+    foreach ($line in @($Text -split "`r?`n")) {
+        $match = [regex]::Match($line, '([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\s*\((.*)\)\s*(\*?)\s*$')
+        if ($match.Success) {
+            $list.Add([pscustomobject]@{
+                Guid = $match.Groups[1].Value.ToLowerInvariant()
+                Name = $match.Groups[2].Value
+                Active = ($match.Groups[3].Value -eq "*")
+            })
+        }
+    }
+    return $list.ToArray()
+}
+
+function Get-WinToolPowerPlanState {
+    param(
+        $Scheme = @(),
+        $Catalog = (Get-WinToolSystemCatalog)
+    )
+    $plan = Get-WinToolNote -Object $Catalog -Name "powerPlan"
+    $copy = ([string]$plan.copyGuid).ToLowerInvariant()
+    $base = ([string]$plan.baseGuid).ToLowerInvariant()
+    $state = [pscustomobject]@{ Added = $false; BuiltIn = $false; Active = $false }
+    foreach ($item in @($Scheme)) {
+        if ([string]$item.Guid -eq $copy) {
+            $state.Added = $true
+            if ($item.Active) { $state.Active = $true }
+        }
+        if ([string]$item.Guid -eq $base) {
+            $state.BuiltIn = $true
+            if ($item.Active) { $state.Active = $true }
+        }
+    }
+    return $state
+}
+
+function Format-WinToolPowerPlanStatus {
+    param(
+        [Parameter(Mandatory = $true)]$State,
+        [string]$Name = "Ultimate Performance"
+    )
+    if ($State.Added) {
+        if ($State.Active) { return "$Name is added and active." }
+        return "$Name is added but another plan is active."
+    }
+    if ($State.BuiltIn) {
+        if ($State.Active) { return "$Name is built into this Windows and active." }
+        return "$Name is built into this Windows. Adding it switches to it."
+    }
+    return "$Name is not on this PC."
+}
+
+function Get-WinToolPowerPlanScript {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet("add", "remove")][string]$Action,
+        $Catalog = (Get-WinToolSystemCatalog)
+    )
+    $plan = Get-WinToolNote -Object $Catalog -Name "powerPlan"
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add('$base = ' + (ConvertTo-WinToolSingleQuoted -Text ([string]$plan.baseGuid)))
+    $lines.Add('$copy = ' + (ConvertTo-WinToolSingleQuoted -Text ([string]$plan.copyGuid)))
+    $lines.Add('$fallback = ' + (ConvertTo-WinToolSingleQuoted -Text ([string]$plan.fallbackGuid)))
+    $lines.Add('$list = (& powercfg.exe /list | Out-String)')
+    if ($Action -eq "add") {
+        $lines.Add('if ($list -match $copy) {')
+        $lines.Add('    $target = $copy')
+        $lines.Add('}')
+        $lines.Add('elseif ($list -match $base) {')
+        $lines.Add('    $target = $base')
+        $lines.Add('}')
+        $lines.Add('else {')
+        $lines.Add('    & powercfg.exe -duplicatescheme $base $copy')
+        $lines.Add('    if ($LASTEXITCODE -ne 0) {')
+        $lines.Add('        Write-Output "Windows did not allow the Ultimate Performance plan on this PC. Some laptops with Modern Standby block it."')
+        $lines.Add('        exit 2')
+        $lines.Add('    }')
+        $lines.Add('    $target = $copy')
+        $lines.Add('    Write-Output "Added the Ultimate Performance plan."')
+        $lines.Add('}')
+        $lines.Add('& powercfg.exe -setactive $target')
+        $lines.Add('if ($LASTEXITCODE -ne 0) { exit 2 }')
+        $lines.Add('Write-Output "Ultimate Performance is now the active plan."')
+    }
+    else {
+        $lines.Add('if ($list -notmatch $copy) {')
+        $lines.Add('    Write-Output "WinTool did not add an Ultimate Performance plan, so there is nothing to remove."')
+        $lines.Add('    if ($list -match $base) { Write-Output "The built-in copy stays. Pick another plan in Control Panel if you want to stop using it." }')
+        $lines.Add('    exit 0')
+        $lines.Add('}')
+        $lines.Add('$active = (& powercfg.exe /getactivescheme | Out-String)')
+        $lines.Add('if ($active -match $copy) {')
+        $lines.Add('    & powercfg.exe -setactive $fallback')
+        $lines.Add('    Write-Output "Switched back to the Balanced plan."')
+        $lines.Add('}')
+        $lines.Add('& powercfg.exe -delete $copy')
+        $lines.Add('if ($LASTEXITCODE -ne 0) { exit 2 }')
+        $lines.Add('Write-Output "Removed the Ultimate Performance plan."')
+    }
+    return ($lines -join [Environment]::NewLine)
+}
+
+function Get-WinToolPowerPlanPlan {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet("add", "remove")][string]$Action,
+        $Catalog = (Get-WinToolSystemCatalog)
+    )
+    $label = "Add the Ultimate Performance power plan"
+    if ($Action -eq "remove") {
+        $label = "Remove the Ultimate Performance power plan"
+    }
+    return @([pscustomobject]@{
+        Type = "inline-script"
+        Label = $label
+        Name = "power-plan"
+        Text = (Get-WinToolPowerPlanScript -Action $Action -Catalog $Catalog)
+    })
+}
+
+function Test-WinToolSystemCatalog {
+    param(
+        [Parameter(Mandatory = $true)]$Catalog,
+        $Errors
+    )
+    if ([int](Get-WinToolNote -Object $Catalog -Name "schemaVersion" -Default 0) -ne 1) {
+        $Errors.Add("system.json schemaVersion must be 1.")
+    }
+    $ids = @{}
+    foreach ($provider in (Get-WinToolDnsProvider -Catalog $Catalog)) {
+        $id = [string](Get-WinToolNote -Object $provider -Name "id" -Default "")
+        if ([string]::IsNullOrWhiteSpace($id) -or $ids.ContainsKey($id)) {
+            $Errors.Add("A DNS provider has a missing or repeated id '$id'.")
+            continue
+        }
+        $ids[$id] = $true
+        foreach ($family in @("ipv4", "ipv6")) {
+            $expected = [System.Net.Sockets.AddressFamily]::InterNetwork
+            if ($family -eq "ipv6") {
+                $expected = [System.Net.Sockets.AddressFamily]::InterNetworkV6
+            }
+            foreach ($address in @(Get-WinToolNote -Object $provider -Name $family -Default @())) {
+                $parsed = $null
+                if (-not [System.Net.IPAddress]::TryParse([string]$address, [ref]$parsed) -or $parsed.AddressFamily -ne $expected) {
+                    $Errors.Add("DNS provider '$id' has an invalid $family address '$address'.")
+                }
+            }
+        }
+    }
+    if (-not $ids.ContainsKey("dhcp")) {
+        $Errors.Add("system.json needs a 'dhcp' DNS choice to go back to automatic.")
+    }
+    $plan = Get-WinToolNote -Object $Catalog -Name "powerPlan"
+    foreach ($field in @("baseGuid", "copyGuid", "fallbackGuid")) {
+        $value = [string](Get-WinToolNote -Object $plan -Name $field -Default "")
+        if ($value -notmatch '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') {
+            $Errors.Add("powerPlan.$field must be a lowercase GUID.")
+        }
     }
 }
 # endregion
@@ -9247,6 +9676,7 @@ function Initialize-WinToolConfigView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "LoadProfile") -EventName "Click" -Name "Config: load profile" -Action { Invoke-WinToolLoadProfile }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ExportWinget") -EventName "Click" -Name "Config: export winget list" -Action { Invoke-WinToolExportWinget }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ImportWinget") -EventName "Click" -Name "Config: import winget list" -Action { Invoke-WinToolImportWinget }
+    Initialize-WinToolSystemView
     Update-WinToolProfileSummary
 }
 
@@ -9385,6 +9815,146 @@ function Invoke-WinToolImportWinget {
     }
     Invoke-WinToolPlanAsync -Step @($step) -DoneMessage "winget import finished."
 }
+
+function Initialize-WinToolSystemView {
+    $catalog = Get-WinToolSystemCatalog
+    $providerBox = Get-WinToolUi -Name "DnsProvider"
+    $providerBox.Items.Clear()
+    foreach ($provider in (Get-WinToolDnsProvider -Catalog $catalog)) {
+        $item = New-Object System.Windows.Controls.ComboBoxItem
+        $item.Content = [string]$provider.name
+        $item.Tag = [string]$provider.id
+        $item.ToolTip = [string](Get-WinToolNote -Object $provider -Name "description" -Default "")
+        [void]$providerBox.Items.Add($item)
+    }
+    $providerBox.SelectedIndex = 0
+    $plan = Get-WinToolNote -Object $catalog -Name "powerPlan"
+    (Get-WinToolUi -Name "PowerPlanDescription").Text = [string]$plan.description
+
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "DnsAdapter") -EventName "SelectionChanged" -Name "Config: pick adapter" -Action { Sync-WinToolDnsSummary }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "RefreshDns") -EventName "Click" -Name "Config: refresh adapters" -Action { Update-WinToolSystemView }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ApplyDns") -EventName "Click" -Name "Config: apply DNS" -Action { Invoke-WinToolDnsClick }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "AddUltimatePlan") -EventName "Click" -Name "Config: add Ultimate Performance" -Action { Invoke-WinToolPowerPlanClick -Action "add" }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "RemoveUltimatePlan") -EventName "Click" -Name "Config: remove Ultimate Performance" -Action { Invoke-WinToolPowerPlanClick -Action "remove" }
+}
+
+function Update-WinToolSystemView {
+    $adapters = @()
+    try {
+        $adapters = @(Get-WinToolDnsAdapter)
+    }
+    catch {
+        Write-WinToolLog -Message ("Could not read network adapters. " + $_.Exception.Message) -Level "warn"
+    }
+    $script:WinToolState.DnsAdapters = $adapters
+    $box = Get-WinToolUi -Name "DnsAdapter"
+    $box.Items.Clear()
+    if ($adapters.Count -gt 1) {
+        $all = New-Object System.Windows.Controls.ComboBoxItem
+        $all.Content = "All connected adapters"
+        $all.Tag = -1
+        [void]$box.Items.Add($all)
+    }
+    foreach ($adapter in $adapters) {
+        $item = New-Object System.Windows.Controls.ComboBoxItem
+        $item.Content = ("{0}  -  {1}" -f [string]$adapter.Name, [string]$adapter.Description)
+        $item.Tag = [int]$adapter.Index
+        [void]$box.Items.Add($item)
+    }
+    if ($box.Items.Count -gt 0) {
+        $box.SelectedIndex = 0
+    }
+    Sync-WinToolDnsSummary
+    Sync-WinToolPowerPlanStatus
+}
+
+function Get-WinToolSelectedDnsAdapter {
+    $item = (Get-WinToolUi -Name "DnsAdapter").SelectedItem
+    if ($null -eq $item) {
+        return @()
+    }
+    $index = [int]$item.Tag
+    $list = New-Object System.Collections.Generic.List[object]
+    foreach ($adapter in @($script:WinToolState.DnsAdapters)) {
+        if ($index -eq -1 -or [int]$adapter.Index -eq $index) {
+            $list.Add($adapter)
+        }
+    }
+    return $list.ToArray()
+}
+
+function Sync-WinToolDnsSummary {
+    $selected = @(Get-WinToolSelectedDnsAdapter)
+    $text = "No connected network adapter found."
+    if ($selected.Count -gt 0) {
+        $lines = New-Object System.Collections.Generic.List[string]
+        foreach ($adapter in $selected) {
+            $lines.Add((Format-WinToolDnsSummary -Adapter $adapter))
+        }
+        $text = "Now: " + ($lines -join [Environment]::NewLine)
+    }
+    (Get-WinToolUi -Name "DnsCurrent").Text = $text
+}
+
+function Sync-WinToolPowerPlanStatus {
+    $text = "Power plans are only on Windows."
+    if (Test-WinToolWindows) {
+        try {
+            $schemes = ConvertFrom-WinToolPowerList -Text ((& powercfg.exe /list) | Out-String)
+            $catalog = Get-WinToolSystemCatalog
+            $state = Get-WinToolPowerPlanState -Scheme $schemes -Catalog $catalog
+            $text = Format-WinToolPowerPlanStatus -State $state -Name ([string]$catalog.powerPlan.name)
+            (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = [bool]$state.Added
+        }
+        catch {
+            $text = "Could not read power plans. " + $_.Exception.Message
+        }
+    }
+    (Get-WinToolUi -Name "PowerPlanStatus").Text = $text
+}
+
+function Invoke-WinToolDnsClick {
+    $adapters = @(Get-WinToolSelectedDnsAdapter)
+    if ($adapters.Count -eq 0) {
+        Write-WinToolLog -Message "Pick a network adapter first." -Level "warn"
+        return
+    }
+    $item = (Get-WinToolUi -Name "DnsProvider").SelectedItem
+    if ($null -eq $item) {
+        Write-WinToolLog -Message "Pick a DNS provider first." -Level "warn"
+        return
+    }
+    $provider = Find-WinToolDnsProvider -Id ([string]$item.Tag)
+    $ipv6 = ((Get-WinToolUi -Name "DnsIncludeIpv6").IsChecked -eq $true)
+    $servers = @(Get-WinToolDnsServerList -Provider $provider -IncludeIpv6 $ipv6)
+    $what = "automatic (DHCP)"
+    if ($servers.Count -gt 0) {
+        $what = [string]$provider.name + " (" + ($servers -join ", ") + ")"
+    }
+    $names = (@($adapters | ForEach-Object { [string]$_.Name })) -join ", "
+    $ok = Request-WinToolConfirmation -Message ("Set DNS on {0} to {1}?" -f $names, $what) -Title "DNS servers"
+    if (-not $ok) {
+        return
+    }
+    $steps = @(Get-WinToolDnsPlan -Adapter $adapters -Provider $provider -IncludeIpv6 $ipv6)
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage "DNS servers changed." -AfterDone "Update-WinToolSystemView"
+}
+
+function Invoke-WinToolPowerPlanClick {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet("add", "remove")][string]$Action
+    )
+    $message = "Add the Ultimate Performance power plan and switch to it?"
+    if ($Action -eq "remove") {
+        $message = "Remove the Ultimate Performance plan WinTool added? If it is active, Windows goes back to Balanced."
+    }
+    $ok = Request-WinToolConfirmation -Message $message -Title "Power plan"
+    if (-not $ok) {
+        return
+    }
+    $steps = @(Get-WinToolPowerPlanPlan -Action $Action)
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage "Power plan updated." -AfterDone "Sync-WinToolPowerPlanStatus"
+}
 # endregion
 
 # region src/UI/Shell.ps1
@@ -9433,6 +10003,10 @@ function Switch-WinToolView {
     }
     if ($Name -eq "Config") {
         Update-WinToolProfileSummary
+        if (-not $script:WinToolState.SystemChecked) {
+            $script:WinToolState.SystemChecked = $true
+            Update-WinToolSystemView
+        }
     }
     if ($Name -eq "Features" -and -not $script:WinToolState.FeaturesChecked) {
         $script:WinToolState.FeaturesChecked = $true
@@ -9913,6 +10487,8 @@ function New-WinToolWindow {
         UpdateMode = ""
         UpdateModeCurrent = ""
         UpdateModeRadios = @()
+        DnsAdapters = @()
+        SystemChecked = $false
         Run = $null
         Pump = $null
         RestoreJob = $null

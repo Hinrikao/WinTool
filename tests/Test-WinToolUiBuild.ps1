@@ -105,6 +105,16 @@ if ([string]::IsNullOrWhiteSpace($currentMode) -or @($modeList.Children | Where-
     throw "The current update mode ($currentMode) should be selected."
 }
 Write-Output ("Update mode: " + $window.FindName("UpdateModeCurrent").Text)
+$dnsProvider = $window.FindName("DnsProvider")
+if ($null -eq $dnsProvider -or $dnsProvider.Items.Count -lt 5) {
+    throw "The Config tab did not list the DNS providers."
+}
+Update-WinToolSystemView
+if ([string]::IsNullOrWhiteSpace([string]$window.FindName("PowerPlanStatus").Text) -or $window.FindName("PowerPlanStatus").Text -eq "Checking...") {
+    throw "The power plan status was not read."
+}
+Write-Output ("DNS: " + $window.FindName("DnsCurrent").Text)
+Write-Output ("Power plan: " + $window.FindName("PowerPlanStatus").Text)
 $logPanel = $window.FindName("LogPanel")
 if ($null -eq $logPanel -or $logPanel.Visibility -ne "Collapsed") {
     throw "The log should be collapsed until a task starts."
@@ -140,6 +150,9 @@ $skip = @(
     "Config: load profile",
     "Config: export winget list",
     "Config: import winget list",
+    "Config: apply DNS",
+    "Config: add Ultimate Performance",
+    "Config: remove Ultimate Performance",
     "Cancel",
     "Open project link",
     "Close WinTool",

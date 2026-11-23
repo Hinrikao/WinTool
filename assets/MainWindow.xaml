@@ -582,6 +582,45 @@
                 </StackPanel>
               </StackPanel>
             </Border>
+
+            <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,12,0,0">
+              <StackPanel>
+                <TextBlock Text="DNS servers" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Pick which DNS servers a network adapter uses. Automatic goes back to what your router hands out." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                <Grid Margin="0,0,0,8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <TextBlock Text="Adapter" VerticalAlignment="Center" Margin="0,0,12,8"/>
+                  <ComboBox x:Name="DnsAdapter" Grid.Column="1" Margin="0,0,0,8" AutomationProperties.Name="Network adapter"/>
+                  <TextBlock Text="DNS" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                  <ComboBox x:Name="DnsProvider" Grid.Row="1" Grid.Column="1" AutomationProperties.Name="DNS provider"/>
+                </Grid>
+                <CheckBox x:Name="DnsIncludeIpv6" Content="Also set IPv6 DNS servers" IsChecked="True" Margin="0,4,0,8"/>
+                <TextBlock x:Name="DnsCurrent" Text="Open this tab to read the current DNS servers." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="ApplyDns" Content="Apply DNS" Style="{StaticResource PrimaryButton}" Margin="0"/>
+                  <Button x:Name="RefreshDns" Content="Refresh adapters" Style="{StaticResource SecondaryButton}"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,12,0,0">
+              <StackPanel>
+                <TextBlock Text="Ultimate Performance power plan" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock x:Name="PowerPlanDescription" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+                <TextBlock x:Name="PowerPlanStatus" Text="Checking..." FontWeight="SemiBold" Margin="0,0,0,12"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="AddUltimatePlan" Content="Add and switch to it" Style="{StaticResource SecondaryButton}" Margin="0"/>
+                  <Button x:Name="RemoveUltimatePlan" Content="Remove it" Style="{StaticResource SecondaryButton}"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
           </StackPanel>
         </ScrollViewer>
       </Grid>

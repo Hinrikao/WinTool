@@ -43,6 +43,10 @@ function Switch-WinToolView {
     }
     if ($Name -eq "Config") {
         Update-WinToolProfileSummary
+        if (-not $script:WinToolState.SystemChecked) {
+            $script:WinToolState.SystemChecked = $true
+            Update-WinToolSystemView
+        }
     }
     if ($Name -eq "Features" -and -not $script:WinToolState.FeaturesChecked) {
         $script:WinToolState.FeaturesChecked = $true
@@ -523,6 +527,8 @@ function New-WinToolWindow {
         UpdateMode = ""
         UpdateModeCurrent = ""
         UpdateModeRadios = @()
+        DnsAdapters = @()
+        SystemChecked = $false
         Run = $null
         Pump = $null
         RestoreJob = $null

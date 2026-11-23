@@ -311,6 +311,55 @@ Invoke-WinToolCase -Name "Update modes set policies and revert to default" -Body
     Test-WinToolExpectation -Condition ($bad.Count -ge 3) -Message "The update mode catalog rejects outside keys, bad startup types, and a missing default."
 }
 
+Invoke-WinToolCase -Name "DNS picker and Ultimate Performance plan" -Body {
+    $catalog = Get-WinToolSystemCatalog
+    $ids = @(Get-WinToolDnsProvider -Catalog $catalog | ForEach-Object { [string]$_.id })
+    Test-WinToolExpectation -Condition (($ids -join ",") -eq "dhcp,cloudflare,google,quad9,adguard") -Message "DNS choices should be Automatic, Cloudflare, Google, Quad9, and AdGuard."
+    $cloudflare = Find-WinToolDnsProvider -Id "cloudflare" -Catalog $catalog
+    Test-WinToolExpectation -Condition ((@(Get-WinToolDnsServerList -Provider $cloudflare -IncludeIpv6 $true) -join ",") -eq "1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001") -Message "Cloudflare lists IPv4 then IPv6."
+    Test-WinToolExpectation -Condition (@(Get-WinToolDnsServerList -Provider $cloudflare -IncludeIpv6 $false).Count -eq 2) -Message "IPv6 can be left out."
+    $adapters = @([pscustomobject]@{ Index = 12; Name = "Ethernet"; Description = "NIC"; Servers = @("9.9.9.9", "2620:fe::fe") }, [pscustomobject]@{ Index = 7; Name = "Wi-Fi"; Description = "WLAN"; Servers = @("192.168.0.1") })
+    Test-WinToolExpectation -Condition ((Resolve-WinToolDnsProvider -Server $adapters[0].Servers -Catalog $catalog).id -eq "quad9") -Message "Quad9 servers are recognized."
+    Test-WinToolExpectation -Condition ($null -eq (Resolve-WinToolDnsProvider -Server $adapters[1].Servers -Catalog $catalog)) -Message "A router DNS is not named as a provider."
+    Test-WinToolExpectation -Condition ((Format-WinToolDnsSummary -Adapter $adapters[0] -Catalog $catalog).EndsWith("(Quad9)")) -Message "The summary names the provider."
+    $plan = @(Get-WinToolDnsPlan -Adapter $adapters -Provider $cloudflare -IncludeIpv6 $true)
+    $text = [string]$plan[0].Text
+    Test-WinToolExpectation -Condition ($text.Contains("@(12, 7)") -and $text.Contains("'2606:4700:4700::1111'") -and $text.Contains("Clear-DnsClientCache")) -Message "The DNS script targets the picked adapters."
+    $dhcp = @(Get-WinToolDnsPlan -Adapter $adapters[1] -Provider (Find-WinToolDnsProvider -Id "dhcp" -Catalog $catalog))
+    Test-WinToolExpectation -Condition ($dhcp[0].Text.Contains('$servers = @()') -and $dhcp[0].Text.Contains("-ResetServerAddresses")) -Message "Automatic resets the adapter DNS."
+    $list = @"
+Existing Power Schemes (* Active)
+-----------------------------------
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+GUID do esquema de energia: 9358CB16-9734-43cb-9301-0fdff2f45345  (Desempenho Maximo) *
+"@
+    $schemes = @(ConvertFrom-WinToolPowerList -Text $list)
+    Test-WinToolExpectation -Condition ($schemes.Count -eq 2 -and $schemes[1].Active -and -not $schemes[0].Active) -Message "powercfg output is read in any language."
+    $state = Get-WinToolPowerPlanState -Scheme $schemes -Catalog $catalog
+    Test-WinToolExpectation -Condition ($state.Added -and $state.Active -and -not $state.BuiltIn) -Message "The WinTool copy of the plan is found."
+    Test-WinToolExpectation -Condition ((Format-WinToolPowerPlanStatus -State (Get-WinToolPowerPlanState -Scheme @($schemes[0]) -Catalog $catalog)) -eq "Ultimate Performance is not on this PC.") -Message "A missing plan is reported."
+    foreach ($action in @("add", "remove")) {
+        $script = [string]@(Get-WinToolPowerPlanPlan -Action $action -Catalog $catalog)[0].Text
+        $tokens = $null
+        $errors = $null
+        [void][System.Management.Automation.Language.Parser]::ParseInput($script, [ref]$tokens, [ref]$errors)
+        Test-WinToolExpectation -Condition (@($errors).Count -eq 0) -Message "The power plan $action script does not parse."
+    }
+    $add = [string]@(Get-WinToolPowerPlanPlan -Action "add" -Catalog $catalog)[0].Text
+    Test-WinToolExpectation -Condition ($add.Contains("-duplicatescheme `$base `$copy") -and $add.Contains("e9a42b02-d5df-448d-aa00-03f14749eb61")) -Message "Adding copies the Ultimate Performance scheme to a fixed GUID."
+    $remove = [string]@(Get-WinToolPowerPlanPlan -Action "remove" -Catalog $catalog)[0].Text
+    Test-WinToolExpectation -Condition ($remove.Contains("-delete `$copy") -and -not $remove.Contains("-delete `$base")) -Message "Removing deletes only the WinTool copy."
+    $parse = Get-WinToolDnsScript -InterfaceIndex @(3) -Provider $cloudflare
+    $tokens = $null
+    $errors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseInput($parse, [ref]$tokens, [ref]$errors)
+    Test-WinToolExpectation -Condition (@($errors).Count -eq 0) -Message "The DNS script does not parse."
+    $bad = New-Object System.Collections.Generic.List[string]
+    $badCatalog = [pscustomobject]@{ schemaVersion = 1; dns = @([pscustomobject]@{ id = "x"; ipv4 = @("1.1.1.1; evil"); ipv6 = @("8.8.8.8") }); powerPlan = [pscustomobject]@{ baseGuid = "nope"; copyGuid = "x"; fallbackGuid = "y" } }
+    Test-WinToolSystemCatalog -Catalog $badCatalog -Errors $bad
+    Test-WinToolExpectation -Condition ($bad.Count -ge 6) -Message "The system catalog rejects bad addresses, GUIDs, and a missing Automatic choice."
+}
+
 Invoke-WinToolCase -Name "Windows features read state and plan DISM changes" -Body {
     $catalog = Get-WinToolFeatureCatalog
     $byId = @{}
