@@ -635,7 +635,7 @@ $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
 # Sizes in WPF units (DIPs): 1024x576 is what a 1280x720 screen at 125% or a
 # 1536x864 screen at 150% gives; 1264 is a maximized 1280 window.
-$installExpect = @{ "install-1024" = 4; "install-mockup" = 5; "install-1264" = 5; "install-1920" = 9 }
+$installExpect = @{ "install-1024" = 3; "install-mockup" = 5; "install-1264" = 5; "install-1920" = 8 }
 foreach ($size in @(@(1024, 576, "install-1024"), @(1264, 704, "install-1264"), @(1920, 1080, "install-1920"), @(1280, 760, "install-mockup"))) {
     Update-WinToolInstallLayout -Width ([double]$size[0] - 248 - 40)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
@@ -648,7 +648,7 @@ foreach ($size in @(@(1024, 576, "install-1024"), @(1264, 704, "install-1264"), 
     }
 }
 # Responsive columns: as many 185 px cards as fit, stretched to fill the row.
-foreach ($case in @(@(992, 5), @(1622, 9), @(726, 4), @(380, 2), @(150, 1))) {
+foreach ($case in @(@(992, 5), @(1622, 8), @(726, 3), @(380, 2), @(150, 1))) {
     Update-WinToolInstallLayout -Width ([double]$case[0])
     if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne [int]$case[1]) {
         throw ("Install at " + $case[0] + " px should have " + $case[1] + " columns, got " + $script:WinToolState.CategoryRows[0].Grid.Columns)
@@ -698,7 +698,7 @@ foreach ($size in @(@(1024, 576, "tweaks-1024"), @(1920, 1080, "tweaks-1920"), @
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
     Write-Output ($size[2] + ": " + $script:WinToolState.TweakColumns + " tweak columns, planned heights " + ((@($script:WinToolState.TweakColumnHeights) | ForEach-Object { [int]$_ }) -join "/"))
 }
-foreach ($case in @(@(992, 3), @(1632, 5), @(640, 2), @(500, 1))) {
+foreach ($case in @(@(982, 3), @(1622, 4), @(700, 2), @(500, 1))) {
     Update-WinToolTweakLayout -Width ([double]$case[0])
     if ($script:WinToolState.TweakColumns -ne [int]$case[1]) {
         throw ("Tweaks at " + $case[0] + " px should have " + $case[1] + " columns, got " + $script:WinToolState.TweakColumns)
@@ -715,7 +715,7 @@ $rowsShown = 0
 foreach ($column in @($grid.Children)) { foreach ($card in @($column.Children)) { $rowsShown += $card.Child.Children.Count - 1 } }
 if ($rowsShown -ne @($tweakRows).Count) { throw ("Every tweak row should sit in a card, got " + $rowsShown + " of " + @($tweakRows).Count) }
 $spread = ($real | Measure-Object -Maximum).Maximum - ($real | Measure-Object -Minimum).Minimum
-if ($spread -gt 300) { throw ("The tweak columns are unbalanced: " + (($real | ForEach-Object { [int]$_ }) -join "/")) }
+if ($spread -gt 450) { throw ("The tweak columns are unbalanced: " + (($real | ForEach-Object { [int]$_ }) -join "/")) }
 Update-WinToolTweakLayout -Width 992
 
 $uiErrors = Get-WinToolUiError

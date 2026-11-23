@@ -97,22 +97,22 @@ function New-WinToolTweakCard {
     $card.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
     $card.BorderThickness = [System.Windows.Thickness]::new(1)
     $card.CornerRadius = [System.Windows.CornerRadius]::new(8)
-    $card.Padding = [System.Windows.Thickness]::new(10, 0, 10, 12)
+    $card.Padding = [System.Windows.Thickness]::new(14, 0, 14, 12)
     $card.Margin = [System.Windows.Thickness]::new(0, 0, 0, 12)
     $stack = New-Object System.Windows.Controls.StackPanel
     $header = New-Object System.Windows.Controls.Grid
-    $header.Height = 36
+    $header.Height = 44
     $header.ColumnDefinitions.Add((New-WinToolColumn))
     $header.ColumnDefinitions.Add((New-WinToolColumn -Auto))
     $text = $Title
     if ($Continued) { $text = $Title + " (continued)" }
-    $titleText = New-WinToolText -Text $text -Size 12.5 -Weight "Bold"
+    $titleText = New-WinToolText -Text $text -Size 15 -Weight "SemiBold"
     $titleText.VerticalAlignment = "Center"
     $titleText.TextTrimming = "CharacterEllipsis"
     $titleText.Margin = [System.Windows.Thickness]::new(2, 0, 8, 0)
     if ($Continued) { $titleText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted") }
     [void]$header.Children.Add($titleText)
-    $count = New-WinToolText -Text " " -Size 9.5 -Brush "BrushMuted"
+    $count = New-WinToolText -Text " " -Size 12 -Brush "BrushMuted"
     $count.VerticalAlignment = "Center"
     $count.Margin = [System.Windows.Thickness]::new(0, 0, 2, 0)
     [System.Windows.Controls.Grid]::SetColumn($count, 1)
@@ -175,8 +175,8 @@ function Get-WinToolTweakMasonryPlan {
 
 function Get-WinToolTweakCardHeight {
     param([int]$Rows)
-    # Header 36, 24 per row, 12 bottom padding, 12 gap below the card.
-    return (36 + 24 * $Rows + 12 + 12)
+    # Header 44, 34 per row, 12 bottom padding, 12 gap below the card.
+    return (44 + 34 * $Rows + 12 + 12)
 }
 
 function New-WinToolTweakRow {
@@ -184,13 +184,13 @@ function New-WinToolTweakRow {
         $Tweak,
         [string]$CategoryName
     )
-    # One 24 px line: a green (Safe) or amber (Caution) dot, the name, an
+    # One 34 px line: a green (Safe) or amber (Caution) dot, the name, an
     # info mark with the details, and an on/off switch that changes Windows
     # right away.
     $panel = New-Object System.Windows.Controls.Border
     $panel.BorderThickness = [System.Windows.Thickness]::new(0, 1, 0, 0)
     $panel.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
-    $panel.Height = 24
+    $panel.Height = 34
     $panel.Background = [System.Windows.Media.Brushes]::Transparent
     $grid = New-Object System.Windows.Controls.Grid
     $grid.ColumnDefinitions.Add((New-WinToolColumn -Auto))
@@ -200,10 +200,10 @@ function New-WinToolTweakRow {
 
     $risk = [string](Get-WinToolNote -Object $Tweak -Name "risk" -Default "safe")
     $dot = New-Object System.Windows.Shapes.Ellipse
-    $dot.Width = 6
-    $dot.Height = 6
+    $dot.Width = 8
+    $dot.Height = 8
     $dot.VerticalAlignment = "Center"
-    $dot.Margin = [System.Windows.Thickness]::new(3, 0, 7, 0)
+    $dot.Margin = [System.Windows.Thickness]::new(3, 0, 10, 0)
     if ($risk -eq "caution") {
         $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushWarn")
         $dot.ToolTip = "Caution: read the details before turning this on."
@@ -214,7 +214,7 @@ function New-WinToolTweakRow {
     }
     [void]$grid.Children.Add($dot)
 
-    $name = New-WinToolText -Text ([string]$Tweak.name) -Size 10.5
+    $name = New-WinToolText -Text ([string]$Tweak.name) -Size 13.5
     $name.TextTrimming = "CharacterEllipsis"
     $name.VerticalAlignment = "Center"
     $name.Margin = [System.Windows.Thickness]::new(0, 0, 6, 0)
@@ -225,9 +225,9 @@ function New-WinToolTweakRow {
     $info = New-Object System.Windows.Controls.TextBlock
     $info.Text = [string][char]0xE946
     $info.FontFamily = [System.Windows.Media.FontFamily]::new("Segoe MDL2 Assets")
-    $info.FontSize = 10
+    $info.FontSize = 13
     $info.VerticalAlignment = "Center"
-    $info.Margin = [System.Windows.Thickness]::new(0, 0, 8, 0)
+    $info.Margin = [System.Windows.Thickness]::new(0, 0, 10, 0)
     $info.Cursor = [System.Windows.Input.Cursors]::Help
     $info.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushHint")
     $info.ToolTip = [string]$Tweak.description
@@ -236,7 +236,7 @@ function New-WinToolTweakRow {
     [void]$grid.Children.Add($info)
 
     $toggle = New-Object System.Windows.Controls.CheckBox
-    $toggle.Style = $script:WinToolWindow.FindResource("SwitchToggleSmall")
+    $toggle.Style = $script:WinToolWindow.FindResource("SwitchToggle")
     $toggle.VerticalAlignment = "Center"
     $toggle.Margin = [System.Windows.Thickness]::new(0, 0, 2, 0)
     $toggle.IsChecked = $false
@@ -279,13 +279,13 @@ function Update-WinToolTweakLayout {
     param(
         [double]$Width
     )
-    # Masonry: as many columns as fit at 300 px (3 at 1280, 5 at 1920), long
+    # Masonry: as many columns as fit at 316 px (3 at 1280, 4 at 1920), long
     # categories split into continuation cards, tallest pieces placed first
     # in the shortest column (Get-WinToolTweakMasonryPlan).
     if ($Width -le 0) {
         return
     }
-    $columns = Get-WinToolColumnCount -Width $Width -MinWidth 300 -Gap 12
+    $columns = Get-WinToolColumnCount -Width $Width -MinWidth 316 -Gap 12
     $script:WinToolState.TweakWidth = $Width
     $script:WinToolState.TweakColumns = $columns
     $script:WinToolState.TweakTwoColumns = ($columns -gt 1)

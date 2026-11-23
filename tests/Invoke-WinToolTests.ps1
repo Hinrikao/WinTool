@@ -676,9 +676,9 @@ Invoke-WinToolCase -Name "UI collection adds do not leak indexes" -Body {
 Invoke-WinToolCase -Name "Responsive columns and balanced Tweaks masonry" -Body {
     . (Join-Path $script:WinToolRoot "src/UI/InstallView.ps1")
     . (Join-Path $script:WinToolRoot "src/UI/TweaksView.ps1")
-    # Install: 160 px cards plus 10 px gaps; width = list width minus the scroll bar.
-    foreach ($case in @(@(726, 4), @(982, 5), @(966, 5), @(1622, 9))) {
-        $got = Get-WinToolColumnCount -Width ([double]$case[0]) -MinWidth 160 -Gap 10
+    # Install: 185 px cards plus 10 px gaps; width = list width minus the scroll bar.
+    foreach ($case in @(@(726, 3), @(982, 5), @(966, 5), @(1622, 8))) {
+        $got = Get-WinToolColumnCount -Width ([double]$case[0]) -MinWidth 185 -Gap 10
         Test-WinToolExpectation -Condition ($got -eq [int]$case[1]) -Message ("Install at " + $case[0] + " px: " + $got + " columns")
     }
     $counts = @{}
