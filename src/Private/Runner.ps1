@@ -2,6 +2,14 @@
 # SPDX-License-Identifier: MIT
 
 function Get-WinToolModuleScript {
+    param(
+        [string]$Name = "Terminal-Icons"
+    )
+    if ($Name -notmatch '^[A-Za-z0-9.-]+$') {
+        throw "Unexpected module name '$Name'."
+    }
+    # PowerShellGet 1.0 (Windows PowerShell 5.1) lacks some switches, so they
+    # are only passed when this Install-Module has them.
     $scriptText = @'
 $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -14,10 +22,15 @@ if ($null -eq $gallery) {
     Register-PSRepository -Default
 }
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -AllowClobber
-Write-Output "Terminal-Icons installed."
+$options = @{ Name = "__MODULE__"; Scope = "CurrentUser"; Force = $true }
+$installer = Get-Command -Name Install-Module
+if ($installer.Parameters.ContainsKey("AllowClobber")) { $options["AllowClobber"] = $true }
+if ($installer.Parameters.ContainsKey("SkipPublisherCheck")) { $options["SkipPublisherCheck"] = $true }
+Install-Module @options
+$installed = Get-Module -ListAvailable -Name "__MODULE__" | Sort-Object Version -Descending | Select-Object -First 1
+Write-Output ("__MODULE__ " + [string]$installed.Version + " installed.")
 '@
-    return $scriptText
+    return $scriptText.Replace("__MODULE__", $Name)
 }
 
 function Get-WinToolWingetStepAction {
@@ -64,8 +77,9 @@ function Get-WinToolPlanCommand {
         }
     }
     if ($type -eq "module") {
-        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-terminal-icons.ps1"
-        Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolModuleScript)
+        $moduleName = [string](Get-WinToolNote -Object $Step -Name "Module" -Default "Terminal-Icons")
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-module-" + $moduleName + ".ps1")
+        Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolModuleScript -Name $moduleName)
         $hostPath = $null
         if ([string]$Step.Host -eq "pwsh") {
             Sync-WinToolProcessPath
@@ -99,9 +113,12 @@ function Get-WinToolPlanCommand {
         }
     }
     if ($type -eq "wsl-install") {
+        $distro = Get-WinToolWslDistroName -Step $Step
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-install.ps1"
+        Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolWslInstallScript -Distro $distro)
         return [pscustomobject]@{
-            FilePath = (Join-Path $env:SystemRoot "System32/wsl.exe")
-            ArgumentList = @("--install", "-d", "Ubuntu", "--no-launch")
+            FilePath = (Get-WinToolSystemFile -RelativePath "System32\WindowsPowerShell\v1.0\powershell.exe")
+            ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
         }
     }
     if ($type -eq "font-download") {
@@ -125,30 +142,14 @@ function Get-WinToolPlanCommand {
         }
     }
     if ($type -eq "wsl-shell") {
-        $wsl = Join-Path $env:SystemRoot "System32/wsl.exe"
-        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-setup.sh"
-        $bash = Get-WinToolPayloadText -Name "Wsl"
-        $bash = $bash -replace "`r`n", "`n" -replace "`r", "`n"
-        $variant = [string](Get-WinToolNote -Object $Step -Name "Variant" -Default "")
-        $omzTheme = [string](Get-WinToolNote -Object $Step -Name "OmzTheme" -Default "robbyrussell")
-        if ([string]::IsNullOrWhiteSpace($omzTheme)) { $omzTheme = "robbyrussell" }
-        if (-not [string]::IsNullOrWhiteSpace($variant)) {
-            $bash = "export WINTOOL_SHELL_PROMPT=" + $variant + "`nexport WINTOOL_OMZ_THEME=" + $omzTheme + "`n" + $bash
-        }
-        Write-WinToolUtf8File -Path $scriptPath -Text $bash
-        $unix = $scriptPath
-        if (Test-Path -LiteralPath $wsl) {
-            $converted = & $wsl wslpath -a $scriptPath
-            if ($converted -is [System.Array]) {
-                $converted = $converted[-1]
-            }
-            if (-not [string]::IsNullOrWhiteSpace([string]$converted)) {
-                $unix = ([string]$converted).Trim()
-            }
-        }
+        $distro = Get-WinToolWslDistroName -Step $Step
+        $bashPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-setup.sh"
+        Write-WinToolUtf8File -Path $bashPath -Text (Get-WinToolWslSetupText -Step $Step)
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-shell.ps1"
+        Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolWslShellScript -Distro $distro -ScriptPath $bashPath)
         return [pscustomobject]@{
-            FilePath = $wsl
-            ArgumentList = @("-d", "Ubuntu", "--", "bash", $unix)
+            FilePath = (Get-WinToolSystemFile -RelativePath "System32\WindowsPowerShell\v1.0\powershell.exe")
+            ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
         }
     }
     throw "Unknown plan step '$type'."
@@ -162,6 +163,7 @@ $script:WinToolLocalStepHandlers = [ordered]@{
     "profile" = "Invoke-WinToolProfileStep"
     "scheme" = "Invoke-WinToolSchemeStep"
     "starship-preset" = "Invoke-WinToolStarshipPresetStep"
+    "wsl-profile" = "Invoke-WinToolWslProfileStep"
 }
 
 function Test-WinToolLocalStepType {
@@ -189,6 +191,11 @@ function Invoke-WinToolSchemeStep {
 function Invoke-WinToolStarshipPresetStep {
     param($Step)
     Invoke-WinToolStarshipPreset -Preset ([string]$Step.Preset)
+}
+
+function Invoke-WinToolWslProfileStep {
+    param($Step)
+    Invoke-WinToolWslTerminalProfile -Distro (Get-WinToolWslDistroName -Step $Step) -Face ([string]$Step.Face) -Match ([string]$Step.Match)
 }
 
 function Invoke-WinToolLocalStep {

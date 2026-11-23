@@ -43,6 +43,12 @@ If startup fails, the message stays on screen and the details are appended to `%
 
 The Terminal tab has a Simple recommendation and an Advanced chooser. Advanced searches the Nerd Fonts catalog and the official Oh My Posh themes, and can refresh both lists from GitHub.
 
+With WSL selected, an Ubuntu that already exists is kept: WinTool installs zsh and the prompt inside it as root (no sudo password), makes zsh the default shell, manages one marked block in `~/.zshrc` with a dated backup when it changes, and sets the Nerd Font on the Ubuntu profile in Windows Terminal. To run only that part from a clone of this repository:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\Invoke-WinToolWslSetup.ps1 -Distro Ubuntu
+```
+
 To run a copy you already downloaded:
 
 ```powershell

@@ -36,6 +36,22 @@ function Select-WinToolFont {
     return $matched.ToArray()
 }
 
+function Get-WinToolOhMyPoshThemeFile {
+    param(
+        [string]$PromptStyle
+    )
+    $themeFile = "jandedobbeleer.omp.json"
+    if (-not [string]::IsNullOrWhiteSpace($PromptStyle)) {
+        if ($PromptStyle.EndsWith(".omp.json")) {
+            $themeFile = $PromptStyle
+        }
+        else {
+            $themeFile = $PromptStyle + ".omp.json"
+        }
+    }
+    return $themeFile
+}
+
 function Get-WinToolPromptScript {
     param(
         [Parameter(Mandatory = $true)][string]$PromptId,
@@ -44,55 +60,94 @@ function Get-WinToolPromptScript {
         [bool]$PsReadLine = $false,
         [bool]$Zoxide = $false
     )
+    # The same text goes into the Windows PowerShell 5.1 and PowerShell 7
+    # profiles. Every block is wrapped so a missing tool, an old module, or a
+    # missing variable never prints an error when a terminal opens.
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add("# Added by WinTool. Delete this block, or run WinTool again, to change it.")
     if ($TerminalIcons) {
-        $lines.Add("if (Get-Module -ListAvailable -Name Terminal-Icons) {")
-        $lines.Add("    Import-Module Terminal-Icons")
-        $lines.Add("}")
+        $lines.Add('try {')
+        $lines.Add('    if (Get-Module -ListAvailable -Name Terminal-Icons) {')
+        $lines.Add('        Import-Module Terminal-Icons -ErrorAction Stop')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     if ($PsReadLine) {
-        $lines.Add("if (Get-Module -ListAvailable -Name PSReadLine) {")
-        $lines.Add("    Set-PSReadLineOption -PredictionSource History")
-        $lines.Add("    Set-PSReadLineOption -PredictionViewStyle ListView")
-        $lines.Add("}")
+        # Windows PowerShell 5.1 ships PSReadLine 2.0, which has neither
+        # option. PredictionSource came in 2.1 and PredictionViewStyle in 2.2.
+        $lines.Add('try {')
+        $lines.Add('    $wintoolReadLine = Get-Command -Name Set-PSReadLineOption -ErrorAction Ignore')
+        $lines.Add('    if ($null -ne $wintoolReadLine -and $wintoolReadLine.Parameters.ContainsKey("PredictionSource")) {')
+        $lines.Add('        Set-PSReadLineOption -PredictionSource History -ErrorAction Stop -WarningAction SilentlyContinue')
+        $lines.Add('    }')
+        $lines.Add('    if ($null -ne $wintoolReadLine -and $wintoolReadLine.Parameters.ContainsKey("PredictionViewStyle")) {')
+        $lines.Add('        Set-PSReadLineOption -PredictionViewStyle ListView -ErrorAction Stop -WarningAction SilentlyContinue')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     if ($Zoxide) {
-        $lines.Add("if (Get-Command zoxide -ErrorAction SilentlyContinue) {")
-        $lines.Add("    Invoke-Expression (& { (zoxide init powershell | Out-String) })")
-        $lines.Add("}")
+        $lines.Add('try {')
+        $lines.Add('    if (Get-Command -Name zoxide -ErrorAction Ignore) {')
+        $lines.Add('        Invoke-Expression (& { (zoxide init powershell | Out-String) })')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     if ($PromptId -eq "starship") {
-        $lines.Add("if (Get-Command starship -ErrorAction SilentlyContinue) {")
-        $lines.Add("    Invoke-Expression (& starship init powershell)")
-        $lines.Add("}")
+        $lines.Add('try {')
+        $lines.Add('    $wintoolStarship = Get-Command -Name starship -CommandType Application -ErrorAction Ignore | Select-Object -First 1')
+        $lines.Add('    if ($null -eq $wintoolStarship) {')
+        $lines.Add('        foreach ($wintoolPath in @(([string]$env:ProgramFiles + "\starship\bin\starship.exe"), ([string]$env:LOCALAPPDATA + "\Programs\starship\bin\starship.exe"))) {')
+        $lines.Add('            if (Test-Path -LiteralPath $wintoolPath) { $wintoolStarship = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
+        $lines.Add('        }')
+        $lines.Add('    }')
+        $lines.Add('    if ($null -ne $wintoolStarship) {')
+        $lines.Add('        Invoke-Expression (& $wintoolStarship.Source init powershell | Out-String)')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     elseif ($PromptId -eq "oh-my-posh") {
-        $themeFile = "jandedobbeleer.omp.json"
-        if (-not [string]::IsNullOrWhiteSpace($PromptStyle)) {
-            if ($PromptStyle.EndsWith(".omp.json")) {
-                $themeFile = $PromptStyle
-            }
-            else {
-                $themeFile = $PromptStyle + ".omp.json"
-            }
-        }
-        $lines.Add("if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {")
-        $lines.Add('    $theme = Join-Path $env:POSH_THEMES_PATH "' + $themeFile + '"')
-        $lines.Add("    if (Test-Path -LiteralPath `$theme) {")
-        $lines.Add("        oh-my-posh init pwsh --config `$theme | Invoke-Expression")
-        $lines.Add("    }")
-        $lines.Add("    else {")
-        $lines.Add("        oh-my-posh init pwsh | Invoke-Expression")
-        $lines.Add("    }")
-        $lines.Add("}")
+        $themeFile = Get-WinToolOhMyPoshThemeFile -PromptStyle $PromptStyle
+        # POSH_THEMES_PATH is not set by newer Oh My Posh builds, so WinTool
+        # saves the theme under %LOCALAPPDATA%\WinTool\themes during setup and
+        # also looks in the older theme folders.
+        $lines.Add('try {')
+        $lines.Add('    $wintoolPosh = Get-Command -Name oh-my-posh -CommandType Application -ErrorAction Ignore | Select-Object -First 1')
+        $lines.Add('    if ($null -eq $wintoolPosh) {')
+        $lines.Add('        foreach ($wintoolPath in @(([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\bin\oh-my-posh.exe"), ([string]$env:ProgramFiles + "\oh-my-posh\bin\oh-my-posh.exe"))) {')
+        $lines.Add('            if (Test-Path -LiteralPath $wintoolPath) { $wintoolPosh = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
+        $lines.Add('        }')
+        $lines.Add('    }')
+        $lines.Add('    if ($null -ne $wintoolPosh) {')
+        $lines.Add('        $wintoolTheme = $null')
+        $lines.Add('        foreach ($wintoolFolder in @([string]$env:POSH_THEMES_PATH, ([string]$env:LOCALAPPDATA + "\WinTool\themes"), ([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\themes"))) {')
+        $lines.Add('            if ([string]::IsNullOrWhiteSpace($wintoolFolder)) { continue }')
+        $lines.Add('            $wintoolCandidate = Join-Path $wintoolFolder "' + $themeFile + '"')
+        $lines.Add('            if (Test-Path -LiteralPath $wintoolCandidate) { $wintoolTheme = $wintoolCandidate; break }')
+        $lines.Add('        }')
+        $lines.Add('        if ($null -ne $wintoolTheme) {')
+        $lines.Add('            (& $wintoolPosh.Source init pwsh --config $wintoolTheme | Out-String) | Invoke-Expression')
+        $lines.Add('        }')
+        $lines.Add('        else {')
+        $lines.Add('            (& $wintoolPosh.Source init pwsh | Out-String) | Invoke-Expression')
+        $lines.Add('        }')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     elseif ($PromptId -eq "powerline-go") {
         $lines.Add('function global:prompt {')
-        $lines.Add('    $tool = Join-Path $env:LOCALAPPDATA "WinTool\bin\powerline-go.exe"')
-        $lines.Add('    if (Test-Path -LiteralPath $tool) {')
-        $lines.Add('        return (& $tool -error $LASTEXITCODE -shell powershell)')
+        $lines.Add('    $wintoolExit = $LASTEXITCODE')
+        $lines.Add('    try {')
+        $lines.Add('        $tool = [string]$env:LOCALAPPDATA + "\WinTool\bin\powerline-go.exe"')
+        $lines.Add('        if (Test-Path -LiteralPath $tool) {')
+        $lines.Add('            return ((& $tool -error $wintoolExit -shell bare) -join "")')
+        $lines.Add('        }')
         $lines.Add('    }')
+        $lines.Add('    catch { $null = $_ }')
         $lines.Add('    return "PS $($executionContext.SessionState.Path.CurrentLocation)> "')
         $lines.Add('}')
     }
@@ -208,18 +263,31 @@ function Add-WinToolTerminalFont {
     return $Settings
 }
 
+$script:WinToolSchemeColorKeys = @("black", "red", "green", "yellow", "blue", "purple", "cyan", "white", "brightBlack", "brightRed", "brightGreen", "brightYellow", "brightBlue", "brightPurple", "brightCyan", "brightWhite")
+
 function Add-WinToolTerminalScheme {
     param(
         [Parameter(Mandatory = $true)]$Settings,
         [Parameter(Mandatory = $true)]$Scheme
     )
-    $entry = [pscustomobject]@{
+    # Windows Terminal ignores a scheme that lacks any of the 16 table colors,
+    # so the full palette is written before a profile points at the name.
+    $fields = [ordered]@{
         name = [string]$Scheme.name
         background = [string]$Scheme.background
         foreground = [string]$Scheme.foreground
         cursorColor = [string]$Scheme.cursor
         selectionBackground = [string]$Scheme.selection
     }
+    $palette = Get-WinToolNote -Object $Scheme -Name "palette"
+    foreach ($key in $script:WinToolSchemeColorKeys) {
+        $value = [string](Get-WinToolNote -Object $palette -Name $key -Default "")
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            throw ("The color scheme " + [string]$Scheme.name + " has no " + $key + " color.")
+        }
+        $fields[$key] = $value
+    }
+    $entry = [pscustomobject]$fields
     $existing = @()
     if ($null -ne $Settings.PSObject.Properties["schemes"] -and $null -ne $Settings.schemes) {
         $existing = @($Settings.schemes)
@@ -252,6 +320,36 @@ function Add-WinToolTerminalScheme {
     return $Settings
 }
 
+function Save-WinToolOhMyPoshTheme {
+    param(
+        [Parameter(Mandatory = $true)][string]$ThemeFile
+    )
+    # Keeps a copy of the theme where the profile can always find it.
+    if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        return $null
+    }
+    $folder = Join-Path $env:LOCALAPPDATA "WinTool\themes"
+    $target = Join-Path $folder $ThemeFile
+    try {
+        if (-not (Test-Path -LiteralPath $folder)) {
+            New-Item -ItemType Directory -Path $folder -Force | Out-Null
+        }
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        $url = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/" + [uri]::EscapeDataString($ThemeFile)
+        Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -TimeoutSec 30
+        Write-WinToolLog -Message "Saved the Oh My Posh theme to $target" -Level "ok"
+        return $target
+    }
+    catch {
+        if (Test-Path -LiteralPath $target) {
+            Write-WinToolLog -Message "Could not refresh the Oh My Posh theme, so the saved copy is kept. $($_.Exception.Message)" -Level "warn"
+            return $target
+        }
+        Write-WinToolLog -Message "Could not download the Oh My Posh theme $ThemeFile, so the default theme will be used. $($_.Exception.Message)" -Level "warn"
+        return $null
+    }
+}
+
 function Write-WinToolShellProfile {
     param(
         [Parameter(Mandatory = $true)][string]$PromptId,
@@ -260,6 +358,9 @@ function Write-WinToolShellProfile {
         [bool]$PsReadLine = $false,
         [bool]$Zoxide = $false
     )
+    if ($PromptId -eq "oh-my-posh") {
+        Save-WinToolOhMyPoshTheme -ThemeFile (Get-WinToolOhMyPoshThemeFile -PromptStyle $PromptStyle) | Out-Null
+    }
     $body = Get-WinToolPromptScript -PromptId $PromptId -TerminalIcons $TerminalIcons -PromptStyle $PromptStyle -PsReadLine $PsReadLine -Zoxide $Zoxide
     $paths = @(
         (Get-WinToolShellProfilePath -HostName "powershell"),
@@ -382,17 +483,19 @@ function Get-WinToolFontFamilyName {
     return $null
 }
 
-function Invoke-WinToolTerminalFont {
+function Resolve-WinToolInstalledFontFace {
     param(
         [Parameter(Mandatory = $true)][string]$Face,
         [string]$Match
     )
+    # Returns the face to write into Terminal settings, or $null (with a
+    # warning) when the font is not installed.
     $chosen = $Face
     if (-not [string]::IsNullOrWhiteSpace($Match) -and (Test-WinToolWindows)) {
         $found = Find-WinToolInstalledFontFile -Token $Match
         if ($null -eq $found) {
             Write-WinToolLog -Message ("{0} is not installed, so the Windows Terminal font was left as it is. Run terminal setup again after the font installs." -f $Face) -Level "warn"
-            return
+            return $null
         }
         $family = Get-WinToolFontFamilyName -Path ([string]$found.Data)
         if (-not [string]::IsNullOrWhiteSpace($family)) {
@@ -401,6 +504,18 @@ function Invoke-WinToolTerminalFont {
         if ($chosen -ne $Face) {
             Write-WinToolLog -Message "Using the installed font name: $chosen" -Level "info"
         }
+    }
+    return $chosen
+}
+
+function Invoke-WinToolTerminalFont {
+    param(
+        [Parameter(Mandatory = $true)][string]$Face,
+        [string]$Match
+    )
+    $chosen = Resolve-WinToolInstalledFontFace -Face $Face -Match $Match
+    if ($null -eq $chosen) {
+        return
     }
     $path = Get-WinToolTerminalSettingsPath
     if ([string]::IsNullOrWhiteSpace($path)) {
@@ -732,17 +847,16 @@ function Get-WinToolTerminalPlan {
         [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Install Terminal-Icons for Windows PowerShell"; Host = "powershell" })
         [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Install Terminal-Icons for PowerShell 7"; Host = "pwsh" })
     }
+    if ([bool]$psReadLine) {
+        # 5.1 ships PSReadLine 2.0, too old for history predictions.
+        [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Update PSReadLine for Windows PowerShell"; Host = "powershell"; Module = "PSReadLine" })
+    }
     [void]$steps.Add([pscustomobject]@{ Type = "profile"; Label = "Update PowerShell profiles"; Prompt = $promptId; PromptStyle = $promptStyle; TerminalIcons = [bool]$icons; PsReadLine = [bool]$psReadLine; Zoxide = [bool]$zoxide })
     if ([bool]$wsl) {
-        [void]$steps.Add([pscustomobject]@{ Type = "wsl-install"; Label = "Install WSL with Ubuntu" })
-        if ([bool]$zsh -or $shellKind -like "wsl-*") {
-            $label = "Install zsh and Oh My Zsh in Ubuntu"
-            if ($shellKind -eq "wsl-fish") { $label = "Install Fish and Tide in Ubuntu" }
-            elseif ($promptId -eq "powerlevel10k") { $label = "Install Powerlevel10k in Ubuntu" }
-            elseif ($promptId -eq "pure") { $label = "Install Pure in Ubuntu" }
-            elseif ($promptId -eq "spaceship") { $label = "Install Spaceship in Ubuntu" }
-            elseif ($promptId -eq "oh-my-zsh") { $label = "Install the Oh My Zsh theme in Ubuntu" }
-            [void]$steps.Add([pscustomobject]@{ Type = "wsl-shell"; Label = $label; Variant = $promptId; OmzTheme = $promptStyle })
+        $distro = [string](Get-WinToolNote -Object $Selection -Name "wslDistro" -Default "Ubuntu")
+        $withShell = ([bool]$zsh -or $shellKind -like "wsl-*")
+        foreach ($wslStep in @(Get-WinToolWslStep -Distro $distro -PromptId $promptId -PromptStyle $promptStyle -Font $font -Install $true -Shell $withShell)) {
+            [void]$steps.Add($wslStep)
         }
     }
     return $steps.ToArray()

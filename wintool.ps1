@@ -1983,14 +1983,39 @@ ZXNjcmlwdGlvbiI6ICJGdXp6eSBmaW5kIGZpbGVzIGFuZCBoaXN0b3J5IGZyb20gdGhlIGtleWJvYXJk
 LiIsICJraW5kIjogIndpbmdldCIsICJ3aW5nZXRJZCI6ICJqdW5lZ3Vubi5memYifQogIF0sCiAgInNj
 aGVtZXMiOiBbCiAgICB7ImlkIjogIndpbnRvb2wtbmlnaHQiLCAibmFtZSI6ICJOaWdodCIsICJiYWNr
 Z3JvdW5kIjogIiMxQjIyMzAiLCAiZm9yZWdyb3VuZCI6ICIjRThFREY3IiwgImN1cnNvciI6ICIjNkM5
-QkZGIiwgInNlbGVjdGlvbiI6ICIjMkEzQTVDIn0sCiAgICB7ImlkIjogIndpbnRvb2wtcGFwZXIiLCAi
-bmFtZSI6ICJQYXBlciIsICJiYWNrZ3JvdW5kIjogIiNGN0Y0RUMiLCAiZm9yZWdyb3VuZCI6ICIjMkIy
-NjFDIiwgImN1cnNvciI6ICIjQTg3NDEyIiwgInNlbGVjdGlvbiI6ICIjRTdEN0IwIn0sCiAgICB7Imlk
-IjogIndpbnRvb2wtb2NlYW4iLCAibmFtZSI6ICJPY2VhbiIsICJiYWNrZ3JvdW5kIjogIiMxMDI0MkMi
-LCAiZm9yZWdyb3VuZCI6ICIjRDVFN0VBIiwgImN1cnNvciI6ICIjM0RDRUI1IiwgInNlbGVjdGlvbiI6
-ICIjMUEzQTM2In0sCiAgICB7ImlkIjogIndpbnRvb2wtYmVycnkiLCAibmFtZSI6ICJCZXJyeSIsICJi
-YWNrZ3JvdW5kIjogIiMyNDE0MUMiLCAiZm9yZWdyb3VuZCI6ICIjRjZFN0VFIiwgImN1cnNvciI6ICIj
-RjA4QUE4IiwgInNlbGVjdGlvbiI6ICIjM0QyNDMwIn0KICBdCn0K
+QkZGIiwgInNlbGVjdGlvbiI6ICIjMkEzQTVDIiwgInBhbGV0dGUiOiB7ImJsYWNrIjogIiMyQTMyNDIi
+LCAicmVkIjogIiNGMDcxNzgiLCAiZ3JlZW4iOiAiI0E2REE5NSIsICJ5ZWxsb3ciOiAiI0VFRDQ5RiIs
+ICJibHVlIjogIiM2QzlCRkYiLCAicHVycGxlIjogIiNDNkEwRjYiLCAiY3lhbiI6ICIjN0RDRkRBIiwg
+IndoaXRlIjogIiNDOEQwRTAiLCAiYnJpZ2h0QmxhY2siOiAiIzVCNjY4MCIsICJicmlnaHRSZWQiOiAi
+I0ZGOEY5NSIsICJicmlnaHRHcmVlbiI6ICIjQjhFOEE4IiwgImJyaWdodFllbGxvdyI6ICIjRjVFMEIw
+IiwgImJyaWdodEJsdWUiOiAiIzhDQjRGRiIsICJicmlnaHRQdXJwbGUiOiAiI0Q3QjhGQSIsICJicmln
+aHRDeWFuIjogIiM5RUUzRUMiLCAiYnJpZ2h0V2hpdGUiOiAiI0Y0RjdGQyJ9fSwKICAgIHsiaWQiOiAi
+d2ludG9vbC1wYXBlciIsICJuYW1lIjogIlBhcGVyIiwgImJhY2tncm91bmQiOiAiI0Y3RjRFQyIsICJm
+b3JlZ3JvdW5kIjogIiMyQjI2MUMiLCAiY3Vyc29yIjogIiNBODc0MTIiLCAic2VsZWN0aW9uIjogIiNF
+N0Q3QjAiLCAicGFsZXR0ZSI6IHsiYmxhY2siOiAiIzJCMjYxQyIsICJyZWQiOiAiI0IzMjYxRSIsICJn
+cmVlbiI6ICIjM0I3QTJBIiwgInllbGxvdyI6ICIjOEE2NTAwIiwgImJsdWUiOiAiIzJGNURBOCIsICJw
+dXJwbGUiOiAiIzdBM0U5RCIsICJjeWFuIjogIiMxRjdBN0EiLCAid2hpdGUiOiAiI0Q4RDJDNCIsICJi
+cmlnaHRCbGFjayI6ICIjNkI2MzU0IiwgImJyaWdodFJlZCI6ICIjRDI0NTNDIiwgImJyaWdodEdyZWVu
+IjogIiM0RTlBM0EiLCAiYnJpZ2h0WWVsbG93IjogIiNBODc0MTIiLCAiYnJpZ2h0Qmx1ZSI6ICIjNDc3
+NkM0IiwgImJyaWdodFB1cnBsZSI6ICIjOTU1OEI4IiwgImJyaWdodEN5YW4iOiAiIzJFOTQ5NCIsICJi
+cmlnaHRXaGl0ZSI6ICIjRkZGREY3In19LAogICAgeyJpZCI6ICJ3aW50b29sLW9jZWFuIiwgIm5hbWUi
+OiAiT2NlYW4iLCAiYmFja2dyb3VuZCI6ICIjMTAyNDJDIiwgImZvcmVncm91bmQiOiAiI0Q1RTdFQSIs
+ICJjdXJzb3IiOiAiIzNEQ0VCNSIsICJzZWxlY3Rpb24iOiAiIzFBM0EzNiIsICJwYWxldHRlIjogeyJi
+bGFjayI6ICIjMTYzMDM5IiwgInJlZCI6ICIjRTA2Qzc1IiwgImdyZWVuIjogIiMzRENFQjUiLCAieWVs
+bG93IjogIiNFNUMwN0IiLCAiYmx1ZSI6ICIjNEZBM0Q5IiwgInB1cnBsZSI6ICIjQjg4QUUwIiwgImN5
+YW4iOiAiIzU2RDRERCIsICJ3aGl0ZSI6ICIjQzREOERCIiwgImJyaWdodEJsYWNrIjogIiM0QTY2NzAi
+LCAiYnJpZ2h0UmVkIjogIiNGMDg4OTAiLCAiYnJpZ2h0R3JlZW4iOiAiIzZCRTBDQiIsICJicmlnaHRZ
+ZWxsb3ciOiAiI0YwRDQ5QSIsICJicmlnaHRCbHVlIjogIiM3NUJCRTgiLCAiYnJpZ2h0UHVycGxlIjog
+IiNDREE4RUUiLCAiYnJpZ2h0Q3lhbiI6ICIjODZFNEVBIiwgImJyaWdodFdoaXRlIjogIiNFRUY2Rjci
+fX0sCiAgICB7ImlkIjogIndpbnRvb2wtYmVycnkiLCAibmFtZSI6ICJCZXJyeSIsICJiYWNrZ3JvdW5k
+IjogIiMyNDE0MUMiLCAiZm9yZWdyb3VuZCI6ICIjRjZFN0VFIiwgImN1cnNvciI6ICIjRjA4QUE4Iiwg
+InNlbGVjdGlvbiI6ICIjM0QyNDMwIiwgInBhbGV0dGUiOiB7ImJsYWNrIjogIiMzNDFFMjgiLCAicmVk
+IjogIiNGMDdBOEEiLCAiZ3JlZW4iOiAiIzlGRDM5QSIsICJ5ZWxsb3ciOiAiI0YyQzk4QSIsICJibHVl
+IjogIiM4RkE4RjAiLCAicHVycGxlIjogIiNGMDhBQTgiLCAiY3lhbiI6ICIjODZDRkQwIiwgIndoaXRl
+IjogIiNFM0NGRDgiLCAiYnJpZ2h0QmxhY2siOiAiIzZBNEQ1QSIsICJicmlnaHRSZWQiOiAiI0ZGOThB
+NiIsICJicmlnaHRHcmVlbiI6ICIjQjZFM0IxIiwgImJyaWdodFllbGxvdyI6ICIjRjhEQUE4IiwgImJy
+aWdodEJsdWUiOiAiI0FFQzBGNyIsICJicmlnaHRQdXJwbGUiOiAiI0Y3QThDMCIsICJicmlnaHRDeWFu
+IjogIiNBNkUwRTAiLCAiYnJpZ2h0V2hpdGUiOiAiI0ZCRjFGNSJ9fQogIF0KfQo=
 '@
     Fonts = @'
 ewogICJzY2hlbWFWZXJzaW9uIjogMSwKICAibmVyZEZvbnRzUmVsZWFzZSI6ICJ2My41LjEiLAogICJm
@@ -3538,55 +3563,127 @@ ICAgICAgIDwvQm9yZGVyPgogICAgICAgIDwvRG9ja1BhbmVsPgogICAgICA8L0JvcmRlcj4KICAgIDwv
 R3JpZD4KICA8L0dyaWQ+CjwvV2luZG93Pgo=
 '@
     Wsl = @'
-IyEvYmluL2Jhc2gKIyBXaW5Ub29sIG9wdGlvbmFsIHNoZWxsIHNldHVwIGluc2lkZSBXU0wuIFNhZmUg
-dG8gcnVuIG1vcmUgdGhhbiBvbmNlLgpzZXQgLWV1CgplY2hvICJXaW5Ub29sOiBpbnN0YWxsaW5nIHpz
-aCIKCmlmIGNvbW1hbmQgLXYgYXB0LWdldCA+L2Rldi9udWxsIDI+JjE7IHRoZW4KICBzdWRvIERFQklB
-Tl9GUk9OVEVORD1ub25pbnRlcmFjdGl2ZSBhcHQtZ2V0IHVwZGF0ZQogIHN1ZG8gREVCSUFOX0ZST05U
-RU5EPW5vbmludGVyYWN0aXZlIGFwdC1nZXQgaW5zdGFsbCAteSB6c2ggZ2l0IGN1cmwKZWxpZiBjb21t
-YW5kIC12IGRuZiA+L2Rldi9udWxsIDI+JjE7IHRoZW4KICBzdWRvIGRuZiBpbnN0YWxsIC15IHpzaCBn
-aXQgY3VybAplbHNlCiAgZWNobyAiV2luVG9vbDogdGhpcyBkaXN0cm8gbmVlZHMgenNoLCBnaXQsIGFu
-ZCBjdXJsIGluc3RhbGxlZCBmaXJzdC4iCiAgZXhpdCAxCmZpCgppZiBbICEgLWQgIiR7SE9NRX0vLm9o
-LW15LXpzaCIgXTsgdGhlbgogIGVjaG8gIldpblRvb2w6IGluc3RhbGxpbmcgT2ggTXkgWnNoIgogIHNo
-IC1jICIkKGN1cmwgLWZzU0wgaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL29obXl6c2gv
-b2hteXpzaC9tYXN0ZXIvdG9vbHMvaW5zdGFsbC5zaCkiICIiIC0tdW5hdHRlbmRlZApmaQoKenNoX3Bh
-dGg9IiQoY29tbWFuZCAtdiB6c2gpIgppZiBbIC1uICIke3pzaF9wYXRofSIgXSAmJiBbICIke1NIRUxM
-fSIgIT0gIiR7enNoX3BhdGh9IiBdOyB0aGVuCiAgY2hzaCAtcyAiJHt6c2hfcGF0aH0iIHx8IGVjaG8g
-IldpblRvb2w6IGNvdWxkIG5vdCBjaGFuZ2UgdGhlIGRlZmF1bHQgc2hlbGwuIFJ1bjogY2hzaCAtcyAk
-e3pzaF9wYXRofSIKZmkKCmNhc2UgIiR7V0lOVE9PTF9TSEVMTF9QUk9NUFQ6LX0iIGluCiAgcG93ZXJs
-ZXZlbDEwaykKICAgIGVjaG8gIldpblRvb2w6IGluc3RhbGxpbmcgUG93ZXJsZXZlbDEwayIKICAgIHRo
-ZW1lX2Rpcj0iJHtIT01FfS8ub2gtbXktenNoL2N1c3RvbS90aGVtZXMvcG93ZXJsZXZlbDEwayIKICAg
-IGlmIFsgISAtZCAiJHt0aGVtZV9kaXJ9IiBdOyB0aGVuCiAgICAgIGdpdCBjbG9uZSAtLWRlcHRoPTEg
-aHR0cHM6Ly9naXRodWIuY29tL3JvbWthdHYvcG93ZXJsZXZlbDEway5naXQgIiR7dGhlbWVfZGlyfSIK
-ICAgIGZpCiAgICBpZiBbIC1mICIke0hPTUV9Ly56c2hyYyIgXTsgdGhlbgogICAgICBzZWQgLWkgJ3Mv
-XlpTSF9USEVNRT0uKi9aU0hfVEhFTUU9InBvd2VybGV2ZWwxMGtcL3Bvd2VybGV2ZWwxMGsiLycgIiR7
-SE9NRX0vLnpzaHJjIiB8fCB0cnVlCiAgICBmaQogICAgOzsKICBwdXJlKQogICAgZWNobyAiV2luVG9v
-bDogaW5zdGFsbGluZyBQdXJlIgogICAgbWtkaXIgLXAgIiR7SE9NRX0vLnpzaCIKICAgIGlmIFsgISAt
-ZCAiJHtIT01FfS8uenNoL3B1cmUiIF07IHRoZW4KICAgICAgZ2l0IGNsb25lIC0tZGVwdGg9MSBodHRw
-czovL2dpdGh1Yi5jb20vc2luZHJlc29yaHVzL3B1cmUuZ2l0ICIke0hPTUV9Ly56c2gvcHVyZSIKICAg
-IGZpCiAgICB0b3VjaCAiJHtIT01FfS8uenNocmMiCiAgICBncmVwIC1xICdwdXJlLnpzaCcgIiR7SE9N
-RX0vLnpzaHJjIiB8fCBwcmludGYgJ1xuZnBhdGgrPSVzXG5hdXRvbG9hZCAtVSBwcm9tcHRpbml0OyBw
-cm9tcHRpbml0XG5wcm9tcHQgcHVyZVxuJyAiJHtIT01FfS8uenNoL3B1cmUiID4+ICIke0hPTUV9Ly56
-c2hyYyIKICAgIDs7CiAgc3BhY2VzaGlwKQogICAgZWNobyAiV2luVG9vbDogaW5zdGFsbGluZyBTcGFj
-ZXNoaXAiCiAgICB0aGVtZV9kaXI9IiR7SE9NRX0vLm9oLW15LXpzaC9jdXN0b20vdGhlbWVzL3NwYWNl
-c2hpcC1wcm9tcHQiCiAgICBpZiBbICEgLWQgIiR7dGhlbWVfZGlyfSIgXTsgdGhlbgogICAgICBnaXQg
+IyEvYmluL2Jhc2gKIyBXaW5Ub29sIHNoZWxsIHNldHVwIGluc2lkZSBXU0wuIFJ1bnMgYXMgcm9vdCAo
+d3NsIC1kIDxkaXN0cm8+IC11IHJvb3QpIHNvCiMgbm8gc3VkbyBwYXNzd29yZCBpcyBuZWVkZWQsIHRo
+ZW4gZG9lcyBwZXItdXNlciB3b3JrIGFzIHRoZSBkaXN0cm8ncyBub3JtYWwKIyB1c2VyLiBTYWZlIHRv
+IHJ1biBtb3JlIHRoYW4gb25jZSBvbiBhbiBleGlzdGluZyBkaXN0cm8uCnNldCAtdQoKc2F5KCkgeyBl
+Y2hvICJXaW5Ub29sOiAkKiI7IH0KCnByb21wdD0iJHtXSU5UT09MX1NIRUxMX1BST01QVDotb2gtbXkt
+enNofSIKc3R5bGU9IiR7V0lOVE9PTF9QUk9NUFRfU1RZTEU6LX0iCm9tel90aGVtZT0iJHtXSU5UT09M
+X09NWl9USEVNRTotcm9iYnlydXNzZWxsfSIKY2FzZSAiJHtvbXpfdGhlbWV9IiBpbiAqWyFBLVphLXow
+LTkuXy8tXSp8IiIpIG9tel90aGVtZT0icm9iYnlydXNzZWxsIiA7OyBlc2FjCmNhc2UgIiR7c3R5bGV9
+IiBpbiAqWyFBLVphLXowLTkuXy1dKikgc3R5bGU9IiIgOzsgZXNhYwoKaWYgWyAiJChpZCAtdSkiIC1u
+ZSAwIF07IHRoZW4KICBzYXkgInRoaXMgc2NyaXB0IG5lZWRzIHJvb3QuIFJ1bjogd3NsIC1kIDxkaXN0
+cm8+IC11IHJvb3QgLS0gYmFzaCAkMCIKICBleGl0IDIKZmkKCiMgVGhlIExpbnV4IHVzZXIgdGhhdCBn
+ZXRzIHpzaDogV2luVG9vbCBwYXNzZXMgdGhlIGRpc3RybydzIGRlZmF1bHQgdWlkLgp1c2VyPSIiCmlm
+IFsgLW4gIiR7V0lOVE9PTF9VSUQ6LX0iIF0gJiYgWyAiJHtXSU5UT09MX1VJRH0iICE9ICIwIiBdOyB0
+aGVuCiAgdXNlcj0iJChnZXRlbnQgcGFzc3dkICIke1dJTlRPT0xfVUlEfSIgfCBjdXQgLWQ6IC1mMSki
+CmZpCmlmIFsgLXogIiR7dXNlcn0iIF0gJiYgWyAtZiAvZXRjL3dzbC5jb25mIF07IHRoZW4KICB1c2Vy
+PSIkKHNlZCAtbiAncy9eW1s6c3BhY2U6XV0qZGVmYXVsdFtbOnNwYWNlOl1dKj1bWzpzcGFjZTpdXSov
+L3AnIC9ldGMvd3NsLmNvbmYgfCBoZWFkIC1uIDEgfCB0ciAtZCAnWzpzcGFjZTpdJykiCmZpCmlmIFsg
+LXogIiR7dXNlcn0iIF07IHRoZW4KICB1c2VyPSIkKGF3ayAtRjogJyQzID49IDEwMDAgJiYgJDMgPCA2
+MDAwMCB7IHByaW50ICQxOyBleGl0IH0nIC9ldGMvcGFzc3dkKSIKZmkKaWYgWyAteiAiJHt1c2VyfSIg
+XSB8fCAhIGlkICIke3VzZXJ9IiA+L2Rldi9udWxsIDI+JjE7IHRoZW4KICBzYXkgIm5vIExpbnV4IHVz
+ZXIgd2FzIGZvdW5kLiBPcGVuIHRoZSBkaXN0cm8gb25jZSB0byBjcmVhdGUgeW91ciB1c2VyLCB0aGVu
+IHJ1biBUZXJtaW5hbCBzZXR1cCBhZ2Fpbi4iCiAgZXhpdCAzCmZpCmhvbWU9IiQoZ2V0ZW50IHBhc3N3
+ZCAiJHt1c2VyfSIgfCBjdXQgLWQ6IC1mNikiCnNheSAic2V0dGluZyB1cCB0aGUgc2hlbGwgZm9yICR7
+dXNlcn0gKCR7aG9tZX0pLCBwcm9tcHQgJHtwcm9tcHR9IgoKYXNfdXNlcigpIHsKICBpZiBjb21tYW5k
+IC12IHJ1bnVzZXIgPi9kZXYvbnVsbCAyPiYxOyB0aGVuCiAgICBydW51c2VyIC11ICIke3VzZXJ9IiAt
+LSBlbnYgSE9NRT0iJHtob21lfSIgVVNFUj0iJHt1c2VyfSIgTE9HTkFNRT0iJHt1c2VyfSIgYmFzaCAt
+YyAiJDEiCiAgZWxzZQogICAgc3UgLXMgL2Jpbi9iYXNoICIke3VzZXJ9IiAtYyAiJDEiCiAgZmkKfQoK
+cGFja2FnZXM9InpzaCBnaXQgY3VybCBjYS1jZXJ0aWZpY2F0ZXMgdW56aXAiCmlmIFsgIiR7cHJvbXB0
+fSIgPSAidGlkZSIgXTsgdGhlbgogIHBhY2thZ2VzPSIke3BhY2thZ2VzfSBmaXNoIgpmaQpzYXkgImlu
+c3RhbGxpbmcgJHtwYWNrYWdlc30iCmlmIGNvbW1hbmQgLXYgYXB0LWdldCA+L2Rldi9udWxsIDI+JjE7
+IHRoZW4KICBERUJJQU5fRlJPTlRFTkQ9bm9uaW50ZXJhY3RpdmUgYXB0LWdldCB1cGRhdGUgLXEgfHwg
+c2F5ICJhcHQtZ2V0IHVwZGF0ZSBmYWlsZWQsIHRyeWluZyB0aGUgaW5zdGFsbCBhbnl3YXkiCiAgIyBz
+aGVsbGNoZWNrIGRpc2FibGU9U0MyMDg2CiAgREVCSUFOX0ZST05URU5EPW5vbmludGVyYWN0aXZlIGFw
+dC1nZXQgaW5zdGFsbCAteSAtcSAke3BhY2thZ2VzfSB8fCBzYXkgInNvbWUgcGFja2FnZXMgZGlkIG5v
+dCBpbnN0YWxsIgplbGlmIGNvbW1hbmQgLXYgZG5mID4vZGV2L251bGwgMj4mMTsgdGhlbgogICMgc2hl
+bGxjaGVjayBkaXNhYmxlPVNDMjA4NgogIGRuZiBpbnN0YWxsIC15ICR7cGFja2FnZXN9IHx8IHNheSAi
+c29tZSBwYWNrYWdlcyBkaWQgbm90IGluc3RhbGwiCmVsaWYgY29tbWFuZCAtdiBwYWNtYW4gPi9kZXYv
+bnVsbCAyPiYxOyB0aGVuCiAgIyBzaGVsbGNoZWNrIGRpc2FibGU9U0MyMDg2CiAgcGFjbWFuIC1TeSAt
+LW5vY29uZmlybSAtLW5lZWRlZCAke3BhY2thZ2VzfSB8fCBzYXkgInNvbWUgcGFja2FnZXMgZGlkIG5v
+dCBpbnN0YWxsIgplbHNlCiAgc2F5ICJ0aGlzIGRpc3RybyBoYXMgbm8gYXB0LWdldCwgZG5mLCBvciBw
+YWNtYW4uIEluc3RhbGwgJHtwYWNrYWdlc30gZmlyc3QuIgpmaQppZiAhIGNvbW1hbmQgLXYgenNoID4v
+ZGV2L251bGwgMj4mMTsgdGhlbgogIHNheSAienNoIGlzIG5vdCBpbnN0YWxsZWQsIHNvIHRoZSBzZXR1
+cCBzdG9wcGVkLiIKICBleGl0IDQKZmkKCmlmIFsgISAtZCAiJHtob21lfS8ub2gtbXktenNoIiBdOyB0
+aGVuCiAgc2F5ICJpbnN0YWxsaW5nIE9oIE15IFpzaCIKICBhc191c2VyICdjZCAiJEhPTUUiICYmIFJV
+TlpTSD1ubyBDSFNIPW5vIEtFRVBfWlNIUkM9eWVzIHNoIC1jICIkKGN1cmwgLWZzU0wgaHR0cHM6Ly9y
+YXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL29obXl6c2gvb2hteXpzaC9tYXN0ZXIvdG9vbHMvaW5zdGFs
+bC5zaCkiICIiIC0tdW5hdHRlbmRlZCcgfHwgc2F5ICJPaCBNeSBac2ggZGlkIG5vdCBpbnN0YWxsIgpm
+aQoKenNoX3RoZW1lPSIiCmJsb2NrPSIiCmNhc2UgIiR7cHJvbXB0fSIgaW4KICBvaC1teS1wb3NoKQog
+ICAgdGhlbWVfZmlsZT0iJHtzdHlsZTotamFuZGVkb2JiZWxlZXJ9IgogICAgY2FzZSAiJHt0aGVtZV9m
+aWxlfSIgaW4gKi5vbXAuanNvbikgOzsgKikgdGhlbWVfZmlsZT0iJHt0aGVtZV9maWxlfS5vbXAuanNv
+biIgOzsgZXNhYwogICAgc2F5ICJpbnN0YWxsaW5nIE9oIE15IFBvc2ggd2l0aCAke3RoZW1lX2ZpbGV9
+IgogICAgYXNfdXNlciAnbWtkaXIgLXAgIiRIT01FLy5sb2NhbC9iaW4iICYmIGN1cmwgLWZzU0wgaHR0
+cHM6Ly9vaG15cG9zaC5kZXYvaW5zdGFsbC5zaCB8IGJhc2ggLXMgLS0gLWQgIiRIT01FLy5sb2NhbC9i
+aW4iJyB8fCBzYXkgIk9oIE15IFBvc2ggZGlkIG5vdCBpbnN0YWxsIgogICAgYXNfdXNlciAibWtkaXIg
+LXAgXCJcJEhPTUUvLmNvbmZpZy93aW50b29sXCIgJiYgY3VybCAtZnNTTCAtbyBcIlwkSE9NRS8uY29u
+ZmlnL3dpbnRvb2wvJHt0aGVtZV9maWxlfVwiIFwiaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQu
+Y29tL0phbkRlRG9iYmVsZWVyL29oLW15LXBvc2gvbWFpbi90aGVtZXMvJHt0aGVtZV9maWxlfVwiIiB8
+fCBzYXkgInRoZSB0aGVtZSBkaWQgbm90IGRvd25sb2FkLCBPaCBNeSBQb3NoIHdpbGwgdXNlIGl0cyBk
+ZWZhdWx0IgogICAgYmxvY2s9ImV4cG9ydCBQQVRIPVwiXCRIT01FLy5sb2NhbC9iaW46XCRQQVRIXCIK
+aWYgY29tbWFuZCAtdiBvaC1teS1wb3NoID4vZGV2L251bGwgMj4mMTsgdGhlbgogIGlmIFsgLWYgXCJc
+JEhPTUUvLmNvbmZpZy93aW50b29sLyR7dGhlbWVfZmlsZX1cIiBdOyB0aGVuCiAgICBldmFsIFwiXCQo
+b2gtbXktcG9zaCBpbml0IHpzaCAtLWNvbmZpZyBcIlwkSE9NRS8uY29uZmlnL3dpbnRvb2wvJHt0aGVt
+ZV9maWxlfVwiKVwiCiAgZWxzZQogICAgZXZhbCBcIlwkKG9oLW15LXBvc2ggaW5pdCB6c2gpXCIKICBm
+aQpmaSIKICAgIDs7CiAgc3RhcnNoaXApCiAgICBzYXkgImluc3RhbGxpbmcgU3RhcnNoaXAiCiAgICBh
+c191c2VyICdta2RpciAtcCAiJEhPTUUvLmxvY2FsL2JpbiIgJiYgY3VybCAtZnNTTCBodHRwczovL3N0
+YXJzaGlwLnJzL2luc3RhbGwuc2ggfCBzaCAtcyAtLSAteSAtYiAiJEhPTUUvLmxvY2FsL2JpbiInIHx8
+IHNheSAiU3RhcnNoaXAgZGlkIG5vdCBpbnN0YWxsIgogICAgYmxvY2s9ImV4cG9ydCBQQVRIPVwiXCRI
+T01FLy5sb2NhbC9iaW46XCRQQVRIXCIKaWYgY29tbWFuZCAtdiBzdGFyc2hpcCA+L2Rldi9udWxsIDI+
+JjE7IHRoZW4KICBldmFsIFwiXCQoc3RhcnNoaXAgaW5pdCB6c2gpXCIKZmkiCiAgICA7OwogIHBvd2Vy
+bGV2ZWwxMGspCiAgICBzYXkgImluc3RhbGxpbmcgUG93ZXJsZXZlbDEwayIKICAgIGFzX3VzZXIgJ2Q9
+IiRIT01FLy5vaC1teS16c2gvY3VzdG9tL3RoZW1lcy9wb3dlcmxldmVsMTBrIjsgWyAtZCAiJGQiIF0g
+fHwgZ2l0IGNsb25lIC0tZGVwdGg9MSBodHRwczovL2dpdGh1Yi5jb20vcm9ta2F0di9wb3dlcmxldmVs
+MTBrLmdpdCAiJGQiJyB8fCBzYXkgIlBvd2VybGV2ZWwxMGsgZGlkIG5vdCBpbnN0YWxsIgogICAgenNo
+X3RoZW1lPSJwb3dlcmxldmVsMTBrL3Bvd2VybGV2ZWwxMGsiCiAgICA7OwogIHB1cmUpCiAgICBzYXkg
+Imluc3RhbGxpbmcgUHVyZSIKICAgIGFzX3VzZXIgJ21rZGlyIC1wICIkSE9NRS8uenNoIjsgWyAtZCAi
+JEhPTUUvLnpzaC9wdXJlIiBdIHx8IGdpdCBjbG9uZSAtLWRlcHRoPTEgaHR0cHM6Ly9naXRodWIuY29t
+L3NpbmRyZXNvcmh1cy9wdXJlLmdpdCAiJEhPTUUvLnpzaC9wdXJlIicgfHwgc2F5ICJQdXJlIGRpZCBu
+b3QgaW5zdGFsbCIKICAgIHpzaF90aGVtZT0iIgogICAgYmxvY2s9ImlmIFsgLWQgXCJcJEhPTUUvLnpz
+aC9wdXJlXCIgXTsgdGhlbgogIGZwYXRoKz0oXCJcJEhPTUUvLnpzaC9wdXJlXCIpCiAgYXV0b2xvYWQg
+LVUgcHJvbXB0aW5pdDsgcHJvbXB0aW5pdAogIHByb21wdCBwdXJlCmZpIgogICAgOzsKICBzcGFjZXNo
+aXApCiAgICBzYXkgImluc3RhbGxpbmcgU3BhY2VzaGlwIgogICAgYXNfdXNlciAnZD0iJEhPTUUvLm9o
+LW15LXpzaC9jdXN0b20vdGhlbWVzL3NwYWNlc2hpcC1wcm9tcHQiOyBbIC1kICIkZCIgXSB8fCBnaXQg
 Y2xvbmUgLS1kZXB0aD0xIGh0dHBzOi8vZ2l0aHViLmNvbS9zcGFjZXNoaXAtcHJvbXB0L3NwYWNlc2hp
-cC1wcm9tcHQuZ2l0ICIke3RoZW1lX2Rpcn0iCiAgICAgIGxuIC1zZm4gIiR7dGhlbWVfZGlyfS9zcGFj
-ZXNoaXAuenNoLXRoZW1lIiAiJHtIT01FfS8ub2gtbXktenNoL2N1c3RvbS90aGVtZXMvc3BhY2VzaGlw
-LnpzaC10aGVtZSIKICAgIGZpCiAgICBpZiBbIC1mICIke0hPTUV9Ly56c2hyYyIgXTsgdGhlbgogICAg
-ICBzZWQgLWkgJ3MvXlpTSF9USEVNRT0uKi9aU0hfVEhFTUU9InNwYWNlc2hpcCIvJyAiJHtIT01FfS8u
-enNocmMiIHx8IHRydWUKICAgIGZpCiAgICA7OwogIG9oLW15LXpzaCkKICAgIHRoZW1lPSIke1dJTlRP
-T0xfT01aX1RIRU1FOi1yb2JieXJ1c3NlbGx9IgogICAgZWNobyAiV2luVG9vbDogc2V0dGluZyBPaCBN
-eSBac2ggdGhlbWUgdG8gJHt0aGVtZX0iCiAgICBpZiBbIC1mICIke0hPTUV9Ly56c2hyYyIgXTsgdGhl
-bgogICAgICBzZWQgLWkgInMvXlpTSF9USEVNRT0uKi9aU0hfVEhFTUU9XCIke3RoZW1lfVwiLyIgIiR7
-SE9NRX0vLnpzaHJjIiB8fCB0cnVlCiAgICBmaQogICAgOzsKICB0aWRlKQogICAgZWNobyAiV2luVG9v
-bDogaW5zdGFsbGluZyBGaXNoIGFuZCBUaWRlIgogICAgaWYgY29tbWFuZCAtdiBhcHQtZ2V0ID4vZGV2
-L251bGwgMj4mMTsgdGhlbgogICAgICBzdWRvIERFQklBTl9GUk9OVEVORD1ub25pbnRlcmFjdGl2ZSBh
-cHQtZ2V0IGluc3RhbGwgLXkgZmlzaAogICAgZmkKICAgIGZpc2ggLWxjICdjdXJsIC1zTCBodHRwczov
-L3Jhdy5naXRodWJ1c2VyY29udGVudC5jb20vam9yZ2VidWNhcmFuL2Zpc2hlci9tYWluL2Z1bmN0aW9u
-cy9maXNoZXIuZmlzaCB8IHNvdXJjZTsgZmlzaGVyIGluc3RhbGwgam9yZ2VidWNhcmFuL2Zpc2hlcjsg
-ZmlzaGVyIGluc3RhbGwgSWxhbkNvc21hbi90aWRlQHY2JyB8fCBlY2hvICJXaW5Ub29sOiBUaWRlIHN0
-aWxsIG5lZWRzIGEgRmlzaCBsb2dpbiB0byBmaW5pc2guIgogICAgOzsKZXNhYwoKZWNobyAiV2luVG9v
-bDogenNoIHNldHVwIGZpbmlzaGVkIgo=
+cC1wcm9tcHQuZ2l0ICIkZCI7IGxuIC1zZm4gIiRkL3NwYWNlc2hpcC56c2gtdGhlbWUiICIkSE9NRS8u
+b2gtbXktenNoL2N1c3RvbS90aGVtZXMvc3BhY2VzaGlwLnpzaC10aGVtZSInIHx8IHNheSAiU3BhY2Vz
+aGlwIGRpZCBub3QgaW5zdGFsbCIKICAgIHpzaF90aGVtZT0ic3BhY2VzaGlwIgogICAgOzsKICB0aWRl
+KQogICAgc2F5ICJpbnN0YWxsaW5nIFRpZGUgZm9yIEZpc2giCiAgICBhc191c2VyICJmaXNoIC1sYyAn
+Y3VybCAtc0wgaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2pvcmdlYnVjYXJhbi9maXNo
+ZXIvbWFpbi9mdW5jdGlvbnMvZmlzaGVyLmZpc2ggfCBzb3VyY2U7IGZpc2hlciBpbnN0YWxsIGpvcmdl
+YnVjYXJhbi9maXNoZXI7IGZpc2hlciBpbnN0YWxsIElsYW5Db3NtYW4vdGlkZUB2NiciIHx8IHNheSAi
+VGlkZSBzdGlsbCBuZWVkcyBhIEZpc2ggbG9naW4gdG8gZmluaXNoIgogICAgOzsKICAqKQogICAgenNo
+X3RoZW1lPSIke29tel90aGVtZX0iCiAgICA7Owplc2FjCgojIH4vLnpzaHJjOiBPaCBNeSBac2gncyBv
+d24gZmlsZSBpcyBrZXB0OyBXaW5Ub29sIHNldHMgWlNIX1RIRU1FIGFuZCBvd25zIG9uZQojIGJsb2Nr
+IGJldHdlZW4gbWFya2Vycy4gQSBkYXRlZCBiYWNrdXAgaXMgbWFkZSBvbmx5IHdoZW4gdGhlIGZpbGUg
+Y2hhbmdlcy4KenNocmM9IiR7aG9tZX0vLnpzaHJjIgpkcmFmdD0iJChta3RlbXApIgppZiBbIC1mICIk
+e3pzaHJjfSIgXTsgdGhlbgogIGNwICIke3pzaHJjfSIgIiR7ZHJhZnR9IgplbGlmIFsgLWYgIiR7aG9t
+ZX0vLm9oLW15LXpzaC90ZW1wbGF0ZXMvenNocmMuenNoLXRlbXBsYXRlIiBdOyB0aGVuCiAgY3AgIiR7
+aG9tZX0vLm9oLW15LXpzaC90ZW1wbGF0ZXMvenNocmMuenNoLXRlbXBsYXRlIiAiJHtkcmFmdH0iCmZp
+CmlmIGdyZXAgLXEgJ15aU0hfVEhFTUU9JyAiJHtkcmFmdH0iOyB0aGVuCiAgc2VkIC1pICJzfF5aU0hf
+VEhFTUU9Lip8WlNIX1RIRU1FPVwiJHt6c2hfdGhlbWV9XCJ8IiAiJHtkcmFmdH0iCmZpCnNlZCAtaSAn
+L14jID4+PiBXaW5Ub29sID4+PiQvLC9eIyA8PDwgV2luVG9vbCA8PDwkL2QnICIke2RyYWZ0fSIKaWYg
+WyAtbiAiJHtibG9ja30iIF07IHRoZW4KICBwcmludGYgJyMgPj4+IFdpblRvb2wgPj4+XG4lc1xuIyA8
+PDwgV2luVG9vbCA8PDxcbicgIiR7YmxvY2t9IiA+PiAiJHtkcmFmdH0iCmZpCmlmIFsgLWYgIiR7enNo
+cmN9IiBdICYmIGNtcCAtcyAiJHtkcmFmdH0iICIke3pzaHJjfSI7IHRoZW4KICBzYXkgIiR7enNocmN9
+IGlzIGFscmVhZHkgdXAgdG8gZGF0ZSIKICBybSAtZiAiJHtkcmFmdH0iCmVsc2UKICBpZiBbIC1mICIk
+e3pzaHJjfSIgXTsgdGhlbgogICAgYmFja3VwPSIke3pzaHJjfS53aW50b29sLSQoZGF0ZSArJVklbSVk
+LSVIJU0lUykuYmFrIgogICAgY3AgLXAgIiR7enNocmN9IiAiJHtiYWNrdXB9IgogICAgc2F5ICJzYXZl
+ZCBhIGJhY2t1cCB0byAke2JhY2t1cH0iCiAgZmkKICBjYXQgIiR7ZHJhZnR9IiA+ICIke3pzaHJjfSIK
+ICBybSAtZiAiJHtkcmFmdH0iCiAgY2hvd24gIiR7dXNlcn06IiAiJHt6c2hyY30iIDI+L2Rldi9udWxs
+IHx8IGNob3duICIke3VzZXJ9IiAiJHt6c2hyY30iCiAgc2F5ICJ3cm90ZSAke3pzaHJjfSIKZmkKCmxv
+Z2luX3NoZWxsPSIkKGNvbW1hbmQgLXYgenNoKSIKaWYgWyAiJHtwcm9tcHR9IiA9ICJ0aWRlIiBdICYm
+IGNvbW1hbmQgLXYgZmlzaCA+L2Rldi9udWxsIDI+JjE7IHRoZW4KICBsb2dpbl9zaGVsbD0iJChjb21t
+YW5kIC12IGZpc2gpIgpmaQpncmVwIC1xeCAiJHtsb2dpbl9zaGVsbH0iIC9ldGMvc2hlbGxzIHx8IGVj
+aG8gIiR7bG9naW5fc2hlbGx9IiA+PiAvZXRjL3NoZWxscwpjdXJyZW50PSIkKGdldGVudCBwYXNzd2Qg
+IiR7dXNlcn0iIHwgY3V0IC1kOiAtZjcpIgppZiBbICIke2N1cnJlbnR9IiAhPSAiJHtsb2dpbl9zaGVs
+bH0iIF07IHRoZW4KICBpZiBjaHNoIC1zICIke2xvZ2luX3NoZWxsfSIgIiR7dXNlcn0iOyB0aGVuCiAg
+ICBzYXkgInRoZSBkZWZhdWx0IHNoZWxsIGZvciAke3VzZXJ9IGlzIG5vdyAke2xvZ2luX3NoZWxsfSIK
+ICBlbHNlCiAgICBzYXkgImNvdWxkIG5vdCBjaGFuZ2UgdGhlIGRlZmF1bHQgc2hlbGwuIFJ1bjogc3Vk
+byBjaHNoIC1zICR7bG9naW5fc2hlbGx9ICR7dXNlcn0iCiAgZmkKZWxzZQogIHNheSAidGhlIGRlZmF1
+bHQgc2hlbGwgZm9yICR7dXNlcn0gaXMgYWxyZWFkeSAke2xvZ2luX3NoZWxsfSIKZmkKCnNheSAic2hl
+bGwgc2V0dXAgZmluaXNoZWQuIE9wZW4gYSBuZXcgVWJ1bnR1IHRhYiB0byB1c2UgaXQuIgpleGl0IDAK
 '@
 }
 
@@ -4478,6 +4575,17 @@ function Test-WinToolDataFile {
         }
         if (-not [string]::IsNullOrWhiteSpace($wingetId) -and -not (Test-WinToolWingetId -Id $wingetId)) {
             Add-WinToolDataError -Errors $errors -Message "Terminal prompt '$id' has an unexpected winget id."
+        }
+    }
+    foreach ($scheme in @(Get-WinToolNote -Object $terminal -Name "schemes" -Default @())) {
+        # Windows Terminal drops a scheme without all 16 colors, and then any
+        # profile that names it shows an "invalid colorScheme" warning.
+        $palette = Get-WinToolNote -Object $scheme -Name "palette"
+        foreach ($key in $script:WinToolSchemeColorKeys) {
+            $value = [string](Get-WinToolNote -Object $palette -Name $key -Default "")
+            if ($value -notmatch '^#[0-9A-Fa-f]{6}$') {
+                Add-WinToolDataError -Errors $errors -Message ("Color scheme '" + [string]$scheme.id + "' needs a " + $key + " color.")
+            }
         }
     }
     if (@(Get-WinToolNote -Object $terminal -Name "prompts" -Default @()).Count -lt 8) {
@@ -5580,6 +5688,22 @@ function Select-WinToolFont {
     return $matched.ToArray()
 }
 
+function Get-WinToolOhMyPoshThemeFile {
+    param(
+        [string]$PromptStyle
+    )
+    $themeFile = "jandedobbeleer.omp.json"
+    if (-not [string]::IsNullOrWhiteSpace($PromptStyle)) {
+        if ($PromptStyle.EndsWith(".omp.json")) {
+            $themeFile = $PromptStyle
+        }
+        else {
+            $themeFile = $PromptStyle + ".omp.json"
+        }
+    }
+    return $themeFile
+}
+
 function Get-WinToolPromptScript {
     param(
         [Parameter(Mandatory = $true)][string]$PromptId,
@@ -5588,55 +5712,94 @@ function Get-WinToolPromptScript {
         [bool]$PsReadLine = $false,
         [bool]$Zoxide = $false
     )
+    # The same text goes into the Windows PowerShell 5.1 and PowerShell 7
+    # profiles. Every block is wrapped so a missing tool, an old module, or a
+    # missing variable never prints an error when a terminal opens.
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add("# Added by WinTool. Delete this block, or run WinTool again, to change it.")
     if ($TerminalIcons) {
-        $lines.Add("if (Get-Module -ListAvailable -Name Terminal-Icons) {")
-        $lines.Add("    Import-Module Terminal-Icons")
-        $lines.Add("}")
+        $lines.Add('try {')
+        $lines.Add('    if (Get-Module -ListAvailable -Name Terminal-Icons) {')
+        $lines.Add('        Import-Module Terminal-Icons -ErrorAction Stop')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     if ($PsReadLine) {
-        $lines.Add("if (Get-Module -ListAvailable -Name PSReadLine) {")
-        $lines.Add("    Set-PSReadLineOption -PredictionSource History")
-        $lines.Add("    Set-PSReadLineOption -PredictionViewStyle ListView")
-        $lines.Add("}")
+        # Windows PowerShell 5.1 ships PSReadLine 2.0, which has neither
+        # option. PredictionSource came in 2.1 and PredictionViewStyle in 2.2.
+        $lines.Add('try {')
+        $lines.Add('    $wintoolReadLine = Get-Command -Name Set-PSReadLineOption -ErrorAction Ignore')
+        $lines.Add('    if ($null -ne $wintoolReadLine -and $wintoolReadLine.Parameters.ContainsKey("PredictionSource")) {')
+        $lines.Add('        Set-PSReadLineOption -PredictionSource History -ErrorAction Stop -WarningAction SilentlyContinue')
+        $lines.Add('    }')
+        $lines.Add('    if ($null -ne $wintoolReadLine -and $wintoolReadLine.Parameters.ContainsKey("PredictionViewStyle")) {')
+        $lines.Add('        Set-PSReadLineOption -PredictionViewStyle ListView -ErrorAction Stop -WarningAction SilentlyContinue')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     if ($Zoxide) {
-        $lines.Add("if (Get-Command zoxide -ErrorAction SilentlyContinue) {")
-        $lines.Add("    Invoke-Expression (& { (zoxide init powershell | Out-String) })")
-        $lines.Add("}")
+        $lines.Add('try {')
+        $lines.Add('    if (Get-Command -Name zoxide -ErrorAction Ignore) {')
+        $lines.Add('        Invoke-Expression (& { (zoxide init powershell | Out-String) })')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     if ($PromptId -eq "starship") {
-        $lines.Add("if (Get-Command starship -ErrorAction SilentlyContinue) {")
-        $lines.Add("    Invoke-Expression (& starship init powershell)")
-        $lines.Add("}")
+        $lines.Add('try {')
+        $lines.Add('    $wintoolStarship = Get-Command -Name starship -CommandType Application -ErrorAction Ignore | Select-Object -First 1')
+        $lines.Add('    if ($null -eq $wintoolStarship) {')
+        $lines.Add('        foreach ($wintoolPath in @(([string]$env:ProgramFiles + "\starship\bin\starship.exe"), ([string]$env:LOCALAPPDATA + "\Programs\starship\bin\starship.exe"))) {')
+        $lines.Add('            if (Test-Path -LiteralPath $wintoolPath) { $wintoolStarship = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
+        $lines.Add('        }')
+        $lines.Add('    }')
+        $lines.Add('    if ($null -ne $wintoolStarship) {')
+        $lines.Add('        Invoke-Expression (& $wintoolStarship.Source init powershell | Out-String)')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     elseif ($PromptId -eq "oh-my-posh") {
-        $themeFile = "jandedobbeleer.omp.json"
-        if (-not [string]::IsNullOrWhiteSpace($PromptStyle)) {
-            if ($PromptStyle.EndsWith(".omp.json")) {
-                $themeFile = $PromptStyle
-            }
-            else {
-                $themeFile = $PromptStyle + ".omp.json"
-            }
-        }
-        $lines.Add("if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {")
-        $lines.Add('    $theme = Join-Path $env:POSH_THEMES_PATH "' + $themeFile + '"')
-        $lines.Add("    if (Test-Path -LiteralPath `$theme) {")
-        $lines.Add("        oh-my-posh init pwsh --config `$theme | Invoke-Expression")
-        $lines.Add("    }")
-        $lines.Add("    else {")
-        $lines.Add("        oh-my-posh init pwsh | Invoke-Expression")
-        $lines.Add("    }")
-        $lines.Add("}")
+        $themeFile = Get-WinToolOhMyPoshThemeFile -PromptStyle $PromptStyle
+        # POSH_THEMES_PATH is not set by newer Oh My Posh builds, so WinTool
+        # saves the theme under %LOCALAPPDATA%\WinTool\themes during setup and
+        # also looks in the older theme folders.
+        $lines.Add('try {')
+        $lines.Add('    $wintoolPosh = Get-Command -Name oh-my-posh -CommandType Application -ErrorAction Ignore | Select-Object -First 1')
+        $lines.Add('    if ($null -eq $wintoolPosh) {')
+        $lines.Add('        foreach ($wintoolPath in @(([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\bin\oh-my-posh.exe"), ([string]$env:ProgramFiles + "\oh-my-posh\bin\oh-my-posh.exe"))) {')
+        $lines.Add('            if (Test-Path -LiteralPath $wintoolPath) { $wintoolPosh = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
+        $lines.Add('        }')
+        $lines.Add('    }')
+        $lines.Add('    if ($null -ne $wintoolPosh) {')
+        $lines.Add('        $wintoolTheme = $null')
+        $lines.Add('        foreach ($wintoolFolder in @([string]$env:POSH_THEMES_PATH, ([string]$env:LOCALAPPDATA + "\WinTool\themes"), ([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\themes"))) {')
+        $lines.Add('            if ([string]::IsNullOrWhiteSpace($wintoolFolder)) { continue }')
+        $lines.Add('            $wintoolCandidate = Join-Path $wintoolFolder "' + $themeFile + '"')
+        $lines.Add('            if (Test-Path -LiteralPath $wintoolCandidate) { $wintoolTheme = $wintoolCandidate; break }')
+        $lines.Add('        }')
+        $lines.Add('        if ($null -ne $wintoolTheme) {')
+        $lines.Add('            (& $wintoolPosh.Source init pwsh --config $wintoolTheme | Out-String) | Invoke-Expression')
+        $lines.Add('        }')
+        $lines.Add('        else {')
+        $lines.Add('            (& $wintoolPosh.Source init pwsh | Out-String) | Invoke-Expression')
+        $lines.Add('        }')
+        $lines.Add('    }')
+        $lines.Add('}')
+        $lines.Add('catch { $null = $_ }')
     }
     elseif ($PromptId -eq "powerline-go") {
         $lines.Add('function global:prompt {')
-        $lines.Add('    $tool = Join-Path $env:LOCALAPPDATA "WinTool\bin\powerline-go.exe"')
-        $lines.Add('    if (Test-Path -LiteralPath $tool) {')
-        $lines.Add('        return (& $tool -error $LASTEXITCODE -shell powershell)')
+        $lines.Add('    $wintoolExit = $LASTEXITCODE')
+        $lines.Add('    try {')
+        $lines.Add('        $tool = [string]$env:LOCALAPPDATA + "\WinTool\bin\powerline-go.exe"')
+        $lines.Add('        if (Test-Path -LiteralPath $tool) {')
+        $lines.Add('            return ((& $tool -error $wintoolExit -shell bare) -join "")')
+        $lines.Add('        }')
         $lines.Add('    }')
+        $lines.Add('    catch { $null = $_ }')
         $lines.Add('    return "PS $($executionContext.SessionState.Path.CurrentLocation)> "')
         $lines.Add('}')
     }
@@ -5752,18 +5915,31 @@ function Add-WinToolTerminalFont {
     return $Settings
 }
 
+$script:WinToolSchemeColorKeys = @("black", "red", "green", "yellow", "blue", "purple", "cyan", "white", "brightBlack", "brightRed", "brightGreen", "brightYellow", "brightBlue", "brightPurple", "brightCyan", "brightWhite")
+
 function Add-WinToolTerminalScheme {
     param(
         [Parameter(Mandatory = $true)]$Settings,
         [Parameter(Mandatory = $true)]$Scheme
     )
-    $entry = [pscustomobject]@{
+    # Windows Terminal ignores a scheme that lacks any of the 16 table colors,
+    # so the full palette is written before a profile points at the name.
+    $fields = [ordered]@{
         name = [string]$Scheme.name
         background = [string]$Scheme.background
         foreground = [string]$Scheme.foreground
         cursorColor = [string]$Scheme.cursor
         selectionBackground = [string]$Scheme.selection
     }
+    $palette = Get-WinToolNote -Object $Scheme -Name "palette"
+    foreach ($key in $script:WinToolSchemeColorKeys) {
+        $value = [string](Get-WinToolNote -Object $palette -Name $key -Default "")
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            throw ("The color scheme " + [string]$Scheme.name + " has no " + $key + " color.")
+        }
+        $fields[$key] = $value
+    }
+    $entry = [pscustomobject]$fields
     $existing = @()
     if ($null -ne $Settings.PSObject.Properties["schemes"] -and $null -ne $Settings.schemes) {
         $existing = @($Settings.schemes)
@@ -5796,6 +5972,36 @@ function Add-WinToolTerminalScheme {
     return $Settings
 }
 
+function Save-WinToolOhMyPoshTheme {
+    param(
+        [Parameter(Mandatory = $true)][string]$ThemeFile
+    )
+    # Keeps a copy of the theme where the profile can always find it.
+    if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        return $null
+    }
+    $folder = Join-Path $env:LOCALAPPDATA "WinTool\themes"
+    $target = Join-Path $folder $ThemeFile
+    try {
+        if (-not (Test-Path -LiteralPath $folder)) {
+            New-Item -ItemType Directory -Path $folder -Force | Out-Null
+        }
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        $url = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/" + [uri]::EscapeDataString($ThemeFile)
+        Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -TimeoutSec 30
+        Write-WinToolLog -Message "Saved the Oh My Posh theme to $target" -Level "ok"
+        return $target
+    }
+    catch {
+        if (Test-Path -LiteralPath $target) {
+            Write-WinToolLog -Message "Could not refresh the Oh My Posh theme, so the saved copy is kept. $($_.Exception.Message)" -Level "warn"
+            return $target
+        }
+        Write-WinToolLog -Message "Could not download the Oh My Posh theme $ThemeFile, so the default theme will be used. $($_.Exception.Message)" -Level "warn"
+        return $null
+    }
+}
+
 function Write-WinToolShellProfile {
     param(
         [Parameter(Mandatory = $true)][string]$PromptId,
@@ -5804,6 +6010,9 @@ function Write-WinToolShellProfile {
         [bool]$PsReadLine = $false,
         [bool]$Zoxide = $false
     )
+    if ($PromptId -eq "oh-my-posh") {
+        Save-WinToolOhMyPoshTheme -ThemeFile (Get-WinToolOhMyPoshThemeFile -PromptStyle $PromptStyle) | Out-Null
+    }
     $body = Get-WinToolPromptScript -PromptId $PromptId -TerminalIcons $TerminalIcons -PromptStyle $PromptStyle -PsReadLine $PsReadLine -Zoxide $Zoxide
     $paths = @(
         (Get-WinToolShellProfilePath -HostName "powershell"),
@@ -5926,17 +6135,19 @@ function Get-WinToolFontFamilyName {
     return $null
 }
 
-function Invoke-WinToolTerminalFont {
+function Resolve-WinToolInstalledFontFace {
     param(
         [Parameter(Mandatory = $true)][string]$Face,
         [string]$Match
     )
+    # Returns the face to write into Terminal settings, or $null (with a
+    # warning) when the font is not installed.
     $chosen = $Face
     if (-not [string]::IsNullOrWhiteSpace($Match) -and (Test-WinToolWindows)) {
         $found = Find-WinToolInstalledFontFile -Token $Match
         if ($null -eq $found) {
             Write-WinToolLog -Message ("{0} is not installed, so the Windows Terminal font was left as it is. Run terminal setup again after the font installs." -f $Face) -Level "warn"
-            return
+            return $null
         }
         $family = Get-WinToolFontFamilyName -Path ([string]$found.Data)
         if (-not [string]::IsNullOrWhiteSpace($family)) {
@@ -5945,6 +6156,18 @@ function Invoke-WinToolTerminalFont {
         if ($chosen -ne $Face) {
             Write-WinToolLog -Message "Using the installed font name: $chosen" -Level "info"
         }
+    }
+    return $chosen
+}
+
+function Invoke-WinToolTerminalFont {
+    param(
+        [Parameter(Mandatory = $true)][string]$Face,
+        [string]$Match
+    )
+    $chosen = Resolve-WinToolInstalledFontFace -Face $Face -Match $Match
+    if ($null -eq $chosen) {
+        return
     }
     $path = Get-WinToolTerminalSettingsPath
     if ([string]::IsNullOrWhiteSpace($path)) {
@@ -6276,20 +6499,290 @@ function Get-WinToolTerminalPlan {
         [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Install Terminal-Icons for Windows PowerShell"; Host = "powershell" })
         [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Install Terminal-Icons for PowerShell 7"; Host = "pwsh" })
     }
+    if ([bool]$psReadLine) {
+        # 5.1 ships PSReadLine 2.0, too old for history predictions.
+        [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Update PSReadLine for Windows PowerShell"; Host = "powershell"; Module = "PSReadLine" })
+    }
     [void]$steps.Add([pscustomobject]@{ Type = "profile"; Label = "Update PowerShell profiles"; Prompt = $promptId; PromptStyle = $promptStyle; TerminalIcons = [bool]$icons; PsReadLine = [bool]$psReadLine; Zoxide = [bool]$zoxide })
     if ([bool]$wsl) {
-        [void]$steps.Add([pscustomobject]@{ Type = "wsl-install"; Label = "Install WSL with Ubuntu" })
-        if ([bool]$zsh -or $shellKind -like "wsl-*") {
-            $label = "Install zsh and Oh My Zsh in Ubuntu"
-            if ($shellKind -eq "wsl-fish") { $label = "Install Fish and Tide in Ubuntu" }
-            elseif ($promptId -eq "powerlevel10k") { $label = "Install Powerlevel10k in Ubuntu" }
-            elseif ($promptId -eq "pure") { $label = "Install Pure in Ubuntu" }
-            elseif ($promptId -eq "spaceship") { $label = "Install Spaceship in Ubuntu" }
-            elseif ($promptId -eq "oh-my-zsh") { $label = "Install the Oh My Zsh theme in Ubuntu" }
-            [void]$steps.Add([pscustomobject]@{ Type = "wsl-shell"; Label = $label; Variant = $promptId; OmzTheme = $promptStyle })
+        $distro = [string](Get-WinToolNote -Object $Selection -Name "wslDistro" -Default "Ubuntu")
+        $withShell = ([bool]$zsh -or $shellKind -like "wsl-*")
+        foreach ($wslStep in @(Get-WinToolWslStep -Distro $distro -PromptId $promptId -PromptStyle $promptStyle -Font $font -Install $true -Shell $withShell)) {
+            [void]$steps.Add($wslStep)
         }
     }
     return $steps.ToArray()
+}
+# endregion
+
+# region src/Private/Wsl.ps1
+# Copyright (c) 2026 Henrique
+# SPDX-License-Identifier: MIT
+
+# WSL shell setup. It works on a distro that already exists: nothing is
+# reinstalled, the Linux part runs as root through wsl.exe (no sudo password),
+# and the default shell is changed with chsh as root.
+
+function Get-WinToolWslDistroName {
+    param($Step)
+    $name = [string](Get-WinToolNote -Object $Step -Name "Distro" -Default "Ubuntu")
+    if ([string]::IsNullOrWhiteSpace($name)) {
+        $name = "Ubuntu"
+    }
+    if ($name -notmatch '^[A-Za-z0-9._-]+$') {
+        throw "Unexpected WSL distro name '$name'."
+    }
+    return $name
+}
+
+function ConvertTo-WinToolShellWord {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    # Values that reach bash: letters, digits, and . _ / - only.
+    return ([string]$Text -replace '[^A-Za-z0-9._/-]', '')
+}
+
+function Get-WinToolWslSetupText {
+    param(
+        [Parameter(Mandatory = $true)]$Step
+    )
+    $bash = Get-WinToolPayloadText -Name "Wsl"
+    $bash = $bash -replace "`r`n", "`n" -replace "`r", "`n"
+    $variant = ConvertTo-WinToolShellWord -Text ([string](Get-WinToolNote -Object $Step -Name "Variant" -Default ""))
+    $style = ConvertTo-WinToolShellWord -Text ([string](Get-WinToolNote -Object $Step -Name "PromptStyle" -Default ""))
+    $omzTheme = ConvertTo-WinToolShellWord -Text ([string](Get-WinToolNote -Object $Step -Name "OmzTheme" -Default ""))
+    if ([string]::IsNullOrWhiteSpace($omzTheme)) { $omzTheme = "robbyrussell" }
+    $header = "export WINTOOL_SHELL_PROMPT='" + $variant + "'`nexport WINTOOL_PROMPT_STYLE='" + $style + "'`nexport WINTOOL_OMZ_THEME='" + $omzTheme + "'`n"
+    if ($bash.StartsWith("#!")) {
+        $cut = $bash.IndexOf("`n")
+        return $bash.Substring(0, $cut + 1) + $header + $bash.Substring($cut + 1)
+    }
+    return $header + $bash
+}
+
+function Get-WinToolWslLookupText {
+    return @'
+$ErrorActionPreference = "Continue"
+$env:WSL_UTF8 = "1"
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { $null = $_ }
+function Get-WinToolWslEntry {
+    param([string]$Name)
+    foreach ($key in @(Get-ChildItem -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss" -ErrorAction SilentlyContinue)) {
+        $item = Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction SilentlyContinue
+        if ($null -ne $item -and [string]$item.DistributionName -eq $Name) {
+            return $item
+        }
+    }
+    return $null
+}
+function Write-WinToolWslOutput {
+    process {
+        $text = ([string]$_).Replace([string][char]0, "")
+        if (-not [string]::IsNullOrWhiteSpace($text)) { Write-Output $text.TrimEnd() }
+    }
+}
+$wsl = Join-Path $env:SystemRoot "System32\wsl.exe"
+'@
+}
+
+function Get-WinToolWslInstallScript {
+    param(
+        [Parameter(Mandatory = $true)][string]$Distro
+    )
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add((Get-WinToolWslLookupText))
+    $lines.Add('$distro = ' + (ConvertTo-WinToolSingleQuoted -Text $Distro))
+    $lines.Add(@'
+if ($null -ne (Get-WinToolWslEntry -Name $distro)) {
+    Write-Output ("WSL already has " + $distro + ", so it is kept as it is.")
+    exit 0
+}
+if (-not (Test-Path -LiteralPath $wsl)) {
+    Write-Output "wsl.exe was not found. WSL needs Windows 10 2004 or later."
+    exit 1
+}
+& $wsl --install -d $distro --no-launch 2>&1 | Write-WinToolWslOutput
+$code = $LASTEXITCODE
+if ($code -eq 0) {
+    Write-Output ("Open " + $distro + " once from the Start menu to create your Linux user, then run the shell setup again.")
+}
+exit $code
+'@)
+    return ($lines -join [Environment]::NewLine)
+}
+
+function Get-WinToolWslShellScript {
+    param(
+        [Parameter(Mandatory = $true)][string]$Distro,
+        [Parameter(Mandatory = $true)][string]$ScriptPath
+    )
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add((Get-WinToolWslLookupText))
+    $lines.Add('$distro = ' + (ConvertTo-WinToolSingleQuoted -Text $Distro))
+    $lines.Add('$script = ' + (ConvertTo-WinToolSingleQuoted -Text $ScriptPath))
+    $lines.Add(@'
+$entry = Get-WinToolWslEntry -Name $distro
+if ($null -eq $entry) {
+    Write-Output ("WSL has no distro named " + $distro + ". If it was just installed, open it once from the Start menu to create your Linux user, then run the shell setup again.")
+    exit 3
+}
+if (-not (Test-Path -LiteralPath $wsl)) {
+    Write-Output "wsl.exe was not found."
+    exit 1
+}
+$uid = 0
+if ($null -ne $entry.PSObject.Properties["DefaultUid"]) { $uid = [int64]$entry.DefaultUid }
+$unix = ""
+$converted = & $wsl -d $distro -u root -- wslpath -a $script 2>$null
+foreach ($line in @($converted)) {
+    $text = ([string]$line).Replace([string][char]0, "").Trim()
+    if ($text.StartsWith("/")) { $unix = $text }
+}
+if ([string]::IsNullOrWhiteSpace($unix)) {
+    $unix = "/mnt/" + $script.Substring(0, 1).ToLowerInvariant() + $script.Substring(2).Replace("\", "/")
+}
+Write-Output ("Running the shell setup in " + $distro + " as root for uid " + $uid + ".")
+& $wsl -d $distro -u root -- env ("WINTOOL_UID=" + $uid) bash $unix 2>&1 | Write-WinToolWslOutput
+exit $LASTEXITCODE
+'@)
+    return ($lines -join [Environment]::NewLine)
+}
+
+function Set-WinToolWslProfileFont {
+    param(
+        [Parameter(Mandatory = $true)]$Settings,
+        [Parameter(Mandatory = $true)][string]$Distro,
+        [Parameter(Mandatory = $true)][string]$Face
+    )
+    # Sets the font on the distro's own Terminal profile, so an older
+    # per-profile font cannot hide the Nerd Font. Returns how many changed.
+    $profiles = Get-WinToolNote -Object $Settings -Name "profiles"
+    $list = @(Get-WinToolNote -Object $profiles -Name "list" -Default @())
+    $count = 0
+    foreach ($item in $list) {
+        $name = [string](Get-WinToolNote -Object $item -Name "name" -Default "")
+        $source = [string](Get-WinToolNote -Object $item -Name "source" -Default "")
+        $isWsl = $source -match '(?i)wsl'
+        if (-not ($name -eq $Distro -or ($isWsl -and $name.StartsWith($Distro, [System.StringComparison]::OrdinalIgnoreCase)))) {
+            continue
+        }
+        $font = Get-WinToolNote -Object $item -Name "font"
+        if ($null -eq $font) {
+            $item | Add-Member -NotePropertyName "font" -NotePropertyValue ([pscustomobject]@{ face = $Face }) -Force
+        }
+        elseif ($null -eq $font.PSObject.Properties["face"]) {
+            $font | Add-Member -NotePropertyName "face" -NotePropertyValue $Face
+        }
+        else {
+            $font.face = $Face
+        }
+        if ($null -ne $item.PSObject.Properties["fontFace"]) {
+            $item.PSObject.Properties.Remove("fontFace")
+        }
+        $count++
+    }
+    return $count
+}
+
+function Invoke-WinToolWslTerminalProfile {
+    param(
+        [Parameter(Mandatory = $true)][string]$Distro,
+        [string]$Face,
+        [string]$Match
+    )
+    if ([string]::IsNullOrWhiteSpace($Face)) {
+        return
+    }
+    $chosen = Resolve-WinToolInstalledFontFace -Face $Face -Match $Match
+    if ($null -eq $chosen) {
+        return
+    }
+    $path = Get-WinToolTerminalSettingsPath
+    if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
+        Write-WinToolLog -Message "Windows Terminal settings were not found, so the $Distro profile font was not set." -Level "warn"
+        return
+    }
+    $raw = [System.IO.File]::ReadAllText($path)
+    if ([string]::IsNullOrWhiteSpace($raw)) {
+        Write-WinToolLog -Message "Windows Terminal settings are empty, so the $Distro profile font was not set." -Level "warn"
+        return
+    }
+    $settings = ConvertFrom-WinToolJsonText -Text $raw
+    $count = Set-WinToolWslProfileFont -Settings $settings -Distro $Distro -Face $chosen
+    if ($count -eq 0) {
+        Write-WinToolLog -Message "Windows Terminal has no $Distro profile yet. It will use the default font, $chosen, when it appears." -Level "info"
+        return
+    }
+    Write-WinToolUtf8File -Path $path -Text ((ConvertTo-WinToolJsonText -Value $settings) + "`n")
+    Write-WinToolLog -Message "Set the $Distro profile font in Windows Terminal to $chosen." -Level "ok"
+}
+
+function Get-WinToolWslStep {
+    param(
+        [string]$Distro = "Ubuntu",
+        [string]$PromptId = "oh-my-zsh",
+        [string]$PromptStyle = "",
+        $Font,
+        [bool]$Install = $true,
+        [bool]$Shell = $true
+    )
+    $steps = New-Object System.Collections.Generic.List[object]
+    if ($Install) {
+        [void]$steps.Add([pscustomobject]@{ Type = "wsl-install"; Label = "Install WSL with $Distro (kept if it already exists)"; Distro = $Distro })
+    }
+    if ($Shell) {
+        $label = "Install zsh and Oh My Zsh in $Distro"
+        if ($PromptId -eq "tide") { $label = "Install Fish and Tide in $Distro" }
+        elseif ($PromptId -eq "powerlevel10k") { $label = "Install Powerlevel10k in $Distro" }
+        elseif ($PromptId -eq "pure") { $label = "Install Pure in $Distro" }
+        elseif ($PromptId -eq "spaceship") { $label = "Install Spaceship in $Distro" }
+        elseif ($PromptId -eq "oh-my-zsh") { $label = "Install the Oh My Zsh theme in $Distro" }
+        elseif ($PromptId -eq "oh-my-posh") { $label = "Install zsh and Oh My Posh in $Distro" }
+        elseif ($PromptId -eq "starship") { $label = "Install zsh and Starship in $Distro" }
+        [void]$steps.Add([pscustomobject]@{ Type = "wsl-shell"; Label = $label; Distro = $Distro; Variant = $PromptId; PromptStyle = $PromptStyle; OmzTheme = $PromptStyle })
+    }
+    if ($null -ne $Font) {
+        [void]$steps.Add([pscustomobject]@{ Type = "wsl-profile"; Label = ("Use " + [string]$Font.name + " in the $Distro Terminal profile"); Distro = $Distro; Face = [string]$Font.face; Match = [string]$Font.match })
+    }
+    return $steps.ToArray()
+}
+
+function Get-WinToolWslShellPlan {
+    param(
+        [string]$Distro = "Ubuntu",
+        [string]$PromptId = "oh-my-posh",
+        [string]$PromptStyle = "jandedobbeleer",
+        [string]$FontId = "cascadiacode-nf",
+        [switch]$Install
+    )
+    # Only the WSL part of terminal setup: no Windows packages, profiles, or
+    # color schemes. Without -Install an existing distro is required.
+    $font = $null
+    if (-not [string]::IsNullOrWhiteSpace($FontId)) {
+        foreach ($item in @(Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "fonts" -Default @())) {
+            if ([string]$item.id -eq $FontId) {
+                $font = $item
+                break
+            }
+        }
+        if ($null -eq $font) {
+            throw "Unknown terminal font '$FontId'."
+        }
+    }
+    return @(Get-WinToolWslStep -Distro $Distro -PromptId $PromptId -PromptStyle $PromptStyle -Font $font -Install ([bool]$Install) -Shell $true)
+}
+
+function Invoke-WinToolWslShellSetup {
+    param(
+        [string]$Distro = "Ubuntu",
+        [string]$PromptId = "oh-my-posh",
+        [string]$PromptStyle = "jandedobbeleer",
+        [string]$FontId = "cascadiacode-nf",
+        [switch]$Install
+    )
+    $plan = @(Get-WinToolWslShellPlan -Distro $Distro -PromptId $PromptId -PromptStyle $PromptStyle -FontId $FontId -Install:$Install)
+    Invoke-WinToolPlan -Step $plan
 }
 # endregion
 
@@ -7517,6 +8010,14 @@ function Initialize-WinToolAppearance {
 # SPDX-License-Identifier: MIT
 
 function Get-WinToolModuleScript {
+    param(
+        [string]$Name = "Terminal-Icons"
+    )
+    if ($Name -notmatch '^[A-Za-z0-9.-]+$') {
+        throw "Unexpected module name '$Name'."
+    }
+    # PowerShellGet 1.0 (Windows PowerShell 5.1) lacks some switches, so they
+    # are only passed when this Install-Module has them.
     $scriptText = @'
 $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -7529,10 +8030,15 @@ if ($null -eq $gallery) {
     Register-PSRepository -Default
 }
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-Module -Name Terminal-Icons -Scope CurrentUser -Force -AllowClobber
-Write-Output "Terminal-Icons installed."
+$options = @{ Name = "__MODULE__"; Scope = "CurrentUser"; Force = $true }
+$installer = Get-Command -Name Install-Module
+if ($installer.Parameters.ContainsKey("AllowClobber")) { $options["AllowClobber"] = $true }
+if ($installer.Parameters.ContainsKey("SkipPublisherCheck")) { $options["SkipPublisherCheck"] = $true }
+Install-Module @options
+$installed = Get-Module -ListAvailable -Name "__MODULE__" | Sort-Object Version -Descending | Select-Object -First 1
+Write-Output ("__MODULE__ " + [string]$installed.Version + " installed.")
 '@
-    return $scriptText
+    return $scriptText.Replace("__MODULE__", $Name)
 }
 
 function Get-WinToolWingetStepAction {
@@ -7579,8 +8085,9 @@ function Get-WinToolPlanCommand {
         }
     }
     if ($type -eq "module") {
-        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-terminal-icons.ps1"
-        Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolModuleScript)
+        $moduleName = [string](Get-WinToolNote -Object $Step -Name "Module" -Default "Terminal-Icons")
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-module-" + $moduleName + ".ps1")
+        Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolModuleScript -Name $moduleName)
         $hostPath = $null
         if ([string]$Step.Host -eq "pwsh") {
             Sync-WinToolProcessPath
@@ -7614,9 +8121,12 @@ function Get-WinToolPlanCommand {
         }
     }
     if ($type -eq "wsl-install") {
+        $distro = Get-WinToolWslDistroName -Step $Step
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-install.ps1"
+        Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolWslInstallScript -Distro $distro)
         return [pscustomobject]@{
-            FilePath = (Join-Path $env:SystemRoot "System32/wsl.exe")
-            ArgumentList = @("--install", "-d", "Ubuntu", "--no-launch")
+            FilePath = (Get-WinToolSystemFile -RelativePath "System32\WindowsPowerShell\v1.0\powershell.exe")
+            ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
         }
     }
     if ($type -eq "font-download") {
@@ -7640,30 +8150,14 @@ function Get-WinToolPlanCommand {
         }
     }
     if ($type -eq "wsl-shell") {
-        $wsl = Join-Path $env:SystemRoot "System32/wsl.exe"
-        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-setup.sh"
-        $bash = Get-WinToolPayloadText -Name "Wsl"
-        $bash = $bash -replace "`r`n", "`n" -replace "`r", "`n"
-        $variant = [string](Get-WinToolNote -Object $Step -Name "Variant" -Default "")
-        $omzTheme = [string](Get-WinToolNote -Object $Step -Name "OmzTheme" -Default "robbyrussell")
-        if ([string]::IsNullOrWhiteSpace($omzTheme)) { $omzTheme = "robbyrussell" }
-        if (-not [string]::IsNullOrWhiteSpace($variant)) {
-            $bash = "export WINTOOL_SHELL_PROMPT=" + $variant + "`nexport WINTOOL_OMZ_THEME=" + $omzTheme + "`n" + $bash
-        }
-        Write-WinToolUtf8File -Path $scriptPath -Text $bash
-        $unix = $scriptPath
-        if (Test-Path -LiteralPath $wsl) {
-            $converted = & $wsl wslpath -a $scriptPath
-            if ($converted -is [System.Array]) {
-                $converted = $converted[-1]
-            }
-            if (-not [string]::IsNullOrWhiteSpace([string]$converted)) {
-                $unix = ([string]$converted).Trim()
-            }
-        }
+        $distro = Get-WinToolWslDistroName -Step $Step
+        $bashPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-setup.sh"
+        Write-WinToolUtf8File -Path $bashPath -Text (Get-WinToolWslSetupText -Step $Step)
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-wsl-shell.ps1"
+        Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolWslShellScript -Distro $distro -ScriptPath $bashPath)
         return [pscustomobject]@{
-            FilePath = $wsl
-            ArgumentList = @("-d", "Ubuntu", "--", "bash", $unix)
+            FilePath = (Get-WinToolSystemFile -RelativePath "System32\WindowsPowerShell\v1.0\powershell.exe")
+            ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
         }
     }
     throw "Unknown plan step '$type'."
@@ -7677,6 +8171,7 @@ $script:WinToolLocalStepHandlers = [ordered]@{
     "profile" = "Invoke-WinToolProfileStep"
     "scheme" = "Invoke-WinToolSchemeStep"
     "starship-preset" = "Invoke-WinToolStarshipPresetStep"
+    "wsl-profile" = "Invoke-WinToolWslProfileStep"
 }
 
 function Test-WinToolLocalStepType {
@@ -7704,6 +8199,11 @@ function Invoke-WinToolSchemeStep {
 function Invoke-WinToolStarshipPresetStep {
     param($Step)
     Invoke-WinToolStarshipPreset -Preset ([string]$Step.Preset)
+}
+
+function Invoke-WinToolWslProfileStep {
+    param($Step)
+    Invoke-WinToolWslTerminalProfile -Distro (Get-WinToolWslDistroName -Step $Step) -Face ([string]$Step.Face) -Match ([string]$Step.Match)
 }
 
 function Invoke-WinToolLocalStep {

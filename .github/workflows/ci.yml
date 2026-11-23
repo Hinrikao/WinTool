@@ -28,3 +28,12 @@ jobs:
       - name: Build the WPF window with Windows PowerShell 5.1
         shell: powershell
         run: powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolUiBuild.ps1
+
+  wsl-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Run the WSL shell setup in an existing Ubuntu
+        run: docker run --rm -v "$PWD:/src:ro" ubuntu:24.04 bash /src/tests/Test-WslSetup.sh /src

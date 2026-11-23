@@ -841,7 +841,7 @@ Invoke-WinToolCase -Name "Every plan step type has a runner" -Body {
                 Test-WinToolExpectation -Condition ($null -ne $command) -Message ("Step '" + $type + "' from " + $plan.Name + " has no command.")
             }
         }
-        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "profile", "scheme", "starship-preset")) {
+        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "profile", "scheme", "starship-preset", "wsl-profile")) {
             Test-WinToolExpectation -Condition ($seen.ContainsKey($type)) -Message ("No plan produced step type '" + $type + "', so the coverage check is incomplete.")
         }
         Test-WinToolExpectation -Condition (Test-WinToolLocalStepType -Type "scheme") -Message "The color scheme step runs inside WinTool."
@@ -902,6 +902,93 @@ Invoke-WinToolCase -Name "Font sources and the installed-font check" -Body {
     $found = Find-WinToolInstalledFontFile -Token "CaskaydiaCove Nerd Font" -Entry $entries
     Test-WinToolExpectation -Condition ($null -ne $found -and $found.Name -eq "CaskaydiaCoveNerdFont-Regular (TrueType)") -Message "The installed-font check prefers the regular file."
     Test-WinToolExpectation -Condition ($null -eq (Find-WinToolInstalledFontFile -Token "FiraCodeNerdFont" -Entry $entries)) -Message "A missing font is reported as missing."
+}
+
+Invoke-WinToolCase -Name "Color schemes carry all 16 colors" -Body {
+    $schemes = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "schemes" -Default @())
+    Test-WinToolExpectation -Condition ($schemes.Count -ge 1) -Message "The Terminal catalog has color schemes."
+    foreach ($scheme in $schemes) {
+        $settings = ConvertFrom-WinToolJsonText -Text '{"profiles":{"defaults":{},"list":[]},"schemes":[{"name":"Campbell","background":"#0C0C0C"}]}'
+        Add-WinToolTerminalScheme -Settings $settings -Scheme $scheme | Out-Null
+        $written = ConvertFrom-WinToolJsonText -Text (ConvertTo-WinToolJsonText -Value $settings)
+        $entry = @($written.schemes | Where-Object { [string]$_.name -eq [string]$written.profiles.defaults.colorScheme })
+        Test-WinToolExpectation -Condition ($entry.Count -eq 1) -Message ("colorScheme " + [string]$scheme.name + " must name a scheme in schemes.")
+        $colors = 0
+        foreach ($key in $script:WinToolSchemeColorKeys) {
+            if ([string](Get-WinToolNote -Object $entry[0] -Name $key -Default "") -match '^#[0-9A-Fa-f]{6}$') { $colors++ }
+        }
+        Test-WinToolExpectation -Condition ($colors -eq 16) -Message ("Scheme " + [string]$scheme.name + " has " + $colors + " of the 16 colors Windows Terminal requires.")
+        Test-WinToolExpectation -Condition (@($written.schemes | Where-Object { [string]$_.name -eq "Campbell" }).Count -eq 1) -Message "Other schemes are kept."
+    }
+    $settings = ConvertFrom-WinToolJsonText -Text '{"profiles":{"defaults":{}}}'
+    Add-WinToolTerminalScheme -Settings $settings -Scheme $schemes[0] | Out-Null
+    Add-WinToolTerminalScheme -Settings $settings -Scheme $schemes[0] | Out-Null
+    Test-WinToolExpectation -Condition (@($settings.schemes).Count -eq 1) -Message "Running the scheme step twice keeps one copy."
+}
+
+Invoke-WinToolCase -Name "Generated PowerShell profiles never throw" -Body {
+    $catalog = Get-WinToolTerminalCatalog
+    $hostPath = (Get-Process -Id $PID).Path
+    $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-profile-" + [guid]::NewGuid().ToString("N") + ".ps1")
+    try {
+        foreach ($prompt in @(Get-WinToolNote -Object $catalog -Name "prompts" -Default @())) {
+            $text = Get-WinToolPromptScript -PromptId ([string]$prompt.id) -TerminalIcons $true -PromptStyle "jandedobbeleer" -PsReadLine $true -Zoxide $true
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$parseErrors)
+            Test-WinToolExpectation -Condition (@($parseErrors).Count -eq 0) -Message ("The " + [string]$prompt.id + " profile does not parse.")
+            Test-WinToolExpectation -Condition (-not $text.Contains('Join-Path $env:POSH_THEMES_PATH')) -Message "The profile must not join a possibly missing POSH_THEMES_PATH."
+            Test-WinToolExpectation -Condition ($text.Contains('ContainsKey("PredictionSource")') -and $text.Contains('ContainsKey("PredictionViewStyle")')) -Message "PSReadLine options are only set when the module has them."
+            [System.IO.File]::WriteAllText($temp, $text)
+            $command = 'Remove-Item Env:POSH_THEMES_PATH -ErrorAction Ignore; $Error.Clear(); . ''' + $temp + '''; foreach ($e in $Error) { "ERR: " + $e }; "WINTOOL-OK"'
+            $output = & $hostPath -NoProfile -NonInteractive -Command $command 2>&1
+            $joined = (@($output) | ForEach-Object { [string]$_ }) -join "`n"
+            Test-WinToolExpectation -Condition ($joined.Contains("WINTOOL-OK") -and -not $joined.Contains("ERR:")) -Message ("The " + [string]$prompt.id + " profile wrote errors: " + $joined)
+        }
+    }
+    finally {
+        Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
+    }
+}
+
+Invoke-WinToolCase -Name "WSL shell setup for an existing distro" -Body {
+    $plan = @(Get-WinToolWslShellPlan -Distro "Ubuntu")
+    Test-WinToolExpectation -Condition ((@($plan | ForEach-Object { $_.Type }) -join ",") -eq "wsl-shell,wsl-profile") -Message "The WSL-only plan does not reinstall the distro."
+    Test-WinToolExpectation -Condition ($plan[0].Distro -eq "Ubuntu" -and $plan[0].Variant -eq "oh-my-posh" -and $plan[0].PromptStyle -eq "jandedobbeleer") -Message "The WSL-only plan defaults to Oh My Posh in Ubuntu."
+    $withInstall = @(Get-WinToolWslShellPlan -Distro "Ubuntu-24.04" -Install)
+    Test-WinToolExpectation -Condition ($withInstall[0].Type -eq "wsl-install" -and $withInstall[0].Distro -eq "Ubuntu-24.04") -Message "-Install adds the install step for that distro."
+    $threw = $false
+    try { Get-WinToolWslDistroName -Step ([pscustomobject]@{ Distro = "Ubuntu; rm -rf" }) | Out-Null } catch { $threw = $true }
+    Test-WinToolExpectation -Condition $threw -Message "Distro names are checked."
+
+    $bash = Get-WinToolWslSetupText -Step ([pscustomobject]@{ Variant = "oh-my-posh"; PromptStyle = "jandedobbeleer'`$(x)"; OmzTheme = "" })
+    $lines = $bash -split "`n"
+    Test-WinToolExpectation -Condition ($lines[0] -eq "#!/bin/bash" -and $lines[1] -eq "export WINTOOL_SHELL_PROMPT='oh-my-posh'" -and $lines[2] -eq "export WINTOOL_PROMPT_STYLE='jandedobbeleerx'") -Message "The setup script keeps its shebang and gets clean exports."
+    Test-WinToolExpectation -Condition (-not $bash.Contains("`r") -and $bash.Contains("chsh -s") -and -not ($bash -match '(?m)^\s*sudo ')) -Message "The setup script uses LF, changes the shell as root, and needs no sudo."
+    $bashCommand = Get-Command -Name bash -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -ne $bashCommand -and -not (Test-WinToolWindows)) {
+        $file = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-wsl-" + [guid]::NewGuid().ToString("N") + ".sh")
+        [System.IO.File]::WriteAllText($file, $bash)
+        & $bashCommand.Source -n $file
+        Test-WinToolExpectation -Condition ($LASTEXITCODE -eq 0) -Message "bash -n rejects the WSL setup script."
+        Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+    }
+    foreach ($text in @((Get-WinToolWslInstallScript -Distro "Ubuntu"), (Get-WinToolWslShellScript -Distro "Ubuntu" -ScriptPath "C:\Temp\WinTool-wsl-setup.sh"))) {
+        $tokens = $null
+        $parseErrors = $null
+        [void][System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$parseErrors)
+        Test-WinToolExpectation -Condition (@($parseErrors).Count -eq 0) -Message "A WSL launcher script does not parse."
+        Test-WinToolExpectation -Condition ($text.Contains("DistributionName")) -Message "WSL launchers look the distro up before using it."
+    }
+    $shell = Get-WinToolWslShellScript -Distro "Ubuntu" -ScriptPath "C:\Temp\x.sh"
+    Test-WinToolExpectation -Condition ($shell.Contains('-u root --') -and $shell.Contains('WINTOOL_UID=')) -Message "The shell setup runs as root and passes the default uid."
+    Test-WinToolExpectation -Condition ((Get-WinToolWslInstallScript -Distro "Ubuntu").Contains("kept as it is")) -Message "An existing distro is not reinstalled."
+
+    $settings = ConvertFrom-WinToolJsonText -Text '{"profiles":{"defaults":{"font":{"face":"X"}},"list":[{"name":"Windows PowerShell"},{"name":"Ubuntu","source":"Microsoft.WSL","fontFace":"Consolas","font":{"size":11}},{"name":"Debian","source":"Windows.Terminal.Wsl"}]}}'
+    $count = Set-WinToolWslProfileFont -Settings $settings -Distro "Ubuntu" -Face "CaskaydiaCove Nerd Font"
+    $ubuntu = @($settings.profiles.list | Where-Object { $_.name -eq "Ubuntu" })[0]
+    Test-WinToolExpectation -Condition ($count -eq 1 -and $ubuntu.font.face -eq "CaskaydiaCove Nerd Font" -and $ubuntu.font.size -eq 11 -and $null -eq $ubuntu.PSObject.Properties["fontFace"]) -Message "The Ubuntu profile gets the Nerd Font and keeps its size."
+    Test-WinToolExpectation -Condition ($null -eq $settings.profiles.list[0].PSObject.Properties["font"] -and $null -eq $settings.profiles.list[2].PSObject.Properties["font"]) -Message "Other profiles are left alone."
 }
 
 if ($script:WinToolFailures.Count -gt 0) {

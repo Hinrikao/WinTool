@@ -92,6 +92,50 @@ if ($family -ne "Consolas") {
 }
 # A font that is not installed must be skipped with a warning, not set.
 Invoke-WinToolTerminalFont -Face "WinTool Missing Nerd Font" -Match "WinToolMissingNerdFont"
+# Run each generated profile in a fresh Windows PowerShell 5.1 (and
+# PowerShell 7 when present) with -NoProfile, as a new Terminal tab would.
+# Fake oh-my-posh and starship commands stand in for the real tools, and
+# POSH_THEMES_PATH is removed, as on a PC with a current Oh My Posh.
+$fakeBin = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-fake-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $fakeBin -Force | Out-Null
+[System.IO.File]::WriteAllText((Join-Path $fakeBin "oh-my-posh.cmd"), "@echo function global:prompt { 'omp-ok %*' }`r`n")
+[System.IO.File]::WriteAllText((Join-Path $fakeBin "starship.cmd"), "@echo function global:prompt { 'starship-ok' }`r`n")
+$themeFolder = Join-Path $env:LOCALAPPDATA "WinTool\themes"
+New-Item -ItemType Directory -Path $themeFolder -Force | Out-Null
+$themeFile = Join-Path $themeFolder "jandedobbeleer.omp.json"
+if (-not (Test-Path -LiteralPath $themeFile)) { [System.IO.File]::WriteAllText($themeFile, "{}") }
+$savedPath = $env:PATH
+$env:PATH = $fakeBin + ";" + $env:PATH
+$profileHosts = @((Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"))
+$pwshCommand = Get-Command -Name pwsh.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($null -ne $pwshCommand) { $profileHosts += [string]$pwshCommand.Source }
+try {
+    foreach ($promptItem in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "prompts" -Default @())) {
+        $promptId = [string]$promptItem.id
+        $profileText = Get-WinToolPromptScript -PromptId $promptId -TerminalIcons $true -PromptStyle "jandedobbeleer" -PsReadLine $true -Zoxide $true
+        $profileFile = Join-Path $fakeBin ("profile-" + $promptId + ".ps1")
+        [System.IO.File]::WriteAllText($profileFile, $profileText, (New-Object System.Text.UTF8Encoding($true)))
+        foreach ($profileHost in $profileHosts) {
+            $probe = 'Remove-Item Env:POSH_THEMES_PATH -ErrorAction Ignore; $Error.Clear(); . ''' + $profileFile + '''; foreach ($e in $Error) { "ERR: " + $e }; "PROMPT: " + (prompt); "WINTOOL-OK"'
+            $profileOutput = & $profileHost -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $probe 2>&1
+            $profileJoined = (@($profileOutput) | ForEach-Object { [string]$_ }) -join " | "
+            if (-not $profileJoined.Contains("WINTOOL-OK") -or $profileJoined.Contains("ERR:")) {
+                throw ("The " + $promptId + " profile failed in " + $profileHost + ": " + $profileJoined)
+            }
+            if ($promptId -eq "oh-my-posh" -and -not ($profileJoined.Contains("omp-ok") -and $profileJoined.Contains("--config") -and $profileJoined.Contains("jandedobbeleer.omp.json"))) {
+                throw ("The oh-my-posh profile did not load the saved theme in " + $profileHost + ": " + $profileJoined)
+            }
+            if ($promptId -eq "starship" -and -not $profileJoined.Contains("starship-ok")) {
+                throw ("The starship profile did not start Starship in " + $profileHost + ": " + $profileJoined)
+            }
+        }
+    }
+    Write-Output ("Generated profiles ran cleanly in " + $profileHosts.Count + " PowerShell host(s).")
+}
+finally {
+    $env:PATH = $savedPath
+    Remove-Item -LiteralPath $fakeBin -Recurse -Force -ErrorAction SilentlyContinue
+}
 $promptHost = $window.FindName("TerminalPromptHost")
 if ($null -eq $promptHost -or $promptHost.Children.Count -lt 8) {
     throw "The Terminal tab did not list the prompt engines."

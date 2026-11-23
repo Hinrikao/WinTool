@@ -267,6 +267,17 @@ function Test-WinToolDataFile {
             Add-WinToolDataError -Errors $errors -Message "Terminal prompt '$id' has an unexpected winget id."
         }
     }
+    foreach ($scheme in @(Get-WinToolNote -Object $terminal -Name "schemes" -Default @())) {
+        # Windows Terminal drops a scheme without all 16 colors, and then any
+        # profile that names it shows an "invalid colorScheme" warning.
+        $palette = Get-WinToolNote -Object $scheme -Name "palette"
+        foreach ($key in $script:WinToolSchemeColorKeys) {
+            $value = [string](Get-WinToolNote -Object $palette -Name $key -Default "")
+            if ($value -notmatch '^#[0-9A-Fa-f]{6}$') {
+                Add-WinToolDataError -Errors $errors -Message ("Color scheme '" + [string]$scheme.id + "' needs a " + $key + " color.")
+            }
+        }
+    }
     if (@(Get-WinToolNote -Object $terminal -Name "prompts" -Default @()).Count -lt 8) {
         Add-WinToolDataError -Errors $errors -Message "terminal.json should list the prompt engines."
     }
