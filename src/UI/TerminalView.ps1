@@ -158,16 +158,20 @@ function Get-WinToolPreviewTheme {
     $url = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/" + [uri]::EscapeDataString($file)
     $scriptText = @'
 param($sync, $url, $path)
+$part = $path + ".part"
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
     $folder = Split-Path -Parent $path
     if (-not (Test-Path -LiteralPath $folder)) { New-Item -ItemType Directory -Path $folder -Force | Out-Null }
-    $part = $path + ".part"
     Invoke-WebRequest -Uri $url -OutFile $part -UseBasicParsing -TimeoutSec 10
+    if (-not (Test-Path -LiteralPath $part) -or (Get-Item -LiteralPath $part).Length -le 2) {
+        throw "Downloaded preview theme was empty."
+    }
     Move-Item -LiteralPath $part -Destination $path -Force
     $sync.Ok = $true
 }
 catch {
+    Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
     $sync.Error = $_.Exception.Message
 }
 finally {
@@ -226,10 +230,64 @@ function New-WinToolTerminalPreview {
 }
 
 function Update-WinToolTerminalCatalogOnline {
+    if ($null -ne $script:WinToolState.CatalogJob) {
+        return
+    }
     Write-WinToolLog -Message "Refreshing Nerd Fonts and Oh My Posh themes from GitHub." -Level "info"
+    $refreshButton = Get-WinToolUi -Name "TerminalRefresh"
+    if ($null -ne $refreshButton) {
+        $refreshButton.IsEnabled = $false
+    }
+    $scriptText = @'
+param($sync)
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    $headers = @{ "User-Agent" = "WinTool"; "Accept" = "application/vnd.github+json" }
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest" -Headers $headers -TimeoutSec 15
+    $themes = Invoke-RestMethod -Uri "https://api.github.com/repos/JanDeDobbeleer/oh-my-posh/contents/themes?ref=main" -Headers $headers -TimeoutSec 15
+    $sync.Release = $release
+    $sync.Themes = $themes
+    $sync.Ok = $true
+}
+catch {
+    $sync.Error = $_.Exception.Message
+}
+finally {
+    $sync.Done = $true
+}
+'@
     try {
-        $headers = @{ "User-Agent" = "WinTool"; "Accept" = "application/vnd.github+json" }
-        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest" -Headers $headers
+        $job = Start-WinToolScriptJob -ScriptText $scriptText -Argument @()
+        $script:WinToolState.CatalogJob = [pscustomobject]@{ Job = $job; Started = [datetime]::UtcNow }
+    }
+    catch {
+        if ($null -ne $refreshButton -and -not $script:WinToolState.Busy) {
+            $refreshButton.IsEnabled = $true
+        }
+        Write-WinToolLog -Message ("Could not refresh the catalogs. The built-in lists are still available. " + $_.Exception.Message) -Level "warn"
+    }
+}
+
+function Complete-WinToolTerminalCatalogOnline {
+    $catalogJob = $script:WinToolState.CatalogJob
+    $script:WinToolState.CatalogJob = $null
+    if ($null -eq $catalogJob) {
+        return
+    }
+    $ok = [bool]$catalogJob.Job.Sync.Ok
+    $errText = [string]$catalogJob.Job.Sync.Error
+    $release = $catalogJob.Job.Sync.Release
+    $themes = $catalogJob.Job.Sync.Themes
+    Stop-WinToolThread -Job $catalogJob.Job
+    $refreshButton = Get-WinToolUi -Name "TerminalRefresh"
+    if ($null -ne $refreshButton -and -not $script:WinToolState.Busy) {
+        $refreshButton.IsEnabled = $true
+    }
+    if (-not $ok) {
+        Write-WinToolLog -Message ("Could not refresh the catalogs. The built-in lists are still available. " + $errText) -Level "warn"
+        return
+    }
+    try {
         $known = @{}
         foreach ($font in @(Get-WinToolActiveFont)) {
             $asset = [string](Get-WinToolNote -Object $font -Name "asset" -Default "")
@@ -255,7 +313,6 @@ function Update-WinToolTerminalCatalogOnline {
             })
         }
         $script:WinToolExtraFont = @($script:WinToolExtraFont) + @($added.ToArray())
-        $themes = Invoke-RestMethod -Uri "https://api.github.com/repos/JanDeDobbeleer/oh-my-posh/contents/themes?ref=main" -Headers $headers
         $knownThemes = @{}
         foreach ($theme in @(Get-WinToolActiveOhMyPoshTheme)) { $knownThemes[[string]$theme.file] = $true }
         $extraThemes = New-Object System.Collections.Generic.List[object]
@@ -267,12 +324,14 @@ function Update-WinToolTerminalCatalogOnline {
             $extraThemes.Add([pscustomobject]@{ id = $id; file = $file; name = $id })
         }
         $script:WinToolExtraOhMyPoshTheme = @($script:WinToolExtraOhMyPoshTheme) + @($extraThemes.ToArray())
+        Build-WinToolPromptCard
+        Update-WinToolPromptSelection
         Update-WinToolFontList
         Update-WinToolPromptStyleList
         Write-WinToolLog -Message ("Catalog refresh added " + @($added.ToArray()).Count + " fonts and " + @($extraThemes.ToArray()).Count + " themes.") -Level "ok"
     }
     catch {
-        Write-WinToolLog -Message ("Could not refresh the catalogs. The built-in lists are still available. " + $_.Exception.Message) -Level "warn"
+        Write-WinToolLog -Message ("Could not apply the refreshed catalogs. " + $_.Exception.Message) -Level "warn"
     }
 }
 
@@ -1246,6 +1305,11 @@ function Sync-WinToolTerminalChoice {
     foreach ($name in @("terminalIcons", "psReadLine", "zoxide", "fzf")) {
         $flag = Get-WinToolNote -Object $Selection -Name $name
         if ($null -ne $flag) { $script:WinToolTerminalChoice.$name = [bool]$flag }
+    }
+    $enabledFlag = Get-WinToolNote -Object $Selection -Name "enabled"
+    $enabledBox = Get-WinToolUi -Name "TerminalEnabled"
+    if ($null -ne $enabledFlag -and $null -ne $enabledBox) {
+        $enabledBox.IsChecked = [bool]$enabledFlag
     }
     (Get-WinToolUi -Name "TerminalModeAdvanced").IsChecked = $true
     Update-WinToolExtraToggle

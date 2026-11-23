@@ -101,9 +101,15 @@ function Get-WinToolPromptScript {
         $lines.Add('try {')
         $lines.Add('    $wintoolZoxide = $null')
         $lines.Add('    if ($wintoolInteractive) { $wintoolZoxide = Get-Command -Name zoxide -CommandType Application -ErrorAction Ignore | Select-Object -First 1 }')
+        $lines.Add('    if ($wintoolInteractive -and $null -eq $wintoolZoxide) {')
+        $lines.Add('        foreach ($wintoolPath in @(([string]$env:LOCALAPPDATA + "\Microsoft\WinGet\Links\zoxide.exe"), ([string]$env:USERPROFILE + "\.cargo\bin\zoxide.exe"), ([string]$env:LOCALAPPDATA + "\Programs\zoxide\bin\zoxide.exe"))) {')
+        $lines.Add('            if (-not [string]::IsNullOrWhiteSpace($wintoolPath) -and (Test-Path -LiteralPath $wintoolPath)) { $wintoolZoxide = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
+        $lines.Add('        }')
+        $lines.Add('    }')
         $lines.Add('    if ($null -ne $wintoolZoxide) {')
-        $lines.Add('        $wintoolInit = (& $wintoolZoxide.Source init powershell | Out-String)')
-        $lines.Add('        if (-not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
+        $lines.Add('        $global:LASTEXITCODE = 0')
+        $lines.Add('        $wintoolInit = (& $wintoolZoxide.Source init powershell 2>$null | Out-String)')
+        $lines.Add('        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
         $lines.Add('    }')
         $lines.Add('}')
         $lines.Add('catch { $null = $_ }')
@@ -113,13 +119,14 @@ function Get-WinToolPromptScript {
         $lines.Add('    $wintoolStarship = $null')
         $lines.Add('    if ($wintoolInteractive) { $wintoolStarship = Get-Command -Name starship -CommandType Application -ErrorAction Ignore | Select-Object -First 1 }')
         $lines.Add('    if ($wintoolInteractive -and $null -eq $wintoolStarship) {')
-        $lines.Add('        foreach ($wintoolPath in @(([string]$env:ProgramFiles + "\starship\bin\starship.exe"), ([string]$env:LOCALAPPDATA + "\Programs\starship\bin\starship.exe"))) {')
-        $lines.Add('            if (Test-Path -LiteralPath $wintoolPath) { $wintoolStarship = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
+        $lines.Add('        foreach ($wintoolPath in @(([string]$env:ProgramFiles + "\starship\bin\starship.exe"), ([string]$env:LOCALAPPDATA + "\Programs\starship\bin\starship.exe"), ([string]$env:LOCALAPPDATA + "\Microsoft\WinGet\Links\starship.exe"), ([string]$env:USERPROFILE + "\.cargo\bin\starship.exe"))) {')
+        $lines.Add('            if (-not [string]::IsNullOrWhiteSpace($wintoolPath) -and (Test-Path -LiteralPath $wintoolPath)) { $wintoolStarship = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
         $lines.Add('        }')
         $lines.Add('    }')
         $lines.Add('    if ($null -ne $wintoolStarship) {')
-        $lines.Add('        $wintoolInit = (& $wintoolStarship.Source init powershell | Out-String)')
-        $lines.Add('        if (-not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
+        $lines.Add('        $global:LASTEXITCODE = 0')
+        $lines.Add('        $wintoolInit = (& $wintoolStarship.Source init powershell 2>$null | Out-String)')
+        $lines.Add('        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
         $lines.Add('    }')
         $lines.Add('}')
         $lines.Add('catch { $null = $_ }')
@@ -134,27 +141,28 @@ function Get-WinToolPromptScript {
         $lines.Add('    $wintoolPosh = $null')
         $lines.Add('    if ($wintoolInteractive) { $wintoolPosh = Get-Command -Name oh-my-posh -CommandType Application -ErrorAction Ignore | Select-Object -First 1 }')
         $lines.Add('    if ($wintoolInteractive -and $null -eq $wintoolPosh) {')
-        $lines.Add('        foreach ($wintoolPath in @(([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\bin\oh-my-posh.exe"), ([string]$env:ProgramFiles + "\oh-my-posh\bin\oh-my-posh.exe"))) {')
-        $lines.Add('            if (Test-Path -LiteralPath $wintoolPath) { $wintoolPosh = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
+        $lines.Add('        foreach ($wintoolPath in @(([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\bin\oh-my-posh.exe"), ([string]$env:ProgramFiles + "\oh-my-posh\bin\oh-my-posh.exe"), ([string]${env:ProgramFiles(x86)} + "\oh-my-posh\bin\oh-my-posh.exe"), ([string]$env:LOCALAPPDATA + "\Microsoft\WinGet\Links\oh-my-posh.exe"))) {')
+        $lines.Add('            if (-not [string]::IsNullOrWhiteSpace($wintoolPath) -and (Test-Path -LiteralPath $wintoolPath)) { $wintoolPosh = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
         $lines.Add('        }')
         $lines.Add('    }')
         $lines.Add('    if ($null -ne $wintoolPosh) {')
         $lines.Add('        $wintoolShell = "pwsh"')
         $lines.Add('        if ($PSVersionTable.PSEdition -ne "Core") { $wintoolShell = "powershell" }')
         $lines.Add('        $wintoolTheme = $null')
-        $lines.Add('        foreach ($wintoolFolder in @([string]$env:POSH_THEMES_PATH, ([string]$env:LOCALAPPDATA + "\WinTool\themes"), ([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\themes"))) {')
+        $lines.Add('        foreach ($wintoolFolder in @([string]$env:POSH_THEMES_PATH, ([string]$env:LOCALAPPDATA + "\WinTool\themes"), ([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\themes"), ([string]$env:ProgramFiles + "\oh-my-posh\themes"), ([string]${env:ProgramFiles(x86)} + "\oh-my-posh\themes"))) {')
         $lines.Add('            if ([string]::IsNullOrWhiteSpace($wintoolFolder)) { continue }')
         $lines.Add('            $wintoolCandidate = Join-Path $wintoolFolder "' + $themeFile + '"')
         $lines.Add('            if (Test-Path -LiteralPath $wintoolCandidate) { $wintoolTheme = $wintoolCandidate; break }')
         $lines.Add('        }')
+        $lines.Add('        $global:LASTEXITCODE = 0')
         $lines.Add('        $wintoolInit = $null')
         $lines.Add('        if ($null -ne $wintoolTheme) {')
-        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init $wintoolShell --config $wintoolTheme | Out-String)')
+        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init $wintoolShell --config $wintoolTheme 2>$null | Out-String)')
         $lines.Add('        }')
         $lines.Add('        else {')
-        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init $wintoolShell | Out-String)')
+        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init $wintoolShell 2>$null | Out-String)')
         $lines.Add('        }')
-        $lines.Add('        if (-not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
+        $lines.Add('        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
         $lines.Add('    }')
         $lines.Add('}')
         $lines.Add('catch { $null = $_ }')
@@ -163,17 +171,20 @@ function Get-WinToolPromptScript {
         $styleArgs = @(Get-WinToolPromptVariantArgument -Variant (Get-WinToolPromptVariant -PromptId $PromptId -PromptStyle $PromptStyle))
         $argText = ""
         foreach ($arg in $styleArgs) { $argText += " '" + $arg + "'" }
-        $lines.Add('function global:prompt {')
-        $lines.Add('    $wintoolExit = $LASTEXITCODE')
-        $lines.Add('    try {')
-        $lines.Add('        $tool = [string]$env:LOCALAPPDATA + "\WinTool\bin\powerline-go.exe"')
-        $lines.Add('        if (Test-Path -LiteralPath $tool) {')
-        $lines.Add('            $wintoolLine = ((& $tool -error $wintoolExit -shell bare' + $argText + ') -join "")')
-        $lines.Add('            if (-not [string]::IsNullOrWhiteSpace($wintoolLine)) { return $wintoolLine }')
+        $lines.Add('if ($wintoolInteractive) {')
+        $lines.Add('    function global:prompt {')
+        $lines.Add('        $wintoolExit = $LASTEXITCODE')
+        $lines.Add('        try {')
+        $lines.Add('            $tool = [string]$env:LOCALAPPDATA + "\WinTool\bin\powerline-go.exe"')
+        $lines.Add('            if (Test-Path -LiteralPath $tool) {')
+        $lines.Add('                $global:LASTEXITCODE = 0')
+        $lines.Add('                $wintoolLine = ((& $tool -error $wintoolExit -shell bare' + $argText + ') -join "")')
+        $lines.Add('                if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($wintoolLine)) { return $wintoolLine }')
+        $lines.Add('            }')
         $lines.Add('        }')
+        $lines.Add('        catch { $null = $_ }')
+        $lines.Add('        return "PS $($executionContext.SessionState.Path.CurrentLocation)> "')
         $lines.Add('    }')
-        $lines.Add('    catch { $null = $_ }')
-        $lines.Add('    return "PS $($executionContext.SessionState.Path.CurrentLocation)> "')
         $lines.Add('}')
     }
     else {
@@ -344,6 +355,20 @@ function Add-WinToolTerminalLigature {
     return $count
 }
 
+function Backup-WinToolTerminalSetting {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path
+    )
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return
+    }
+    $backup = $Path + ".wintool-backup"
+    if (-not (Test-Path -LiteralPath $backup)) {
+        Copy-Item -LiteralPath $Path -Destination $backup -Force
+        Write-WinToolLog -Message "Saved a backup of Terminal settings next to settings.json." -Level "info"
+    }
+}
+
 function Invoke-WinToolTerminalLigature {
     $path = Get-WinToolTerminalSettingsPath
     if ([string]::IsNullOrWhiteSpace($path)) {
@@ -352,11 +377,7 @@ function Invoke-WinToolTerminalLigature {
     }
     $settings = [pscustomobject]@{}
     if (Test-Path -LiteralPath $path) {
-        $backup = $path + ".wintool-backup"
-        if (-not (Test-Path -LiteralPath $backup)) {
-            Copy-Item -LiteralPath $path -Destination $backup -Force
-            Write-WinToolLog -Message "Saved a backup of Terminal settings next to settings.json." -Level "info"
-        }
+        Backup-WinToolTerminalSetting -Path $path
         $raw = [System.IO.File]::ReadAllText($path)
         if (-not [string]::IsNullOrWhiteSpace($raw)) {
             $settings = ConvertFrom-WinToolJsonText -Text $raw
@@ -436,17 +457,26 @@ function Save-WinToolOhMyPoshTheme {
     }
     $folder = Join-Path $env:LOCALAPPDATA "WinTool\themes"
     $target = Join-Path $folder $ThemeFile
+    $part = $target + ".part"
     try {
         if (-not (Test-Path -LiteralPath $folder)) {
             New-Item -ItemType Directory -Path $folder -Force | Out-Null
         }
         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
         $url = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/" + [uri]::EscapeDataString($ThemeFile)
-        Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -TimeoutSec 30
+        Invoke-WebRequest -Uri $url -OutFile $part -UseBasicParsing -TimeoutSec 30
+        if (-not (Test-Path -LiteralPath $part) -or (Get-Item -LiteralPath $part).Length -le 2) {
+            throw "Downloaded theme file was empty."
+        }
+        Move-Item -LiteralPath $part -Destination $target -Force
+        if ($null -ne $script:WinToolOmpThemeCache) {
+            $script:WinToolOmpThemeCache.Remove($ThemeFile)
+        }
         Write-WinToolLog -Message "Saved the Oh My Posh theme to $target" -Level "ok"
         return $target
     }
     catch {
+        Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
         if (Test-Path -LiteralPath $target) {
             Write-WinToolLog -Message "Could not refresh the Oh My Posh theme, so the saved copy is kept. $($_.Exception.Message)" -Level "warn"
             return $target
@@ -482,7 +512,7 @@ function Write-WinToolShellProfile {
             $existing = [System.IO.File]::ReadAllText($path)
         }
         $updated = Update-WinToolManagedBlock -Text $existing -Begin $script:WinToolProfileBegin -End $script:WinToolProfileEnd -Body $body
-        Write-WinToolUtf8File -Path $path -Text $updated
+        Write-WinToolUtf8File -Path $path -Text $updated -Bom
         Write-WinToolLog -Message "Updated $path" -Level "ok"
     }
 }
@@ -632,11 +662,7 @@ function Invoke-WinToolTerminalFont {
     }
     $settings = [pscustomobject]@{}
     if (Test-Path -LiteralPath $path) {
-        $backup = $path + ".wintool-backup"
-        if (-not (Test-Path -LiteralPath $backup)) {
-            Copy-Item -LiteralPath $path -Destination $backup -Force
-            Write-WinToolLog -Message "Saved a backup of Terminal settings next to settings.json." -Level "info"
-        }
+        Backup-WinToolTerminalSetting -Path $path
         $raw = [System.IO.File]::ReadAllText($path)
         if (-not [string]::IsNullOrWhiteSpace($raw)) {
             $settings = ConvertFrom-WinToolJsonText -Text $raw
@@ -670,6 +696,7 @@ function Invoke-WinToolTerminalScheme {
     }
     $settings = [pscustomobject]@{}
     if (Test-Path -LiteralPath $path) {
+        Backup-WinToolTerminalSetting -Path $path
         $raw = [System.IO.File]::ReadAllText($path)
         if (-not [string]::IsNullOrWhiteSpace($raw)) {
             $settings = ConvertFrom-WinToolJsonText -Text $raw
@@ -685,7 +712,20 @@ function Invoke-WinToolStarshipPreset {
         [Parameter(Mandatory = $true)][string]$Preset
     )
     Sync-WinToolProcessPath
-    $command = Get-Command -Name "starship" -ErrorAction SilentlyContinue
+    $command = Get-Command -Name "starship" -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -eq $command) {
+        foreach ($candidate in @(
+                ([string]$env:ProgramFiles + "\starship\bin\starship.exe"),
+                ([string]$env:LOCALAPPDATA + "\Programs\starship\bin\starship.exe"),
+                ([string]$env:LOCALAPPDATA + "\Microsoft\WinGet\Links\starship.exe"),
+                ([string]$env:USERPROFILE + "\.cargo\bin\starship.exe")
+            )) {
+            if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $candidate)) {
+                $command = Get-Command -Name $candidate -ErrorAction SilentlyContinue
+                break
+            }
+        }
+    }
     if ($null -eq $command) {
         Write-WinToolLog -Message "Starship is not on PATH yet, so the preset was skipped." -Level "warn"
         return
@@ -695,7 +735,12 @@ function Invoke-WinToolStarshipPreset {
         New-Item -ItemType Directory -Path $directory -Force | Out-Null
     }
     $destination = Join-Path $directory "starship.toml"
+    $global:LASTEXITCODE = 0
     & $command.Source preset $Preset -o $destination
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $destination)) {
+        Write-WinToolLog -Message ("Starship could not apply the preset '{0}' (exit {1})." -f $Preset, $LASTEXITCODE) -Level "warn"
+        return
+    }
     Write-WinToolLog -Message "Wrote the Starship preset to $destination." -Level "ok"
 }
 
@@ -817,12 +862,20 @@ function Get-WinToolToolDownloadScript {
     )
     $text = @'
 $ErrorActionPreference = "Stop"
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 $url = "URL"
 $name = "FILENAME"
 $dest = Join-Path $env:LOCALAPPDATA "WinTool\bin"
 if (-not (Test-Path -LiteralPath $dest)) { New-Item -ItemType Directory -Path $dest -Force | Out-Null }
 $path = Join-Path $dest $name
-Invoke-WebRequest -Uri $url -OutFile $path -UseBasicParsing
+$part = $path + ".part"
+try {
+    Invoke-WebRequest -Uri $url -OutFile $part -UseBasicParsing -TimeoutSec 60
+    Move-Item -LiteralPath $part -Destination $path -Force
+}
+finally {
+    Remove-Item -LiteralPath $part -Force -ErrorAction SilentlyContinue
+}
 Write-Output ("Downloaded " + $path)
 '@
     return $text.Replace("URL", $Url).Replace("FILENAME", $FileName)

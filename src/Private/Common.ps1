@@ -294,8 +294,9 @@ function Show-WinToolFailure {
 function Write-WinToolUtf8File {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
+        [switch]$Bom
     )
-    $encoding = New-Object System.Text.UTF8Encoding $false
+    $encoding = New-Object System.Text.UTF8Encoding ([bool]$Bom)
     [System.IO.File]::WriteAllText($Path, $Text, $encoding)
 }

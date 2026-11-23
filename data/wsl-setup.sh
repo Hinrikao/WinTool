@@ -91,7 +91,7 @@ case "${prompt}" in
     case "${theme_file}" in *.omp.json) ;; *) theme_file="${theme_file}.omp.json" ;; esac
     say "installing Oh My Posh with ${theme_file}"
     as_user 'mkdir -p "$HOME/.local/bin" && curl -fsSL https://ohmyposh.dev/install.sh | bash -s -- -d "$HOME/.local/bin"' || say "Oh My Posh did not install"
-    as_user "mkdir -p \"\$HOME/.config/wintool\" && curl -fsSL -o \"\$HOME/.config/wintool/${theme_file}\" \"https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/${theme_file}\"" || say "the theme did not download, Oh My Posh will use its default"
+    as_user "mkdir -p \"\$HOME/.config/wintool\" && tmp=\"\$HOME/.config/wintool/${theme_file}.tmp\" && curl -fsSL -o \"\$tmp\" \"https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/${theme_file}\" && [ -s \"\$tmp\" ] && mv -f \"\$tmp\" \"\$HOME/.config/wintool/${theme_file}\" || { rm -f \"\$tmp\"; false; }" || say "the theme did not download, Oh My Posh will use its default"
     block="export PATH=\"\$HOME/.local/bin:\$PATH\"
 if command -v oh-my-posh >/dev/null 2>&1; then
   if [ -f \"\$HOME/.config/wintool/${theme_file}\" ]; then
@@ -179,7 +179,15 @@ if [ -f "${zshrc}" ]; then
 elif [ -f "${home}/.oh-my-zsh/templates/zshrc.zsh-template" ]; then
   cp "${home}/.oh-my-zsh/templates/zshrc.zsh-template" "${draft}"
 fi
-if grep -q '^ZSH_THEME=' "${draft}"; then
+if [ -d "${home}/.oh-my-zsh" ] && ! grep -q 'oh-my-zsh\.sh' "${draft}"; then
+  omz_head="$(mktemp)"
+  printf 'export ZSH="$HOME/.oh-my-zsh"\nZSH_THEME="%s"\nsource "$ZSH/oh-my-zsh.sh"\n' "${zsh_theme}" > "${omz_head}"
+  if [ -s "${draft}" ]; then
+    printf '\n' >> "${omz_head}"
+    cat "${draft}" >> "${omz_head}"
+  fi
+  mv -f "${omz_head}" "${draft}"
+elif grep -q '^ZSH_THEME=' "${draft}"; then
   sed -i "s|^ZSH_THEME=.*|ZSH_THEME=\"${zsh_theme}\"|" "${draft}"
 fi
 sed -i '/^# >>> WinTool >>>$/,/^# <<< WinTool <<<$/d' "${draft}"

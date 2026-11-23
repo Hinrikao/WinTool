@@ -195,6 +195,7 @@ function Invoke-WinToolWslTerminalProfile {
         Write-WinToolLog -Message "Windows Terminal settings were not found, so the $Distro profile font was not set." -Level "warn"
         return
     }
+    Backup-WinToolTerminalSetting -Path $path
     $raw = [System.IO.File]::ReadAllText($path)
     if ([string]::IsNullOrWhiteSpace($raw)) {
         Write-WinToolLog -Message "Windows Terminal settings are empty, so the $Distro profile font was not set." -Level "warn"
