@@ -655,11 +655,11 @@
             </StackPanel>
           </Grid>
           <ScrollViewer x:Name="HomeScroll" Grid.Row="1" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <Grid x:Name="HomeBody" Margin="20,0,20,20">
+            <Grid x:Name="HomeBody" Margin="20,0,20,16">
               <Grid.RowDefinitions>
                 <RowDefinition Height="474"/>
                 <RowDefinition Height="16"/>
-                <RowDefinition Height="*" MinHeight="172"/>
+                <RowDefinition Height="*" MinHeight="150"/>
               </Grid.RowDefinitions>
               <Border x:Name="HomeHero" Grid.Row="0" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="22">
                 <Grid>

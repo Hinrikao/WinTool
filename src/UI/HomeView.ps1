@@ -335,10 +335,11 @@ function New-WinToolHomeMini {
     [System.Windows.Controls.Grid]::SetRow($detail, 2)
     $null = $info.Children.Add($detail)
 
+    # The chart takes the rest of the card, so taller windows get a taller chart.
     $spark = New-Object System.Windows.Controls.Grid
-    $spark.Height = 40
+    $spark.MinHeight = 40
     $spark.Margin = [System.Windows.Thickness]::new(0, 14, 0, 0)
-    $spark.VerticalAlignment = "Bottom"
+    $spark.VerticalAlignment = "Stretch"
     $spark.ClipToBounds = $true
     [System.Windows.Controls.Grid]::SetRow($spark, 1)
     $fill = New-Object System.Windows.Shapes.Path
@@ -409,8 +410,9 @@ function Update-WinToolHomeSpark {
     # The newest sample sits on the right; 24 samples fill the width.
     param($Mini)
     $width = [double]$Mini.Spark.ActualWidth
+    $height = [double]$Mini.Spark.ActualHeight
     $count = $Mini.Points.Count
-    if ($width -le 0 -or $count -lt 2) {
+    if ($width -le 0 -or $height -le 0 -or $count -lt 2) {
         $Mini.SparkLine.Data = $null
         $Mini.SparkFill.Data = $null
         return
@@ -422,12 +424,12 @@ function Update-WinToolHomeSpark {
     for ($i = 0; $i -lt $count; $i++) {
         $x = $width - ($count - 1 - $i) * $step
         if ($i -eq 0) { $firstX = $x }
-        $y = 38 - ($Mini.Points[$i] / 100) * 32
+        $y = ($height - 2) - ($Mini.Points[$i] / 100) * ($height - 8)
         $points.Add([string]::Format($culture, "{0:0.##},{1:0.##}", $x, $y))
     }
     $line = "M " + ($points -join " L ")
     $Mini.SparkLine.Data = [System.Windows.Media.Geometry]::Parse($line)
-    $Mini.SparkFill.Data = [System.Windows.Media.Geometry]::Parse(($line + [string]::Format($culture, " L {0:0.##},40 L {1:0.##},40 Z", $width, $firstX)))
+    $Mini.SparkFill.Data = [System.Windows.Media.Geometry]::Parse(($line + [string]::Format($culture, " L {0:0.##},{2:0.##} L {1:0.##},{2:0.##} Z", $width, $firstX, $height)))
 }
 
 function Format-WinToolHomeSize {
@@ -580,7 +582,7 @@ function Update-WinToolHomeLayout {
     # The cards row fills the rest of the page; a short window scrolls.
     $scroll = Get-WinToolUi -Name "HomeScroll"
     $body = Get-WinToolUi -Name "HomeBody"
-    $body.MinHeight = [Math]::Max(0, [double]$scroll.ActualHeight - 20)
+    $body.MinHeight = [Math]::Max(0, [double]$scroll.ActualHeight - 16)
 }
 
 function Sync-WinToolHomeHeader {
@@ -743,6 +745,7 @@ function Complete-WinToolHomeCheck {
     if ($hs.Phase -eq "analyzing") {
         Sync-WinToolHomeHeader
         if ($hs.Pending.Count -eq 0) { Complete-WinToolHomeAnalysis }
+        elseif (Test-WinToolHomeReduceMotion) { Start-WinToolHomeAnimation }
         return
     }
     Test-WinToolHomeFixDone

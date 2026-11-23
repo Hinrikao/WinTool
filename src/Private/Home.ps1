@@ -20,6 +20,7 @@ function Format-WinToolByteSize {
     param([double]$Bytes)
     $culture = [System.Globalization.CultureInfo]::InvariantCulture
     if ($Bytes -ge 1TB) { return ([string]::Format($culture, "{0:0.0} TB", $Bytes / 1TB)) }
+    if ($Bytes -ge 100GB) { return ([string]::Format($culture, "{0:0} GB", $Bytes / 1GB)) }
     if ($Bytes -ge 1GB) { return ([string]::Format($culture, "{0:0.0} GB", $Bytes / 1GB)) }
     if ($Bytes -ge 1MB) { return ([string]::Format($culture, "{0:0} MB", $Bytes / 1MB)) }
     if ($Bytes -ge 1KB) { return ([string]::Format($culture, "{0:0} KB", $Bytes / 1KB)) }
@@ -81,10 +82,13 @@ function ConvertTo-WinToolHomeJunkResult {
         return (New-WinToolHomeResult -Id "junk" -Status "ok" -Text "Nothing worth cleaning" -Detail $detail.ToArray() -Amount $total)
     }
     $text = "{0} can be deleted" -f (Format-WinToolByteSize -Bytes $total)
+    if ($total -lt 200MB) {
+        # Too little to be worth a Fix.
+        return (New-WinToolHomeResult -Id "junk" -Status "ok" -Text $text -Detail $detail.ToArray() -Amount $total)
+    }
     $status = "warn"
     $penalty = 4
     if ($total -ge 1GB) { $status = "bad"; $penalty = 12 }
-    if ($total -lt 200MB) { $status = "ok"; $penalty = 0 }
     return (New-WinToolHomeResult -Id "junk" -Status $status -Text $text -Action "fix" -Penalty $penalty -Detail $detail.ToArray() -Amount $total)
 }
 
