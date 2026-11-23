@@ -65,6 +65,14 @@ function Get-WinToolPromptScript {
     # missing variable never prints an error when a terminal opens.
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add("# Added by WinTool. Delete this block, or run WinTool again, to change it.")
+    # Prompt and zoxide init only run in a real interactive console (Windows
+    # Terminal, conhost, or the VS Code terminal). A script host, a remote
+    # session, or TERM=dumb gets none, and empty init output is never run.
+    $lines.Add('$wintoolInteractive = $false')
+    $lines.Add('try {')
+    $lines.Add('    $wintoolInteractive = [Environment]::UserInteractive -and ([string]$env:TERM -ne "dumb") -and (@("ConsoleHost", "Visual Studio Code Host") -contains [string]$Host.Name)')
+    $lines.Add('}')
+    $lines.Add('catch { $wintoolInteractive = $false }')
     if ($TerminalIcons) {
         $lines.Add('try {')
         $lines.Add('    if (Get-Module -ListAvailable -Name Terminal-Icons) {')
@@ -91,22 +99,27 @@ function Get-WinToolPromptScript {
     }
     if ($Zoxide) {
         $lines.Add('try {')
-        $lines.Add('    if (Get-Command -Name zoxide -ErrorAction Ignore) {')
-        $lines.Add('        Invoke-Expression (& { (zoxide init powershell | Out-String) })')
+        $lines.Add('    $wintoolZoxide = $null')
+        $lines.Add('    if ($wintoolInteractive) { $wintoolZoxide = Get-Command -Name zoxide -CommandType Application -ErrorAction Ignore | Select-Object -First 1 }')
+        $lines.Add('    if ($null -ne $wintoolZoxide) {')
+        $lines.Add('        $wintoolInit = (& $wintoolZoxide.Source init powershell | Out-String)')
+        $lines.Add('        if (-not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
         $lines.Add('    }')
         $lines.Add('}')
         $lines.Add('catch { $null = $_ }')
     }
     if ($PromptId -eq "starship") {
         $lines.Add('try {')
-        $lines.Add('    $wintoolStarship = Get-Command -Name starship -CommandType Application -ErrorAction Ignore | Select-Object -First 1')
-        $lines.Add('    if ($null -eq $wintoolStarship) {')
+        $lines.Add('    $wintoolStarship = $null')
+        $lines.Add('    if ($wintoolInteractive) { $wintoolStarship = Get-Command -Name starship -CommandType Application -ErrorAction Ignore | Select-Object -First 1 }')
+        $lines.Add('    if ($wintoolInteractive -and $null -eq $wintoolStarship) {')
         $lines.Add('        foreach ($wintoolPath in @(([string]$env:ProgramFiles + "\starship\bin\starship.exe"), ([string]$env:LOCALAPPDATA + "\Programs\starship\bin\starship.exe"))) {')
         $lines.Add('            if (Test-Path -LiteralPath $wintoolPath) { $wintoolStarship = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
         $lines.Add('        }')
         $lines.Add('    }')
         $lines.Add('    if ($null -ne $wintoolStarship) {')
-        $lines.Add('        Invoke-Expression (& $wintoolStarship.Source init powershell | Out-String)')
+        $lines.Add('        $wintoolInit = (& $wintoolStarship.Source init powershell | Out-String)')
+        $lines.Add('        if (-not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
         $lines.Add('    }')
         $lines.Add('}')
         $lines.Add('catch { $null = $_ }')
@@ -117,8 +130,9 @@ function Get-WinToolPromptScript {
         # saves the theme under %LOCALAPPDATA%\WinTool\themes during setup and
         # also looks in the older theme folders.
         $lines.Add('try {')
-        $lines.Add('    $wintoolPosh = Get-Command -Name oh-my-posh -CommandType Application -ErrorAction Ignore | Select-Object -First 1')
-        $lines.Add('    if ($null -eq $wintoolPosh) {')
+        $lines.Add('    $wintoolPosh = $null')
+        $lines.Add('    if ($wintoolInteractive) { $wintoolPosh = Get-Command -Name oh-my-posh -CommandType Application -ErrorAction Ignore | Select-Object -First 1 }')
+        $lines.Add('    if ($wintoolInteractive -and $null -eq $wintoolPosh) {')
         $lines.Add('        foreach ($wintoolPath in @(([string]$env:LOCALAPPDATA + "\Programs\oh-my-posh\bin\oh-my-posh.exe"), ([string]$env:ProgramFiles + "\oh-my-posh\bin\oh-my-posh.exe"))) {')
         $lines.Add('            if (Test-Path -LiteralPath $wintoolPath) { $wintoolPosh = Get-Command -Name $wintoolPath -ErrorAction Ignore; break }')
         $lines.Add('        }')
@@ -131,11 +145,14 @@ function Get-WinToolPromptScript {
         $lines.Add('            if (Test-Path -LiteralPath $wintoolCandidate) { $wintoolTheme = $wintoolCandidate; break }')
         $lines.Add('        }')
         $lines.Add('        if ($null -ne $wintoolTheme) {')
-        $lines.Add('            (& $wintoolPosh.Source init pwsh --config $wintoolTheme | Out-String) | Invoke-Expression')
+        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init pwsh --config $wintoolTheme | Out-String)')
         $lines.Add('        }')
         $lines.Add('        else {')
-        $lines.Add('            (& $wintoolPosh.Source init pwsh | Out-String) | Invoke-Expression')
+        $lines.Add('            $wintoolInit = (& $wintoolPosh.Source init pwsh | Out-String)')
         $lines.Add('        }')
+        $lines.Add('        # Empty output (old host, TERM=dumb) would make Invoke-Expression')
+        $lines.Add('        # print a binding error that try/catch does not stop.')
+        $lines.Add('        if (-not [string]::IsNullOrWhiteSpace($wintoolInit)) { Invoke-Expression $wintoolInit }')
         $lines.Add('    }')
         $lines.Add('}')
         $lines.Add('catch { $null = $_ }')
@@ -149,7 +166,8 @@ function Get-WinToolPromptScript {
         $lines.Add('    try {')
         $lines.Add('        $tool = [string]$env:LOCALAPPDATA + "\WinTool\bin\powerline-go.exe"')
         $lines.Add('        if (Test-Path -LiteralPath $tool) {')
-        $lines.Add('            return ((& $tool -error $wintoolExit -shell bare' + $argText + ') -join "")')
+        $lines.Add('            $wintoolLine = ((& $tool -error $wintoolExit -shell bare' + $argText + ') -join "")')
+        $lines.Add('            if (-not [string]::IsNullOrWhiteSpace($wintoolLine)) { return $wintoolLine }')
         $lines.Add('        }')
         $lines.Add('    }')
         $lines.Add('    catch { $null = $_ }')

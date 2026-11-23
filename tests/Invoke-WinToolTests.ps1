@@ -1243,6 +1243,79 @@ Invoke-WinToolCase -Name "Generated PowerShell profiles never throw" -Body {
     }
 }
 
+Invoke-WinToolCase -Name "Profile init: empty output, dumb terminals, and script hosts" -Body {
+    # Stub oh-my-posh, starship, and zoxide on PATH. WINTOOL_STUB_MODE=empty
+    # makes them print nothing, the way oh-my-posh 33 does for TERM=dumb or a
+    # non-interactive host; "code" makes them print a line of PowerShell.
+    $hostPath = (Get-Process -Id $PID).Path
+    $work = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-stub-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $work -Force | Out-Null
+    try {
+        foreach ($tool in @("oh-my-posh", "starship", "zoxide")) {
+            if (Test-WinToolWindows) {
+                $stubText = "@echo off`r`necho %~n0>>""%WINTOOL_STUB_LOG%""`r`nif ""%WINTOOL_STUB_MODE%""==""code"" echo `$global:WinToolStubRan += 1`r`n"
+                [System.IO.File]::WriteAllText((Join-Path $work ($tool + ".cmd")), $stubText)
+            }
+            else {
+                $stubPath = Join-Path $work $tool
+                $stubText = "#!/bin/sh`necho ""`$(basename ""`$0"")"" >> ""`$WINTOOL_STUB_LOG""`nif [ ""`$WINTOOL_STUB_MODE"" = ""code"" ]; then echo '`$global:WinToolStubRan += 1'; fi`n"
+                [System.IO.File]::WriteAllText($stubPath, $stubText)
+                & chmod +x $stubPath
+            }
+        }
+        # A theme file, so Oh My Posh takes the --config branch.
+        [System.IO.File]::WriteAllText((Join-Path $work "jandedobbeleer.omp.json"), "{}")
+        $separator = [string][System.IO.Path]::PathSeparator
+        foreach ($promptId in @("oh-my-posh", "starship", "powerline-go")) {
+            $text = Get-WinToolPromptScript -PromptId $promptId -TerminalIcons $false -PromptStyle "jandedobbeleer" -PsReadLine $false -Zoxide $true
+            Test-WinToolExpectation -Condition ($text.Contains('IsNullOrWhiteSpace($wintoolInit)') -and $text.Contains('$wintoolInteractive')) -Message ("The " + $promptId + " profile should check the init output and the host.")
+            $profileFile = Join-Path $work ($promptId + ".ps1")
+            [System.IO.File]::WriteAllText($profileFile, $text)
+            foreach ($case in @(
+                    @{ Mode = "empty"; Term = "xterm-256color"; Ran = 0; Called = $true },
+                    @{ Mode = "code"; Term = "xterm-256color"; Ran = -1; Called = $true },
+                    @{ Mode = "code"; Term = "dumb"; Ran = 0; Called = $false })) {
+                $log = Join-Path $work ("calls-" + [guid]::NewGuid().ToString("N") + ".txt")
+                $setup = @(
+                    ('$env:PATH = "{0}" + $env:PATH' -f ($work + $separator)),
+                    ('$env:POSH_THEMES_PATH = "{0}"' -f $work),
+                    ('$env:TERM = "{0}"' -f $case.Term),
+                    ('$env:WINTOOL_STUB_MODE = "{0}"' -f $case.Mode),
+                    ('$env:WINTOOL_STUB_LOG = "{0}"' -f $log),
+                    '$global:WinToolStubRan = 0',
+                    '$Error.Clear()',
+                    ('. "{0}"' -f $profileFile),
+                    'foreach ($e in $Error) { "ERR: " + $e }',
+                    '"RAN=" + $global:WinToolStubRan',
+                    '"WINTOOL-OK"'
+                )
+                $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(($setup -join "`n")))
+                $output = & $hostPath -NoProfile -EncodedCommand $encoded 2>&1
+                $joined = (@($output) | ForEach-Object { [string]$_ }) -join "`n"
+                $label = $promptId + " with " + $case.Mode + " output and TERM=" + $case.Term
+                Test-WinToolExpectation -Condition ($joined.Contains("WINTOOL-OK") -and -not $joined.Contains("ERR:")) -Message ($label + " wrote errors: " + $joined)
+                $calls = @()
+                if (Test-Path -LiteralPath $log) { $calls = @(Get-Content -LiteralPath $log | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
+                $expected = @("zoxide")
+                if ($promptId -ne "powerline-go") { $expected += $promptId }
+                if ($case.Called) {
+                    foreach ($name in $expected) { Test-WinToolExpectation -Condition ($calls -contains $name) -Message ($label + ": " + $name + " init should run; calls: " + ($calls -join ",")) }
+                    if ($case.Ran -lt 0) { Test-WinToolExpectation -Condition ($joined.Contains("RAN=" + $expected.Count)) -Message ($label + ": the init output should run once per tool: " + $joined) }
+                    else { Test-WinToolExpectation -Condition ($joined.Contains("RAN=0")) -Message ($label + ": empty init output should run nothing: " + $joined) }
+                }
+                else {
+                    Test-WinToolExpectation -Condition ($calls.Count -eq 0 -and $joined.Contains("RAN=0")) -Message ($label + ": TERM=dumb should skip every init; calls: " + ($calls -join ","))
+                }
+            }
+        }
+        $text = Get-WinToolPromptScript -PromptId "oh-my-posh" -TerminalIcons $false -PromptStyle "jandedobbeleer" -PsReadLine $false -Zoxide $true
+        Test-WinToolExpectation -Condition ($text.Contains('@("ConsoleHost", "Visual Studio Code Host") -contains [string]$Host.Name') -and $text.Contains('[Environment]::UserInteractive')) -Message "The profile skips init in script hosts and non-interactive sessions."
+    }
+    finally {
+        Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
 Invoke-WinToolCase -Name "WSL shell setup for an existing distro" -Body {
     $plan = @(Get-WinToolWslShellPlan -Distro "Ubuntu")
     Test-WinToolExpectation -Condition ((@($plan | ForEach-Object { $_.Type }) -join ",") -eq "wsl-shell,wsl-profile") -Message "The WSL-only plan does not reinstall the distro."
