@@ -432,21 +432,43 @@ $window.FindName("TerminalModeAdvanced").IsChecked = $true
 # Back to the recommended choices (the event test above clicked others) and
 # the log folded, as a person opening the tab would see it.
 $script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
+(Get-WinToolUi -Name "TerminalFontSearch").Text = ""
+(Get-WinToolUi -Name "TerminalThemeSearch").Text = ""
+$script:WinToolTerminalChoice = Get-WinToolSimpleTerminalChoice
 Update-WinToolPromptSelection
 Update-WinToolSchemeSelection
-Update-WinToolPromptStyleList
 Update-WinToolFontList
+Update-WinToolPromptStyleList
 Update-WinToolTerminalSummary
+# Let the theme download for the preview finish (or give up) so the shot
+# shows the real colors; the window never waits for it.
+$previewWait = [datetime]::UtcNow.AddSeconds(20)
+while ($null -ne $script:WinToolState.PreviewJob -and [datetime]::UtcNow -lt $previewWait) {
+    if ($script:WinToolState.PreviewJob.Job.Sync.Done) { Complete-WinToolPreviewThemeDownload; break }
+    Start-Sleep -Milliseconds 200
+}
+Update-WinToolTerminalPreview
+if ([string]$window.FindName("TerminalFontList").SelectedItem.Tag -ne "cascadiacode-nf") {
+    throw "The recommended font should be selected in the font list."
+}
+if ([string]$window.FindName("TerminalStyleList").SelectedItem.Tag -ne "jandedobbeleer") {
+    throw "The recommended theme should be selected in the theme list."
+}
+if ($window.FindName("TerminalFontSample").Inlines.Count -lt 3) {
+    throw "The Terminal preview did not draw the prompt line."
+}
 $script:WinToolState.LogExpanded = $false
 $script:WinToolState.Busy = $false
 Sync-WinToolLogPanel
 $rootVisual = $window.Content
-foreach ($size in @(@(1280, 900, "wide"), @(1000, 1300, "narrow"))) {
+foreach ($size in @(@(1280, 760, "mockup"), @(1280, 900, "wide"), @(1000, 1300, "narrow"))) {
     $shotWidth = [double]$size[0]
     $shotHeight = [double]$size[1]
-    Update-WinToolTerminalLayout -Width ($shotWidth - 248 - 48)
+    Update-WinToolTerminalLayout -Width ($shotWidth - 248 - 40)
     $rootVisual.Measure([System.Windows.Size]::new($shotWidth, $shotHeight))
     $rootVisual.Arrange([System.Windows.Rect]::new(0, 0, $shotWidth, $shotHeight))
+    $rootVisual.UpdateLayout()
+    Show-WinToolTerminalSelection
     $rootVisual.UpdateLayout()
     $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]$shotWidth, [int]$shotHeight, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
     # The window background is not part of its content, so paint it first.

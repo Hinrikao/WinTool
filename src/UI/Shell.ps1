@@ -441,6 +441,15 @@ function Update-WinToolLogPump {
     if ($null -ne $install -and $install.Sync.Done) {
         Complete-WinToolUpdateInstall
     }
+
+    if ($script:WinToolTerminalScrollPending -and (Get-WinToolUi -Name "ViewTerminal").IsVisible) {
+        Show-WinToolTerminalSelection
+    }
+
+    $preview = $script:WinToolState.PreviewJob
+    if ($null -ne $preview -and $preview.Job.Sync.Done) {
+        Complete-WinToolPreviewThemeDownload
+    }
 }
 
 function Initialize-WinToolShellEvent {
@@ -538,6 +547,7 @@ function New-WinToolWindow {
         UpdateJob = $null
         InstallJob = $null
         DetectJob = $null
+        PreviewJob = $null
         BusyControls = $null
         FeatureJob = $null
         FeatureRows = @()

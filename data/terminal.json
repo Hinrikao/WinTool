@@ -92,6 +92,148 @@
     {"id": "zoxide", "name": "zoxide", "description": "Jump to folders you use often. The command is z.", "kind": "winget", "wingetId": "ajeetdsouza.zoxide"},
     {"id": "fzf", "name": "fzf", "description": "Fuzzy find files and history from the keyboard.", "kind": "winget", "wingetId": "junegunn.fzf"}
   ],
+  "previews": {
+    "powerlevel10k": [
+      {
+        "text": " ~/src ",
+        "fg": "#FFFFFF",
+        "bg": "#0087AF"
+      },
+      {
+        "text": " main ",
+        "fg": "#000000",
+        "bg": "#5FAF00"
+      },
+      {
+        "text": " \u276f",
+        "fg": "#5FD700"
+      }
+    ],
+    "pure": [
+      {
+        "text": "~/src",
+        "fg": "#6C9BFF"
+      },
+      {
+        "text": " main",
+        "fg": "#8B94A7"
+      },
+      {
+        "text": " \u276f",
+        "fg": "#C678DD"
+      }
+    ],
+    "spaceship": [
+      {
+        "text": "~/src",
+        "fg": "#56B6C2"
+      },
+      {
+        "text": " on ",
+        "fg": "#E8EDF7"
+      },
+      {
+        "text": "main",
+        "fg": "#C678DD"
+      },
+      {
+        "text": " \u279c",
+        "fg": "#98C379"
+      }
+    ],
+    "tide": [
+      {
+        "text": " ~/src ",
+        "fg": "#5FAFFF",
+        "bg": "#303030"
+      },
+      {
+        "text": " main ",
+        "fg": "#5FD700",
+        "bg": "#303030"
+      },
+      {
+        "text": " \u276f",
+        "fg": "#5FD700"
+      }
+    ],
+    "powerline-go": [
+      {
+        "text": " ~ ",
+        "fg": "#FFFFFF",
+        "bg": "#0087AF"
+      },
+      {
+        "text": " src ",
+        "fg": "#D0D0D0",
+        "bg": "#444444"
+      },
+      {
+        "text": " main ",
+        "fg": "#000000",
+        "bg": "#87AF00"
+      },
+      {
+        "text": " $",
+        "fg": "#E8EDF7"
+      }
+    ],
+    "oh-my-zsh:agnoster": [
+      {
+        "text": " henrique@pc ",
+        "fg": "#FFFFFF",
+        "bg": "#000000"
+      },
+      {
+        "text": " ~/src ",
+        "fg": "#000000",
+        "bg": "#3B78FF"
+      },
+      {
+        "text": " main ",
+        "fg": "#000000",
+        "bg": "#13A10E"
+      }
+    ],
+    "oh-my-zsh": [
+      {
+        "text": "\u279c  ",
+        "fg": "#13A10E"
+      },
+      {
+        "text": "src ",
+        "fg": "#3A96DD"
+      },
+      {
+        "text": "git:(",
+        "fg": "#3B78FF"
+      },
+      {
+        "text": "main",
+        "fg": "#C50F1F"
+      },
+      {
+        "text": ")",
+        "fg": "#3B78FF"
+      }
+    ],
+    "oh-my-posh": [
+      {
+        "text": " ~/src ",
+        "fg": "#FFFFFF",
+        "bg": "#3B78FF"
+      },
+      {
+        "text": " main ",
+        "fg": "#1B2230",
+        "bg": "#FFD866"
+      },
+      {
+        "text": " \u276f",
+        "fg": "#6C9BFF"
+      }
+    ]
+  },
   "schemes": [
     {"id": "wintool-night", "name": "Night", "background": "#1B2230", "foreground": "#E8EDF7", "cursor": "#6C9BFF", "selection": "#2A3A5C", "palette": {"black": "#2A3242", "red": "#F07178", "green": "#A6DA95", "yellow": "#EED49F", "blue": "#6C9BFF", "purple": "#C6A0F6", "cyan": "#7DCFDA", "white": "#C8D0E0", "brightBlack": "#5B6680", "brightRed": "#FF8F95", "brightGreen": "#B8E8A8", "brightYellow": "#F5E0B0", "brightBlue": "#8CB4FF", "brightPurple": "#D7B8FA", "brightCyan": "#9EE3EC", "brightWhite": "#F4F7FC"}},
     {"id": "wintool-paper", "name": "Paper", "background": "#F7F4EC", "foreground": "#2B261C", "cursor": "#A87412", "selection": "#E7D7B0", "palette": {"black": "#2B261C", "red": "#B3261E", "green": "#3B7A2A", "yellow": "#8A6500", "blue": "#2F5DA8", "purple": "#7A3E9D", "cyan": "#1F7A7A", "white": "#D8D2C4", "brightBlack": "#6B6354", "brightRed": "#D2453C", "brightGreen": "#4E9A3A", "brightYellow": "#A87412", "brightBlue": "#4776C4", "brightPurple": "#9558B8", "brightCyan": "#2E9494", "brightWhite": "#FFFDF7"}},

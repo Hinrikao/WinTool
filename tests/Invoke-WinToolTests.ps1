@@ -926,6 +926,34 @@ Invoke-WinToolCase -Name "Color schemes carry all 16 colors" -Body {
     Test-WinToolExpectation -Condition (@($settings.schemes).Count -eq 1) -Message "Running the scheme step twice keeps one copy."
 }
 
+Invoke-WinToolCase -Name "Prompt preview follows the theme colors" -Body {
+    $json = '{"palette":{"blue":"#3B78FF"},"blocks":[{"type":"prompt","alignment":"left","segments":[{"type":"session","style":"diamond","leading_diamond":"<","trailing_diamond":">","foreground":"#ffffff","background":"#c386f1"},{"type":"path","style":"powerline","powerline_symbol":"X","foreground":"#100e23","background":"p:blue"},{"type":"git","style":"powerline","powerline_symbol":"X","foreground":"#193549","background":"#95ffa4"},{"type":"text","style":"plain","foreground":"red","template":"{{ .Var }}"},{"type":"text","style":"plain","foreground":"#abc","template":" $ "}]},{"type":"prompt","alignment":"right","segments":[{"type":"time","style":"plain"}]}]}'
+    $theme = ConvertFrom-WinToolJsonText -Text $json
+    $segments = @(Get-WinToolOmpPreviewSegment -Theme $theme)
+    $texts = ($segments | ForEach-Object { [string]$_.Text }) -join "|"
+    Test-WinToolExpectation -Condition ($texts -eq "<| henrique |>| ~/src |X| main |X|$ ") -Message ("Unexpected preview segments: " + $texts)
+    Test-WinToolExpectation -Condition ($segments[3].Background -eq "#3B78FF" -and $segments[3].Foreground -eq "#100E23") -Message "Palette colors are resolved."
+    Test-WinToolExpectation -Condition ($segments[4].Foreground -eq "#3B78FF" -and $segments[4].Background -eq "#95FFA4") -Message "A powerline arrow takes the next segment background."
+    Test-WinToolExpectation -Condition ($segments[6].Foreground -eq "#95FFA4" -and $null -eq $segments[6].Background) -Message "The last arrow ends on the terminal background."
+    Test-WinToolExpectation -Condition ($segments[7].Foreground -eq "#AABBCC" -and $null -eq $segments[7].Background) -Message "Plain segments have no background."
+}
+
+Invoke-WinToolCase -Name "Every prompt has a preview" -Body {
+    $catalog = Get-WinToolTerminalCatalog
+    foreach ($prompt in @(Get-WinToolNote -Object $catalog -Name "prompts" -Default @())) {
+        $segments = @(Get-WinToolPromptPreview -PromptId ([string]$prompt.id) -PromptStyle "" -Theme $null)
+        Test-WinToolExpectation -Condition ($segments.Count -gt 0) -Message ("No preview for " + [string]$prompt.id)
+    }
+    foreach ($preset in @(Get-WinToolNote -Object $catalog -Name "starshipPresets" -Default @())) {
+        $segments = @(Get-WinToolPromptPreview -PromptId "starship" -PromptStyle ([string]$preset.id) -Theme $null)
+        Test-WinToolExpectation -Condition ($segments.Count -gt 0 -and $null -ne $segments[0].Foreground) -Message ("No preview for the Starship preset " + [string]$preset.id)
+    }
+    $agnoster = @(Get-WinToolPromptPreview -PromptId "oh-my-zsh" -PromptStyle "agnoster" -Theme $null)
+    Test-WinToolExpectation -Condition ($null -ne $agnoster[0].Background) -Message "agnoster has a powerline preview."
+    Test-WinToolExpectation -Condition ((Get-WinToolOmpThemeFileName -ThemeId "atomic" -Themes @()) -eq "atomic.omp.json") -Message "Theme file names default to <id>.omp.json."
+    Test-WinToolExpectation -Condition ($null -eq (ConvertTo-WinToolPreviewColor -Value "transparent" -Palette $null)) -Message "Unknown colors are ignored."
+}
+
 Invoke-WinToolCase -Name "Generated PowerShell profiles never throw" -Body {
     $catalog = Get-WinToolTerminalCatalog
     $hostPath = (Get-Process -Id $PID).Path

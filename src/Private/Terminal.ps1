@@ -863,3 +863,198 @@ function Get-WinToolTerminalPlan {
     }
     return $steps.ToArray()
 }
+
+# Prompt preview: a list of colored segments that approximates what the
+# chosen prompt and theme look like. Oh My Posh themes are read from their
+# JSON (palette, segment colors, powerline or diamond style); other prompts
+# use the small samples in terminal.json "previews".
+$script:WinToolPreviewNamedColor = @{
+    black = "#0C0C0C"; red = "#C50F1F"; green = "#13A10E"; yellow = "#C19C00"; blue = "#0037DA"; magenta = "#881798"; cyan = "#3A96DD"; white = "#CCCCCC"
+    darkGray = "#767676"; lightBlack = "#767676"; lightRed = "#E74856"; lightGreen = "#16C60C"; lightYellow = "#F9F1A5"; lightBlue = "#3B78FF"; lightMagenta = "#B4009E"; lightCyan = "#61D6D6"; lightWhite = "#F2F2F2"
+}
+
+$script:WinToolPreviewSampleText = @{
+    path = "~/src"; git = "main"; session = "henrique"; time = "23:14"; executiontime = "12ms"
+    node = "20.11"; python = "3.12"; go = "1.22"; dotnet = "8.0"; rust = "1.79"; java = "21"
+    shell = "pwsh"; battery = "87%"; az = "dev"; aws = "dev"; kubectl = "dev"; docker = "dev"
+}
+
+function ConvertTo-WinToolPreviewColor {
+    param(
+        [AllowEmptyString()][string]$Value,
+        $Palette
+    )
+    $text = [string]$Value
+    for ($depth = 0; $depth -lt 3 -and $text.StartsWith("p:"); $depth++) {
+        $text = [string](Get-WinToolNote -Object $Palette -Name $text.Substring(2) -Default "")
+    }
+    if ($text -match '^#([0-9A-Fa-f]{6})([0-9A-Fa-f]{2})?$') {
+        return ("#" + $Matches[1].ToUpperInvariant())
+    }
+    if ($text -match '^#([0-9A-Fa-f])([0-9A-Fa-f])([0-9A-Fa-f])$') {
+        return ("#" + $Matches[1] + $Matches[1] + $Matches[2] + $Matches[2] + $Matches[3] + $Matches[3]).ToUpperInvariant()
+    }
+    if ($script:WinToolPreviewNamedColor.ContainsKey($text)) {
+        return $script:WinToolPreviewNamedColor[$text]
+    }
+    return $null
+}
+
+function New-WinToolPreviewSegment {
+    param(
+        [AllowEmptyString()][string]$Text,
+        [string]$Foreground,
+        [string]$Background
+    )
+    $fg = $null
+    $bg = $null
+    if (-not [string]::IsNullOrWhiteSpace($Foreground)) { $fg = $Foreground }
+    if (-not [string]::IsNullOrWhiteSpace($Background)) { $bg = $Background }
+    return [pscustomobject]@{ Text = $Text; Foreground = $fg; Background = $bg }
+}
+
+function Get-WinToolOmpPreviewSegment {
+    param(
+        [Parameter(Mandatory = $true)]$Theme
+    )
+    $palette = Get-WinToolNote -Object $Theme -Name "palette"
+    $parts = New-Object System.Collections.Generic.List[object]
+    foreach ($block in @(Get-WinToolNote -Object $Theme -Name "blocks" -Default @())) {
+        if ([string](Get-WinToolNote -Object $block -Name "type" -Default "prompt") -ne "prompt") { continue }
+        if ([string](Get-WinToolNote -Object $block -Name "alignment" -Default "left") -eq "right") { continue }
+        foreach ($segment in @(Get-WinToolNote -Object $block -Name "segments" -Default @())) {
+            if ($parts.Count -ge 6) { break }
+            $type = [string](Get-WinToolNote -Object $segment -Name "type" -Default "")
+            $text = ""
+            if ($script:WinToolPreviewSampleText.ContainsKey($type)) {
+                $text = [string]$script:WinToolPreviewSampleText[$type]
+            }
+            elseif ($type -eq "text") {
+                $template = [string](Get-WinToolNote -Object $segment -Name "template" -Default "")
+                if (-not $template.Contains("{{")) { $text = $template.Trim() }
+            }
+            if ([string]::IsNullOrWhiteSpace($text)) { continue }
+            $style = [string](Get-WinToolNote -Object $segment -Name "style" -Default "plain")
+            $background = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $segment -Name "background" -Default "")) -Palette $palette
+            $foreground = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $segment -Name "foreground" -Default "")) -Palette $palette
+            if ($style -eq "plain") { $background = $null }
+            $parts.Add([pscustomobject]@{
+                Text = $text
+                Foreground = $foreground
+                Background = $background
+                Style = $style
+                Symbol = [string](Get-WinToolNote -Object $segment -Name "powerline_symbol" -Default ([string][char]0xE0B0))
+                Leading = [string](Get-WinToolNote -Object $segment -Name "leading_diamond" -Default "")
+                Trailing = [string](Get-WinToolNote -Object $segment -Name "trailing_diamond" -Default "")
+            })
+        }
+        if ($parts.Count -gt 0) { break }
+    }
+    $result = New-Object System.Collections.Generic.List[object]
+    for ($index = 0; $index -lt $parts.Count; $index++) {
+        $part = $parts[$index]
+        $nextBackground = $null
+        if ($index + 1 -lt $parts.Count) { $nextBackground = $parts[$index + 1].Background }
+        if ($null -eq $part.Background) {
+            $result.Add((New-WinToolPreviewSegment -Text ($part.Text + " ") -Foreground $part.Foreground))
+            continue
+        }
+        if ($part.Style -eq "diamond" -and -not [string]::IsNullOrEmpty($part.Leading)) {
+            $result.Add((New-WinToolPreviewSegment -Text $part.Leading -Foreground $part.Background))
+        }
+        $result.Add((New-WinToolPreviewSegment -Text (" " + $part.Text + " ") -Foreground $part.Foreground -Background $part.Background))
+        if ($part.Style -eq "powerline") {
+            $result.Add((New-WinToolPreviewSegment -Text $part.Symbol -Foreground $part.Background -Background $nextBackground))
+        }
+        elseif ($part.Style -eq "diamond" -and -not [string]::IsNullOrEmpty($part.Trailing)) {
+            $result.Add((New-WinToolPreviewSegment -Text $part.Trailing -Foreground $part.Background))
+        }
+    }
+    return $result.ToArray()
+}
+
+function Get-WinToolPromptPreview {
+    param(
+        [string]$PromptId,
+        [string]$PromptStyle,
+        $Theme
+    )
+    $catalog = Get-WinToolTerminalCatalog
+    $previews = Get-WinToolNote -Object $catalog -Name "previews"
+    if ($PromptId -eq "oh-my-posh" -and $null -ne $Theme) {
+        $segments = @(Get-WinToolOmpPreviewSegment -Theme $Theme)
+        if ($segments.Count -gt 0) {
+            return $segments
+        }
+    }
+    if ($PromptId -eq "starship") {
+        foreach ($preset in @(Get-WinToolNote -Object $catalog -Name "starshipPresets" -Default @())) {
+            if ([string]$preset.id -ne $PromptStyle) { continue }
+            $list = New-Object System.Collections.Generic.List[object]
+            foreach ($item in @(Get-WinToolNote -Object $preset -Name "preview" -Default @())) {
+                $list.Add((New-WinToolPreviewSegment -Text ([string]$item.text) -Foreground ([string](Get-WinToolNote -Object $item -Name "color" -Default ""))))
+            }
+            if ($list.Count -gt 0) {
+                return $list.ToArray()
+            }
+        }
+    }
+    $key = $PromptId
+    if ($PromptId -eq "oh-my-zsh" -and $null -ne $previews -and $null -ne $previews.PSObject.Properties[("oh-my-zsh:" + $PromptStyle)]) {
+        $key = "oh-my-zsh:" + $PromptStyle
+    }
+    $sample = @(Get-WinToolNote -Object $previews -Name $key -Default @())
+    if ($sample.Count -eq 0) {
+        $sample = @(Get-WinToolNote -Object $previews -Name "oh-my-posh" -Default @())
+    }
+    $out = New-Object System.Collections.Generic.List[object]
+    foreach ($item in $sample) {
+        $out.Add((New-WinToolPreviewSegment -Text ([string]$item.text) -Foreground ([string](Get-WinToolNote -Object $item -Name "fg" -Default "")) -Background ([string](Get-WinToolNote -Object $item -Name "bg" -Default ""))))
+    }
+    return $out.ToArray()
+}
+
+function Get-WinToolOmpThemeFileName {
+    param(
+        [AllowEmptyString()][string]$ThemeId,
+        [object[]]$Themes
+    )
+    foreach ($theme in @($Themes)) {
+        if ($null -ne $theme -and [string]$theme.id -eq $ThemeId) {
+            $file = [string](Get-WinToolNote -Object $theme -Name "file" -Default "")
+            if (-not [string]::IsNullOrWhiteSpace($file)) { return $file }
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($ThemeId)) {
+        return "jandedobbeleer.omp.json"
+    }
+    return (Get-WinToolOhMyPoshThemeFile -PromptStyle $ThemeId)
+}
+
+function Read-WinToolCachedOmpTheme {
+    param(
+        [Parameter(Mandatory = $true)][string]$File
+    )
+    # Memory first, then the copy under %LOCALAPPDATA%\WinTool\themes.
+    if ($null -eq $script:WinToolOmpThemeCache) {
+        $script:WinToolOmpThemeCache = @{}
+    }
+    if ($script:WinToolOmpThemeCache.ContainsKey($File)) {
+        return $script:WinToolOmpThemeCache[$File]
+    }
+    if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA) -or $File -notmatch '^[A-Za-z0-9._-]+$') {
+        return $null
+    }
+    $path = Join-Path $env:LOCALAPPDATA ("WinTool\themes\" + $File)
+    if (-not (Test-Path -LiteralPath $path)) {
+        return $null
+    }
+    try {
+        $theme = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($path))
+        $script:WinToolOmpThemeCache[$File] = $theme
+        return $theme
+    }
+    catch {
+        return $null
+    }
+}
