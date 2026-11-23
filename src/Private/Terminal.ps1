@@ -76,8 +76,10 @@ function Get-WinToolPromptScript {
     if ($PsReadLine) {
         # Windows PowerShell 5.1 ships PSReadLine 2.0, which has neither
         # option. PredictionSource came in 2.1 and PredictionViewStyle in 2.2.
+        # Predictions also refuse to start when output is redirected.
         $lines.Add('try {')
-        $lines.Add('    $wintoolReadLine = Get-Command -Name Set-PSReadLineOption -ErrorAction Ignore')
+        $lines.Add('    $wintoolReadLine = $null')
+        $lines.Add('    if (-not [Console]::IsOutputRedirected) { $wintoolReadLine = Get-Command -Name Set-PSReadLineOption -ErrorAction Ignore }')
         $lines.Add('    if ($null -ne $wintoolReadLine -and $wintoolReadLine.Parameters.ContainsKey("PredictionSource")) {')
         $lines.Add('        Set-PSReadLineOption -PredictionSource History -ErrorAction Stop -WarningAction SilentlyContinue')
         $lines.Add('    }')
