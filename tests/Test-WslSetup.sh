@@ -64,4 +64,15 @@ grep -q '^SETUVAR tide_pwd_bg_color:303030$' "${vars}" || fail "Tide is not on t
 run tide rainbow-16color | tee /tmp/tide2.log
 grep -q '^SETUVAR tide_pwd_bg_color:blue$' "${vars}" || fail "Tide is not on the Rainbow (16 colors) style"
 
+# A distro user with a pre-existing minimal ~/.zshrc (no oh-my-zsh.sh line yet)
+# still gets Oh My Zsh and ZSH_THEME wired up while keeping custom lines.
+printf '# custom user alias\nalias ll="ls -la"\n' > /home/ubuntu/.zshrc
+chown ubuntu: /home/ubuntu/.zshrc
+run spaceship single-line "" "SPACESHIP_PROMPT_SEPARATE_LINE=false" | tee /tmp/minimal-zshrc.log
+grep -q 'source "\$ZSH/oh-my-zsh.sh"' /home/ubuntu/.zshrc || fail "minimal ~/.zshrc did not get oh-my-zsh.sh sourced"
+grep -q '^ZSH_THEME="spaceship"' /home/ubuntu/.zshrc || fail "minimal ~/.zshrc did not get ZSH_THEME=spaceship"
+grep -q 'alias ll="ls -la"' /home/ubuntu/.zshrc || fail "minimal ~/.zshrc lost existing user content"
+run spaceship single-line "" "SPACESHIP_PROMPT_SEPARATE_LINE=false" | tee /tmp/minimal-zshrc-2.log
+grep -q "already up to date" /tmp/minimal-zshrc-2.log || fail "minimal ~/.zshrc was not idempotent on second run"
+
 echo "WSL setup script passed."

@@ -1126,6 +1126,11 @@ foreach ($size in @(@(1280, 800), @(1920, 1080), @(1024, 640))) {
     Compare-WinToolHomeBound -Before $analyzing -After $fixing -Label ("fixing at " + $size[0])
     Complete-WinToolHomeCheck -Id "junk" -Data @([pscustomobject]@{ Name = "Temp"; Bytes = [double]0 })
     if ($script:WinToolState.Home.Phase -ne "done" -or [string]$window.FindName("HomeScore").Text -ne "84") { throw ("After the junk fix the score should be 84, got " + $window.FindName("HomeScore").Text) }
+    if (-not ([string]$window.FindName("HomeMetaText").Text).Contains("Score 84")) { throw ("HomeMetaText should sync to Score 84 after fixing, got " + [string]$window.FindName("HomeMetaText").Text) }
+    if ([string]$script:WinToolState.Home.Minis["pc"].TagText.Text -ne "Healthy") { throw ("This PC should show Healthy when drivers and disk are ok, got " + [string]$script:WinToolState.Home.Minis["pc"].TagText.Text) }
+    Complete-WinToolHomeCheck -Id "drivers" -Data @([pscustomobject]@{ Name = "USB Serial"; Class = "Ports"; Status = "Error"; Problem = 28 })
+    if ([string]$script:WinToolState.Home.Minis["pc"].TagText.Text -ne "Driver issue") { throw ("This PC should show 'Driver issue' when a driver fails, got " + [string]$script:WinToolState.Home.Minis["pc"].TagText.Text) }
+    Complete-WinToolHomeCheck -Id "drivers" -Data @()
     # The page fills the width: the hero and the cards end at the same right edge.
     $hero = $window.FindName("HomeHero")
     $right = $hero.TranslatePoint([System.Windows.Point]::new($hero.ActualWidth, 0), $rootVisual).X
@@ -1170,6 +1175,42 @@ if ($uiErrors.Count -gt 0) {
     throw "$($uiErrors.Count) UI handler(s) failed."
 }
 Write-Output "Raised $raised UI events without errors."
+
+# Verify Appearance controls are absent, Config ComboBoxes use the dark 34 px style,
+# ProfileSummary names every prompt engine accurately, and LogPanel clearance keeps top cards still.
+if ($null -ne $window.FindName("ThemePicker") -or $null -ne $window.FindName("AccentSwatches")) {
+    throw "Appearance controls should be removed from MainWindow.xaml."
+}
+$window.FindName("NavConfig").IsChecked = $true
+$script:WinToolTerminalChoice.prompt = "powerlevel10k"
+Update-WinToolProfileSummary
+if (-not ([string]$window.FindName("ProfileSummary").Text).Contains("Prompt: Powerlevel10k.")) {
+    throw ("Config ProfileSummary should name Powerlevel10k, got: " + [string]$window.FindName("ProfileSummary").Text)
+}
+$script:WinToolTerminalChoice.prompt = "oh-my-posh"
+Update-WinToolProfileSummary
+if ($window.FindName("DnsAdapter").Height -ne 34 -or $window.FindName("DnsProvider").Height -ne 34) {
+    throw "Config DNS ComboBoxes should be 34 px tall."
+}
+Save-WinToolViewShot -Name "config-1280" -Width 1280 -Height 760
+$configFirstCard = $window.FindName("ConfigBody").Children[2]
+$cardBefore = $configFirstCard.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+$script:WinToolState.LogExpanded = $true
+Sync-WinToolLogPanel
+Save-WinToolViewShot -Name "config-log-open" -Width 1280 -Height 760
+$cardAfter = $configFirstCard.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+if ([Math]::Abs($cardAfter.Y - $cardBefore.Y) -gt 0.5 -or $window.FindName("ConfigBody").Margin.Bottom -lt 180) {
+    throw "Opening LogPanel on Config should keep cards in place while adding bottom scroll clearance."
+}
+$script:WinToolState.LogExpanded = $false
+Sync-WinToolLogPanel
+$window.FindName("NavUpdates").IsChecked = $true
+Save-WinToolViewShot -Name "updates-1280" -Width 1280 -Height 760
+$window.FindName("NavFixes").IsChecked = $true
+Save-WinToolViewShot -Name "fixes-1280" -Width 1280 -Height 760
+$window.FindName("NavFeatures").IsChecked = $true
+Save-WinToolViewShot -Name "features-1280" -Width 1280 -Height 760
+$window.FindName("NavHome").IsChecked = $true
 
 if (-not (Initialize-WinToolConsoleApi)) {
     throw "The console helper did not compile on Windows PowerShell."

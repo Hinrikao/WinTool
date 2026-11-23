@@ -173,19 +173,10 @@ Invoke-WinToolCase -Name "Terminal plan, font face, and profile block" -Body {
     $simplePlan = @(Get-WinToolTerminalPlan -Selection $simple)
     $simpleLabels = @($simplePlan | ForEach-Object { $_.Label }) -join " "
     Test-WinToolExpectation -Condition ($simpleLabels.Contains("Oh My Posh") -and $simpleLabels.Contains("PowerShell 7")) -Message "Simple mode installs the recommended prompt."
-    $dark = Resolve-WinToolAppearance -Theme "dark" -Accent "teal" -SystemIsLight $true
-    $light = Resolve-WinToolAppearance -Theme "system" -Accent "blue" -SystemIsLight $true
-    Test-WinToolExpectation -Condition ($dark.Resolved -eq "dark" -and $dark.Brushes["BrushAccent"] -eq "#3DCEB5") -Message "Dark theme keeps the chosen accent."
-    Test-WinToolExpectation -Condition ($light.Resolved -eq "light" -and $light.Brushes["BrushCanvas"] -eq "#F3F5F9") -Message "System theme follows a light Windows setting."
-    $settingsPath = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-settings-" + [guid]::NewGuid().ToString() + ".json")
-    try {
-        Save-WinToolSetting -Setting ([pscustomobject]@{ theme = "system"; accent = "rose" }) -Path $settingsPath
-        $loadedSetting = Read-WinToolSetting -Path $settingsPath
-        Test-WinToolExpectation -Condition ($loadedSetting.theme -eq "system" -and $loadedSetting.accent -eq "rose") -Message "Appearance settings round-trip."
-    }
-    finally {
-        Remove-Item -LiteralPath $settingsPath -Force -ErrorAction SilentlyContinue
-    }
+    $palette = Get-WinToolPalette
+    Test-WinToolExpectation -Condition ($palette["BrushCanvas"] -eq "#1B2230" -and $palette["BrushAccent"] -eq "#6C9BFF" -and $palette["BrushBad"] -eq "#F07178") -Message "The fixed dark palette carries the canvas, accent, and alert colors."
+    $xamlText = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "assets/MainWindow.xaml"))
+    Test-WinToolExpectation -Condition ($xamlText -notmatch 'x:Name="ThemePicker"' -and $xamlText -notmatch 'x:Name="AccentSwatches"') -Message "Sidebar appearance controls are removed from the window markup."
 }
 
 Invoke-WinToolCase -Name "Search and GPU vendor matching" -Body {
@@ -1648,6 +1639,114 @@ Invoke-WinToolCase -Name "Home page follows the text standard and fixed slots" -
     $view = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/HomeView.ps1"))
     Test-WinToolExpectation -Condition ($view -notmatch 'FontSize\s*=') -Message "Home code does not set font sizes."
     Test-WinToolExpectation -Condition ($view -match '\$button\.Visibility = "Hidden"') -Message "Home rows hide buttons with Hidden so their slot stays."
+}
+
+Invoke-WinToolCase -Name "Driver codes, Home history sync, profile BOM, non-zero init guard, and PS 5.1 fixes" -Body {
+    $disabledOnly = ConvertTo-WinToolHomeResult -Id "drivers" -Data @(
+        [pscustomobject]@{ Name = "Disabled Camera"; Class = "Camera"; Status = "Error"; Problem = 22 },
+        [pscustomobject]@{ Name = "Unplugged USB"; Class = "USB"; Status = "Unknown"; Problem = 45 }
+    )
+    Test-WinToolExpectation -Condition ($disabledOnly.Status -eq "ok" -and $disabledOnly.Text -eq "No device with problems") -Message "Disabled (22) and disconnected (45) devices should not warn."
+
+    $missingDriver = ConvertTo-WinToolHomeResult -Id "drivers" -Data @(
+        [pscustomobject]@{ Name = ""; InstanceId = "PCI\VEN_10DE"; Class = "Display"; Status = "Error"; Problem = 28 }
+    )
+    Test-WinToolExpectation -Condition ($missingDriver.Status -eq "bad" -and $missingDriver.Detail[0].Contains("PCI\VEN_10DE") -and $missingDriver.Detail[0].Contains("driver not installed (code 28)")) -Message ("Driver details should explain code 28 and fall back to InstanceId: " + ($missingDriver.Detail -join "; "))
+
+    $folder = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-sync-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $folder -Force | Out-Null
+    try {
+        $historyFile = Join-Path $folder "home-history.json"
+        Add-WinToolHomeHistory -Time ([datetime]::UtcNow) -Score 72 -Seconds 15 -Path $historyFile
+        Set-WinToolHomeLatestHistory -Score 88 -Path $historyFile
+        $entries = @(Read-WinToolHomeHistory -Path $historyFile)
+        Test-WinToolExpectation -Condition ($entries.Count -eq 1 -and [int]$entries[0].Score -eq 88) -Message "Set-WinToolHomeLatestHistory should update the latest saved score in place."
+
+        $bomFile = Join-Path $folder "with-bom.ps1"
+        $plainFile = Join-Path $folder "no-bom.json"
+        Write-WinToolUtf8File -Path $bomFile -Text "Write-Output 'ok'" -Bom
+        Write-WinToolUtf8File -Path $plainFile -Text "{}"
+        $bomBytes = [System.IO.File]::ReadAllBytes($bomFile)
+        $plainBytes = [System.IO.File]::ReadAllBytes($plainFile)
+        Test-WinToolExpectation -Condition ($bomBytes[0] -eq 0xEF -and $bomBytes[1] -eq 0xBB -and $bomBytes[2] -eq 0xBF) -Message "Write-WinToolUtf8File -Bom should write a UTF-8 BOM for Windows PowerShell 5.1."
+        Test-WinToolExpectation -Condition ($plainBytes[0] -ne 0xEF) -Message "Write-WinToolUtf8File without -Bom should write UTF-8 without BOM."
+
+        $settingsFile = Join-Path $folder "settings.json"
+        Write-WinToolUtf8File -Path $settingsFile -Text '{"orig":1}'
+        Backup-WinToolTerminalSetting -Path $settingsFile
+        Write-WinToolUtf8File -Path $settingsFile -Text '{"orig":2}'
+        Backup-WinToolTerminalSetting -Path $settingsFile
+        $backupText = [System.IO.File]::ReadAllText(($settingsFile + ".wintool-backup"))
+        Test-WinToolExpectation -Condition ($backupText -eq '{"orig":1}') -Message "Backup-WinToolTerminalSetting keeps the original settings.json backup."
+
+        # Junk collector skips locked files and symlinks, and clean measures actual freed bytes.
+        $junkRoot = Join-Path $folder "junk"
+        $outside = Join-Path $folder "outside"
+        New-Item -ItemType Directory -Path $junkRoot, $outside -Force | Out-Null
+        $outsideFile = Join-Path $outside "keep.txt"
+        [System.IO.File]::WriteAllBytes($outsideFile, (New-Object byte[] 2048))
+        [System.IO.File]::SetLastWriteTime($outsideFile, (Get-Date).AddDays(-5))
+        $deletableFile = Join-Path $junkRoot "old.tmp"
+        [System.IO.File]::WriteAllBytes($deletableFile, (New-Object byte[] 4096))
+        [System.IO.File]::SetLastWriteTime($deletableFile, (Get-Date).AddDays(-5))
+        $lockedFile = Join-Path $junkRoot "locked.tmp"
+        [System.IO.File]::WriteAllBytes($lockedFile, (New-Object byte[] 8192))
+        [System.IO.File]::SetLastWriteTime($lockedFile, (Get-Date).AddDays(-5))
+        $linkDir = Join-Path $junkRoot "linked"
+        try { New-Item -ItemType SymbolicLink -Path $linkDir -Target $outside -ErrorAction Stop | Out-Null } catch { $null = $_ }
+        $lockStream = [System.IO.File]::Open($lockedFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+        try {
+            $loc = [pscustomobject]@{ Id = "temp"; Name = "Stub"; Path = $junkRoot; Filter = "*"; Recurse = $true; MinAgeHours = 24 }
+            $junkSync = [hashtable]::Synchronized(@{ Done = $false; Ok = $false; Error = $null; Data = $null })
+            & ([scriptblock]::Create((Get-WinToolHomeCheckScript -Id "junk"))) $junkSync @($loc)
+            Test-WinToolExpectation -Condition ($junkSync.Ok -and [double]$junkSync.Data[0].Bytes -eq 4096) -Message ("Locked and symlinked files must not be counted as deletable, got " + [double]$junkSync.Data[0].Bytes)
+
+            $cleanSync = [hashtable]::Synchronized(@{ Done = $false; Ok = $false; Error = $null; Data = $null })
+            & ([scriptblock]::Create((Get-WinToolHomeCheckScript -Id "clean"))) $cleanSync @($loc)
+            Test-WinToolExpectation -Condition ($cleanSync.Ok -and [double]$cleanSync.Data -eq 4096 -and -not (Test-Path -LiteralPath $deletableFile) -and (Test-Path -LiteralPath $outsideFile)) -Message "Home clean frees only unlocked non-reparse files and reports exact freed bytes."
+        }
+        finally {
+            $lockStream.Dispose()
+        }
+
+        # Non-zero exit from prompt tools must not pass stdout error text into Invoke-Expression.
+        $hostPath = (Get-Process -Id $PID).Path
+        foreach ($tool in @("oh-my-posh", "starship", "zoxide")) {
+            if (Test-WinToolWindows) {
+                [System.IO.File]::WriteAllText((Join-Path $folder ($tool + ".cmd")), "@echo off`r`necho THIS IS NOT VALID POWERSHELL {{`r`nexit /b 1`r`n")
+            }
+            else {
+                $stub = Join-Path $folder $tool
+                [System.IO.File]::WriteAllText($stub, "#!/bin/sh`necho 'THIS IS NOT VALID POWERSHELL {{'`nexit 1`n")
+                & chmod +x $stub
+            }
+        }
+        $badProfile = Join-Path $folder "failing-init.ps1"
+        Write-WinToolUtf8File -Path $badProfile -Text (Get-WinToolPromptScript -PromptId "oh-my-posh" -TerminalIcons $false -PromptStyle "jandedobbeleer" -PsReadLine $false -Zoxide $true) -Bom
+        $sep = [string][System.IO.Path]::PathSeparator
+        $probeLines = @(
+            ('$env:PATH = "{0}" + $env:PATH' -f ($folder + $sep)),
+            '$env:TERM = "xterm-256color"',
+            '$Error.Clear()',
+            ('. "{0}"' -f $badProfile),
+            'foreach ($e in $Error) { "ERR: " + $e }',
+            '"WINTOOL-NONZERO-OK"'
+        )
+        $encodedProbe = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(($probeLines -join "`n")))
+        $probeOut = ((& $hostPath -NoProfile -EncodedCommand $encodedProbe 2>&1) | ForEach-Object { [string]$_ }) -join "`n"
+        Test-WinToolExpectation -Condition ($probeOut.Contains("WINTOOL-NONZERO-OK") -and -not $probeOut.Contains("ERR:")) -Message ("Non-zero tool exit caused profile errors: " + $probeOut)
+    }
+    finally {
+        Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    $repairScript = Get-WinToolFixScript -Name "winget-repair"
+    Test-WinToolExpectation -Condition ($repairScript.Contains('ContainsKey("AllowClobber")') -and -not $repairScript.Contains('-Force -AllowClobber')) -Message "winget-repair checks PowerShellGet parameters before passing AllowClobber on PS 5.1."
+
+    $xaml = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "assets/MainWindow.xaml"))
+    Test-WinToolExpectation -Condition ($xaml -match 'x:Name="DnsAdapter"[^>]*Style="\{StaticResource TerminalCombo\}"' -and $xaml -match 'x:Name="DnsProvider"[^>]*Style="\{StaticResource TerminalCombo\}"') -Message "Config ComboBoxes use the dark 34 px TerminalCombo style."
+    $builder = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "build/Build-WinTool.ps1"))
+    Test-WinToolExpectation -Condition ($builder.Contains('$script:WinToolSelfText = [string]$MyInvocation.MyCommand.ScriptBlock')) -Message "Built wintool.ps1 saves its own ScriptBlock text for irm | iex relaunches."
 }
 
 if ($script:WinToolFailures.Count -gt 0) {
