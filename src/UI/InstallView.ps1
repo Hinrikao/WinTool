@@ -131,7 +131,7 @@ function New-WinToolCardButton {
         "primary" {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushAccent")
             $button.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "BrushOnAccent")
-            $button.FontWeight = "Bold"
+            $button.FontWeight = [System.Windows.FontWeights]::Bold
         }
         "danger" {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushBadSoft")
@@ -140,7 +140,7 @@ function New-WinToolCardButton {
         "warn" {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushWarnStrong")
             $button.SetResourceReference([System.Windows.Controls.Control]::ForegroundProperty, "BrushOnWarn")
-            $button.FontWeight = "Bold"
+            $button.FontWeight = [System.Windows.FontWeights]::Bold
         }
         default {
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushNavHover")
@@ -242,7 +242,7 @@ function New-WinToolAppRow {
     $initial = New-Object System.Windows.Controls.TextBlock
     $initial.Text = Get-WinToolAppInitial -Name ([string]$App.name)
     $initial.FontSize = 16
-    $initial.FontWeight = "Bold"
+    $initial.FontWeight = [System.Windows.FontWeights]::Bold
     $initial.Foreground = [System.Windows.Media.Brushes]::White
     $initial.HorizontalAlignment = "Center"
     $initial.VerticalAlignment = "Center"
