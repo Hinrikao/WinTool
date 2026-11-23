@@ -890,11 +890,7 @@
                         <Ellipse Canvas.Left="20" Canvas.Top="20" Width="156" Height="156" StrokeThickness="10" Stroke="{DynamicResource BrushProgressTrack}"/>
                         <Ellipse Canvas.Left="36" Canvas.Top="36" Width="124" Height="124" Fill="{DynamicResource BrushCanvas}" Stroke="{DynamicResource BrushLine}" StrokeThickness="1"/>
                         <Path x:Name="HomeArc" StrokeThickness="10" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{StaticResource BrushHomeGradient}"/>
-                        <Ellipse x:Name="HomeArcCap" Width="12" Height="12" Fill="#FFFFFF">
-                          <Ellipse.Effect>
-                            <DropShadowEffect Color="#8B5CF6" BlurRadius="14" ShadowDepth="0" Opacity="0.9"/>
-                          </Ellipse.Effect>
-                        </Ellipse>
+                        <Ellipse x:Name="HomeArcCap" Width="12" Height="12" Fill="#FFFFFF"/>
                       </Canvas>
                       <StackPanel x:Name="HomeRingBusy" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Path Width="22" Height="22" HorizontalAlignment="Center" Stroke="{DynamicResource BrushAccent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 9,2 A 7,7 0 1 1 8.99,2 M 14,14 L 20,20"/>

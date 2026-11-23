@@ -233,32 +233,49 @@ function Set-WinToolCardButtonText {
 }
 
 $script:WinToolIconBackplate = "#F3F5F8"
+$script:WinToolIconCache = @{}
 
-function New-WinToolAppIconImage {
-    # A 32 px image in the same slot as the letter tile. Uniform keeps the
-    # picture's shape; HighQuality is the scale from the 48 px source.
+function Get-WinToolCachedAppIcon {
+    # Decode each file once. The frozen bitmap is shared by every card that
+    # uses it, including a later visit to Install.
     param(
         [Parameter(Mandatory = $true)][string]$FileName
     )
+    $key = $FileName.ToLowerInvariant()
+    if ($script:WinToolIconCache.ContainsKey($key)) {
+        return $script:WinToolIconCache[$key]
+    }
+    $bitmap = $null
     $data = Get-WinToolAppIconData -FileName $FileName
-    if ($null -eq $data -or $data.Length -lt 8) {
-        return $null
+    if ($null -ne $data -and $data.Length -ge 8 -and $data[0] -eq 137 -and $data[1] -eq 80 -and $data[2] -eq 78 -and $data[3] -eq 71) {
+        try {
+            $stream = [System.IO.MemoryStream]::new($data)
+            $bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
+            $bitmap.BeginInit()
+            $bitmap.StreamSource = $stream
+            $bitmap.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+            $bitmap.DecodePixelWidth = 64
+            $bitmap.EndInit()
+            $bitmap.Freeze()
+            $stream.Dispose()
+        }
+        catch {
+            $bitmap = $null
+        }
     }
-    if ($data[0] -ne 137 -or $data[1] -ne 80 -or $data[2] -ne 78 -or $data[3] -ne 71) {
-        return $null
-    }
-    try {
-        $stream = [System.IO.MemoryStream]::new($data)
-        $bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
-        $bitmap.BeginInit()
-        $bitmap.StreamSource = $stream
-        $bitmap.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
-        $bitmap.DecodePixelWidth = 64
-        $bitmap.EndInit()
-        $bitmap.Freeze()
-        $stream.Dispose()
-    }
-    catch {
+    $script:WinToolIconCache[$key] = $bitmap
+    return $bitmap
+}
+
+function New-WinToolAppIconImage {
+    # A 32 px image in the same slot as the letter tile. Uniform keeps the
+    # picture's shape. The bitmap is decoded at 64 px; BitmapCache keeps that
+    # scale so the page fade does not paint every icon in software again.
+    param(
+        [Parameter(Mandatory = $true)][string]$FileName
+    )
+    $bitmap = Get-WinToolCachedAppIcon -FileName $FileName
+    if ($null -eq $bitmap) {
         return $null
     }
     $image = New-Object System.Windows.Controls.Image
@@ -270,6 +287,7 @@ function New-WinToolAppIconImage {
     $image.VerticalAlignment = "Center"
     $image.IsHitTestVisible = $false
     [System.Windows.Media.RenderOptions]::SetBitmapScalingMode($image, [System.Windows.Media.BitmapScalingMode]::HighQuality)
+    $image.CacheMode = New-Object System.Windows.Media.BitmapCache
     $image.Clip = New-Object System.Windows.Media.RectangleGeometry ([System.Windows.Rect]::new(0, 0, 32, 32), 8, 8)
     return $image
 }

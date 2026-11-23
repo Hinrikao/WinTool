@@ -79,9 +79,7 @@ function Initialize-WinToolTweakView {
         Update-WinToolTweakLayout -Width (Get-WinToolTweakWidth)
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "NavTweaks") -EventName "Checked" -Name "Tweaks: read current state" -Action {
-        if (-not $script:WinToolState.TweakStateRead) {
-            Update-WinToolTweakState
-        }
+        Start-WinToolTweakStateRead
     }
 }
 
@@ -253,6 +251,7 @@ function New-WinToolTweakRow {
         Checkbox = $toggle
         Tweak = $Tweak
         State = "unknown"
+        Touched = $false
     }
     Register-WinToolUiEvent -Control $toggle -EventName "Click" -Name "Tweaks: switch" -Data $row -Action {
         param($source, $eventData, $boundRow)
@@ -274,6 +273,22 @@ function Get-WinToolTweakWidth {
     return ((Get-WinToolUi -Name "ViewTweaks").ActualWidth - 50)
 }
 
+function Get-WinToolTweakLayoutSignature {
+    param([int]$Columns)
+    # Column count plus one bit per row. A filter that shows the same number
+    # of rows but different rows still rebuilds; an unchanged page does not.
+    $builder = New-Object System.Text.StringBuilder
+    [void]$builder.Append([string]$Columns)
+    foreach ($group in @($script:WinToolState.TweakGroups)) {
+        foreach ($row in @($group.Rows)) {
+            if ($row.Panel.Visibility -eq "Visible") { [void]$builder.Append("1") }
+            else { [void]$builder.Append("0") }
+        }
+        [void]$builder.Append("|")
+    }
+    return $builder.ToString()
+}
+
 function Update-WinToolTweakLayout {
     param(
         [double]$Width
@@ -289,6 +304,11 @@ function Update-WinToolTweakLayout {
     $script:WinToolState.TweakColumns = $columns
     $script:WinToolState.TweakTwoColumns = ($columns -gt 1)
     $grid = Get-WinToolUi -Name "TweakCategories"
+    $signature = Get-WinToolTweakLayoutSignature -Columns $columns
+    if ($signature -eq [string]$script:WinToolState.TweakLayoutSignature -and $grid.Children.Count -gt 0) {
+        return
+    }
+    $script:WinToolState.TweakLayoutSignature = $signature
     foreach ($column in @($grid.Children)) { $column.Children.Clear() }
     $grid.Children.Clear()
     $grid.ColumnDefinitions.Clear()
@@ -379,6 +399,8 @@ function Sync-WinToolTweakToggleTip {
 
 function Update-WinToolTweakState {
     # Reads every tweak's current state from Windows and sets the switches.
+    # A newer read wins over a background read that was already running.
+    $script:WinToolState.TweakStateGeneration = [int]$script:WinToolState.TweakStateGeneration + 1
     $script:WinToolState.TweakStateRead = $true
     $probe = Get-WinToolTweakProbe
     $unknown = 0
@@ -393,6 +415,102 @@ function Update-WinToolTweakState {
     }
     Update-WinToolTweakCount
     Write-WinToolLog -Message ("Tweaks: read the current state of {0} tweaks ({1} could not be read)." -f @($script:WinToolState.TweakRows).Count, $unknown) -Level "info" -Diagnostic
+}
+
+function Get-WinToolTweakStatePayload {
+    # The steps only. The background read never touches the live row objects.
+    $list = New-Object System.Collections.Generic.List[object]
+    foreach ($row in @($script:WinToolState.TweakRows)) {
+        $steps = @()
+        try {
+            $steps = @(Get-WinToolTweakStep -Tweak $row.Tweak -Direction "Apply")
+        }
+        catch {
+            $steps = @()
+        }
+        $packed = New-Object System.Collections.Generic.List[object]
+        foreach ($step in $steps) {
+            $packages = @()
+            if ($null -ne $step.Packages) {
+                $packages = @($step.Packages | ForEach-Object { [string]$_ })
+            }
+            $packed.Add(@{
+                Type = [string]$step.Type
+                Path = [string]$step.Path
+                Name = [string]$step.Name
+                Value = [string]$step.Value
+                Kind = [string]$step.Kind
+                Operation = [string]$step.Operation
+                TaskPath = [string]$step.TaskPath
+                TaskName = [string]$step.TaskName
+                State = [string]$step.State
+                StartupType = [string]$step.StartupType
+                Packages = $packages
+            })
+        }
+        $list.Add(@{ Id = [string]$row.Id; Steps = @($packed.ToArray()) })
+    }
+    return ,$list.ToArray()
+}
+
+function Start-WinToolTweakStateRead {
+    # The click must not wait on the registry, services, tasks, or Appx.
+    if ($script:WinToolState.TweakStateRead) { return }
+    if ($null -ne $script:WinToolTweakProbeOverride) {
+        Update-WinToolTweakState
+        return
+    }
+    if ($null -ne $script:WinToolState.TweakStateJob) { return }
+    if ($script:WinToolHomeNoJobs) { return }
+    if (-not (Test-WinToolWindows)) {
+        $script:WinToolState.TweakStateRead = $true
+        return
+    }
+    $payload = Get-WinToolTweakStatePayload
+    $generation = [int]$script:WinToolState.TweakStateGeneration
+    $job = Start-WinToolScriptJob -ScriptText (Get-WinToolTweakStateJobScript) -Argument @(,$payload)
+    $job | Add-Member -NotePropertyName Generation -NotePropertyValue $generation
+    $script:WinToolState.TweakStateJob = $job
+}
+
+function Complete-WinToolTweakStateRead {
+    $job = $script:WinToolState.TweakStateJob
+    if ($null -eq $job) { return }
+    $generation = 0
+    if ($null -ne $job.PSObject.Properties["Generation"]) { $generation = [int]$job.Generation }
+    $ok = [bool]$job.Sync.Ok
+    $errorText = [string]$job.Sync.Error
+    $lines = [string]$job.Sync.Lines
+    Stop-WinToolThread -Job $job
+    $script:WinToolState.TweakStateJob = $null
+    if ($generation -ne [int]$script:WinToolState.TweakStateGeneration) { return }
+    if ($script:WinToolState.TweakStateRead) { return }
+    if (-not $ok) {
+        Write-WinToolLog -Message ("Tweaks: could not read the current state. {0}" -f $errorText) -Level "warn" -Diagnostic
+        return
+    }
+    $map = @{}
+    foreach ($line in @($lines -split "`n")) {
+        $tab = $line.IndexOf("`t")
+        if ([string]::IsNullOrWhiteSpace($line) -or $tab -lt 1) { continue }
+        $map[$line.Substring(0, $tab)] = $line.Substring($tab + 1)
+    }
+    $unknown = 0
+    foreach ($row in @($script:WinToolState.TweakRows)) {
+        $state = "unknown"
+        if ($map.ContainsKey([string]$row.Id)) { $state = [string]$map[[string]$row.Id] }
+        if ($state -ne "on" -and $state -ne "off") { $state = "unknown" }
+        if ($state -eq "unknown") { $unknown++ }
+        if ($row.Touched) { continue }
+        Set-WinToolTweakToggleState -Row $row -State $state
+        Sync-WinToolTweakToggleTip -Row $row
+    }
+    $script:WinToolState.TweakStateRead = $true
+    Update-WinToolTweakCount
+    Write-WinToolLog -Message ("Tweaks: read the current state of {0} tweaks ({1} could not be read)." -f @($script:WinToolState.TweakRows).Count, $unknown) -Level "info" -Diagnostic
+    if ([string]$script:WinToolState.ActiveView -eq "Config") {
+        Update-WinToolProfileSummary
+    }
 }
 
 function Invoke-WinToolTweakToggle {
@@ -414,6 +532,7 @@ function Invoke-WinToolTweakToggle {
             return
         }
     }
+    $Row.Touched = $true
     Start-WinToolTweakQueue -Item @([pscustomobject]@{ Row = $Row; Direction = $direction; Previous = (-not $wantOn) })
 }
 

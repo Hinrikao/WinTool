@@ -299,14 +299,9 @@ function Initialize-WinToolSystemView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "RemoveUltimatePlan") -EventName "Click" -Name "Config: remove Ultimate Performance" -Action { Invoke-WinToolPowerPlanClick -Action "remove" }
 }
 
-function Update-WinToolSystemView {
-    $adapters = @()
-    try {
-        $adapters = @(Get-WinToolDnsAdapter)
-    }
-    catch {
-        Write-WinToolLog -Message ("Could not read network adapters. " + $_.Exception.Message) -Level "warn"
-    }
+function Set-WinToolDnsAdapterList {
+    param($Adapter)
+    $adapters = @($Adapter)
     $script:WinToolState.DnsAdapters = $adapters
     $box = Get-WinToolUi -Name "DnsAdapter"
     $box.Items.Clear()
@@ -326,7 +321,84 @@ function Update-WinToolSystemView {
         $box.SelectedIndex = 0
     }
     Sync-WinToolDnsSummary
+}
+
+function Set-WinToolPowerPlanFromList {
+    param([AllowEmptyString()][string]$Text)
+    $status = "Power plans are only on Windows."
+    $script:WinToolState.UltimatePlanAdded = $false
+    if (Test-WinToolWindows) {
+        try {
+            $schemes = ConvertFrom-WinToolPowerList -Text $Text
+            $catalog = Get-WinToolSystemCatalog
+            $state = Get-WinToolPowerPlanState -Scheme $schemes -Catalog $catalog
+            $status = Format-WinToolPowerPlanStatus -State $state -Name ([string]$catalog.powerPlan.name)
+            $script:WinToolState.UltimatePlanAdded = [bool]$state.Added
+        }
+        catch {
+            $status = "Could not read power plans. " + $_.Exception.Message
+        }
+    }
+    (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = (-not $script:WinToolState.Busy -and [bool]$script:WinToolState.UltimatePlanAdded)
+    (Get-WinToolUi -Name "PowerPlanStatus").Text = $status
+}
+
+function Update-WinToolSystemView {
+    # A direct refresh stays on this thread so the status text is ready at once.
+    # Opening the tab uses Start-WinToolSystemProbe instead.
+    $script:WinToolState.SystemGeneration = [int]$script:WinToolState.SystemGeneration + 1
+    $script:WinToolState.SystemChecked = $true
+    $adapters = @()
+    try {
+        $adapters = @(Get-WinToolDnsAdapter)
+    }
+    catch {
+        Write-WinToolLog -Message ("Could not read network adapters. " + $_.Exception.Message) -Level "warn"
+    }
+    Set-WinToolDnsAdapterList -Adapter $adapters
     Sync-WinToolPowerPlanStatus
+}
+
+function Start-WinToolSystemProbe {
+    if ($script:WinToolState.SystemChecked) { return }
+    if ($null -ne $script:WinToolState.SystemJob) { return }
+    if ($script:WinToolHomeNoJobs) { return }
+    if (-not (Test-WinToolWindows)) {
+        $script:WinToolState.SystemChecked = $true
+        return
+    }
+    $generation = [int]$script:WinToolState.SystemGeneration
+    $job = Start-WinToolScriptJob -ScriptText (Get-WinToolSystemProbeScript)
+    $job | Add-Member -NotePropertyName Generation -NotePropertyValue $generation
+    $script:WinToolState.SystemJob = $job
+    $script:WinToolState.SystemChecked = $true
+}
+
+function Complete-WinToolSystemProbe {
+    $job = $script:WinToolState.SystemJob
+    if ($null -eq $job) { return }
+    $generation = 0
+    if ($null -ne $job.PSObject.Properties["Generation"]) { $generation = [int]$job.Generation }
+    $ok = [bool]$job.Sync.Ok
+    $errorText = [string]$job.Sync.Error
+    $packed = [string]$job.Sync.Adapters
+    $power = [string]$job.Sync.Power
+    $powerError = [string]$job.Sync.PowerError
+    Stop-WinToolThread -Job $job
+    $script:WinToolState.SystemJob = $null
+    if ($generation -ne [int]$script:WinToolState.SystemGeneration) { return }
+    if (-not $ok) {
+        Write-WinToolLog -Message ("Could not read network adapters. " + $errorText) -Level "warn" -Diagnostic
+        return
+    }
+    Set-WinToolDnsAdapterList -Adapter @(ConvertFrom-WinToolSystemProbe -Text $packed)
+    if (-not [string]::IsNullOrWhiteSpace($powerError)) {
+        $script:WinToolState.UltimatePlanAdded = $false
+        (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = $false
+        (Get-WinToolUi -Name "PowerPlanStatus").Text = "Could not read power plans. " + $powerError
+        return
+    }
+    Set-WinToolPowerPlanFromList -Text $power
 }
 
 function Get-WinToolSelectedDnsAdapter {
@@ -358,22 +430,19 @@ function Sync-WinToolDnsSummary {
 }
 
 function Sync-WinToolPowerPlanStatus {
-    $text = "Power plans are only on Windows."
-    $script:WinToolState.UltimatePlanAdded = $false
+    $text = ""
     if (Test-WinToolWindows) {
         try {
-            $schemes = ConvertFrom-WinToolPowerList -Text ((& powercfg.exe /list) | Out-String)
-            $catalog = Get-WinToolSystemCatalog
-            $state = Get-WinToolPowerPlanState -Scheme $schemes -Catalog $catalog
-            $text = Format-WinToolPowerPlanStatus -State $state -Name ([string]$catalog.powerPlan.name)
-            $script:WinToolState.UltimatePlanAdded = [bool]$state.Added
+            $text = ((& powercfg.exe /list) | Out-String)
         }
         catch {
-            $text = "Could not read power plans. " + $_.Exception.Message
+            $script:WinToolState.UltimatePlanAdded = $false
+            (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = $false
+            (Get-WinToolUi -Name "PowerPlanStatus").Text = "Could not read power plans. " + $_.Exception.Message
+            return
         }
     }
-    (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = (-not $script:WinToolState.Busy -and [bool]$script:WinToolState.UltimatePlanAdded)
-    (Get-WinToolUi -Name "PowerPlanStatus").Text = $text
+    Set-WinToolPowerPlanFromList -Text $text
 }
 
 function Invoke-WinToolDnsClick {

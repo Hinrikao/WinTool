@@ -433,7 +433,7 @@ function Initialize-WinToolTerminalView {
         }
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "NavTerminal") -EventName "Checked" -Name "Terminal: show the selection" -Action {
-        Show-WinToolTerminalSelection
+        $script:WinToolTerminalScrollPending = $true
     }
     Build-WinToolSimpleTerminalCard
     Build-WinToolPromptCard
@@ -641,6 +641,7 @@ function New-WinToolTerminalChip {
 }
 
 function Update-WinToolPromptStyleList {
+    $script:WinToolTerminalBodyKey = 0
     $list = Get-WinToolUi -Name "TerminalStyleList"
     $prompt = [string]$script:WinToolTerminalChoice.prompt
     # The list remembers which prompt it was built for, so an old selection
@@ -922,7 +923,8 @@ function Update-WinToolTerminalLayout {
     }
     if ($Width -le 0) { $Width = $scroll.ActualWidth }
     if ($Height -lt 0) { $Height = $scroll.ActualHeight }
-    if ($Width -le 0) { return }
+    if ([double]::IsNaN($Height) -or [double]::IsInfinity($Height) -or $Height -lt 0) { $Height = 0 }
+    if ($Width -le 0 -or [double]::IsNaN($Width) -or [double]::IsInfinity($Width)) { return }
     $narrow = ($Width -lt 760)
     $side = Get-WinToolUi -Name "TerminalSideColumn"
     $prompt = Get-WinToolUi -Name "TerminalCardPrompt"
@@ -977,6 +979,15 @@ function Update-WinToolTerminalLayout {
 function Get-WinToolTerminalBodyMinHeight {
     param([double]$Width)
     # The tallest of the three aligned cards. Extras live inside the preview column.
+    # Measuring the theme list with infinite height builds every row, so a width
+    # that was already measured keeps that height.
+    $widthKey = 0
+    if (-not [double]::IsNaN($Width) -and -not [double]::IsInfinity($Width) -and $Width -gt 0) {
+        $widthKey = [int][Math]::Round($Width)
+    }
+    if ($widthKey -gt 0 -and $widthKey -eq [int]$script:WinToolTerminalBodyKey -and [double]$script:WinToolTerminalBodyNeed -gt 0) {
+        return [double]$script:WinToolTerminalBodyNeed
+    }
     $prompt = Get-WinToolUi -Name "TerminalCardPrompt"
     $side = Get-WinToolUi -Name "TerminalSideColumn"
     $infinite = [double]::PositiveInfinity
@@ -987,7 +998,10 @@ function Get-WinToolTerminalBodyMinHeight {
     $promptNeed = $prompt.DesiredSize.Height
     $themeNeed = 260.0
     $restNeed = [Math]::Max($side.DesiredSize.Height, $themeNeed)
-    return [Math]::Ceiling([Math]::Max([Math]::Max($promptNeed, $restNeed), 420.0))
+    $need = [Math]::Ceiling([Math]::Max([Math]::Max($promptNeed, $restNeed), 420.0))
+    $script:WinToolTerminalBodyKey = $widthKey
+    $script:WinToolTerminalBodyNeed = $need
+    return $need
 }
 
 function Update-WinToolFontList {

@@ -91,6 +91,12 @@ foreach ($row in $appRows) {
         if ($scaling -ne [System.Windows.Media.BitmapScalingMode]::HighQuality) {
             throw ($row.Id + " icon must use high-quality scaling.")
         }
+        if ($null -eq $row.IconImage.Source -or -not $row.IconImage.Source.IsFrozen) {
+            throw ($row.Id + " icon bitmap should be decoded once and frozen.")
+        }
+        if ($null -eq $row.IconImage.CacheMode) {
+            throw ($row.Id + " icon should cache its scaled bitmap.")
+        }
         $plate = $row.IconHost.Background.Color
         if ($plate.R -ne 0xF3 -or $plate.G -ne 0xF5 -or $plate.B -ne 0xF8) {
             throw ($row.Id + " icon backplate should be the shared light plate.")
@@ -1274,6 +1280,32 @@ if (-not (Initialize-WinToolConsoleApi)) {
 }
 $null = [WinToolConsoleApi]::GetConsoleWindow()
 Write-Output "Console helper compiled."
+
+# The first pass builds each page. The second pass is a repeat visit and must
+# not block the dispatcher. Input runs after Render and Loaded, and before
+# the background timers, so the number is the click itself.
+function Invoke-WinToolNavPump {
+    $window.Dispatcher.Invoke([System.Windows.Threading.DispatcherPriority]::Input, [System.Action]([scriptblock]::Create("return"))) | Out-Null
+}
+$navNames = @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config", "Home")
+foreach ($navName in $navNames) {
+    $window.FindName("Nav" + $navName).IsChecked = $true
+    Invoke-WinToolNavPump
+}
+$navSlow = New-Object System.Collections.Generic.List[string]
+foreach ($navName in $navNames) {
+    $script:WinToolState.NavMilliseconds = -1
+    $window.FindName("Nav" + $navName).IsChecked = $true
+    Invoke-WinToolNavPump
+    $navMs = [int]$script:WinToolState.NavMilliseconds
+    Write-Output ("Nav " + $navName + ": " + $navMs + "ms")
+    if ($navMs -lt 0 -or $navMs -gt 250) {
+        $navSlow.Add($navName + " " + $navMs + "ms")
+    }
+}
+if ($navSlow.Count -gt 0) {
+    throw ("Navigation blocked the dispatcher: " + ($navSlow -join ", "))
+}
 
 try {
     $window.Close()

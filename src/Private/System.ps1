@@ -180,6 +180,80 @@ function Get-WinToolDnsPlan {
     })
 }
 
+function Get-WinToolSystemProbeScript {
+    # Runs off the UI thread. Returns adapter rows and powercfg text as strings.
+    $scriptText = @'
+param($Sync)
+$ErrorActionPreference = "Continue"
+try {
+    $records = New-Object System.Collections.Generic.List[string]
+    $unit = [string][char]31
+    $record = [string][char]30
+    $adapters = @(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { [string]$_.Status -eq "Up" } | Sort-Object -Property Name)
+    foreach ($adapter in $adapters) {
+        $servers = New-Object System.Collections.Generic.List[string]
+        foreach ($entry in @(Get-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue)) {
+            foreach ($address in @($entry.ServerAddresses)) {
+                $text = [string]$address
+                if (-not [string]::IsNullOrWhiteSpace($text)) { $servers.Add($text) }
+            }
+        }
+        $name = ([string]$adapter.Name).Replace($unit, " ").Replace($record, " ").Replace("`r", " ").Replace("`n", " ")
+        $description = ([string]$adapter.InterfaceDescription).Replace($unit, " ").Replace($record, " ").Replace("`r", " ").Replace("`n", " ")
+        $records.Add(([string][int]$adapter.ifIndex) + $unit + $name + $unit + $description + $unit + (($servers.ToArray()) -join ","))
+    }
+    $Sync.Adapters = ($records.ToArray() -join $record)
+    try {
+        $Sync.Power = [string]((& powercfg.exe /list) | Out-String)
+        $Sync.PowerError = ""
+    }
+    catch {
+        $Sync.Power = ""
+        $Sync.PowerError = $_.Exception.Message
+    }
+    $Sync.Ok = $true
+}
+catch {
+    $Sync.Ok = $false
+    $Sync.Error = $_.Exception.Message
+}
+finally {
+    $Sync.Done = $true
+}
+'@
+    return $scriptText
+}
+
+function ConvertFrom-WinToolSystemProbe {
+    param([AllowEmptyString()][string]$Text)
+    $list = New-Object System.Collections.Generic.List[object]
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return @()
+    }
+    $record = [string][char]30
+    foreach ($line in @($Text -split [regex]::Escape($record))) {
+        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+        $part = @($line.Split([char]31))
+        $index = 0
+        [void][int]::TryParse([string]$part[0], [ref]$index)
+        $name = ""
+        $description = ""
+        $servers = @()
+        if ($part.Length -ge 2) { $name = [string]$part[1] }
+        if ($part.Length -ge 3) { $description = [string]$part[2] }
+        if ($part.Length -ge 4 -and -not [string]::IsNullOrWhiteSpace([string]$part[3])) {
+            $servers = @([string]$part[3] -split ",")
+        }
+        $list.Add([pscustomobject]@{
+            Index = $index
+            Name = $name
+            Description = $description
+            Servers = $servers
+        })
+    }
+    return $list.ToArray()
+}
+
 function ConvertFrom-WinToolPowerList {
     param(
         [string]$Text

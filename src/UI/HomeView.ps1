@@ -907,7 +907,7 @@ function Update-WinToolHomePoll {
     }
     $sampler = $script:WinToolState.HomeSampler
     if ($null -ne $sampler) {
-        $sampler.Sync.Paused = ((Get-WinToolUi -Name "ViewHome").Visibility -ne "Visible")
+        $sampler.Sync.Paused = ([string]$script:WinToolState.ActiveView -ne "Home")
         $sample = $null
         while ($sampler.Sync.Queue.TryDequeue([ref]$sample)) {
             Add-WinToolHomeSample -Sample $sample

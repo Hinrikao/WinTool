@@ -104,15 +104,39 @@ function Sync-WinToolProgressShimmer {
 function Complete-WinToolMotion {
     # Leaves every storyboard on its resting frame so a screenshot taken on
     # the same tick shows the settled screen, then real motion can start again.
+    # Pages that stay measured (opacity 0) must not be faded back in, or every
+    # tab would paint on top of the one the screenshot is of.
+    $active = "Home"
+    if ($null -ne $script:WinToolState -and -not [string]::IsNullOrWhiteSpace([string]$script:WinToolState.ActiveView)) {
+        $active = [string]$script:WinToolState.ActiveView
+    }
+    $shown = @()
+    if ($null -ne $script:WinToolState) { $shown = @($script:WinToolState.ViewShown) }
     foreach ($view in @(Get-WinToolViewName)) {
         $element = Get-WinToolUi -Name ("View" + $view)
         if ($null -eq $element) { continue }
         $element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
-        if ($element.Visibility -eq "Visible") { $element.Opacity = 1 }
         $shift = $element.RenderTransform
         if ($shift -is [System.Windows.Media.TranslateTransform]) {
             $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $null)
             $shift.X = 0
+        }
+        if ($view -eq $active) {
+            $element.Visibility = "Visible"
+            $element.Opacity = 1
+            $element.IsHitTestVisible = $true
+            [System.Windows.Controls.Panel]::SetZIndex($element, 2)
+        }
+        elseif ($shown -contains $view) {
+            $element.Visibility = "Visible"
+            $element.Opacity = 0
+            $element.IsHitTestVisible = $false
+            [System.Windows.Controls.Panel]::SetZIndex($element, 0)
+        }
+        else {
+            $element.Opacity = 0
+            $element.IsHitTestVisible = $false
+            $element.Visibility = "Collapsed"
         }
     }
     Update-WinToolNavPill -Animate $false
@@ -187,39 +211,131 @@ function Stop-WinToolMotion {
     }
 }
 
-function Switch-WinToolView {
+function Complete-WinToolNavTiming {
+    # Runs after the render pass that paints the new page, so the number is
+    # the time from the click to the first frame. The pill moves here, after
+    # that frame: measuring it inside the click forced a full layout first.
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][long]$Stamp
+    )
+    if ([int64]$script:WinToolState.NavStamp -ne [int64]$Stamp) { return }
+    Update-WinToolNavPill -Animate $true
+    if ($Name -eq "Config") {
+        Update-WinToolProfileSummary
+    }
+    $elapsed = ([System.Diagnostics.Stopwatch]::GetTimestamp() - [int64]$Stamp) * 1000.0 / [System.Diagnostics.Stopwatch]::Frequency
+    $ms = [int][Math]::Round($elapsed)
+    if ($ms -lt 0) { $ms = 0 }
+    $script:WinToolState.NavMilliseconds = $ms
+    Write-WinToolLog -Message ("Nav: {0} shown in {1}ms" -f $Name, $ms) -Level "info" -Diagnostic
+    $safe = ($Name -replace "[^A-Za-z]", "")
+    $follow = [scriptblock]::Create(("Complete-WinToolNavFollowUp -Name '{0}'" -f $safe))
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$follow)
+}
+
+function Complete-WinToolNavFollowUp {
+    # Registry, DNS, and list scrolling stay off the click and off the first frame.
     param(
         [Parameter(Mandatory = $true)][string]$Name
     )
-    foreach ($view in @(Get-WinToolViewName)) {
-        $element = Get-WinToolUi -Name ("View" + $view)
-        if ($view -eq $Name) {
-            $show = ($element.Visibility -ne "Visible")
-            $element.Visibility = "Visible"
-            if ($show) {
-                Start-WinToolSlide -Element $element -FromX 8 -ToX 0 -Milliseconds 150
-            }
-        }
-        else {
-            $element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
-            $element.Visibility = "Collapsed"
-        }
+    if ([string]$script:WinToolState.ActiveView -ne $Name) { return }
+    if ($Name -eq "Tweaks" -or $Name -eq "Config") {
+        Start-WinToolTweakStateRead
     }
-    Update-WinToolNavPill -Animate $true
     if ($Name -eq "Config") {
-        if (-not $script:WinToolState.TweakStateRead) {
-            Update-WinToolTweakState
-        }
-        Update-WinToolProfileSummary
-        if (-not $script:WinToolState.SystemChecked) {
-            $script:WinToolState.SystemChecked = $true
-            Update-WinToolSystemView
-        }
+        Start-WinToolSystemProbe
+    }
+    if ($Name -eq "Terminal") {
+        Show-WinToolTerminalSelection
     }
     if ($Name -eq "Features" -and -not $script:WinToolState.FeaturesChecked) {
         $script:WinToolState.FeaturesChecked = $true
         Start-WinToolFeatureDetection
     }
+}
+
+function Start-WinToolNavWarmup {
+    # Measures each page once while Home is on screen, so the first click
+    # does not pay for building that page.
+    $script:WinToolState.WarmViews = @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config")
+    $callback = [scriptblock]::Create("Invoke-WinToolNavWarmupStep")
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$callback)
+}
+
+function Invoke-WinToolNavWarmupStep {
+    $pending = @($script:WinToolState.WarmViews)
+    if ($pending.Count -eq 0) { return }
+    $name = [string]$pending[0]
+    if ($pending.Count -le 1) { $script:WinToolState.WarmViews = @() }
+    else { $script:WinToolState.WarmViews = @($pending | Select-Object -Skip 1) }
+    if ([string]$script:WinToolState.ActiveView -ne $name) {
+        $shown = @($script:WinToolState.ViewShown)
+        $element = Get-WinToolUi -Name ("View" + $name)
+        if ($null -ne $element -and $shown -notcontains $name) {
+            $element.Opacity = 0
+            $element.IsHitTestVisible = $false
+            [System.Windows.Controls.Panel]::SetZIndex($element, 0)
+            $element.Visibility = "Visible"
+            $script:WinToolState.ViewShown = @($shown + $name)
+        }
+    }
+    if (@($script:WinToolState.WarmViews).Count -gt 0) {
+        $callback = [scriptblock]::Create("Invoke-WinToolNavWarmupStep")
+        $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$callback)
+    }
+}
+
+function Switch-WinToolView {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+    # The click only changes which page is on top. A page that has been shown
+    # stays Visible at opacity 0, because collapsing it throws its layout away
+    # and the next visit measures the whole tree inside the click.
+    if ($null -eq $script:WinToolState.ViewShown) {
+        $script:WinToolState.ViewShown = @("Home")
+    }
+    $stamp = [System.Diagnostics.Stopwatch]::GetTimestamp()
+    $script:WinToolState.NavStamp = [int64]$stamp
+    $script:WinToolState.ActiveView = $Name
+    $shown = @($script:WinToolState.ViewShown)
+    foreach ($view in @(Get-WinToolViewName)) {
+        $element = Get-WinToolUi -Name ("View" + $view)
+        if ($null -eq $element) { continue }
+        if ($view -eq $Name) {
+            $element.Visibility = "Visible"
+            $element.IsHitTestVisible = $true
+            [System.Windows.Controls.Panel]::SetZIndex($element, 2)
+            Start-WinToolSlide -Element $element -FromX 8 -ToX 0 -Milliseconds 150
+            if ($shown -notcontains $view) {
+                $script:WinToolState.ViewShown = @($script:WinToolState.ViewShown) + $view
+            }
+        }
+        elseif ($shown -contains $view) {
+            $element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
+            $shift = $element.RenderTransform
+            if ($shift -is [System.Windows.Media.TranslateTransform]) {
+                $shift.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $null)
+                $shift.X = 0
+            }
+            $element.Opacity = 0
+            $element.IsHitTestVisible = $false
+            [System.Windows.Controls.Panel]::SetZIndex($element, 0)
+            $element.Visibility = "Visible"
+        }
+        else {
+            $element.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $null)
+            $element.Opacity = 0
+            $element.IsHitTestVisible = $false
+            [System.Windows.Controls.Panel]::SetZIndex($element, 0)
+            $element.Visibility = "Collapsed"
+        }
+    }
+    try { $null = $script:WinToolWindow.Focus() } catch { $null = $_.Exception.Message }
+    $safe = ($Name -replace "[^A-Za-z]", "")
+    $callback = [scriptblock]::Create(("Complete-WinToolNavTiming -Name '{0}' -Stamp {1}" -f $safe, [int64]$stamp))
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Loaded, [System.Action]$callback)
 }
 
 function Sync-WinToolStatus {
@@ -677,8 +793,18 @@ function Update-WinToolLogPump {
         Complete-WinToolUpdateInstall
     }
 
-    if ($script:WinToolTerminalScrollPending -and (Get-WinToolUi -Name "ViewTerminal").IsVisible) {
+    if ($script:WinToolTerminalScrollPending -and [string]$script:WinToolState.ActiveView -eq "Terminal") {
         Show-WinToolTerminalSelection
+    }
+
+    $tweakStateJob = $script:WinToolState.TweakStateJob
+    if ($null -ne $tweakStateJob -and $tweakStateJob.Sync.Done) {
+        Complete-WinToolTweakStateRead
+    }
+
+    $systemJob = $script:WinToolState.SystemJob
+    if ($null -ne $systemJob -and $systemJob.Sync.Done) {
+        Complete-WinToolSystemProbe
     }
 
     $preview = $script:WinToolState.PreviewJob
@@ -737,13 +863,14 @@ function Initialize-WinToolShellEvent {
         $modifiers = [System.Windows.Input.Keyboard]::Modifiers
         $control = [System.Windows.Input.ModifierKeys]::Control
         if (($modifiers -band $control) -eq $control -and $uiEvent.Key -eq "F") {
-            if ((Get-WinToolUi -Name "ViewInstall").Visibility -eq "Visible") {
+            $activeView = [string]$script:WinToolState.ActiveView
+            if ($activeView -eq "Install") {
                 (Get-WinToolUi -Name "AppSearch").Focus() | Out-Null
             }
-            elseif ((Get-WinToolUi -Name "ViewTweaks").Visibility -eq "Visible") {
+            elseif ($activeView -eq "Tweaks") {
                 (Get-WinToolUi -Name "TweakSearch").Focus() | Out-Null
             }
-            elseif ((Get-WinToolUi -Name "ViewTerminal").Visibility -eq "Visible" -and $script:WinToolTerminalMode -eq "advanced") {
+            elseif ($activeView -eq "Terminal" -and $script:WinToolTerminalMode -eq "advanced") {
                 (Get-WinToolUi -Name "TerminalThemeSearch").Focus() | Out-Null
             }
             $uiEvent.Handled = $true
@@ -774,6 +901,8 @@ function Initialize-WinToolShellEvent {
             Write-WinToolLog -Message "winget is available." -Level "ok"
             Sync-WinToolStatus -Text "Ready"
         }
+        Start-WinToolTweakStateRead
+        Start-WinToolNavWarmup
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Check installed apps" -Action {
         Start-WinToolAppDetection
@@ -811,7 +940,17 @@ function New-WinToolWindow {
         FeatureJob = $null
         FeatureRows = @()
         TweakQueue = $null
+        ActiveView = "Home"
+        ViewShown = @("Home")
+        NavStamp = [int64]0
+        NavMilliseconds = -1
+        WarmViews = @()
         TweakStateRead = $false
+        TweakStateJob = $null
+        TweakStateGeneration = 0
+        TweakLayoutSignature = ""
+        SystemJob = $null
+        SystemGeneration = 0
         TweakTwoColumns = $true
         TweakColumns = 3
         TweakWidth = 0

@@ -540,6 +540,125 @@ function Get-WinToolTweakState {
     return "on"
 }
 
+function Get-WinToolTweakStateJobScript {
+    # Same answers as Test-WinToolTweakStepState, with no UI functions in scope.
+    $scriptText = @'
+param($Sync, $Items)
+$ErrorActionPreference = "Continue"
+try {
+    $script:WinToolJobAppx = $null
+    function Read-WinToolJobValue {
+        param($Path, $Name)
+        if (-not (Test-Path -LiteralPath $Path)) { return $null }
+        $key = Get-Item -LiteralPath $Path -ErrorAction Stop
+        return $key.GetValue([string]$Name, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+    }
+    function Test-WinToolJobStep {
+        param($Step)
+        try {
+            switch ([string]$Step.Type) {
+                "registry-set" {
+                    $current = Read-WinToolJobValue ([string]$Step.Path) ([string]$Step.Name)
+                    if ($null -eq $current) { return "off" }
+                    $kind = [string]$Step.Kind
+                    if ($kind -eq "DWord" -or $kind -eq "QWord") {
+                        $wantedNumber = [int64]0
+                        $currentNumber = [int64]0
+                        if (-not [int64]::TryParse([string]$Step.Value, [ref]$wantedNumber)) { return "unknown" }
+                        if ($current -is [int] -or $current -is [long] -or $current -is [uint32] -or $current -is [uint64]) {
+                            $currentNumber = [int64]$current
+                        }
+                        elseif (-not [int64]::TryParse([string]$current, [ref]$currentNumber)) {
+                            return "off"
+                        }
+                        if ($kind -eq "DWord" -and $currentNumber -lt 0) { $currentNumber += 4294967296 }
+                        if ($kind -eq "DWord" -and $wantedNumber -lt 0) { $wantedNumber += 4294967296 }
+                        if ($currentNumber -eq $wantedNumber) { return "on" }
+                        return "off"
+                    }
+                    if ($kind -eq "String" -or $kind -eq "ExpandString" -or [string]::IsNullOrEmpty($kind)) {
+                        if ([string]$current -eq [string]$Step.Value) { return "on" }
+                        return "off"
+                    }
+                    return "unknown"
+                }
+                "registry-remove-value" {
+                    $current = Read-WinToolJobValue ([string]$Step.Path) ([string]$Step.Name)
+                    if ($null -eq $current) { return "on" }
+                    return "off"
+                }
+                "registry-key" {
+                    $exists = Test-Path -LiteralPath ([string]$Step.Path)
+                    if ([string]$Step.Operation -eq "remove") {
+                        if ($exists) { return "off" }
+                        return "on"
+                    }
+                    if ($exists) { return "on" }
+                    return "off"
+                }
+                "service" {
+                    $service = Get-Service -Name ([string]$Step.Name) -ErrorAction SilentlyContinue
+                    if ($null -eq $service) { return "unknown" }
+                    if ([string]$service.StartType -eq [string]$Step.StartupType) { return "on" }
+                    return "off"
+                }
+                "scheduled-task" {
+                    $task = Get-ScheduledTask -TaskName ([string]$Step.TaskName) -TaskPath ([string]$Step.TaskPath) -ErrorAction SilentlyContinue
+                    if ($null -eq $task) { return "unknown" }
+                    $disabled = ([string]$task.State -eq "Disabled")
+                    if (([string]$Step.State -eq "Disabled") -eq $disabled) { return "on" }
+                    return "off"
+                }
+                "appx-remove" {
+                    if ($null -eq $script:WinToolJobAppx) {
+                        $script:WinToolJobAppx = @{}
+                        foreach ($package in @(Get-AppxPackage -ErrorAction Stop)) {
+                            $script:WinToolJobAppx[[string]$package.Name] = $true
+                        }
+                    }
+                    foreach ($name in @($Step.Packages)) {
+                        if ($script:WinToolJobAppx.ContainsKey([string]$name)) { return "off" }
+                    }
+                    return "on"
+                }
+                default { return "unknown" }
+            }
+        }
+        catch {
+            return "unknown"
+        }
+    }
+    $lines = New-Object System.Collections.Generic.List[string]
+    foreach ($item in @($Items)) {
+        $id = [string]$item.Id
+        $steps = @($item.Steps)
+        $state = "on"
+        if ($steps.Count -eq 0) { $state = "unknown" }
+        else {
+            $unknown = $false
+            foreach ($step in $steps) {
+                $one = Test-WinToolJobStep -Step $step
+                if ($one -eq "off") { $state = "off"; $unknown = $false; break }
+                if ($one -eq "unknown") { $unknown = $true }
+            }
+            if ($state -ne "off" -and $unknown) { $state = "unknown" }
+        }
+        $lines.Add($id + "`t" + $state)
+    }
+    $Sync.Lines = ($lines.ToArray() -join "`n")
+    $Sync.Ok = $true
+}
+catch {
+    $Sync.Ok = $false
+    $Sync.Error = $_.Exception.Message
+}
+finally {
+    $Sync.Done = $true
+}
+'@
+    return $scriptText
+}
+
 function Set-WinToolTweakToggleState {
     # Puts a row's switch in line with a detected state. Unknown shows off.
     param(
