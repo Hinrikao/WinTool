@@ -36,8 +36,8 @@ function Build-WinToolSimpleTerminalCard {
     $hostPanel.Children.Clear()
     $card = New-WinToolCard
     $stack = New-Object System.Windows.Controls.StackPanel
-    [void]$stack.Children.Add((New-WinToolText -Text "Recommended setup" -Size 18 -Weight "SemiBold"))
-    [void]$stack.Children.Add((New-WinToolText -Text "Windows Terminal, PowerShell 7, Oh My Posh with the Jan De Dobbeleer theme, a Nerd Font, file icons, and history suggestions. You can change any of this in Advanced." -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 6, 0, 8))))
+    [void]$stack.Children.Add((New-WinToolText -Text "Recommended setup" -Weight "Bold"))
+    [void]$stack.Children.Add((New-WinToolText -Text "Windows Terminal, PowerShell 7, Oh My Posh with the Jan De Dobbeleer theme, a Nerd Font, file icons, and history suggestions. You can change any of this in Advanced." -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 6, 0, 8))))
     [void]$stack.Children.Add((New-WinToolTerminalPreview -Segments @(
         [pscustomobject]@{ text = "~/src "; color = "#6C9BFF" },
         [pscustomobject]@{ text = "main "; color = "#3DDC97" },
@@ -212,7 +212,7 @@ function New-WinToolTerminalPreview {
     $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushLog")
     $text = New-Object System.Windows.Controls.TextBlock
     $text.FontFamily = "Consolas"
-    $text.FontSize = 13
+    $text.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
     $text.TextWrapping = "Wrap"
     foreach ($segment in @($Segments)) {
         $run = New-Object System.Windows.Documents.Run
@@ -348,8 +348,9 @@ function Initialize-WinToolTerminalView {
         if ([string]::IsNullOrWhiteSpace($promptId) -or $promptId -eq [string]$script:WinToolTerminalChoice.prompt) { return }
         Select-WinToolTerminalPrompt -PromptId $promptId
     }
-    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ViewTerminal") -EventName "SizeChanged" -Name "Terminal: layout" -Action {
-        Update-WinToolTerminalLayout -Width ((Get-WinToolUi -Name "ViewTerminal").ActualWidth - 40)
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalBodyScroll") -EventName "SizeChanged" -Name "Terminal: layout" -Action {
+        $bodyScroll = Get-WinToolUi -Name "TerminalBodyScroll"
+        Update-WinToolTerminalLayout -Width $bodyScroll.ActualWidth -Height $bodyScroll.ActualHeight
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "NavTerminal") -EventName "Checked" -Name "Terminal: show the selection" -Action {
         Show-WinToolTerminalSelection
@@ -401,12 +402,11 @@ function Select-WinToolTerminalPrompt {
 function New-WinToolTerminalLabel {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text,
-        [double]$Size = 11,
         [string]$Brush = "BrushInk",
         [string]$Weight = "Normal"
     )
-    $block = New-WinToolText -Text $Text -Size 11 -Brush $Brush -Weight $Weight
-    $block.FontSize = $Size
+    # Every label uses the shared FontSizeBody (14 px) text size.
+    $block = New-WinToolText -Text $Text -Brush $Brush -Weight $Weight
     $block.TextTrimming = "CharacterEllipsis"
     return $block
 }
@@ -427,8 +427,8 @@ function Build-WinToolPromptCard {
             $header.Style = $rowStyle
             $header.IsEnabled = $false
             $header.Focusable = $false
-            $header.Padding = [System.Windows.Thickness]::new(8, 4, 8, 1)
-            $header.Content = New-WinToolTerminalLabel -Text $group.ToUpperInvariant() -Size 9 -Brush "BrushHint"
+            $header.Padding = [System.Windows.Thickness]::new(8, 6, 8, 2)
+            $header.Content = New-WinToolTerminalLabel -Text $group.ToUpperInvariant() -Brush "BrushHint" -Weight "SemiBold"
             [void]$list.Items.Add($header)
             for ($index = 0; $index -lt $prompts.Count; $index++) {
                 $prompt = $prompts[$index]
@@ -452,27 +452,26 @@ function New-WinToolPromptRow {
     $item.Tag = [string]$Prompt.id
     $item.BorderThickness = [System.Windows.Thickness]::new(1)
     $item.Margin = [System.Windows.Thickness]::new(0, 0, 0, 1)
-    $item.Padding = [System.Windows.Thickness]::new(7, 3, 7, 3)
-    $item.ToolTip = [string]$Prompt.summary
+    $item.ToolTip = ([string]$Prompt.name + " (" + [string]$Info.Sub + ")`n" + [string]$Prompt.summary)
     [System.Windows.Automation.AutomationProperties]::SetName($item, [string]$Prompt.name)
     $grid = New-Object System.Windows.Controls.Grid
-    foreach ($width in @(30, -1, 18)) {
+    foreach ($width in @(34, -1, 22)) {
         $column = New-Object System.Windows.Controls.ColumnDefinition
         if ($width -lt 0) { $column.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }
         else { $column.Width = [System.Windows.GridLength]::new($width) }
         $grid.ColumnDefinitions.Add($column)
     }
     $icon = New-Object System.Windows.Controls.Border
-    $icon.Width = 20
-    $icon.Height = 20
-    $icon.CornerRadius = [System.Windows.CornerRadius]::new(5)
+    $icon.Width = 24
+    $icon.Height = 24
+    $icon.CornerRadius = [System.Windows.CornerRadius]::new(6)
     $icon.HorizontalAlignment = "Left"
     $fill = ConvertTo-WinToolPreviewBrush -Color ([string]$Info.Color)
     if ($null -ne $fill) { $icon.Background = $fill }
     $glyph = New-Object System.Windows.Controls.TextBlock
     $glyph.Text = [string][char]0xE756
     $glyph.FontFamily = [System.Windows.Media.FontFamily]::new("Segoe MDL2 Assets")
-    $glyph.FontSize = 11
+    $glyph.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
     $glyph.Foreground = [System.Windows.Media.Brushes]::White
     $glyph.HorizontalAlignment = "Center"
     $glyph.VerticalAlignment = "Center"
@@ -480,11 +479,10 @@ function New-WinToolPromptRow {
     [void]$grid.Children.Add($icon)
     $names = New-Object System.Windows.Controls.StackPanel
     $names.VerticalAlignment = "Center"
-    [void]$names.Children.Add((New-WinToolTerminalLabel -Text ([string]$Prompt.name) -Size 11.5))
-    [void]$names.Children.Add((New-WinToolTerminalLabel -Text ([string]$Info.Sub) -Size 9 -Brush "BrushHint"))
+    [void]$names.Children.Add((New-WinToolTerminalLabel -Text ([string]$Prompt.name)))
     [System.Windows.Controls.Grid]::SetColumn($names, 1)
     [void]$grid.Children.Add($names)
-    $check = New-WinToolTerminalLabel -Text ([string][char]0xE73E) -Size 11 -Brush "BrushAccent"
+    $check = New-WinToolTerminalLabel -Text ([string][char]0xE73E) -Brush "BrushAccent"
     $check.FontFamily = [System.Windows.Media.FontFamily]::new("Segoe MDL2 Assets")
     $check.VerticalAlignment = "Center"
     $check.HorizontalAlignment = "Right"
@@ -524,9 +522,7 @@ function Update-WinToolPromptSelection {
     }
     $nameBlock = Get-WinToolUi -Name "TerminalPromptName"
     $aboutBlock = Get-WinToolUi -Name "TerminalPromptAbout"
-    $chipHost = Get-WinToolUi -Name "TerminalPromptChips"
-    if ($null -eq $nameBlock -or $null -eq $aboutBlock -or $null -eq $chipHost) { return }
-    $chipHost.Children.Clear()
+    if ($null -eq $nameBlock -or $null -eq $aboutBlock) { return }
     if ($null -eq $prompt) {
         $nameBlock.Text = ""
         $aboutBlock.Text = ""
@@ -534,11 +530,9 @@ function Update-WinToolPromptSelection {
     }
     $info = Get-WinToolPromptEngineInfo -Prompt $prompt -OhMyPoshCount (@(Get-WinToolActiveOhMyPoshTheme).Count)
     $nameBlock.Text = [string]$prompt.name
-    $aboutBlock.Text = ([string]$prompt.summary + " " + [string]$info.Runs).Trim()
-    $aboutBlock.ToolTip = $aboutBlock.Text
-    foreach ($part in @($prompt.installs)) {
-        [void]$chipHost.Children.Add((New-WinToolTerminalChip -Text ([string]$part)))
-    }
+    # What it installs is listed in the action bar, so the note stays short.
+    $aboutBlock.Text = ([string]$info.Sub + ". " + [string]$prompt.summary).Trim()
+    $aboutBlock.ToolTip = ("Installs: " + (@($prompt.installs) -join ", ") + "`n" + [string]$info.Runs).Trim()
 }
 
 function New-WinToolTerminalChip {
@@ -547,13 +541,16 @@ function New-WinToolTerminalChip {
         [string]$Background = "BrushNavHover",
         [string]$Foreground = "BrushInk"
     )
+    # A 32 px pill, like the shared chips.
     $chip = New-Object System.Windows.Controls.Border
-    $chip.CornerRadius = [System.Windows.CornerRadius]::new(9)
-    $chip.Padding = [System.Windows.Thickness]::new(8, 2, 8, 2)
-    $chip.Margin = [System.Windows.Thickness]::new(0, 0, 4, 4)
+    $chip.CornerRadius = [System.Windows.CornerRadius]::new(16)
+    $chip.Height = 32
+    $chip.Padding = [System.Windows.Thickness]::new(12, 0, 12, 0)
+    $chip.Margin = [System.Windows.Thickness]::new(0, 0, 6, 6)
     $chip.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, $Background)
-    $label = New-WinToolTerminalLabel -Text $Text -Size 9.5 -Brush $Foreground
+    $label = New-WinToolTerminalLabel -Text $Text -Brush $Foreground
     $label.TextTrimming = "None"
+    $label.VerticalAlignment = "Center"
     $chip.Child = $label
     return $chip
 }
@@ -612,37 +609,37 @@ function New-WinToolThemeItem {
     $item.BorderThickness = [System.Windows.Thickness]::new(3, 0, 0, 0)
     $item.Padding = [System.Windows.Thickness]::new(8, 6, 8, 7)
     $item.Margin = [System.Windows.Thickness]::new(0, 0, 0, 1)
-    if (-not [string]::IsNullOrWhiteSpace([string]$Row.Description)) { $item.ToolTip = [string]$Row.Description }
+    $tip = [string]$Row.Id
+    if (-not [string]::IsNullOrWhiteSpace([string]$Row.Description)) { $tip = [string]$Row.Description + "`n" + $tip }
+    $item.ToolTip = $tip
     [System.Windows.Automation.AutomationProperties]::SetName($item, [string]$Row.Name)
     $stack = New-Object System.Windows.Controls.StackPanel
     $top = New-Object System.Windows.Controls.DockPanel
-    $id = New-WinToolTerminalLabel -Text ([string]$Row.Id) -Size 9 -Brush "BrushHint"
-    $id.FontFamily = [System.Windows.Media.FontFamily]::new("Cascadia Mono, Consolas")
-    $id.VerticalAlignment = "Center"
-    $id.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
-    [System.Windows.Controls.DockPanel]::SetDock($id, "Right")
-    [void]$top.Children.Add($id)
-    $names = New-Object System.Windows.Controls.StackPanel
-    $names.Orientation = "Horizontal"
-    [void]$names.Children.Add((New-WinToolTerminalLabel -Text ([string]$Row.Name) -Size 11.5))
     if ($Row.NerdFont -eq $true) {
-        $tag = New-WinToolTerminalLabel -Text "Nerd Font" -Size 8.5 -Brush "BrushWarn"
-        $tag.Margin = [System.Windows.Thickness]::new(6, 0, 0, 0)
+        $tag = New-WinToolTerminalLabel -Text "Nerd Font" -Brush "BrushWarn"
+        $tag.TextTrimming = "None"
+        $tag.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
         $tag.VerticalAlignment = "Center"
-        [void]$names.Children.Add($tag)
+        [System.Windows.Controls.DockPanel]::SetDock($tag, "Right")
+        [void]$top.Children.Add($tag)
     }
-    [void]$top.Children.Add($names)
+    $nameLabel = New-WinToolTerminalLabel -Text ([string]$Row.Name)
+    $nameLabel.TextTrimming = "None"
+    $nameLabel.TextWrapping = "Wrap"
+    [void]$top.Children.Add($nameLabel)
     [void]$stack.Children.Add($top)
     $segments = @($Row.Preview)
     if ($segments.Count -gt 0) {
         $sample = New-Object System.Windows.Controls.Border
         $sample.CornerRadius = [System.Windows.CornerRadius]::new(4)
-        $sample.Padding = [System.Windows.Thickness]::new(6, 2, 6, 2)
+        $sample.Padding = [System.Windows.Thickness]::new(6, 3, 6, 3)
         $sample.Margin = [System.Windows.Thickness]::new(0, 4, 0, 0)
         $sample.ClipToBounds = $true
         $sample.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushLog")
         $line = New-Object System.Windows.Controls.TextBlock
-        $line.FontSize = 10.5
+        # A sample prompt in the theme colors; it may run past the edge like a real terminal line.
+        $line.Tag = "preview-content"
+        $line.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
         $line.TextWrapping = "NoWrap"
         $line.SetResourceReference([System.Windows.Controls.TextBlock]::FontFamilyProperty, "TerminalPreviewFont")
         Set-WinToolLigatureTypography -Element $line
@@ -676,7 +673,8 @@ function New-WinToolPreviewRun {
 }
 
 function Build-WinToolExtraToggle {
-    # Each extra as a switch with a one-line description, in two columns.
+    # Each extra as the shared rounded checkbox with its name and a
+    # description that wraps, in two columns.
     $hostPanel = Get-WinToolUi -Name "TerminalExtrasHost"
     $hostPanel.Children.Clear()
     $script:WinToolTerminalExtraBox = @()
@@ -684,29 +682,32 @@ function Build-WinToolExtraToggle {
     for ($index = 0; $index -lt $extras.Count; $index++) {
         $extra = $extras[$index]
         $cell = New-Object System.Windows.Controls.Border
-        $cell.Margin = [System.Windows.Thickness]::new(0, 0, 14, 0)
-        $cell.Padding = [System.Windows.Thickness]::new(0, 6, 0, 6)
+        $cell.Margin = [System.Windows.Thickness]::new(0, 0, 16, 0)
+        $cell.Padding = [System.Windows.Thickness]::new(0, 8, 0, 8)
         $cell.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
         if ($index -ge 2) { $cell.BorderThickness = [System.Windows.Thickness]::new(0, 1, 0, 0) }
         $grid = New-Object System.Windows.Controls.Grid
-        $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition))
         $auto = New-Object System.Windows.Controls.ColumnDefinition
         $auto.Width = [System.Windows.GridLength]::Auto
         $grid.ColumnDefinitions.Add($auto)
-        $text = New-Object System.Windows.Controls.StackPanel
-        [void]$text.Children.Add((New-WinToolTerminalLabel -Text ([string]$extra.name) -Size 11))
-        $about = New-WinToolTerminalLabel -Text ([string]$extra.description) -Size 9.5 -Brush "BrushHint"
-        $about.ToolTip = [string]$extra.description
-        [void]$text.Children.Add($about)
-        [void]$grid.Children.Add($text)
+        $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition))
         $box = New-Object System.Windows.Controls.CheckBox
-        $box.Style = $hostPanel.FindResource("SwitchToggleSmall")
         $box.Tag = [string]$extra.id
-        $box.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
-        $box.VerticalAlignment = "Center"
+        $box.Margin = [System.Windows.Thickness]::new(0, 0, 10, 0)
+        $box.VerticalAlignment = "Top"
         [System.Windows.Automation.AutomationProperties]::SetName($box, [string]$extra.name)
-        [System.Windows.Controls.Grid]::SetColumn($box, 1)
         [void]$grid.Children.Add($box)
+        $text = New-Object System.Windows.Controls.StackPanel
+        $name = New-WinToolTerminalLabel -Text ([string]$extra.name) -Weight "SemiBold"
+        $name.TextTrimming = "None"
+        $name.TextWrapping = "Wrap"
+        [void]$text.Children.Add($name)
+        $about = New-WinToolTerminalLabel -Text ([string]$extra.description) -Brush "BrushMuted"
+        $about.TextTrimming = "None"
+        $about.TextWrapping = "Wrap"
+        [void]$text.Children.Add($about)
+        [System.Windows.Controls.Grid]::SetColumn($text, 1)
+        [void]$grid.Children.Add($text)
         Register-WinToolUiEvent -Control $box -EventName "Click" -Name "Terminal: extras" -Action {
             Update-WinToolTerminalSummary
             Update-WinToolTerminalPreview
@@ -743,37 +744,25 @@ function Build-WinToolSchemeCard {
     $hostPanel.Children.Clear()
     foreach ($scheme in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "schemes" -Default @())) {
         $card = New-WinToolTerminalTile
-        $card.Padding = [System.Windows.Thickness]::new(4)
+        # Each tile is drawn in its own colors: the scheme background with
+        # the name in its text color, so no extra swatch or hex line is needed.
+        $card.Padding = [System.Windows.Thickness]::new(4, 0, 4, 0)
         $card.Margin = [System.Windows.Thickness]::new(0, 0, 6, 0)
+        $card.Height = 36
         $card.CornerRadius = [System.Windows.CornerRadius]::new(6)
         $card.Tag = [string]$scheme.id
         $card.ToolTip = [string]$scheme.name + " " + [string]$scheme.background
-        $grid = New-Object System.Windows.Controls.Grid
-        $auto = New-Object System.Windows.Controls.ColumnDefinition
-        $auto.Width = [System.Windows.GridLength]::Auto
-        $grid.ColumnDefinitions.Add($auto)
-        $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition))
-        $swatch = New-Object System.Windows.Controls.Border
-        $swatch.Width = 34
-        $swatch.Height = 30
-        $swatch.CornerRadius = [System.Windows.CornerRadius]::new(4)
-        $swatch.Padding = [System.Windows.Thickness]::new(4, 3, 2, 0)
-        $swatchFill = ConvertTo-WinToolPreviewBrush -Color ([string]$scheme.background)
-        if ($null -ne $swatchFill) { $swatch.Background = $swatchFill }
+        [System.Windows.Automation.AutomationProperties]::SetName($card, [string]$scheme.name)
+        $tileFill = ConvertTo-WinToolPreviewBrush -Color ([string]$scheme.background)
+        if ($null -ne $tileFill) { $card.Background = $tileFill }
+        $palette = Get-WinToolNote -Object $scheme -Name "palette"
         $mark = New-Object System.Windows.Controls.TextBlock
-        $mark.FontFamily = [System.Windows.Media.FontFamily]::new("Cascadia Mono, Consolas")
-        $mark.FontSize = 9
-        $mark.Inlines.Add((New-WinToolPreviewRun -Segment ([pscustomobject]@{ Text = ("~ " + [string][char]0x276F); Foreground = [string]$scheme.foreground; Background = $null })))
-        $mark.Inlines.Add((New-WinToolPreviewRun -Segment ([pscustomobject]@{ Text = (" " + [string][char]0x258D); Foreground = [string]$scheme.cursor; Background = $null })))
-        $swatch.Child = $mark
-        [void]$grid.Children.Add($swatch)
-        $names = New-Object System.Windows.Controls.StackPanel
-        $names.VerticalAlignment = "Center"
-        $names.Margin = [System.Windows.Thickness]::new(6, 0, 0, 0)
-        [void]$names.Children.Add((New-WinToolTerminalLabel -Text ([string]$scheme.name) -Size 10))
-        [void]$names.Children.Add((New-WinToolTerminalLabel -Text ([string]$scheme.background) -Size 9 -Brush "BrushHint"))
-        [System.Windows.Controls.Grid]::SetColumn($names, 1)
-        [void]$grid.Children.Add($names)
+        $mark.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
+        $mark.VerticalAlignment = "Center"
+        $mark.HorizontalAlignment = "Center"
+        $mark.Inlines.Add((New-WinToolPreviewRun -Segment ([pscustomobject]@{ Text = ([string][char]0x276F + " "); Foreground = [string](Get-WinToolNote -Object $palette -Name "green" -Default ([string]$scheme.cursor)); Background = $null })))
+        $mark.Inlines.Add((New-WinToolPreviewRun -Segment ([pscustomobject]@{ Text = [string]$scheme.name; Foreground = [string]$scheme.foreground; Background = $null })))
+        $grid = $mark
         $card.Child = $grid
         Register-WinToolUiEvent -Control $card -EventName "MouseLeftButtonUp" -Name "Terminal: choose color scheme" -Data ([string]$scheme.id) -Action {
             param($source, $eventData, $schemeId)
@@ -826,49 +815,92 @@ function Update-WinToolFontSizeSelection {
 
 function Update-WinToolTerminalLayout {
     param(
-        [double]$Width
+        [double]$Width,
+        [double]$Height = -1
     )
-    # Three full-height columns. Below 760 px of content (a window under
-    # about 1050 px) the preview, font, and extras move under the lists and
-    # the page scrolls.
+    # Wide: prompt engines | themes | preview with font and colors, and the
+    # extras under the last two. Below 760 px of content (a window under
+    # about 1050 px) the preview, font, and extras move under the lists.
+    # When the body is shorter than the cards need at 14 px text, it gets a
+    # fixed height and scrolls instead of squeezing or clipping the cards.
     $grid = Get-WinToolUi -Name "TerminalAdvancedHost"
-    if ($null -eq $grid -or $Width -le 0) {
-        return
-    }
-    $narrow = ($Width -lt 760)
-    if ($narrow -eq [bool]$script:WinToolTerminalNarrow -and $null -ne $script:WinToolTerminalNarrow) {
-        return
-    }
-    $script:WinToolTerminalNarrow = $narrow
-    $side = Get-WinToolUi -Name "TerminalSideColumn"
     $scroll = Get-WinToolUi -Name "TerminalBodyScroll"
+    if ($null -eq $grid -or $null -eq $scroll) {
+        return
+    }
+    if ($Width -le 0) { $Width = $scroll.ActualWidth }
+    if ($Height -lt 0) { $Height = $scroll.ActualHeight }
+    if ($Width -le 0) { return }
+    $narrow = ($Width -lt 760)
+    $side = Get-WinToolUi -Name "TerminalSideColumn"
+    $prompt = Get-WinToolUi -Name "TerminalCardPrompt"
+    $extras = Get-WinToolUi -Name "TerminalCardExtras"
     $right = Get-WinToolUi -Name "TerminalColumnRight"
     $gap = Get-WinToolUi -Name "TerminalColumnGap"
     $mainRow = Get-WinToolUi -Name "TerminalRowMain"
     $previewRow = Get-WinToolUi -Name "TerminalRowPreview"
+    if ($narrow -ne [bool]$script:WinToolTerminalNarrow -or $null -eq $script:WinToolTerminalNarrow) {
+        $script:WinToolTerminalNarrow = $narrow
+        if ($narrow) {
+            [System.Windows.Controls.Grid]::SetRow($side, 1)
+            [System.Windows.Controls.Grid]::SetColumn($side, 0)
+            [System.Windows.Controls.Grid]::SetColumnSpan($side, 5)
+            $side.Margin = [System.Windows.Thickness]::new(0, 12, 0, 0)
+            [System.Windows.Controls.Grid]::SetRowSpan($prompt, 1)
+            [System.Windows.Controls.Grid]::SetColumn($extras, 0)
+            [System.Windows.Controls.Grid]::SetColumnSpan($extras, 5)
+            $right.Width = [System.Windows.GridLength]::new(0)
+            $gap.Width = [System.Windows.GridLength]::new(0)
+            $mainRow.Height = [System.Windows.GridLength]::new(520)
+            $previewRow.Height = [System.Windows.GridLength]::new(300)
+        }
+        else {
+            [System.Windows.Controls.Grid]::SetRow($side, 0)
+            [System.Windows.Controls.Grid]::SetColumn($side, 4)
+            [System.Windows.Controls.Grid]::SetColumnSpan($side, 1)
+            $side.Margin = [System.Windows.Thickness]::new(0)
+            [System.Windows.Controls.Grid]::SetRowSpan($prompt, 3)
+            [System.Windows.Controls.Grid]::SetColumn($extras, 2)
+            [System.Windows.Controls.Grid]::SetColumnSpan($extras, 3)
+            $right.Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+            $gap.Width = [System.Windows.GridLength]::new(12)
+            $mainRow.Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+            $previewRow.Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+        }
+    }
     if ($narrow) {
-        [System.Windows.Controls.Grid]::SetRow($side, 1)
-        [System.Windows.Controls.Grid]::SetColumn($side, 0)
-        [System.Windows.Controls.Grid]::SetColumnSpan($side, 5)
-        $side.Margin = [System.Windows.Thickness]::new(0, 12, 0, 0)
-        $right.Width = [System.Windows.GridLength]::new(0)
-        $gap.Width = [System.Windows.GridLength]::new(0)
-        $mainRow.Height = [System.Windows.GridLength]::new(440)
-        $previewRow.Height = [System.Windows.GridLength]::new(250)
-        $scroll.VerticalScrollBarVisibility = "Auto"
+        # Fixed row heights; the body scrolls.
+        $grid.Height = [double]::NaN
+        return
+    }
+    # Wide: fill the body, but never go below what the cards need.
+    $need = Get-WinToolTerminalBodyMinHeight -Width $Width
+    if ($Height -gt 0 -and $Height -ge $need) {
+        $grid.Height = $Height
     }
     else {
-        [System.Windows.Controls.Grid]::SetRow($side, 0)
-        [System.Windows.Controls.Grid]::SetColumn($side, 4)
-        [System.Windows.Controls.Grid]::SetColumnSpan($side, 1)
-        $side.Margin = [System.Windows.Thickness]::new(0)
-        $right.Width = [System.Windows.GridLength]::new(1.32, [System.Windows.GridUnitType]::Star)
-        $gap.Width = [System.Windows.GridLength]::new(12)
-        $mainRow.Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
-        $previewRow.Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
-        $scroll.ScrollToTop()
-        $scroll.VerticalScrollBarVisibility = "Disabled"
+        $grid.Height = $need
     }
+}
+
+function Get-WinToolTerminalBodyMinHeight {
+    param([double]$Width)
+    # The tallest of: the whole prompt card (all engines and the note), and
+    # the theme card or the preview with font card, plus the extras below.
+    $prompt = Get-WinToolUi -Name "TerminalCardPrompt"
+    $font = Get-WinToolUi -Name "TerminalCardFont"
+    $extras = Get-WinToolUi -Name "TerminalCardExtras"
+    $infinite = [double]::PositiveInfinity
+    $promptWidth = 230.0
+    $restWidth = [Math]::Max(200.0, ($Width - $promptWidth - 24.0) / 2.0)
+    $prompt.Measure([System.Windows.Size]::new($promptWidth, $infinite))
+    $font.Measure([System.Windows.Size]::new($restWidth, $infinite))
+    $extras.Measure([System.Windows.Size]::new(($restWidth * 2.0) + 12.0, $infinite))
+    $promptNeed = $prompt.DesiredSize.Height
+    $sideNeed = 150.0 + 12.0 + $font.DesiredSize.Height
+    $themeNeed = 260.0
+    $restNeed = [Math]::Max($sideNeed, $themeNeed) + $extras.DesiredSize.Height
+    return [Math]::Ceiling([Math]::Max([Math]::Max($promptNeed, $restNeed), 420.0))
 }
 
 function Update-WinToolFontList {
@@ -1117,16 +1149,11 @@ function Update-WinToolTerminalSummary {
     }
     $summaryHost = Get-WinToolUi -Name "TerminalSummaryHost"
     if ($null -eq $summaryHost) { return }
-    # Two rows of chips: what gets installed (+) and what gets changed (~).
+    # One wrapping row of chips: what gets installed (+), then what gets changed (~).
     $summaryHost.Children.Clear()
     $summaryHost.ToolTip = ($lines -join "`n")
     $chips = @(Get-WinToolSummaryChip -Step $steps)
     foreach ($kind in @("add", "change")) {
-        $row = New-Object System.Windows.Controls.StackPanel
-        $row.Orientation = "Horizontal"
-        $row.ClipToBounds = $true
-        $row.Height = 20
-        if ($kind -eq "change") { $row.Margin = [System.Windows.Thickness]::new(0, 4, 0, 0) }
         foreach ($chip in @($chips | Where-Object { $_.Kind -eq $kind })) {
             if ($kind -eq "add") {
                 $element = New-WinToolTerminalChip -Text ("+ " + [string]$chip.Text) -Background "BrushOkSoft" -Foreground "BrushOk"
@@ -1134,10 +1161,9 @@ function Update-WinToolTerminalSummary {
             else {
                 $element = New-WinToolTerminalChip -Text ([string][char]0x007E + " " + [string]$chip.Text) -Background "BrushWarnSoft" -Foreground "BrushWarn"
             }
-            $element.Margin = [System.Windows.Thickness]::new(0, 0, 4, 0)
-            [void]$row.Children.Add($element)
+            $element.Tag = [string]$kind
+            [void]$summaryHost.Children.Add($element)
         }
-        [void]$summaryHost.Children.Add($row)
     }
 }
 

@@ -1427,6 +1427,26 @@ Invoke-WinToolCase -Name "Terminal setup always turns on font ligatures for ever
     }
 }
 
+Invoke-WinToolCase -Name "Terminal page follows the 14 px text standard" -Body {
+    $xaml = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "assets/MainWindow.xaml"))
+    $start = $xaml.IndexOf('x:Name="ViewTerminal"')
+    $end = $xaml.IndexOf('x:Name="ViewUpdates"')
+    Test-WinToolExpectation -Condition ($start -gt 0 -and $end -gt $start) -Message "The Terminal view is in the window markup."
+    $terminal = $xaml.Substring($start, $end - $start)
+    $literal = @([regex]::Matches($terminal, 'FontSize"?\s*(=|Value=)\s*"[0-9.]+"') | ForEach-Object { $_.Value })
+    Test-WinToolExpectation -Condition ($literal.Count -eq 0) -Message ("Terminal markup uses the shared text sizes, not numbers: " + ($literal -join ", "))
+    $titles = @([regex]::Matches($terminal, 'FontSizeTitle')).Count
+    Test-WinToolExpectation -Condition ($titles -eq 1) -Message "Only the Terminal page title uses FontSizeTitle."
+    Test-WinToolExpectation -Condition ($terminal -notmatch 'SwitchToggle' -and $terminal -notmatch 'LayoutTransform') -Message "Terminal checkboxes use the shared rounded checkbox, unscaled."
+    Test-WinToolExpectation -Condition ($terminal -notmatch '<Style[^>]*TargetType="CheckBox"') -Message "The Terminal page does not define its own checkbox style."
+    $view = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/TerminalView.ps1"))
+    $sizes = @([regex]::Matches($view, '(FontSize\s*=\s*[0-9]|-Size\s+[0-9])') | ForEach-Object { $_.Value })
+    Test-WinToolExpectation -Condition ($sizes.Count -eq 0) -Message ("Terminal code uses FontSizeBody, not fixed sizes: " + ($sizes -join ", "))
+    Test-WinToolExpectation -Condition ($view -notmatch 'SwitchToggle') -Message "Terminal extras use the shared rounded checkbox."
+    # The live sample is the one exception: it follows the chosen terminal font size.
+    Test-WinToolExpectation -Condition ($view -match '\$sample\.FontSize = \[Math\]::Round\(\$size') -Message "The live preview follows the chosen terminal font size."
+}
+
 if ($script:WinToolFailures.Count -gt 0) {
     Write-Output ""
     Write-Output ("{0} test(s) failed." -f $script:WinToolFailures.Count)
