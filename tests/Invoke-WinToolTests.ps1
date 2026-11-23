@@ -264,6 +264,53 @@ Invoke-WinToolCase -Name "Fixes run known programs and named scripts" -Body {
     Test-WinToolExpectation -Condition ($bad.Count -ge 3) -Message "The fix catalog rejects outside programs and unknown scripts."
 }
 
+Invoke-WinToolCase -Name "Update modes set policies and revert to default" -Body {
+    $catalog = Get-WinToolUpdateCatalog
+    $ids = @(Get-WinToolUpdateMode -Catalog $catalog | ForEach-Object { [string]$_.id })
+    Test-WinToolExpectation -Condition (($ids -join ",") -eq "default,security,disabled") -Message "Update modes should be Default, Security only, and Disabled."
+    $managed = @(Get-WinToolManagedUpdatePolicy -Catalog $catalog)
+    $security = Get-WinToolUpdateModeChange -ModeId "security" -Catalog $catalog
+    $setNames = @($security.Set | ForEach-Object { $_.name })
+    Test-WinToolExpectation -Condition (($setNames -contains "DeferFeatureUpdates") -and ($setNames -contains "DeferFeatureUpdatesPeriodInDays")) -Message "Security only defers feature updates."
+    Test-WinToolExpectation -Condition (-not ($setNames -contains "NoAutoUpdate")) -Message "Security only keeps updates on."
+    Test-WinToolExpectation -Condition (@($security.Remove).Count -eq $managed.Count) -Message "Every mode clears all managed policies first."
+    $default = Get-WinToolUpdateModeChange -ModeId "default" -Catalog $catalog
+    Test-WinToolExpectation -Condition (@($default.Set).Count -eq 0 -and @($default.Remove).Count -eq $managed.Count) -Message "Default removes every policy WinTool sets."
+    $wu = @($default.Services | Where-Object { $_.name -eq "wuauserv" })[0]
+    Test-WinToolExpectation -Condition ($wu.startupType -eq "Manual" -and -not $wu.stop) -Message "Default turns the update service back on."
+    $disabled = Get-WinToolUpdateModeChange -ModeId "disabled" -Catalog $catalog
+    Test-WinToolExpectation -Condition (@($disabled.Services | Where-Object { $_.startupType -eq "Disabled" -and $_.stop }).Count -eq 2) -Message "Disabled stops and disables both update services."
+    foreach ($id in $ids) {
+        $text = Get-WinToolUpdateModeScript -ModeId $id -Catalog $catalog
+        $tokens = $null
+        $errors = $null
+        [void][System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$errors)
+        Test-WinToolExpectation -Condition (@($errors).Count -eq 0) -Message "The $id mode script does not parse."
+    }
+    $plan = @(Get-WinToolUpdateModePlan -ModeId "security" -Catalog $catalog)
+    $command = Get-WinToolPlanCommand -Step $plan[0]
+    Test-WinToolExpectation -Condition ($command.FilePath.EndsWith("powershell.exe") -and (@($command.ArgumentList) -contains "-File")) -Message "The update mode runs in Windows PowerShell."
+    $written = Get-Content -LiteralPath @($command.ArgumentList)[-1] -Raw
+    Remove-Item -LiteralPath @($command.ArgumentList)[-1] -Force -ErrorAction SilentlyContinue
+    Test-WinToolExpectation -Condition ($written.Contains("DeferFeatureUpdatesPeriodInDays")) -Message "The written script carries the mode settings."
+
+    $root = "hklm:\software\policies\microsoft\windows\windowsupdate"
+    Test-WinToolExpectation -Condition ((Resolve-WinToolUpdateMode -Catalog $catalog) -eq "default") -Message "No policies means Default."
+    $values = @{}
+    foreach ($item in @($security.Set)) { $values[(Get-WinToolUpdatePolicyKey -Policy $item)] = $item.value }
+    Test-WinToolExpectation -Condition ((Resolve-WinToolUpdateMode -Values $values -Catalog $catalog) -eq "security") -Message "Security policies are detected."
+    $values[$root + "\au|noautoupdate"] = 1
+    Test-WinToolExpectation -Condition ((Resolve-WinToolUpdateMode -Values $values -Catalog $catalog) -eq "custom") -Message "Mixed policies show as custom."
+    $off = @{ ($root + "\au|noautoupdate") = 1 }
+    Test-WinToolExpectation -Condition ((Resolve-WinToolUpdateMode -Values $off -Services @{ wuauserv = "Disabled" } -Catalog $catalog) -eq "disabled") -Message "Disabled is detected."
+    Test-WinToolExpectation -Condition ((Resolve-WinToolUpdateMode -Services @{ wuauserv = "Disabled" } -Catalog $catalog) -eq "custom") -Message "A disabled service without policies is custom."
+
+    $bad = New-Object System.Collections.Generic.List[string]
+    $badCatalog = [pscustomobject]@{ modes = @([pscustomobject]@{ id = "x"; name = "X"; description = "d"; policies = @([pscustomobject]@{ path = "HKLM:\SOFTWARE\Evil"; name = "A"; value = 1 }); services = @([pscustomobject]@{ name = "wuauserv"; startupType = "Sometimes" }) }) }
+    Test-WinToolUpdateModeCatalog -Catalog $badCatalog -Errors $bad
+    Test-WinToolExpectation -Condition ($bad.Count -ge 3) -Message "The update mode catalog rejects outside keys, bad startup types, and a missing default."
+}
+
 Invoke-WinToolCase -Name "Windows features read state and plan DISM changes" -Body {
     $catalog = Get-WinToolFeatureCatalog
     $byId = @{}

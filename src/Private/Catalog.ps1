@@ -313,6 +313,7 @@ function Test-WinToolDataFile {
 
     Test-WinToolFixCatalog -Catalog (Get-WinToolFixCatalog) -Errors $errors
     Test-WinToolFeatureCatalog -Catalog (Get-WinToolFeatureCatalog) -Errors $errors
+    Test-WinToolUpdateModeCatalog -Catalog $updates -Errors $errors
 
     return $errors.ToArray()
 }

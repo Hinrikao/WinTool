@@ -498,6 +498,19 @@
               </StackPanel>
             </Border>
 
+            <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
+              <StackPanel>
+                <TextBlock Text="Update mode" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Choose how Windows Update behaves on this PC. WinTool only writes Windows Update policies and service settings, and Default removes them all again." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+                <TextBlock x:Name="UpdateModeCurrent" Text="Current mode: checking..." FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <StackPanel x:Name="UpdateModeList" Margin="0,0,0,12"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="ApplyUpdateMode" Content="Apply mode" Style="{StaticResource PrimaryButton}" Margin="0"/>
+                  <Button x:Name="RevertUpdateMode" Content="Back to default" Style="{StaticResource SecondaryButton}"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
               <StackPanel>
                 <TextBlock Text="Windows Update" FontWeight="SemiBold" FontSize="16"/>

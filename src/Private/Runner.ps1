@@ -90,6 +90,14 @@ function Get-WinToolPlanCommand {
             ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
         }
     }
+    if ($type -eq "inline-script") {
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-" + [string]$Step.Name + ".ps1")
+        Write-WinToolUtf8File -Path $scriptPath -Text ([string]$Step.Text)
+        return [pscustomobject]@{
+            FilePath = (Get-WinToolSystemFile -RelativePath "System32\WindowsPowerShell\v1.0\powershell.exe")
+            ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
+        }
+    }
     if ($type -eq "wsl-install") {
         return [pscustomobject]@{
             FilePath = (Join-Path $env:SystemRoot "System32/wsl.exe")

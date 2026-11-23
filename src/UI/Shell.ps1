@@ -520,6 +520,9 @@ function New-WinToolWindow {
         TweakRows = @()
         TweakGroups = @()
         Updates = @()
+        UpdateMode = ""
+        UpdateModeCurrent = ""
+        UpdateModeRadios = @()
         Run = $null
         Pump = $null
         RestoreJob = $null

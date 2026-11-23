@@ -39,6 +39,8 @@ function Initialize-WinToolUpdateView {
         [void]$panel.Children.Add($button)
     }
 
+    Initialize-WinToolUpdateModeView
+
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ScanDrivers") -EventName "Click" -Name "Updates: scan" -Action { Invoke-WinToolScanClick }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenWindowsUpdate") -EventName "Click" -Name "Updates: open Windows Update" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate" }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenOptionalUpdates") -EventName "Click" -Name "Updates: open optional updates" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate-optionalupdates" }
@@ -159,4 +161,78 @@ function Complete-WinToolUpdateInstall {
     if ($reboot) {
         Write-WinToolLog -Message "Windows asked for a restart to finish the updates." -Level "warn"
     }
+}
+
+function Initialize-WinToolUpdateModeView {
+    $list = Get-WinToolUi -Name "UpdateModeList"
+    $list.Children.Clear()
+    $radios = New-Object System.Collections.Generic.List[object]
+    foreach ($mode in (Get-WinToolUpdateMode)) {
+        $radio = New-Object System.Windows.Controls.RadioButton
+        $radio.GroupName = "WinToolUpdateMode"
+        $radio.Tag = [string]$mode.id
+        $radio.Margin = [System.Windows.Thickness]::new(0, 0, 0, 10)
+        $content = New-Object System.Windows.Controls.StackPanel
+        [void]$content.Children.Add((New-WinToolText -Text ([string]$mode.name) -Weight "SemiBold"))
+        [void]$content.Children.Add((New-WinToolText -Text ([string]$mode.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
+        $radio.Content = $content
+        Register-WinToolUiEvent -Control $radio -EventName "Checked" -Name "Updates: pick mode" -Data ([string]$mode.id) -Action {
+            param($source, $eventData, $modeId)
+            $null = $source, $eventData
+            $script:WinToolState.UpdateMode = $modeId
+        }
+        [void]$list.Children.Add($radio)
+        $radios.Add($radio)
+    }
+    $script:WinToolState.UpdateModeRadios = $radios.ToArray()
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ApplyUpdateMode") -EventName "Click" -Name "Updates: apply mode" -Action {
+        Invoke-WinToolUpdateModeClick -ModeId ([string]$script:WinToolState.UpdateMode)
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "RevertUpdateMode") -EventName "Click" -Name "Updates: back to default" -Action {
+        Invoke-WinToolUpdateModeClick -ModeId "default"
+    }
+    Sync-WinToolUpdateMode
+}
+
+function Sync-WinToolUpdateMode {
+    $current = "default"
+    if (Test-WinToolWindows) {
+        $snapshot = Get-WinToolUpdateModeSnapshot
+        $current = Resolve-WinToolUpdateMode -Values $snapshot.Values -Services $snapshot.Services
+    }
+    $label = "Custom (policies set outside WinTool)"
+    $mode = Find-WinToolUpdateMode -Id $current
+    if ($null -ne $mode) {
+        $label = [string]$mode.name
+    }
+    (Get-WinToolUi -Name "UpdateModeCurrent").Text = "Current mode: " + $label
+    $script:WinToolState.UpdateModeCurrent = $current
+    $script:WinToolState.UpdateMode = $current
+    foreach ($radio in @($script:WinToolState.UpdateModeRadios)) {
+        $radio.IsChecked = ([string]$radio.Tag -eq $current)
+    }
+}
+
+function Invoke-WinToolUpdateModeClick {
+    param(
+        [string]$ModeId
+    )
+    $mode = $null
+    if (-not [string]::IsNullOrWhiteSpace($ModeId)) {
+        $mode = Find-WinToolUpdateMode -Id $ModeId
+    }
+    if ($null -eq $mode) {
+        Write-WinToolLog -Message "Pick an update mode first." -Level "warn"
+        return
+    }
+    $message = "Set Windows Update to: {0}?`n`n{1}" -f [string]$mode.name, [string]$mode.description
+    if ($ModeId -eq "disabled") {
+        $message += "`n`nThis is not recommended. Use Back to default to undo it."
+    }
+    $ok = Request-WinToolConfirmation -Message $message -Title "Update mode"
+    if (-not $ok) {
+        return
+    }
+    $steps = @(Get-WinToolUpdateModePlan -ModeId $ModeId)
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage ("Windows Update mode set to " + [string]$mode.name + ".") -AfterDone "Sync-WinToolUpdateMode"
 }

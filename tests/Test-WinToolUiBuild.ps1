@@ -90,6 +90,13 @@ $fixList = $window.FindName("FixList")
 if ($null -eq $fixList -or $fixList.Children.Count -lt 4) {
     throw "The Fixes tab did not list the repairs."
 }
+$modeList = $window.FindName("UpdateModeList")
+if ($null -eq $modeList -or $modeList.Children.Count -ne 3) {
+    throw "The Updates tab did not list the three update modes."
+}
+if (@($modeList.Children | Where-Object { $_.IsChecked -eq $true }).Count -ne 1) {
+    throw "The current update mode should be selected."
+}
 $logPanel = $window.FindName("LogPanel")
 if ($null -eq $logPanel -or $logPanel.Visibility -ne "Collapsed") {
     throw "The log should be collapsed until a task starts."
@@ -118,6 +125,8 @@ $skip = @(
     "Updates: open Windows Update",
     "Updates: open optional updates",
     "Updates: install scanned updates",
+    "Updates: apply mode",
+    "Updates: back to default",
     "Updates: vendor downloads",
     "Config: save profile",
     "Config: load profile",

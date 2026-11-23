@@ -2661,7 +2661,50 @@ L3d3dy5hbWQuY29tL2VuL3N1cHBvcnQiLAogICAgICAibm90ZSI6ICJPZmZpY2lhbCBBTUQgZHJpdmVy
 IGFuZCBjaGlwc2V0IHN1cHBvcnQiCiAgICB9LAogICAgewogICAgICAiaWQiOiAiaW50ZWwiLAogICAg
 ICAibmFtZSI6ICJJbnRlbCIsCiAgICAgICJtYXRjaCI6IFsiaW50ZWwiXSwKICAgICAgInVybCI6ICJo
 dHRwczovL3d3dy5pbnRlbC5jb20vY29udGVudC93d3cvdXMvZW4vZG93bmxvYWQtY2VudGVyL2hvbWUu
-aHRtbCIsCiAgICAgICJub3RlIjogIk9mZmljaWFsIEludGVsIGRvd25sb2FkcyIKICAgIH0KICBdCn0K
+aHRtbCIsCiAgICAgICJub3RlIjogIk9mZmljaWFsIEludGVsIGRvd25sb2FkcyIKICAgIH0KICBdLAog
+ICJtb2RlcyI6IFsKICAgIHsKICAgICAgImlkIjogImRlZmF1bHQiLAogICAgICAibmFtZSI6ICJEZWZh
+dWx0IiwKICAgICAgImRlc2NyaXB0aW9uIjogIldpbmRvd3MgaW5zdGFsbHMgdXBkYXRlcyBvbiBpdHMg
+b3duIHNjaGVkdWxlLiBQaWNraW5nIHRoaXMgcmVtb3ZlcyBldmVyeSB1cGRhdGUgcG9saWN5IFdpblRv
+b2wgc2V0cyBhbmQgdHVybnMgdGhlIHVwZGF0ZSBzZXJ2aWNlcyBiYWNrIG9uLiIsCiAgICAgICJwb2xp
+Y2llcyI6IFtdLAogICAgICAic2VydmljZXMiOiBbCiAgICAgICAgewogICAgICAgICAgIm5hbWUiOiAi
+d3VhdXNlcnYiLAogICAgICAgICAgInN0YXJ0dXBUeXBlIjogIk1hbnVhbCIKICAgICAgICB9LAogICAg
+ICAgIHsKICAgICAgICAgICJuYW1lIjogIlVzb1N2YyIsCiAgICAgICAgICAic3RhcnR1cFR5cGUiOiAi
+QXV0b21hdGljRGVsYXllZCIKICAgICAgICB9CiAgICAgIF0KICAgIH0sCiAgICB7CiAgICAgICJpZCI6
+ICJzZWN1cml0eSIsCiAgICAgICJuYW1lIjogIlNlY3VyaXR5IHVwZGF0ZXMgb25seSIsCiAgICAgICJk
+ZXNjcmlwdGlvbiI6ICJNb250aGx5IHNlY3VyaXR5IGFuZCBxdWFsaXR5IHVwZGF0ZXMgc3RpbGwgaW5z
+dGFsbCwgZm91ciBkYXlzIGFmdGVyIHJlbGVhc2UuIEZlYXR1cmUgdXBkYXRlcyAobmV3IFdpbmRvd3Mg
+dmVyc2lvbnMpIHdhaXQgMzY1IGRheXMsIGFuZCBXaW5kb3dzIGRvZXMgbm90IHJlc3RhcnQgb24gaXRz
+IG93biB3aGlsZSBzb21lb25lIGlzIHNpZ25lZCBpbi4iLAogICAgICAicG9saWNpZXMiOiBbCiAgICAg
+ICAgewogICAgICAgICAgInBhdGgiOiAiSEtMTTpcXFNPRlRXQVJFXFxQb2xpY2llc1xcTWljcm9zb2Z0
+XFxXaW5kb3dzXFxXaW5kb3dzVXBkYXRlIiwKICAgICAgICAgICJuYW1lIjogIkRlZmVyRmVhdHVyZVVw
+ZGF0ZXMiLAogICAgICAgICAgInZhbHVlIjogMQogICAgICAgIH0sCiAgICAgICAgewogICAgICAgICAg
+InBhdGgiOiAiSEtMTTpcXFNPRlRXQVJFXFxQb2xpY2llc1xcTWljcm9zb2Z0XFxXaW5kb3dzXFxXaW5k
+b3dzVXBkYXRlIiwKICAgICAgICAgICJuYW1lIjogIkRlZmVyRmVhdHVyZVVwZGF0ZXNQZXJpb2RJbkRh
+eXMiLAogICAgICAgICAgInZhbHVlIjogMzY1CiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAi
+cGF0aCI6ICJIS0xNOlxcU09GVFdBUkVcXFBvbGljaWVzXFxNaWNyb3NvZnRcXFdpbmRvd3NcXFdpbmRv
+d3NVcGRhdGUiLAogICAgICAgICAgIm5hbWUiOiAiRGVmZXJRdWFsaXR5VXBkYXRlcyIsCiAgICAgICAg
+ICAidmFsdWUiOiAxCiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAicGF0aCI6ICJIS0xNOlxc
+U09GVFdBUkVcXFBvbGljaWVzXFxNaWNyb3NvZnRcXFdpbmRvd3NcXFdpbmRvd3NVcGRhdGUiLAogICAg
+ICAgICAgIm5hbWUiOiAiRGVmZXJRdWFsaXR5VXBkYXRlc1BlcmlvZEluRGF5cyIsCiAgICAgICAgICAi
+dmFsdWUiOiA0CiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAicGF0aCI6ICJIS0xNOlxcU09G
+VFdBUkVcXFBvbGljaWVzXFxNaWNyb3NvZnRcXFdpbmRvd3NcXFdpbmRvd3NVcGRhdGVcXEFVIiwKICAg
+ICAgICAgICJuYW1lIjogIk5vQXV0b1JlYm9vdFdpdGhMb2dnZWRPblVzZXJzIiwKICAgICAgICAgICJ2
+YWx1ZSI6IDEKICAgICAgICB9CiAgICAgIF0sCiAgICAgICJzZXJ2aWNlcyI6IFsKICAgICAgICB7CiAg
+ICAgICAgICAibmFtZSI6ICJ3dWF1c2VydiIsCiAgICAgICAgICAic3RhcnR1cFR5cGUiOiAiTWFudWFs
+IgogICAgICAgIH0sCiAgICAgICAgewogICAgICAgICAgIm5hbWUiOiAiVXNvU3ZjIiwKICAgICAgICAg
+ICJzdGFydHVwVHlwZSI6ICJBdXRvbWF0aWNEZWxheWVkIgogICAgICAgIH0KICAgICAgXQogICAgfSwK
+ICAgIHsKICAgICAgImlkIjogImRpc2FibGVkIiwKICAgICAgIm5hbWUiOiAiRGlzYWJsZWQiLAogICAg
+ICAiZGVzY3JpcHRpb24iOiAiU3RvcHMgV2luZG93cyBVcGRhdGUgY29tcGxldGVseS4gVGhlIFBDIGdl
+dHMgbm8gc2VjdXJpdHkgZml4ZXMgYW5kIHRoZSBkcml2ZXIgc2NhbiBvbiB0aGlzIHBhZ2Ugc3RvcHMg
+d29ya2luZyB1bnRpbCB5b3UgcGljayBhbm90aGVyIG1vZGUuIFdpbmRvd3MgbWF5IHR1cm4gcGFydHMg
+b2YgaXQgYmFjayBvbiBieSBpdHNlbGYuIiwKICAgICAgInBvbGljaWVzIjogWwogICAgICAgIHsKICAg
+ICAgICAgICJwYXRoIjogIkhLTE06XFxTT0ZUV0FSRVxcUG9saWNpZXNcXE1pY3Jvc29mdFxcV2luZG93
+c1xcV2luZG93c1VwZGF0ZVxcQVUiLAogICAgICAgICAgIm5hbWUiOiAiTm9BdXRvVXBkYXRlIiwKICAg
+ICAgICAgICJ2YWx1ZSI6IDEKICAgICAgICB9CiAgICAgIF0sCiAgICAgICJzZXJ2aWNlcyI6IFsKICAg
+ICAgICB7CiAgICAgICAgICAibmFtZSI6ICJ3dWF1c2VydiIsCiAgICAgICAgICAic3RhcnR1cFR5cGUi
+OiAiRGlzYWJsZWQiLAogICAgICAgICAgInN0b3AiOiB0cnVlCiAgICAgICAgfSwKICAgICAgICB7CiAg
+ICAgICAgICAibmFtZSI6ICJVc29TdmMiLAogICAgICAgICAgInN0YXJ0dXBUeXBlIjogIkRpc2FibGVk
+IiwKICAgICAgICAgICJzdG9wIjogdHJ1ZQogICAgICAgIH0KICAgICAgXQogICAgfQogIF0KfQo=
 '@
     Fixes = @'
 ewogICJzY2hlbWFWZXJzaW9uIjogMSwKICAiZml4ZXMiOiBbCiAgICB7CiAgICAgICJpZCI6ICJ3aW5k
@@ -3242,139 +3285,158 @@ YXJnaW49IjAsOCwwLDEyIi8+CiAgICAgICAgICAgICAgICA8V3JhcFBhbmVsIHg6TmFtZT0iVmVuZG9y
 TGlua3MiLz4KICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvQm9yZGVyPgoK
 ICAgICAgICAgICAgPEJvcmRlciBCYWNrZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoQ2FyZH0i
 IEJvcmRlckJydXNoPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTGluZX0iIEJvcmRlclRoaWNrbmVzcz0i
-MSIgQ29ybmVyUmFkaXVzPSIxMiIgUGFkZGluZz0iMTYiPgogICAgICAgICAgICAgIDxTdGFja1BhbmVs
-PgogICAgICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJXaW5kb3dzIFVwZGF0ZSIgRm9udFdlaWdo
-dD0iU2VtaUJvbGQiIEZvbnRTaXplPSIxNiIvPgogICAgICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0
-PSJUaGUgc2NhbiBsaXN0cyBkcml2ZXIgdXBkYXRlcyBXaW5kb3dzIFVwZGF0ZSBpcyBvZmZlcmluZyBy
-aWdodCBub3cuIE9wdGlvbmFsIHVwZGF0ZXMgYXJlIGVhc2llciB0byByZXZpZXcgaW4gU2V0dGluZ3Mu
-IEluc3RhbGxpbmcgY2FuIHRha2UgYSB3aGlsZSBhbmQgbWF5IGFzayBmb3IgYSByZXN0YXJ0LiIgRm9y
-ZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIgVGV4dFdyYXBwaW5nPSJXcmFwIiBN
-YXJnaW49IjAsNiwwLDEyIi8+CiAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggeDpOYW1lPSJJbmNsdWRl
-U29mdHdhcmVVcGRhdGVzIiBDb250ZW50PSJJbmNsdWRlIHNvZnR3YXJlIHVwZGF0ZXMsIG5vdCBvbmx5
-IGRyaXZlcnMiIE1hcmdpbj0iMCwwLDAsMTIiLz4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIE9y
-aWVudGF0aW9uPSJIb3Jpem9udGFsIiBNYXJnaW49IjAsMCwwLDEyIj4KICAgICAgICAgICAgICAgICAg
-PEJ1dHRvbiB4Ok5hbWU9IlNjYW5Ecml2ZXJzIiBDb250ZW50PSJTY2FuIGZvciB1cGRhdGVzIiBTdHls
-ZT0ie1N0YXRpY1Jlc291cmNlIFByaW1hcnlCdXR0b259IiBNYXJnaW49IjAiLz4KICAgICAgICAgICAg
-ICAgICAgPEJ1dHRvbiB4Ok5hbWU9Ik9wZW5XaW5kb3dzVXBkYXRlIiBDb250ZW50PSJPcGVuIFdpbmRv
-d3MgVXBkYXRlIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFNlY29uZGFyeUJ1dHRvbn0iLz4KICAgICAg
-ICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9Ik9wZW5PcHRpb25hbFVwZGF0ZXMiIENvbnRlbnQ9Ik9w
-ZW4gb3B0aW9uYWwgdXBkYXRlcyIgU3R5bGU9IntTdGF0aWNSZXNvdXJjZSBTZWNvbmRhcnlCdXR0b259
-Ii8+CiAgICAgICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJJbnN0YWxsU2Nhbm5lZFVwZGF0ZXMi
-IENvbnRlbnQ9Ikluc3RhbGwgc2Nhbm5lZCB1cGRhdGVzIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFNl
-Y29uZGFyeUJ1dHRvbn0iIElzRW5hYmxlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQ
-YW5lbD4KICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgeDpOYW1lPSJVcGRhdGVFbXB0eSIgVGV4dD0i
-Tm8gc2NhbiB5ZXQuIiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTXV0ZWR9Ii8+CiAg
-ICAgICAgICAgICAgICA8TGlzdEJveCB4Ok5hbWU9IlVwZGF0ZUxpc3QiIEJvcmRlclRoaWNrbmVzcz0i
-MCIgQmFja2dyb3VuZD0iVHJhbnNwYXJlbnQiIE1heEhlaWdodD0iMjIwIiBNYXJnaW49IjAsOCwwLDAi
-Lz4KICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvQm9yZGVyPgogICAgICAg
-ICAgPC9TdGFja1BhbmVsPgogICAgICAgIDwvU2Nyb2xsVmlld2VyPgoKICAgICAgICA8U2Nyb2xsVmll
-d2VyIHg6TmFtZT0iVmlld0ZpeGVzIiBWaXNpYmlsaXR5PSJDb2xsYXBzZWQiIFZlcnRpY2FsU2Nyb2xs
-QmFyVmlzaWJpbGl0eT0iQXV0byI+CiAgICAgICAgICA8U3RhY2tQYW5lbCBNYXJnaW49IjI0LDIyLDI0
-LDEyIj4KICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJGaXhlcyIgRm9udFNpemU9IjI4IiBGb250
-V2VpZ2h0PSJTZW1pQm9sZCIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaElua30iLz4K
-ICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJSZXBhaXJzIGZvciBjb21tb24gV2luZG93cyBwcm9i
-bGVtcy4gRWFjaCBvbmUgYXNrcyBmaXJzdCBhbmQgd3JpdGVzIHdoYXQgaXQgZG9lcyB0byB0aGUgbG9n
-LiIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIgVGV4dFdyYXBwaW5nPSJX
-cmFwIiBNYXJnaW49IjAsNiwwLDE2Ii8+CiAgICAgICAgICAgIDxTdGFja1BhbmVsIHg6TmFtZT0iRml4
-TGlzdCIvPgogICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgIDwvU2Nyb2xsVmlld2VyPgoKICAg
-ICAgICA8U2Nyb2xsVmlld2VyIHg6TmFtZT0iVmlld0ZlYXR1cmVzIiBWaXNpYmlsaXR5PSJDb2xsYXBz
-ZWQiIFZlcnRpY2FsU2Nyb2xsQmFyVmlzaWJpbGl0eT0iQXV0byI+CiAgICAgICAgICA8U3RhY2tQYW5l
-bCBNYXJnaW49IjI0LDIyLDI0LDEyIj4KICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJXaW5kb3dz
-IGZlYXR1cmVzIiBGb250U2l6ZT0iMjgiIEZvbnRXZWlnaHQ9IlNlbWlCb2xkIiBGb3JlZ3JvdW5kPSJ7
-RHluYW1pY1Jlc291cmNlIEJydXNoSW5rfSIvPgogICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9Ik9w
-dGlvbmFsIHBhcnRzIG9mIFdpbmRvd3MuIFRpY2tlZCBtZWFucyBvbi4gQ2hhbmdlIHRoZSB0aWNrcyBh
-bmQgcHJlc3MgQXBwbHkuIFdpbmRvd3MgbmVlZHMgYSByZXN0YXJ0IGFmdGVyIGEgY2hhbmdlLiIgRm9y
-ZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIgVGV4dFdyYXBwaW5nPSJXcmFwIiBN
-YXJnaW49IjAsNiwwLDE2Ii8+CiAgICAgICAgICAgIDxCb3JkZXIgQmFja2dyb3VuZD0ie0R5bmFtaWNS
-ZXNvdXJjZSBCcnVzaENhcmR9IiBCb3JkZXJCcnVzaD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaExpbmV9
-IiBCb3JkZXJUaGlja25lc3M9IjEiIENvcm5lclJhZGl1cz0iMTIiIFBhZGRpbmc9IjE2Ij4KICAgICAg
-ICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIE9yaWVudGF0aW9u
-PSJIb3Jpem9udGFsIiBNYXJnaW49IjAsMCwwLDE2Ij4KICAgICAgICAgICAgICAgICAgPEJ1dHRvbiB4
-Ok5hbWU9IkZlYXR1cmVBcHBseSIgQ29udGVudD0iQXBwbHkgY2hhbmdlcyIgU3R5bGU9IntTdGF0aWNS
-ZXNvdXJjZSBQcmltYXJ5QnV0dG9ufSIgTWFyZ2luPSIwIi8+CiAgICAgICAgICAgICAgICAgIDxCdXR0
-b24geDpOYW1lPSJGZWF0dXJlUmVmcmVzaCIgQ29udGVudD0iUmVmcmVzaCIgU3R5bGU9IntTdGF0aWNS
-ZXNvdXJjZSBTZWNvbmRhcnlCdXR0b259Ii8+CiAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgeDpO
-YW1lPSJGZWF0dXJlU3RhdHVzIiBUZXh0PSJPcGVuIHRoaXMgdGFiIHRvIHJlYWQgdGhlIGN1cnJlbnQg
-c3RhdGUuIiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTXV0ZWR9IiBWZXJ0aWNhbEFs
-aWdubWVudD0iQ2VudGVyIiBNYXJnaW49IjE2LDAsMCwwIi8+CiAgICAgICAgICAgICAgICA8L1N0YWNr
-UGFuZWw+CiAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCB4Ok5hbWU9IkZlYXR1cmVMaXN0Ii8+CiAg
-ICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICA8L0JvcmRlcj4KICAgICAgICAgIDwv
-U3RhY2tQYW5lbD4KICAgICAgICA8L1Njcm9sbFZpZXdlcj4KCiAgICAgICAgPFNjcm9sbFZpZXdlciB4
-Ok5hbWU9IlZpZXdDb25maWciIFZpc2liaWxpdHk9IkNvbGxhcHNlZCIgVmVydGljYWxTY3JvbGxCYXJW
-aXNpYmlsaXR5PSJBdXRvIj4KICAgICAgICAgIDxTdGFja1BhbmVsIE1hcmdpbj0iMjQsMjIsMjQsMTIi
-PgogICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IkNvbmZpZyIgRm9udFNpemU9IjI4IiBGb250V2Vp
-Z2h0PSJTZW1pQm9sZCIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaElua30iLz4KICAg
-ICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJTYXZlIHdoYXQgeW91IHBpY2tlZCBhbmQgdXNlIGl0IGFn
-YWluIGFmdGVyIHRoZSBuZXh0IGZvcm1hdC4iIEZvcmVncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1
-c2hNdXRlZH0iIFRleHRXcmFwcGluZz0iV3JhcCIgTWFyZ2luPSIwLDYsMCwxNiIvPgoKICAgICAgICAg
-ICAgPEJvcmRlciBCYWNrZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoQ2FyZH0iIEJvcmRlckJy
-dXNoPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTGluZX0iIEJvcmRlclRoaWNrbmVzcz0iMSIgQ29ybmVy
-UmFkaXVzPSIxMiIgUGFkZGluZz0iMTYiIE1hcmdpbj0iMCwwLDAsMTIiPgogICAgICAgICAgICAgIDxT
-dGFja1BhbmVsPgogICAgICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJXaW5Ub29sIHByb2ZpbGUi
-IEZvbnRXZWlnaHQ9IlNlbWlCb2xkIiBGb250U2l6ZT0iMTYiLz4KICAgICAgICAgICAgICAgIDxUZXh0
-QmxvY2sgVGV4dD0iQSBwcm9maWxlIHJlbWVtYmVycyB0aGUgYXBwcywgdHdlYWtzLCBhbmQgdGVybWlu
-YWwgY2hvaWNlcy4gTG9hZGluZyBpdCBzZWxlY3RzIHRoZW0gaW4gdGhpcyB3aW5kb3cuIEl0IGRvZXMg
-bm90IGluc3RhbGwgYW55dGhpbmcgdW50aWwgeW91IHByZXNzIEluc3RhbGwsIEFwcGx5LCBvciBTZXQg
-dXAgdGVybWluYWwuIiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTXV0ZWR9IiBUZXh0
-V3JhcHBpbmc9IldyYXAiIE1hcmdpbj0iMCw2LDAsOCIvPgogICAgICAgICAgICAgICAgPFRleHRCbG9j
-ayB4Ok5hbWU9IlByb2ZpbGVTdW1tYXJ5IiBUZXh0PSJOb3RoaW5nIHNlbGVjdGVkIHlldC4iIEZvcmVn
-cm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hJbmt9IiBNYXJnaW49IjAsMCwwLDEyIi8+CiAgICAg
-ICAgICAgICAgICA8U3RhY2tQYW5lbCBPcmllbnRhdGlvbj0iSG9yaXpvbnRhbCIgTWFyZ2luPSIwLDAs
-MCwxMiI+CiAgICAgICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJTYXZlUHJvZmlsZSIgQ29udGVu
-dD0iU2F2ZSBwcm9maWxlIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFByaW1hcnlCdXR0b259IiBNYXJn
-aW49IjAiLz4KICAgICAgICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9IkxvYWRQcm9maWxlIiBDb250
-ZW50PSJMb2FkIHByb2ZpbGUiIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2UgU2Vjb25kYXJ5QnV0dG9ufSIv
-PgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgPFRleHRCbG9jayBU
-ZXh0V3JhcHBpbmc9IldyYXAiIEZvcmVncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hNdXRlZH0i
-IEZvbnRTaXplPSIxMyIgVGV4dD0iVG8gcmVwbGF5IGEgcHJvZmlsZSBmcm9tIGEgY29tbWFuZCBhZnRl
-ciB0aGUgbmV4dCBmb3JtYXQsIHJ1biBQb3dlclNoZWxsIGFzIGFkbWluOiAgcG93ZXJzaGVsbCAtU1RB
-IC1FeGVjdXRpb25Qb2xpY3kgQnlwYXNzIC1GaWxlIC5cd2ludG9vbC5wczEgLUFwcGx5UHJvZmlsZSAu
-XHdpbnRvb2wtcHJvZmlsZS5qc29uIC1VbmF0dGVuZGVkIi8+CiAgICAgICAgICAgICAgPC9TdGFja1Bh
-bmVsPgogICAgICAgICAgICA8L0JvcmRlcj4KCiAgICAgICAgICAgIDxCb3JkZXIgQmFja2dyb3VuZD0i
-e0R5bmFtaWNSZXNvdXJjZSBCcnVzaENhcmR9IiBCb3JkZXJCcnVzaD0ie0R5bmFtaWNSZXNvdXJjZSBC
-cnVzaExpbmV9IiBCb3JkZXJUaGlja25lc3M9IjEiIENvcm5lclJhZGl1cz0iMTIiIFBhZGRpbmc9IjE2
-Ij4KICAgICAgICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgVGV4
-dD0id2luZ2V0IHBhY2thZ2UgbGlzdCIgRm9udFdlaWdodD0iU2VtaUJvbGQiIEZvbnRTaXplPSIxNiIv
-PgogICAgICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJUaGlzIGlzIHdpbmdldCdzIG93biBleHBv
-cnQgZmlsZSwgd2hpY2ggY2FuIGluY2x1ZGUgYXBwcyB0aGF0IHdlcmUgbm90IGluc3RhbGxlZCBieSBX
-aW5Ub29sLiBJbXBvcnQgYXNrcyB3aW5nZXQgdG8gaW5zdGFsbCBldmVyeSBwYWNrYWdlIGluIHRoZSBm
-aWxlLiIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIgVGV4dFdyYXBwaW5n
-PSJXcmFwIiBNYXJnaW49IjAsNiwwLDEyIi8+CiAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCBPcmll
-bnRhdGlvbj0iSG9yaXpvbnRhbCI+CiAgICAgICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJFeHBv
-cnRXaW5nZXQiIENvbnRlbnQ9IkV4cG9ydCB3aW5nZXQgbGlzdCIgU3R5bGU9IntTdGF0aWNSZXNvdXJj
-ZSBTZWNvbmRhcnlCdXR0b259IiBNYXJnaW49IjAiLz4KICAgICAgICAgICAgICAgICAgPEJ1dHRvbiB4
-Ok5hbWU9IkltcG9ydFdpbmdldCIgQ29udGVudD0iSW1wb3J0IHdpbmdldCBsaXN0IiBTdHlsZT0ie1N0
-YXRpY1Jlc291cmNlIFNlY29uZGFyeUJ1dHRvbn0iLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5l
-bD4KICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvQm9yZGVyPgogICAgICAg
-ICAgPC9TdGFja1BhbmVsPgogICAgICAgIDwvU2Nyb2xsVmlld2VyPgogICAgICA8L0dyaWQ+CgogICAg
-ICA8Qm9yZGVyIHg6TmFtZT0iU3RhdHVzQmFyIiBHcmlkLlJvdz0iMSIgQmFja2dyb3VuZD0ie1N0YXRp
-Y1Jlc291cmNlIEJydXNoTG9nfSIgQ29ybmVyUmFkaXVzPSIxMiIgTWFyZ2luPSIyMCwwLDIwLDE2IiBQ
-YWRkaW5nPSIxNCw4Ij4KICAgICAgICA8RG9ja1BhbmVsPgogICAgICAgICAgPERvY2tQYW5lbCBEb2Nr
-UGFuZWwuRG9jaz0iVG9wIiBMYXN0Q2hpbGRGaWxsPSJGYWxzZSI+CiAgICAgICAgICAgIDxUZXh0Qmxv
-Y2sgeDpOYW1lPSJTdGF0dXNUZXh0IiBUZXh0PSJSZWFkeSIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNv
-dXJjZSBCcnVzaExvZ1RleHR9IiBGb250V2VpZ2h0PSJTZW1pQm9sZCIgVmVydGljYWxBbGlnbm1lbnQ9
-IkNlbnRlciIvPgogICAgICAgICAgICA8U3RhY2tQYW5lbCBEb2NrUGFuZWwuRG9jaz0iUmlnaHQiIE9y
-aWVudGF0aW9uPSJIb3Jpem9udGFsIj4KICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iQ2FuY2Vs
-UnVuIiBDb250ZW50PSJDYW5jZWwiIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2UgUXVpZXRCdXR0b259IiBW
-aXNpYmlsaXR5PSJDb2xsYXBzZWQiLz4KICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iQ2xlYXJM
-b2dCdXR0b24iIENvbnRlbnQ9IkNsZWFyIGxvZyIgU3R5bGU9IntTdGF0aWNSZXNvdXJjZSBRdWlldEJ1
-dHRvbn0iIFZpc2liaWxpdHk9IkNvbGxhcHNlZCIvPgogICAgICAgICAgICAgIDxCdXR0b24geDpOYW1l
-PSJUb2dnbGVMb2dCdXR0b24iIENvbnRlbnQ9IlNob3cgbG9nIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNl
-IFF1aWV0QnV0dG9ufSIgQXV0b21hdGlvblByb3BlcnRpZXMuTmFtZT0iU2hvdyBsb2ciLz4KICAgICAg
-ICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgPC9Eb2NrUGFuZWw+CiAgICAgICAgICA8UHJvZ3Jl
-c3NCYXIgeDpOYW1lPSJNYWluUHJvZ3Jlc3MiIEhlaWdodD0iOCIgTWluaW11bT0iMCIgTWF4aW11bT0i
-MTAwIiBWYWx1ZT0iMCIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaFByb2dyZXNzfSIg
-QmFja2dyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaFByb2dyZXNzVHJhY2t9IiBCb3JkZXJUaGlj
-a25lc3M9IjAiIE1hcmdpbj0iMCwxMCwwLDAiIERvY2tQYW5lbC5Eb2NrPSJUb3AiIFZpc2liaWxpdHk9
-IkNvbGxhcHNlZCIvPgogICAgICAgICAgPEJvcmRlciB4Ok5hbWU9IkxvZ1BhbmVsIiBIZWlnaHQ9IjE2
-OCIgTWFyZ2luPSIwLDEwLDAsMCIgVmlzaWJpbGl0eT0iQ29sbGFwc2VkIj4KICAgICAgICAgICAgPFRl
-eHRCb3ggeDpOYW1lPSJMb2dCb3giIElzUmVhZE9ubHk9IlRydWUiIElzUmVhZE9ubHlDYXJldFZpc2li
-bGU9IlRydWUiIFRleHRXcmFwcGluZz0iV3JhcCIgVmVydGljYWxTY3JvbGxCYXJWaXNpYmlsaXR5PSJB
-dXRvIiBBY2NlcHRzUmV0dXJuPSJUcnVlIiBCYWNrZ3JvdW5kPSJUcmFuc3BhcmVudCIgRm9yZWdyb3Vu
-ZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaExvZ1RleHR9IiBDYXJldEJydXNoPSJ7RHluYW1pY1Jlc291
-cmNlIEJydXNoTG9nVGV4dH0iIEJvcmRlclRoaWNrbmVzcz0iMCIgRm9udEZhbWlseT0iQ29uc29sYXMi
-IEZvbnRTaXplPSIxMiIgUGFkZGluZz0iMCIvPgogICAgICAgICAgPC9Cb3JkZXI+CiAgICAgICAgPC9E
-b2NrUGFuZWw+CiAgICAgIDwvQm9yZGVyPgogICAgPC9HcmlkPgogIDwvR3JpZD4KPC9XaW5kb3c+Cg==
+MSIgQ29ybmVyUmFkaXVzPSIxMiIgUGFkZGluZz0iMTYiIE1hcmdpbj0iMCwwLDAsMTIiPgogICAgICAg
+ICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJVcGRhdGUg
+bW9kZSIgRm9udFdlaWdodD0iU2VtaUJvbGQiIEZvbnRTaXplPSIxNiIvPgogICAgICAgICAgICAgICAg
+PFRleHRCbG9jayBUZXh0PSJDaG9vc2UgaG93IFdpbmRvd3MgVXBkYXRlIGJlaGF2ZXMgb24gdGhpcyBQ
+Qy4gV2luVG9vbCBvbmx5IHdyaXRlcyBXaW5kb3dzIFVwZGF0ZSBwb2xpY2llcyBhbmQgc2VydmljZSBz
+ZXR0aW5ncywgYW5kIERlZmF1bHQgcmVtb3ZlcyB0aGVtIGFsbCBhZ2Fpbi4iIEZvcmVncm91bmQ9IntE
+eW5hbWljUmVzb3VyY2UgQnJ1c2hNdXRlZH0iIFRleHRXcmFwcGluZz0iV3JhcCIgTWFyZ2luPSIwLDYs
+MCw4Ii8+CiAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIHg6TmFtZT0iVXBkYXRlTW9kZUN1cnJlbnQi
+IFRleHQ9IkN1cnJlbnQgbW9kZTogY2hlY2tpbmcuLi4iIEZvbnRXZWlnaHQ9IlNlbWlCb2xkIiBNYXJn
+aW49IjAsMCwwLDgiLz4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIHg6TmFtZT0iVXBkYXRlTW9k
+ZUxpc3QiIE1hcmdpbj0iMCwwLDAsMTIiLz4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIE9yaWVu
+dGF0aW9uPSJIb3Jpem9udGFsIj4KICAgICAgICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9IkFwcGx5
+VXBkYXRlTW9kZSIgQ29udGVudD0iQXBwbHkgbW9kZSIgU3R5bGU9IntTdGF0aWNSZXNvdXJjZSBQcmlt
+YXJ5QnV0dG9ufSIgTWFyZ2luPSIwIi8+CiAgICAgICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJS
+ZXZlcnRVcGRhdGVNb2RlIiBDb250ZW50PSJCYWNrIHRvIGRlZmF1bHQiIFN0eWxlPSJ7U3RhdGljUmVz
+b3VyY2UgU2Vjb25kYXJ5QnV0dG9ufSIvPgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAg
+ICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Cb3JkZXI+CgogICAgICAgICAgICA8
+Qm9yZGVyIEJhY2tncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hDYXJkfSIgQm9yZGVyQnJ1c2g9
+IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hMaW5lfSIgQm9yZGVyVGhpY2tuZXNzPSIxIiBDb3JuZXJSYWRp
+dXM9IjEyIiBQYWRkaW5nPSIxNiI+CiAgICAgICAgICAgICAgPFN0YWNrUGFuZWw+CiAgICAgICAgICAg
+ICAgICA8VGV4dEJsb2NrIFRleHQ9IldpbmRvd3MgVXBkYXRlIiBGb250V2VpZ2h0PSJTZW1pQm9sZCIg
+Rm9udFNpemU9IjE2Ii8+CiAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IlRoZSBzY2FuIGxp
+c3RzIGRyaXZlciB1cGRhdGVzIFdpbmRvd3MgVXBkYXRlIGlzIG9mZmVyaW5nIHJpZ2h0IG5vdy4gT3B0
+aW9uYWwgdXBkYXRlcyBhcmUgZWFzaWVyIHRvIHJldmlldyBpbiBTZXR0aW5ncy4gSW5zdGFsbGluZyBj
+YW4gdGFrZSBhIHdoaWxlIGFuZCBtYXkgYXNrIGZvciBhIHJlc3RhcnQuIiBGb3JlZ3JvdW5kPSJ7RHlu
+YW1pY1Jlc291cmNlIEJydXNoTXV0ZWR9IiBUZXh0V3JhcHBpbmc9IldyYXAiIE1hcmdpbj0iMCw2LDAs
+MTIiLz4KICAgICAgICAgICAgICAgIDxDaGVja0JveCB4Ok5hbWU9IkluY2x1ZGVTb2Z0d2FyZVVwZGF0
+ZXMiIENvbnRlbnQ9IkluY2x1ZGUgc29mdHdhcmUgdXBkYXRlcywgbm90IG9ubHkgZHJpdmVycyIgTWFy
+Z2luPSIwLDAsMCwxMiIvPgogICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRpb249Ikhv
+cml6b250YWwiIE1hcmdpbj0iMCwwLDAsMTIiPgogICAgICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFt
+ZT0iU2NhbkRyaXZlcnMiIENvbnRlbnQ9IlNjYW4gZm9yIHVwZGF0ZXMiIFN0eWxlPSJ7U3RhdGljUmVz
+b3VyY2UgUHJpbWFyeUJ1dHRvbn0iIE1hcmdpbj0iMCIvPgogICAgICAgICAgICAgICAgICA8QnV0dG9u
+IHg6TmFtZT0iT3BlbldpbmRvd3NVcGRhdGUiIENvbnRlbnQ9Ik9wZW4gV2luZG93cyBVcGRhdGUiIFN0
+eWxlPSJ7U3RhdGljUmVzb3VyY2UgU2Vjb25kYXJ5QnV0dG9ufSIvPgogICAgICAgICAgICAgICAgICA8
+QnV0dG9uIHg6TmFtZT0iT3Blbk9wdGlvbmFsVXBkYXRlcyIgQ29udGVudD0iT3BlbiBvcHRpb25hbCB1
+cGRhdGVzIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFNlY29uZGFyeUJ1dHRvbn0iLz4KICAgICAgICAg
+ICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9Ikluc3RhbGxTY2FubmVkVXBkYXRlcyIgQ29udGVudD0iSW5z
+dGFsbCBzY2FubmVkIHVwZGF0ZXMiIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2UgU2Vjb25kYXJ5QnV0dG9u
+fSIgSXNFbmFibGVkPSJGYWxzZSIvPgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAg
+ICAgICAgICAgPFRleHRCbG9jayB4Ok5hbWU9IlVwZGF0ZUVtcHR5IiBUZXh0PSJObyBzY2FuIHlldC4i
+IEZvcmVncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hNdXRlZH0iLz4KICAgICAgICAgICAgICAg
+IDxMaXN0Qm94IHg6TmFtZT0iVXBkYXRlTGlzdCIgQm9yZGVyVGhpY2tuZXNzPSIwIiBCYWNrZ3JvdW5k
+PSJUcmFuc3BhcmVudCIgTWF4SGVpZ2h0PSIyMjAiIE1hcmdpbj0iMCw4LDAsMCIvPgogICAgICAgICAg
+ICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Cb3JkZXI+CiAgICAgICAgICA8L1N0YWNrUGFu
+ZWw+CiAgICAgICAgPC9TY3JvbGxWaWV3ZXI+CgogICAgICAgIDxTY3JvbGxWaWV3ZXIgeDpOYW1lPSJW
+aWV3Rml4ZXMiIFZpc2liaWxpdHk9IkNvbGxhcHNlZCIgVmVydGljYWxTY3JvbGxCYXJWaXNpYmlsaXR5
+PSJBdXRvIj4KICAgICAgICAgIDxTdGFja1BhbmVsIE1hcmdpbj0iMjQsMjIsMjQsMTIiPgogICAgICAg
+ICAgICA8VGV4dEJsb2NrIFRleHQ9IkZpeGVzIiBGb250U2l6ZT0iMjgiIEZvbnRXZWlnaHQ9IlNlbWlC
+b2xkIiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoSW5rfSIvPgogICAgICAgICAgICA8
+VGV4dEJsb2NrIFRleHQ9IlJlcGFpcnMgZm9yIGNvbW1vbiBXaW5kb3dzIHByb2JsZW1zLiBFYWNoIG9u
+ZSBhc2tzIGZpcnN0IGFuZCB3cml0ZXMgd2hhdCBpdCBkb2VzIHRvIHRoZSBsb2cuIiBGb3JlZ3JvdW5k
+PSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTXV0ZWR9IiBUZXh0V3JhcHBpbmc9IldyYXAiIE1hcmdpbj0i
+MCw2LDAsMTYiLz4KICAgICAgICAgICAgPFN0YWNrUGFuZWwgeDpOYW1lPSJGaXhMaXN0Ii8+CiAgICAg
+ICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgPC9TY3JvbGxWaWV3ZXI+CgogICAgICAgIDxTY3JvbGxW
+aWV3ZXIgeDpOYW1lPSJWaWV3RmVhdHVyZXMiIFZpc2liaWxpdHk9IkNvbGxhcHNlZCIgVmVydGljYWxT
+Y3JvbGxCYXJWaXNpYmlsaXR5PSJBdXRvIj4KICAgICAgICAgIDxTdGFja1BhbmVsIE1hcmdpbj0iMjQs
+MjIsMjQsMTIiPgogICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IldpbmRvd3MgZmVhdHVyZXMiIEZv
+bnRTaXplPSIyOCIgRm9udFdlaWdodD0iU2VtaUJvbGQiIEZvcmVncm91bmQ9IntEeW5hbWljUmVzb3Vy
+Y2UgQnJ1c2hJbmt9Ii8+CiAgICAgICAgICAgIDxUZXh0QmxvY2sgVGV4dD0iT3B0aW9uYWwgcGFydHMg
+b2YgV2luZG93cy4gVGlja2VkIG1lYW5zIG9uLiBDaGFuZ2UgdGhlIHRpY2tzIGFuZCBwcmVzcyBBcHBs
+eS4gV2luZG93cyBuZWVkcyBhIHJlc3RhcnQgYWZ0ZXIgYSBjaGFuZ2UuIiBGb3JlZ3JvdW5kPSJ7RHlu
+YW1pY1Jlc291cmNlIEJydXNoTXV0ZWR9IiBUZXh0V3JhcHBpbmc9IldyYXAiIE1hcmdpbj0iMCw2LDAs
+MTYiLz4KICAgICAgICAgICAgPEJvcmRlciBCYWNrZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNo
+Q2FyZH0iIEJvcmRlckJydXNoPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTGluZX0iIEJvcmRlclRoaWNr
+bmVzcz0iMSIgQ29ybmVyUmFkaXVzPSIxMiIgUGFkZGluZz0iMTYiPgogICAgICAgICAgICAgIDxTdGFj
+a1BhbmVsPgogICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRpb249Ikhvcml6b250YWwi
+IE1hcmdpbj0iMCwwLDAsMTYiPgogICAgICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iRmVhdHVy
+ZUFwcGx5IiBDb250ZW50PSJBcHBseSBjaGFuZ2VzIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFByaW1h
+cnlCdXR0b259IiBNYXJnaW49IjAiLz4KICAgICAgICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9IkZl
+YXR1cmVSZWZyZXNoIiBDb250ZW50PSJSZWZyZXNoIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFNlY29u
+ZGFyeUJ1dHRvbn0iLz4KICAgICAgICAgICAgICAgICAgPFRleHRCbG9jayB4Ok5hbWU9IkZlYXR1cmVT
+dGF0dXMiIFRleHQ9Ik9wZW4gdGhpcyB0YWIgdG8gcmVhZCB0aGUgY3VycmVudCBzdGF0ZS4iIEZvcmVn
+cm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hNdXRlZH0iIFZlcnRpY2FsQWxpZ25tZW50PSJDZW50
+ZXIiIE1hcmdpbj0iMTYsMCwwLDAiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAg
+ICAgICAgICAgIDxTdGFja1BhbmVsIHg6TmFtZT0iRmVhdHVyZUxpc3QiLz4KICAgICAgICAgICAgICA8
+L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvQm9yZGVyPgogICAgICAgICAgPC9TdGFja1BhbmVsPgog
+ICAgICAgIDwvU2Nyb2xsVmlld2VyPgoKICAgICAgICA8U2Nyb2xsVmlld2VyIHg6TmFtZT0iVmlld0Nv
+bmZpZyIgVmlzaWJpbGl0eT0iQ29sbGFwc2VkIiBWZXJ0aWNhbFNjcm9sbEJhclZpc2liaWxpdHk9IkF1
+dG8iPgogICAgICAgICAgPFN0YWNrUGFuZWwgTWFyZ2luPSIyNCwyMiwyNCwxMiI+CiAgICAgICAgICAg
+IDxUZXh0QmxvY2sgVGV4dD0iQ29uZmlnIiBGb250U2l6ZT0iMjgiIEZvbnRXZWlnaHQ9IlNlbWlCb2xk
+IiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoSW5rfSIvPgogICAgICAgICAgICA8VGV4
+dEJsb2NrIFRleHQ9IlNhdmUgd2hhdCB5b3UgcGlja2VkIGFuZCB1c2UgaXQgYWdhaW4gYWZ0ZXIgdGhl
+IG5leHQgZm9ybWF0LiIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIgVGV4
+dFdyYXBwaW5nPSJXcmFwIiBNYXJnaW49IjAsNiwwLDE2Ii8+CgogICAgICAgICAgICA8Qm9yZGVyIEJh
+Y2tncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hDYXJkfSIgQm9yZGVyQnJ1c2g9IntEeW5hbWlj
+UmVzb3VyY2UgQnJ1c2hMaW5lfSIgQm9yZGVyVGhpY2tuZXNzPSIxIiBDb3JuZXJSYWRpdXM9IjEyIiBQ
+YWRkaW5nPSIxNiIgTWFyZ2luPSIwLDAsMCwxMiI+CiAgICAgICAgICAgICAgPFN0YWNrUGFuZWw+CiAg
+ICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IldpblRvb2wgcHJvZmlsZSIgRm9udFdlaWdodD0i
+U2VtaUJvbGQiIEZvbnRTaXplPSIxNiIvPgogICAgICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJB
+IHByb2ZpbGUgcmVtZW1iZXJzIHRoZSBhcHBzLCB0d2Vha3MsIGFuZCB0ZXJtaW5hbCBjaG9pY2VzLiBM
+b2FkaW5nIGl0IHNlbGVjdHMgdGhlbSBpbiB0aGlzIHdpbmRvdy4gSXQgZG9lcyBub3QgaW5zdGFsbCBh
+bnl0aGluZyB1bnRpbCB5b3UgcHJlc3MgSW5zdGFsbCwgQXBwbHksIG9yIFNldCB1cCB0ZXJtaW5hbC4i
+IEZvcmVncm91bmQ9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hNdXRlZH0iIFRleHRXcmFwcGluZz0iV3Jh
+cCIgTWFyZ2luPSIwLDYsMCw4Ii8+CiAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIHg6TmFtZT0iUHJv
+ZmlsZVN1bW1hcnkiIFRleHQ9Ik5vdGhpbmcgc2VsZWN0ZWQgeWV0LiIgRm9yZWdyb3VuZD0ie0R5bmFt
+aWNSZXNvdXJjZSBCcnVzaElua30iIE1hcmdpbj0iMCwwLDAsMTIiLz4KICAgICAgICAgICAgICAgIDxT
+dGFja1BhbmVsIE9yaWVudGF0aW9uPSJIb3Jpem9udGFsIiBNYXJnaW49IjAsMCwwLDEyIj4KICAgICAg
+ICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9IlNhdmVQcm9maWxlIiBDb250ZW50PSJTYXZlIHByb2Zp
+bGUiIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2UgUHJpbWFyeUJ1dHRvbn0iIE1hcmdpbj0iMCIvPgogICAg
+ICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iTG9hZFByb2ZpbGUiIENvbnRlbnQ9IkxvYWQgcHJv
+ZmlsZSIgU3R5bGU9IntTdGF0aWNSZXNvdXJjZSBTZWNvbmRhcnlCdXR0b259Ii8+CiAgICAgICAgICAg
+ICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHRXcmFwcGluZz0i
+V3JhcCIgRm9yZWdyb3VuZD0ie0R5bmFtaWNSZXNvdXJjZSBCcnVzaE11dGVkfSIgRm9udFNpemU9IjEz
+IiBUZXh0PSJUbyByZXBsYXkgYSBwcm9maWxlIGZyb20gYSBjb21tYW5kIGFmdGVyIHRoZSBuZXh0IGZv
+cm1hdCwgcnVuIFBvd2VyU2hlbGwgYXMgYWRtaW46ICBwb3dlcnNoZWxsIC1TVEEgLUV4ZWN1dGlvblBv
+bGljeSBCeXBhc3MgLUZpbGUgLlx3aW50b29sLnBzMSAtQXBwbHlQcm9maWxlIC5cd2ludG9vbC1wcm9m
+aWxlLmpzb24gLVVuYXR0ZW5kZWQiLz4KICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAg
+ICAgIDwvQm9yZGVyPgoKICAgICAgICAgICAgPEJvcmRlciBCYWNrZ3JvdW5kPSJ7RHluYW1pY1Jlc291
+cmNlIEJydXNoQ2FyZH0iIEJvcmRlckJydXNoPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTGluZX0iIEJv
+cmRlclRoaWNrbmVzcz0iMSIgQ29ybmVyUmFkaXVzPSIxMiIgUGFkZGluZz0iMTYiPgogICAgICAgICAg
+ICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJ3aW5nZXQgcGFj
+a2FnZSBsaXN0IiBGb250V2VpZ2h0PSJTZW1pQm9sZCIgRm9udFNpemU9IjE2Ii8+CiAgICAgICAgICAg
+ICAgICA8VGV4dEJsb2NrIFRleHQ9IlRoaXMgaXMgd2luZ2V0J3Mgb3duIGV4cG9ydCBmaWxlLCB3aGlj
+aCBjYW4gaW5jbHVkZSBhcHBzIHRoYXQgd2VyZSBub3QgaW5zdGFsbGVkIGJ5IFdpblRvb2wuIEltcG9y
+dCBhc2tzIHdpbmdldCB0byBpbnN0YWxsIGV2ZXJ5IHBhY2thZ2UgaW4gdGhlIGZpbGUuIiBGb3JlZ3Jv
+dW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTXV0ZWR9IiBUZXh0V3JhcHBpbmc9IldyYXAiIE1hcmdp
+bj0iMCw2LDAsMTIiLz4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIE9yaWVudGF0aW9uPSJIb3Jp
+em9udGFsIj4KICAgICAgICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9IkV4cG9ydFdpbmdldCIgQ29u
+dGVudD0iRXhwb3J0IHdpbmdldCBsaXN0IiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFNlY29uZGFyeUJ1
+dHRvbn0iIE1hcmdpbj0iMCIvPgogICAgICAgICAgICAgICAgICA8QnV0dG9uIHg6TmFtZT0iSW1wb3J0
+V2luZ2V0IiBDb250ZW50PSJJbXBvcnQgd2luZ2V0IGxpc3QiIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2Ug
+U2Vjb25kYXJ5QnV0dG9ufSIvPgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAg
+ICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Cb3JkZXI+CiAgICAgICAgICA8L1N0YWNrUGFu
+ZWw+CiAgICAgICAgPC9TY3JvbGxWaWV3ZXI+CiAgICAgIDwvR3JpZD4KCiAgICAgIDxCb3JkZXIgeDpO
+YW1lPSJTdGF0dXNCYXIiIEdyaWQuUm93PSIxIiBCYWNrZ3JvdW5kPSJ7U3RhdGljUmVzb3VyY2UgQnJ1
+c2hMb2d9IiBDb3JuZXJSYWRpdXM9IjEyIiBNYXJnaW49IjIwLDAsMjAsMTYiIFBhZGRpbmc9IjE0LDgi
+PgogICAgICAgIDxEb2NrUGFuZWw+CiAgICAgICAgICA8RG9ja1BhbmVsIERvY2tQYW5lbC5Eb2NrPSJU
+b3AiIExhc3RDaGlsZEZpbGw9IkZhbHNlIj4KICAgICAgICAgICAgPFRleHRCbG9jayB4Ok5hbWU9IlN0
+YXR1c1RleHQiIFRleHQ9IlJlYWR5IiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoTG9n
+VGV4dH0iIEZvbnRXZWlnaHQ9IlNlbWlCb2xkIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIi8+CiAg
+ICAgICAgICAgIDxTdGFja1BhbmVsIERvY2tQYW5lbC5Eb2NrPSJSaWdodCIgT3JpZW50YXRpb249Ikhv
+cml6b250YWwiPgogICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJDYW5jZWxSdW4iIENvbnRlbnQ9
+IkNhbmNlbCIgU3R5bGU9IntTdGF0aWNSZXNvdXJjZSBRdWlldEJ1dHRvbn0iIFZpc2liaWxpdHk9IkNv
+bGxhcHNlZCIvPgogICAgICAgICAgICAgIDxCdXR0b24geDpOYW1lPSJDbGVhckxvZ0J1dHRvbiIgQ29u
+dGVudD0iQ2xlYXIgbG9nIiBTdHlsZT0ie1N0YXRpY1Jlc291cmNlIFF1aWV0QnV0dG9ufSIgVmlzaWJp
+bGl0eT0iQ29sbGFwc2VkIi8+CiAgICAgICAgICAgICAgPEJ1dHRvbiB4Ok5hbWU9IlRvZ2dsZUxvZ0J1
+dHRvbiIgQ29udGVudD0iU2hvdyBsb2ciIFN0eWxlPSJ7U3RhdGljUmVzb3VyY2UgUXVpZXRCdXR0b259
+IiBBdXRvbWF0aW9uUHJvcGVydGllcy5OYW1lPSJTaG93IGxvZyIvPgogICAgICAgICAgICA8L1N0YWNr
+UGFuZWw+CiAgICAgICAgICA8L0RvY2tQYW5lbD4KICAgICAgICAgIDxQcm9ncmVzc0JhciB4Ok5hbWU9
+Ik1haW5Qcm9ncmVzcyIgSGVpZ2h0PSI4IiBNaW5pbXVtPSIwIiBNYXhpbXVtPSIxMDAiIFZhbHVlPSIw
+IiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jlc291cmNlIEJydXNoUHJvZ3Jlc3N9IiBCYWNrZ3JvdW5kPSJ7
+RHluYW1pY1Jlc291cmNlIEJydXNoUHJvZ3Jlc3NUcmFja30iIEJvcmRlclRoaWNrbmVzcz0iMCIgTWFy
+Z2luPSIwLDEwLDAsMCIgRG9ja1BhbmVsLkRvY2s9IlRvcCIgVmlzaWJpbGl0eT0iQ29sbGFwc2VkIi8+
+CiAgICAgICAgICA8Qm9yZGVyIHg6TmFtZT0iTG9nUGFuZWwiIEhlaWdodD0iMTY4IiBNYXJnaW49IjAs
+MTAsMCwwIiBWaXNpYmlsaXR5PSJDb2xsYXBzZWQiPgogICAgICAgICAgICA8VGV4dEJveCB4Ok5hbWU9
+IkxvZ0JveCIgSXNSZWFkT25seT0iVHJ1ZSIgSXNSZWFkT25seUNhcmV0VmlzaWJsZT0iVHJ1ZSIgVGV4
+dFdyYXBwaW5nPSJXcmFwIiBWZXJ0aWNhbFNjcm9sbEJhclZpc2liaWxpdHk9IkF1dG8iIEFjY2VwdHNS
+ZXR1cm49IlRydWUiIEJhY2tncm91bmQ9IlRyYW5zcGFyZW50IiBGb3JlZ3JvdW5kPSJ7RHluYW1pY1Jl
+c291cmNlIEJydXNoTG9nVGV4dH0iIENhcmV0QnJ1c2g9IntEeW5hbWljUmVzb3VyY2UgQnJ1c2hMb2dU
+ZXh0fSIgQm9yZGVyVGhpY2tuZXNzPSIwIiBGb250RmFtaWx5PSJDb25zb2xhcyIgRm9udFNpemU9IjEy
+IiBQYWRkaW5nPSIwIi8+CiAgICAgICAgICA8L0JvcmRlcj4KICAgICAgICA8L0RvY2tQYW5lbD4KICAg
+ICAgPC9Cb3JkZXI+CiAgICA8L0dyaWQ+CiAgPC9HcmlkPgo8L1dpbmRvdz4K
 '@
     Wsl = @'
 IyEvYmluL2Jhc2gKIyBXaW5Ub29sIG9wdGlvbmFsIHNoZWxsIHNldHVwIGluc2lkZSBXU0wuIFNhZmUg
@@ -4336,6 +4398,7 @@ function Test-WinToolDataFile {
 
     Test-WinToolFixCatalog -Catalog (Get-WinToolFixCatalog) -Errors $errors
     Test-WinToolFeatureCatalog -Catalog (Get-WinToolFeatureCatalog) -Errors $errors
+    Test-WinToolUpdateModeCatalog -Catalog $updates -Errors $errors
 
     return $errors.ToArray()
 }
@@ -5838,6 +5901,271 @@ function Open-WinToolUri {
 }
 # endregion
 
+# region src/Private/UpdateModes.ps1
+# Copyright (c) 2026 Henrique
+# SPDX-License-Identifier: MIT
+
+# Windows Update modes from data/updates.json. A mode is a set of policy
+# values under HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate plus a
+# startup type for the update services. Applying a mode first clears every
+# policy value any mode knows about, so switching modes never stacks, and
+# "Default" is the revert.
+
+$script:WinToolUpdatePolicyRoot = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
+$script:WinToolServiceStartTypes = @("Manual", "Automatic", "AutomaticDelayed", "Disabled")
+
+function Get-WinToolUpdateMode {
+    param(
+        $Catalog = (Get-WinToolUpdateCatalog)
+    )
+    return @(Get-WinToolNote -Object $Catalog -Name "modes" -Default @())
+}
+
+function Find-WinToolUpdateMode {
+    param(
+        [Parameter(Mandatory = $true)][string]$Id,
+        $Catalog = (Get-WinToolUpdateCatalog)
+    )
+    foreach ($mode in (Get-WinToolUpdateMode -Catalog $Catalog)) {
+        if ([string]$mode.id -eq $Id) {
+            return $mode
+        }
+    }
+    return $null
+}
+
+function Get-WinToolUpdatePolicyKey {
+    param(
+        [Parameter(Mandatory = $true)]$Policy
+    )
+    return ([string]$Policy.path + "|" + [string]$Policy.name).ToLowerInvariant()
+}
+
+function Get-WinToolManagedUpdatePolicy {
+    param(
+        $Catalog = (Get-WinToolUpdateCatalog)
+    )
+    # Every policy value any mode sets, once each.
+    $seen = @{}
+    $list = New-Object System.Collections.Generic.List[object]
+    foreach ($mode in (Get-WinToolUpdateMode -Catalog $Catalog)) {
+        foreach ($policy in @(Get-WinToolNote -Object $mode -Name "policies" -Default @())) {
+            $key = Get-WinToolUpdatePolicyKey -Policy $policy
+            if (-not $seen.ContainsKey($key)) {
+                $seen[$key] = $true
+                $list.Add([pscustomobject]@{ path = [string]$policy.path; name = [string]$policy.name })
+            }
+        }
+    }
+    return $list.ToArray()
+}
+
+function Get-WinToolUpdateModeChange {
+    param(
+        [Parameter(Mandatory = $true)][string]$ModeId,
+        $Catalog = (Get-WinToolUpdateCatalog)
+    )
+    $mode = Find-WinToolUpdateMode -Id $ModeId -Catalog $Catalog
+    if ($null -eq $mode) {
+        throw "Unknown update mode '$ModeId'."
+    }
+    $set = New-Object System.Collections.Generic.List[object]
+    foreach ($policy in @(Get-WinToolNote -Object $mode -Name "policies" -Default @())) {
+        $set.Add([pscustomobject]@{ path = [string]$policy.path; name = [string]$policy.name; value = [int]$policy.value })
+    }
+    $services = New-Object System.Collections.Generic.List[object]
+    foreach ($service in @(Get-WinToolNote -Object $mode -Name "services" -Default @())) {
+        $services.Add([pscustomobject]@{
+            name = [string]$service.name
+            startupType = [string]$service.startupType
+            stop = [bool](Get-WinToolNote -Object $service -Name "stop" -Default $false)
+        })
+    }
+    return [pscustomobject]@{
+        Mode = [string]$mode.id
+        Name = [string]$mode.name
+        Remove = @(Get-WinToolManagedUpdatePolicy -Catalog $Catalog)
+        Set = $set.ToArray()
+        Services = $services.ToArray()
+    }
+}
+
+function Get-WinToolUpdateModeScript {
+    param(
+        [Parameter(Mandatory = $true)][string]$ModeId,
+        $Catalog = (Get-WinToolUpdateCatalog)
+    )
+    $change = Get-WinToolUpdateModeChange -ModeId $ModeId -Catalog $Catalog
+    $json = ConvertTo-Json -InputObject $change -Depth 6 -Compress
+    $body = @'
+$ErrorActionPreference = "Stop"
+$change = ConvertFrom-Json -InputObject '__CHANGE__'
+$failed = 0
+foreach ($item in @($change.Remove)) {
+    if ((Test-Path -LiteralPath $item.path) -and ($null -ne (Get-ItemProperty -LiteralPath $item.path -Name $item.name -ErrorAction SilentlyContinue))) {
+        Remove-ItemProperty -LiteralPath $item.path -Name $item.name
+        Write-Output ("Removed policy " + $item.name)
+    }
+}
+foreach ($item in @($change.Set)) {
+    if (-not (Test-Path -LiteralPath $item.path)) {
+        New-Item -Path $item.path -Force | Out-Null
+    }
+    New-ItemProperty -LiteralPath $item.path -Name $item.name -Value ([int]$item.value) -PropertyType DWord -Force | Out-Null
+    Write-Output ("Set policy {0} = {1}" -f $item.name, $item.value)
+}
+$startNames = @{ Manual = "demand"; Automatic = "auto"; AutomaticDelayed = "delayed-auto"; Disabled = "disabled" }
+foreach ($service in @($change.Services)) {
+    if ($null -eq (Get-Service -Name $service.name -ErrorAction SilentlyContinue)) {
+        Write-Output ("Service {0} is not on this PC." -f $service.name)
+        continue
+    }
+    if ($service.stop) {
+        try {
+            Stop-Service -Name $service.name -Force -ErrorAction Stop
+            Write-Output ("Stopped " + $service.name)
+        }
+        catch {
+            Write-Output ("Could not stop {0}: {1}" -f $service.name, $_.Exception.Message)
+        }
+    }
+    $output = & sc.exe config $service.name start= $startNames[[string]$service.startupType] 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Output ("{0} startup is now {1}" -f $service.name, $service.startupType)
+    }
+    else {
+        $failed++
+        Write-Output ("Could not change {0}: {1}" -f $service.name, (($output | Out-String).Trim()))
+    }
+}
+Write-Output ("Update mode is now: " + $change.Name)
+if ($failed -gt 0) {
+    exit 2
+}
+'@
+    return $body.Replace("__CHANGE__", $json.Replace("'", "''"))
+}
+
+function Get-WinToolUpdateModePlan {
+    param(
+        [Parameter(Mandatory = $true)][string]$ModeId,
+        $Catalog = (Get-WinToolUpdateCatalog)
+    )
+    $mode = Find-WinToolUpdateMode -Id $ModeId -Catalog $Catalog
+    if ($null -eq $mode) {
+        throw "Unknown update mode '$ModeId'."
+    }
+    return @([pscustomobject]@{
+        Type = "inline-script"
+        Label = "Set Windows Update to: " + [string]$mode.name
+        Name = "update-mode"
+        Text = (Get-WinToolUpdateModeScript -ModeId $ModeId -Catalog $Catalog)
+    })
+}
+
+function Get-WinToolUpdateModeSnapshot {
+    param(
+        $Catalog = (Get-WinToolUpdateCatalog)
+    )
+    $values = @{}
+    foreach ($policy in (Get-WinToolManagedUpdatePolicy -Catalog $Catalog)) {
+        $item = Get-ItemProperty -LiteralPath $policy.path -Name $policy.name -ErrorAction SilentlyContinue
+        if ($null -ne $item) {
+            $values[(Get-WinToolUpdatePolicyKey -Policy $policy)] = [int]$item.($policy.name)
+        }
+    }
+    $services = @{}
+    foreach ($name in @("wuauserv", "UsoSvc")) {
+        $service = Get-Service -Name $name -ErrorAction SilentlyContinue
+        if ($null -ne $service) {
+            $services[$name] = [string]$service.StartType
+        }
+    }
+    return [pscustomobject]@{ Values = $values; Services = $services }
+}
+
+function Resolve-WinToolUpdateMode {
+    param(
+        [hashtable]$Values = @{},
+        [hashtable]$Services = @{},
+        $Catalog = (Get-WinToolUpdateCatalog)
+    )
+    # The current mode is the one whose policies are all in place and whose
+    # disabled services really are disabled. Leftover values from another
+    # tool show as "custom" so nothing gets mislabeled as Default.
+    foreach ($mode in (Get-WinToolUpdateMode -Catalog $Catalog)) {
+        $policies = @(Get-WinToolNote -Object $mode -Name "policies" -Default @())
+        if ($policies.Count -eq 0) {
+            continue
+        }
+        $match = $true
+        foreach ($policy in $policies) {
+            $key = Get-WinToolUpdatePolicyKey -Policy $policy
+            if (-not $Values.ContainsKey($key) -or [int]$Values[$key] -ne [int]$policy.value) {
+                $match = $false
+            }
+        }
+        if ($match -and $Values.Count -eq $policies.Count) {
+            return [string]$mode.id
+        }
+    }
+    foreach ($name in @($Services.Keys)) {
+        if ([string]$Services[$name] -eq "Disabled") {
+            return "custom"
+        }
+    }
+    if ($Values.Count -gt 0) {
+        return "custom"
+    }
+    return "default"
+}
+
+function Test-WinToolUpdateModeCatalog {
+    param(
+        [Parameter(Mandatory = $true)]$Catalog,
+        $Errors
+    )
+    $modes = @(Get-WinToolUpdateMode -Catalog $Catalog)
+    $ids = @{}
+    foreach ($mode in $modes) {
+        $id = [string](Get-WinToolNote -Object $mode -Name "id" -Default "")
+        if ([string]::IsNullOrWhiteSpace($id) -or $ids.ContainsKey($id)) {
+            $Errors.Add("An update mode has a missing or repeated id '$id'.")
+            continue
+        }
+        $ids[$id] = $true
+        foreach ($field in @("name", "description")) {
+            if ([string]::IsNullOrWhiteSpace([string](Get-WinToolNote -Object $mode -Name $field -Default ""))) {
+                $Errors.Add("Update mode '$id' needs a $field.")
+            }
+        }
+        foreach ($policy in @(Get-WinToolNote -Object $mode -Name "policies" -Default @())) {
+            if (-not ([string]$policy.path).StartsWith($script:WinToolUpdatePolicyRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $Errors.Add("Update mode '$id' writes outside the Windows Update policy key.")
+            }
+            if ([string]$policy.name -notmatch '^[A-Za-z]+$') {
+                $Errors.Add("Update mode '$id' has an invalid policy name '$([string]$policy.name)'.")
+            }
+        }
+        foreach ($service in @(Get-WinToolNote -Object $mode -Name "services" -Default @())) {
+            if ($script:WinToolServiceStartTypes -notcontains [string]$service.startupType) {
+                $Errors.Add("Update mode '$id' has an unknown startup type for $([string]$service.name).")
+            }
+            if ([string]$service.name -notmatch '^[A-Za-z]+$') {
+                $Errors.Add("Update mode '$id' has an invalid service name.")
+            }
+        }
+    }
+    $default = Find-WinToolUpdateMode -Id "default" -Catalog $Catalog
+    if ($null -eq $default) {
+        $Errors.Add("updates.json needs a 'default' mode to revert to.")
+    }
+    elseif (@(Get-WinToolNote -Object $default -Name "policies" -Default @()).Count -ne 0) {
+        $Errors.Add("The default update mode must not set policies.")
+    }
+}
+# endregion
+
 # region src/Private/Config.ps1
 # Copyright (c) 2026 Henrique
 # SPDX-License-Identifier: MIT
@@ -6393,6 +6721,14 @@ function Get-WinToolPlanCommand {
     if ($type -eq "fix-script") {
         $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-fix-" + [string]$Step.Script + ".ps1")
         Write-WinToolUtf8File -Path $scriptPath -Text (Get-WinToolFixScript -Name ([string]$Step.Script))
+        return [pscustomobject]@{
+            FilePath = (Get-WinToolSystemFile -RelativePath "System32\WindowsPowerShell\v1.0\powershell.exe")
+            ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
+        }
+    }
+    if ($type -eq "inline-script") {
+        $scriptPath = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-" + [string]$Step.Name + ".ps1")
+        Write-WinToolUtf8File -Path $scriptPath -Text ([string]$Step.Text)
         return [pscustomobject]@{
             FilePath = (Get-WinToolSystemFile -RelativePath "System32\WindowsPowerShell\v1.0\powershell.exe")
             ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
@@ -8501,6 +8837,8 @@ function Initialize-WinToolUpdateView {
         [void]$panel.Children.Add($button)
     }
 
+    Initialize-WinToolUpdateModeView
+
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ScanDrivers") -EventName "Click" -Name "Updates: scan" -Action { Invoke-WinToolScanClick }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenWindowsUpdate") -EventName "Click" -Name "Updates: open Windows Update" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate" }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenOptionalUpdates") -EventName "Click" -Name "Updates: open optional updates" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate-optionalupdates" }
@@ -8621,6 +8959,80 @@ function Complete-WinToolUpdateInstall {
     if ($reboot) {
         Write-WinToolLog -Message "Windows asked for a restart to finish the updates." -Level "warn"
     }
+}
+
+function Initialize-WinToolUpdateModeView {
+    $list = Get-WinToolUi -Name "UpdateModeList"
+    $list.Children.Clear()
+    $radios = New-Object System.Collections.Generic.List[object]
+    foreach ($mode in (Get-WinToolUpdateMode)) {
+        $radio = New-Object System.Windows.Controls.RadioButton
+        $radio.GroupName = "WinToolUpdateMode"
+        $radio.Tag = [string]$mode.id
+        $radio.Margin = [System.Windows.Thickness]::new(0, 0, 0, 10)
+        $content = New-Object System.Windows.Controls.StackPanel
+        [void]$content.Children.Add((New-WinToolText -Text ([string]$mode.name) -Weight "SemiBold"))
+        [void]$content.Children.Add((New-WinToolText -Text ([string]$mode.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
+        $radio.Content = $content
+        Register-WinToolUiEvent -Control $radio -EventName "Checked" -Name "Updates: pick mode" -Data ([string]$mode.id) -Action {
+            param($source, $eventData, $modeId)
+            $null = $source, $eventData
+            $script:WinToolState.UpdateMode = $modeId
+        }
+        [void]$list.Children.Add($radio)
+        $radios.Add($radio)
+    }
+    $script:WinToolState.UpdateModeRadios = $radios.ToArray()
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ApplyUpdateMode") -EventName "Click" -Name "Updates: apply mode" -Action {
+        Invoke-WinToolUpdateModeClick -ModeId ([string]$script:WinToolState.UpdateMode)
+    }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "RevertUpdateMode") -EventName "Click" -Name "Updates: back to default" -Action {
+        Invoke-WinToolUpdateModeClick -ModeId "default"
+    }
+    Sync-WinToolUpdateMode
+}
+
+function Sync-WinToolUpdateMode {
+    $current = "default"
+    if (Test-WinToolWindows) {
+        $snapshot = Get-WinToolUpdateModeSnapshot
+        $current = Resolve-WinToolUpdateMode -Values $snapshot.Values -Services $snapshot.Services
+    }
+    $label = "Custom (policies set outside WinTool)"
+    $mode = Find-WinToolUpdateMode -Id $current
+    if ($null -ne $mode) {
+        $label = [string]$mode.name
+    }
+    (Get-WinToolUi -Name "UpdateModeCurrent").Text = "Current mode: " + $label
+    $script:WinToolState.UpdateModeCurrent = $current
+    $script:WinToolState.UpdateMode = $current
+    foreach ($radio in @($script:WinToolState.UpdateModeRadios)) {
+        $radio.IsChecked = ([string]$radio.Tag -eq $current)
+    }
+}
+
+function Invoke-WinToolUpdateModeClick {
+    param(
+        [string]$ModeId
+    )
+    $mode = $null
+    if (-not [string]::IsNullOrWhiteSpace($ModeId)) {
+        $mode = Find-WinToolUpdateMode -Id $ModeId
+    }
+    if ($null -eq $mode) {
+        Write-WinToolLog -Message "Pick an update mode first." -Level "warn"
+        return
+    }
+    $message = "Set Windows Update to: {0}?`n`n{1}" -f [string]$mode.name, [string]$mode.description
+    if ($ModeId -eq "disabled") {
+        $message += "`n`nThis is not recommended. Use Back to default to undo it."
+    }
+    $ok = Request-WinToolConfirmation -Message $message -Title "Update mode"
+    if (-not $ok) {
+        return
+    }
+    $steps = @(Get-WinToolUpdateModePlan -ModeId $ModeId)
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage ("Windows Update mode set to " + [string]$mode.name + ".") -AfterDone "Sync-WinToolUpdateMode"
 }
 # endregion
 
@@ -9498,6 +9910,9 @@ function New-WinToolWindow {
         TweakRows = @()
         TweakGroups = @()
         Updates = @()
+        UpdateMode = ""
+        UpdateModeCurrent = ""
+        UpdateModeRadios = @()
         Run = $null
         Pump = $null
         RestoreJob = $null
