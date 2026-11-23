@@ -132,7 +132,9 @@ function Write-WinToolLog {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Message,
         [ValidateSet("info", "ok", "warn", "error")]
-        [string]$Level = "info"
+        [string]$Level = "info",
+        # Also append to %TEMP%\WinTool\wintool.log, the file people send in bug reports.
+        [switch]$Diagnostic
     )
     if ([string]::IsNullOrWhiteSpace($Message)) {
         return
@@ -144,6 +146,32 @@ function Write-WinToolLog {
     $stamp = Get-Date -Format "HH:mm:ss"
     $line = "{0}  {1}  {2}" -f $stamp, $prefix, $Message
     Add-WinToolLogLine -Line $line
+    if ($Diagnostic) {
+        Write-WinToolDiagnosticLine -Line $line
+    }
+}
+
+function Write-WinToolDiagnosticLine {
+    param(
+        [Parameter(Mandatory = $true)][string]$Line,
+        [string]$Path
+    )
+    try {
+        if ([string]::IsNullOrWhiteSpace($Path)) {
+            if ([string]::IsNullOrWhiteSpace($env:TEMP)) {
+                return
+            }
+            $directory = Join-Path $env:TEMP "WinTool"
+            if (-not (Test-Path -LiteralPath $directory)) {
+                New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            }
+            $Path = Join-Path $directory "wintool.log"
+        }
+        Add-Content -LiteralPath $Path -Value ((Get-Date -Format "yyyy-MM-dd ") + $Line) -Encoding UTF8
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
 }
 
 function ConvertTo-WinToolArgumentLine {

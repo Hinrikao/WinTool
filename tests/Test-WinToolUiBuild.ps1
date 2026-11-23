@@ -227,7 +227,7 @@ foreach ($card in @($promptHost.Children)) {
 # Installed and update badges follow the detected state.
 $firstApp = $appRows[0]
 $secondApp = $appRows[1]
-Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
+$null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
 if ($firstApp.InstalledBadge.Visibility -ne "Visible" -or $firstApp.UpdateBadge.Visibility -ne "Collapsed") {
     throw "The Installed badge did not follow the detected state."
 }
@@ -256,6 +256,79 @@ $featureRows[1].Checkbox.IsChecked = $true
 $featureChange = Get-WinToolFeatureChange
 if (@($featureChange.Enable).Count -ne 1 -or @($featureChange.Disable).Count -ne 1) {
     throw "Feature changes were not worked out from the ticks."
+}
+
+# Installed-app detection on Windows PowerShell 5.1, first with a stand-in
+# winget that writes to stderr (which used to abort the check on 5.1), then
+# with the real winget when the runner has one.
+$fixtures = Join-Path $PSScriptRoot "fixtures"
+$fakeDir = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-fake-winget-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $fakeDir -Force | Out-Null
+$fakeWinget = Join-Path $fakeDir "winget.cmd"
+$fakeLines = @(
+    "@echo off",
+    "if ""%~1""==""--version"" (echo v1.29.380& exit /b 0)",
+    ("if ""%~1""==""export"" (echo stderr noise 1>&2& copy /y ""{0}"" ""%~3"" >nul& exit /b 0)" -f (Join-Path $fixtures "winget-export.json")),
+    ("if ""%~1""==""list"" (type ""{0}""& exit /b 0)" -f (Join-Path $fixtures "winget-list-ptbr.txt")),
+    "if ""%~1""==""upgrade"" (echo Name Id Version Available& echo 7-Zip 7zip.7zip 24.08 24.09& exit /b 0)",
+    "exit /b 1"
+)
+[System.IO.File]::WriteAllText($fakeWinget, ($fakeLines -join "`r`n") + "`r`n")
+$oldPreference = $ErrorActionPreference
+$stderrAborts = $false
+try {
+    $ErrorActionPreference = "Stop"
+    $null = & $fakeWinget export --output (Join-Path $fakeDir "probe.json") 2>&1
+}
+catch {
+    $stderrAborts = $true
+}
+finally {
+    $ErrorActionPreference = $oldPreference
+}
+Write-Output ("Windows PowerShell 5.1 aborts on winget stderr under ErrorActionPreference Stop: " + $stderrAborts)
+$detectJob = Start-WinToolScriptJob -ScriptText (Get-WinToolAppDetectionScript) -Argument @(@((Join-Path $fakeDir "missing\winget.exe"), $fakeWinget), (Join-Path $fakeDir "export.json"))
+$deadline = [DateTime]::UtcNow.AddSeconds(60)
+while (-not $detectJob.Sync.Done -and [DateTime]::UtcNow -lt $deadline) {
+    Start-Sleep -Milliseconds 200
+}
+$detectOk = [bool]$detectJob.Sync.Ok
+$detectError = [string]$detectJob.Sync.Error
+$detectIds = @(ConvertFrom-WinToolWingetExport -Text ([string]$detectJob.Sync.ExportText))
+$detectList = [string]$detectJob.Sync.ListText
+Stop-WinToolThread -Job $detectJob
+Remove-Item -LiteralPath $fakeDir -Recurse -Force -ErrorAction SilentlyContinue
+if (-not $detectOk -or $detectIds.Count -ne 12 -or -not $detectList.Contains("Google.Chrome")) {
+    throw ("Installed-app detection failed with a stand-in winget on 5.1: ok={0} ids={1} error={2}" -f $detectOk, $detectIds.Count, $detectError)
+}
+Write-Output "Installed-app detection works on 5.1 with a winget that writes to stderr."
+
+$realCandidates = @(Get-WinToolWingetCandidate)
+if ($realCandidates.Count -eq 0) {
+    Write-Output "No winget on this runner; skipped the real detection run."
+}
+else {
+    $script:WinToolState.DetectJob = $null
+    Start-WinToolAppDetection
+    $realJob = $script:WinToolState.DetectJob
+    $deadline = [DateTime]::UtcNow.AddSeconds(240)
+    while ($null -ne $realJob -and -not $realJob.Sync.Done -and [DateTime]::UtcNow -lt $deadline) {
+        Start-Sleep -Milliseconds 500
+    }
+    if ($null -ne $realJob) {
+        foreach ($line in @($realJob.Sync.Log.ToArray())) {
+            Write-Output ("Real winget: " + $line)
+        }
+        if ($realJob.Sync.Done) {
+            Complete-WinToolAppDetection
+        }
+        else {
+            Stop-WinToolThread -Job $realJob
+            $script:WinToolState.DetectJob = $null
+            Write-Output "Real winget: still running after 240 seconds."
+        }
+    }
+    Write-Output ("Real winget status: " + $window.FindName("AppInstalledStatus").Text)
 }
 
 $uiErrors = Get-WinToolUiError

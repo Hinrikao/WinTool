@@ -433,6 +433,9 @@ function Update-WinToolLogPump {
     if ($null -ne $detect -and $detect.Sync.Done) {
         Complete-WinToolAppDetection
     }
+    else {
+        Test-WinToolAppDetectionTimeout
+    }
 
     $install = $script:WinToolState.InstallJob
     if ($null -ne $install -and $install.Sync.Done) {

@@ -236,6 +236,65 @@ Something Else           Other.Package                 1.0       2.0       winge
     Test-WinToolExpectation -Condition (@($errors).Count -eq 0 -and $script.Contains("export")) -Message "The detection script parses and uses winget export."
 }
 
+Invoke-WinToolCase -Name "Installed apps are read from a real winget export and list" -Body {
+    $fixtures = Join-Path $PSScriptRoot "fixtures"
+    $exportText = [System.IO.File]::ReadAllText((Join-Path $fixtures "winget-export.json"))
+    $ids = @(ConvertFrom-WinToolWingetExport -Text $exportText)
+    Test-WinToolExpectation -Condition ($ids.Count -eq 12 -and $ids -contains "7zip.7zip" -and $ids -contains "Microsoft.VisualStudio.Community") -Message ("The export fixture gives 12 ids, got " + $ids.Count)
+    Test-WinToolExpectation -Condition (@(ConvertFrom-WinToolWingetExport -Text "").Count -eq 0) -Message "An empty export gives no ids."
+    $listText = [System.IO.File]::ReadAllText((Join-Path $fixtures "winget-list-ptbr.txt"))
+
+    $catalogIds = New-Object System.Collections.Generic.List[string]
+    foreach ($category in @((Get-WinToolAppCatalog).categories)) {
+        foreach ($app in @($category.apps)) { $catalogIds.Add([string]$app.wingetId) }
+    }
+    $state = Resolve-WinToolAppState -CatalogId $catalogIds.ToArray() -InstalledId $ids -ListText $listText -UpgradeText ""
+    foreach ($id in @("7zip.7zip", "Git.Git", "Valve.Steam", "OBSProject.OBSStudio", "GitHub.cli", "Blizzard.BattleNet", "Google.GoogleDrive")) {
+        Test-WinToolExpectation -Condition ($state.Installed.ContainsKey($id)) -Message "$id from the export should show as installed."
+    }
+    Test-WinToolExpectation -Condition ($state.Installed.ContainsKey("Google.Chrome")) -Message "An app only in winget list (pt-BR headers) still shows as installed."
+    Test-WinToolExpectation -Condition ($state.Installed.ContainsKey("Microsoft.VisualStudioCode")) -Message "A shortened id in winget list is matched."
+    Test-WinToolExpectation -Condition ($state.Updates.Count -eq 0) -Message "The list alone marks no updates."
+
+    # Run the background detection script end to end with a stand-in winget.
+    if (-not (Test-WinToolWindows) -and $null -ne (Get-Command -Name "bash" -ErrorAction SilentlyContinue)) {
+        $work = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-fake-winget-" + [guid]::NewGuid().ToString("N"))
+        New-Item -ItemType Directory -Path $work -Force | Out-Null
+        $fake = Join-Path $work "winget"
+        $body = @"
+#!/bin/bash
+case "`$1" in
+  --version) echo v1.29.380 ;;
+  export) echo 'stderr noise' 1>&2; cp '$((Join-Path $fixtures "winget-export.json"))' "`$3" ;;
+  list) cat '$((Join-Path $fixtures "winget-list-ptbr.txt"))' ;;
+  upgrade) printf 'Name Id Version Available\n7-Zip 7zip.7zip 24.08 24.09\n' ;;
+esac
+"@
+        [System.IO.File]::WriteAllText($fake, $body.Replace("`r`n", "`n"))
+        & chmod +x $fake
+        $missing = Join-Path $work "missing-winget"
+        $job = Start-WinToolScriptJob -ScriptText (Get-WinToolAppDetectionScript) -Argument @(@($missing, $fake), (Join-Path $work "export.json"))
+        $waited = 0
+        while (-not $job.Sync.Done -and $waited -lt 300) {
+            Start-Sleep -Milliseconds 100
+            $waited++
+        }
+        $ok = [bool]$job.Sync.Ok
+        $jobError = [string]$job.Sync.Error
+        $found = @(ConvertFrom-WinToolWingetExport -Text ([string]$job.Sync.ExportText))
+        $used = [string]$job.Sync.Winget
+        $log = @($job.Sync.Log.ToArray())
+        $upgrade = [string]$job.Sync.UpgradeText
+        Stop-WinToolThread -Job $job
+        Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
+        Test-WinToolExpectation -Condition $ok -Message ("The detection job failed: " + $jobError)
+        Test-WinToolExpectation -Condition ($used -eq $fake) -Message "Detection skips a winget that does not start and uses the next one."
+        Test-WinToolExpectation -Condition ($found.Count -eq 12) -Message "Detection returns the export even when winget writes to stderr."
+        Test-WinToolExpectation -Condition ($upgrade.Contains("7zip.7zip")) -Message "Detection returns the upgrade table."
+        Test-WinToolExpectation -Condition (($log -join "`n").Contains("did not start")) -Message "Detection logs the winget it could not start."
+    }
+}
+
 Invoke-WinToolCase -Name "Fixes run known programs and named scripts" -Body {
     $catalog = Get-WinToolFixCatalog
     $fixes = @{}

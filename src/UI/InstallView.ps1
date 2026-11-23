@@ -189,19 +189,50 @@ function Sync-WinToolAppBadge {
     }
 }
 
+$script:WinToolDetectTimeoutSeconds = 300
+
 function Start-WinToolAppDetection {
     if ($null -ne $script:WinToolState.DetectJob) {
         return
     }
     $status = Get-WinToolUi -Name "AppInstalledStatus"
-    $winget = Get-WinToolWingetPath
-    if ([string]::IsNullOrWhiteSpace($winget)) {
+    $candidates = @(Get-WinToolWingetCandidate)
+    if ($candidates.Count -eq 0) {
         $status.Text = "winget not found, so installed apps cannot be checked."
+        Write-WinToolLog -Message "Installed apps: winget.exe was not found on this PC." -Level "warn" -Diagnostic
         return
     }
     $status.Text = "Checking installed apps..."
+    Write-WinToolLog -Message ("Installed apps: checking with winget. Candidates: " + ($candidates -join "; ")) -Level "info" -Diagnostic
     $exportPath = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-installed-" + [guid]::NewGuid().ToString("N") + ".json")
-    $script:WinToolState.DetectJob = Start-WinToolScriptJob -ScriptText (Get-WinToolAppDetectionScript) -Argument @($winget, $exportPath)
+    $job = Start-WinToolScriptJob -ScriptText (Get-WinToolAppDetectionScript) -Argument @($candidates, $exportPath)
+    $job | Add-Member -NotePropertyName Started -NotePropertyValue ([DateTime]::UtcNow)
+    $script:WinToolState.DetectJob = $job
+}
+
+function Test-WinToolAppDetectionTimeout {
+    $job = $script:WinToolState.DetectJob
+    if ($null -eq $job -or $job.Sync.Done) {
+        return
+    }
+    if (([DateTime]::UtcNow - $job.Started).TotalSeconds -lt $script:WinToolDetectTimeoutSeconds) {
+        return
+    }
+    Write-WinToolDetectionLog -Job $job
+    Stop-WinToolThread -Job $job
+    $script:WinToolState.DetectJob = $null
+    (Get-WinToolUi -Name "AppInstalledStatus").Text = "Checking installed apps took too long. Press Refresh to try again."
+    Write-WinToolLog -Message ("Installed apps: winget did not finish in {0} seconds, so the check was stopped." -f $script:WinToolDetectTimeoutSeconds) -Level "warn" -Diagnostic
+}
+
+function Write-WinToolDetectionLog {
+    param($Job)
+    if ($null -eq $Job -or $null -eq $Job.Sync.Log) {
+        return
+    }
+    foreach ($line in @($Job.Sync.Log.ToArray())) {
+        Write-WinToolLog -Message ("Installed apps: " + [string]$line) -Level "info" -Diagnostic
+    }
 }
 
 function Complete-WinToolAppDetection {
@@ -211,32 +242,48 @@ function Complete-WinToolAppDetection {
     }
     $ok = [bool]$job.Sync.Ok
     $errorMessage = [string]$job.Sync.Error
-    $installedIds = @()
-    if ($null -ne $job.Sync.Installed) {
-        $installedIds = [string[]]$job.Sync.Installed
-    }
+    $exportText = [string]$job.Sync.ExportText
+    $listText = [string]$job.Sync.ListText
     $upgradeText = [string]$job.Sync.UpgradeText
+    $winget = [string]$job.Sync.Winget
+    Write-WinToolDetectionLog -Job $job
     Stop-WinToolThread -Job $job
     $script:WinToolState.DetectJob = $null
     $status = Get-WinToolUi -Name "AppInstalledStatus"
     if (-not $ok) {
-        $status.Text = "Could not check installed apps."
-        Write-WinToolLog -Message ("Could not check installed apps. {0}" -f $errorMessage) -Level "warn"
+        $status.Text = "Could not check installed apps. See the log."
+        Write-WinToolLog -Message ("Could not check installed apps. {0}" -f $errorMessage) -Level "warn" -Diagnostic
         return
     }
-    Set-WinToolAppState -InstalledId $installedIds -UpgradeText $upgradeText
+    if (-not [string]::IsNullOrWhiteSpace($winget)) {
+        $script:WinToolWingetWorking = $winget
+    }
+    $installedIds = @()
+    try {
+        $installedIds = @(ConvertFrom-WinToolWingetExport -Text $exportText)
+    }
+    catch {
+        Write-WinToolLog -Message ("Installed apps: could not read the winget export file. {0}" -f $_.Exception.Message) -Level "warn" -Diagnostic
+    }
+    Write-WinToolLog -Message ("Installed apps: winget export listed {0} packages." -f $installedIds.Count) -Level "info" -Diagnostic
+    $counts = Set-WinToolAppState -InstalledId $installedIds -UpgradeText $upgradeText -ListText $listText
+    Write-WinToolLog -Message ("Installed apps: {0} catalog apps installed, {1} with an update." -f $counts.Installed, $counts.Updates) -Level "ok" -Diagnostic
+    if ($counts.Installed -eq 0 -and $installedIds.Count -eq 0 -and [string]::IsNullOrWhiteSpace($listText)) {
+        $status.Text = "winget returned nothing. See the log."
+    }
 }
 
 function Set-WinToolAppState {
     param(
         [string[]]$InstalledId,
-        [AllowEmptyString()][string]$UpgradeText
+        [AllowEmptyString()][string]$UpgradeText,
+        [AllowEmptyString()][string]$ListText
     )
     $catalogIds = New-Object System.Collections.Generic.List[string]
     foreach ($row in @($script:WinToolState.AppRows)) {
         $catalogIds.Add([string]$row.WingetId)
     }
-    $state = Resolve-WinToolAppState -CatalogId $catalogIds.ToArray() -InstalledId $InstalledId -UpgradeText $UpgradeText
+    $state = Resolve-WinToolAppState -CatalogId $catalogIds.ToArray() -InstalledId $InstalledId -UpgradeText $UpgradeText -ListText $ListText
     $installedCount = 0
     $updateCount = 0
     foreach ($row in @($script:WinToolState.AppRows)) {
@@ -247,6 +294,7 @@ function Set-WinToolAppState {
         Sync-WinToolAppBadge -Row $row
     }
     (Get-WinToolUi -Name "AppInstalledStatus").Text = ("{0} installed, {1} with an update." -f $installedCount, $updateCount)
+    return [pscustomobject]@{ Installed = $installedCount; Updates = $updateCount }
 }
 
 function Select-WinToolInstalledApp {

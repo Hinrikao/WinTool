@@ -21,20 +21,83 @@ function Sync-WinToolProcessPath {
     $env:Path = "$machine;$user"
 }
 
-function Get-WinToolWingetPath {
+function Get-WinToolWingetCandidate {
+    # Every winget.exe this PC might have, best first. The per-user alias in
+    # WindowsApps is what a normal shell runs, but an elevated process can
+    # fail to start it ("The file cannot be accessed by the system"), so the
+    # real file inside the App Installer package is kept as a fallback.
     if (-not (Test-WinToolWindows)) {
-        return $null
+        return @()
     }
     Sync-WinToolProcessPath
+    $list = New-Object System.Collections.Generic.List[string]
     $command = Get-Command -Name "winget.exe" -ErrorAction SilentlyContinue
     if ($null -ne $command -and -not [string]::IsNullOrWhiteSpace([string]$command.Source)) {
-        return [string]$command.Source
+        $list.Add([string]$command.Source)
     }
-    $fallback = Join-Path $env:LOCALAPPDATA "Microsoft/WindowsApps/winget.exe"
-    if (Test-Path -LiteralPath $fallback) {
-        return $fallback
+    if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        $alias = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\winget.exe"
+        if (Test-Path -LiteralPath $alias) {
+            $list.Add($alias)
+        }
     }
-    return $null
+    try {
+        foreach ($package in @(Get-AppxPackage -Name "Microsoft.DesktopAppInstaller" -ErrorAction Stop | Sort-Object -Property Version -Descending)) {
+            $file = Join-Path ([string]$package.InstallLocation) "winget.exe"
+            if (Test-Path -LiteralPath $file) {
+                $list.Add($file)
+            }
+        }
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    $pattern = Join-Path $env:ProgramFiles "WindowsApps\Microsoft.DesktopAppInstaller_*__8wekyb3d8bbwe\winget.exe"
+    foreach ($item in @(Resolve-Path -Path $pattern -ErrorAction SilentlyContinue | Sort-Object -Property Path -Descending)) {
+        $list.Add([string]$item.Path)
+    }
+    $seen = @{}
+    $unique = New-Object System.Collections.Generic.List[string]
+    foreach ($path in $list) {
+        $key = $path.ToLowerInvariant()
+        if (-not $seen.ContainsKey($key)) {
+            $seen[$key] = $true
+            $unique.Add($path)
+        }
+    }
+    return $unique.ToArray()
+}
+
+function Get-WinToolWingetPath {
+    if ($null -ne $script:WinToolWingetWorking -and (Test-Path -LiteralPath $script:WinToolWingetWorking)) {
+        return $script:WinToolWingetWorking
+    }
+    $candidates = @(Get-WinToolWingetCandidate)
+    if ($candidates.Count -eq 0) {
+        return $null
+    }
+    return $candidates[0]
+}
+
+function ConvertFrom-WinToolWingetExport {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    # The file winget export writes: Sources[].Packages[].PackageIdentifier.
+    $ids = New-Object System.Collections.Generic.List[string]
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $ids.ToArray()
+    }
+    $data = ConvertFrom-Json -InputObject $Text.TrimStart([char]0xFEFF)
+    foreach ($source in @(Get-WinToolNote -Object $data -Name "Sources" -Default @())) {
+        foreach ($package in @(Get-WinToolNote -Object $source -Name "Packages" -Default @())) {
+            $id = [string](Get-WinToolNote -Object $package -Name "PackageIdentifier" -Default "")
+            if (-not [string]::IsNullOrWhiteSpace($id)) {
+                $ids.Add($id)
+            }
+        }
+    }
+    return $ids.ToArray()
 }
 
 function Get-WinToolWingetArgument {
@@ -106,26 +169,65 @@ function Get-WinToolWingetOutcomeText {
 # responsive. "winget export" gives exact package ids. The upgrade table is
 # read by matching known catalog ids, because its column widths vary.
 function Get-WinToolAppDetectionScript {
+    # Runs in a background runspace on Windows PowerShell 5.1. It does not use
+    # ErrorActionPreference Stop around winget: on 5.1 any line winget writes
+    # to stderr would then abort the whole check. Every step is written to
+    # $Sync.Log so the window can put it in the log files.
     $scriptText = @'
-param($Sync, $Winget, $ExportPath)
-$ErrorActionPreference = "Stop"
+param($Sync, $Candidates, $ExportPath)
+$ErrorActionPreference = "Continue"
+$log = New-Object System.Collections.Generic.List[string]
+$Sync.Log = $log
 try {
-    if (Test-Path -LiteralPath $ExportPath) {
-        Remove-Item -LiteralPath $ExportPath -Force
+    try {
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     }
-    $null = & $Winget export --output $ExportPath --source winget --accept-source-agreements --disable-interactivity 2>&1
-    $ids = New-Object System.Collections.Generic.List[string]
-    if (Test-Path -LiteralPath $ExportPath) {
-        $data = [System.IO.File]::ReadAllText($ExportPath) | ConvertFrom-Json
-        foreach ($source in @($data.Sources)) {
-            foreach ($package in @($source.Packages)) {
-                $ids.Add([string]$package.PackageIdentifier)
+    catch {
+        $log.Add("Could not switch the console to UTF-8: " + $_.Exception.Message)
+    }
+    $winget = $null
+    foreach ($candidate in @($Candidates)) {
+        try {
+            $version = (& $candidate --version 2>&1 | ForEach-Object { [string]$_ }) -join " "
+            if ($LASTEXITCODE -eq 0) {
+                $winget = $candidate
+                $log.Add(("Using {0} ({1})" -f $candidate, $version.Trim()))
+                break
             }
+            $log.Add(("{0} exited with {1}: {2}" -f $candidate, $LASTEXITCODE, $version.Trim()))
         }
+        catch {
+            $log.Add(("{0} did not start: {1}" -f $candidate, $_.Exception.Message))
+        }
+    }
+    if ($null -eq $winget) {
+        throw "No winget.exe could be started."
+    }
+    $Sync.Winget = $winget
+    $common = @("--source", "winget", "--accept-source-agreements", "--disable-interactivity")
+
+    if (Test-Path -LiteralPath $ExportPath) {
         Remove-Item -LiteralPath $ExportPath -Force -ErrorAction SilentlyContinue
     }
-    $Sync.Installed = $ids.ToArray()
-    $Sync.UpgradeText = (& $Winget upgrade --source winget --accept-source-agreements --disable-interactivity 2>&1 | Out-String)
+    $exportArgs = @("export", "--output", $ExportPath) + $common
+    $exportOut = (& $winget @exportArgs 2>&1 | ForEach-Object { [string]$_ }) -join "`n"
+    $log.Add(("winget export exited with {0}." -f $LASTEXITCODE))
+    $Sync.ExportText = ""
+    if (Test-Path -LiteralPath $ExportPath) {
+        $Sync.ExportText = [System.IO.File]::ReadAllText($ExportPath)
+        Remove-Item -LiteralPath $ExportPath -Force -ErrorAction SilentlyContinue
+    }
+    else {
+        $log.Add("winget export wrote no file. Output: " + $exportOut.Trim())
+    }
+
+    $listArgs = @("list") + $common
+    $Sync.ListText = (& $winget @listArgs 2>&1 | ForEach-Object { [string]$_ }) -join "`n"
+    $log.Add(("winget list exited with {0}." -f $LASTEXITCODE))
+
+    $upgradeArgs = @("upgrade") + $common
+    $Sync.UpgradeText = (& $winget @upgradeArgs 2>&1 | ForEach-Object { [string]$_ }) -join "`n"
+    $log.Add(("winget upgrade exited with {0}." -f $LASTEXITCODE))
     $Sync.Ok = $true
 }
 catch {
@@ -185,7 +287,8 @@ function Resolve-WinToolAppState {
     param(
         [string[]]$CatalogId,
         [string[]]$InstalledId,
-        [AllowEmptyString()][string]$UpgradeText
+        [AllowEmptyString()][string]$UpgradeText,
+        [AllowEmptyString()][string]$ListText
     )
     $installed = @{}
     $known = @{}
@@ -202,6 +305,10 @@ function Resolve-WinToolAppState {
         if ($known.ContainsKey($key)) {
             $installed[$known[$key]] = $true
         }
+    }
+    # winget list catches packages that export leaves out.
+    foreach ($id in @(Find-WinToolWingetIdInText -Text $ListText -KnownId $CatalogId)) {
+        $installed[$id] = $true
     }
     $updates = @{}
     foreach ($id in @(Find-WinToolWingetIdInText -Text $UpgradeText -KnownId $CatalogId)) {
