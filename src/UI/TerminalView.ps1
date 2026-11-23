@@ -320,6 +320,8 @@ function Initialize-WinToolTerminalView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalThemeSearch") -EventName "TextChanged" -Name "Terminal: theme search" -Action {
         Sync-WinToolSearchHint -BoxName "TerminalThemeSearch" -HintName "TerminalThemeSearchHint"
         Update-WinToolPromptStyleList
+        Update-WinToolTerminalSummary
+        Update-WinToolTerminalPreview
     }
     foreach ($filterName in @("TerminalFilterAll", "TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd")) {
         Register-WinToolUiEvent -Control (Get-WinToolUi -Name $filterName) -EventName "Checked" -Name "Terminal: theme filter" -Action {
@@ -327,6 +329,8 @@ function Initialize-WinToolTerminalView {
             $null = $eventData
             $script:WinToolTerminalFilter = [string]$source.Tag
             Update-WinToolPromptStyleList
+            Update-WinToolTerminalSummary
+            Update-WinToolTerminalPreview
         }
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalRefresh") -EventName "Click" -Name "Terminal: refresh lists" -Action { Update-WinToolTerminalCatalogOnline }
@@ -344,6 +348,9 @@ function Initialize-WinToolTerminalView {
         }
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalStyleList") -EventName "SelectionChanged" -Name "Terminal: choose prompt style" -Action {
+        # While the list is rebuilt for another engine, its selection changes
+        # are not clicks: they must not copy other controls into the choice.
+        if ($script:WinToolTerminalSyncing) { return }
         Update-WinToolTerminalSummary
         Update-WinToolTerminalPreview
     }
@@ -579,41 +586,48 @@ function Update-WinToolPromptStyleList {
     $prompt = [string]$script:WinToolTerminalChoice.prompt
     # The list remembers which prompt it was built for, so an old selection
     # never overwrites the style of a newly picked prompt.
-    $list.Tag = $null
-    $list.Items.Clear()
-    $query = [string](Get-WinToolUi -Name "TerminalThemeSearch").Text
-    $note = Get-WinToolUi -Name "TerminalStyleNote"
-    $filter = [string]$script:WinToolTerminalFilter
-    if ([string]::IsNullOrWhiteSpace($filter)) { $filter = "all" }
-    $titles = Get-WinToolThemeTitle -PromptId $prompt
-    (Get-WinToolUi -Name "TerminalThemeTitle").Text = [string]$titles.Title
-    (Get-WinToolUi -Name "TerminalThemeSearchHint").Text = ([string]$titles.Hint + [string][char]0x2026)
-    $rows = @(Get-WinToolThemeRow -PromptId $prompt -OhMyPoshTheme @(Get-WinToolActiveOhMyPoshTheme))
-    $script:WinToolTerminalRows = $rows
-    $shown = @(Select-WinToolThemeRow -Row $rows -Query $query -Filter $filter)
-    $rowStyle = $list.FindResource("TerminalRow")
-    foreach ($row in $shown) {
-        $item = New-WinToolThemeItem -Row $row -Style $rowStyle
-        [void]$list.Items.Add($item)
-        if ([string]$row.Id -eq [string]$script:WinToolTerminalChoice.promptStyle) {
-            $list.SelectedItem = $item
+    $wasSyncing = [bool]$script:WinToolTerminalSyncing
+    $script:WinToolTerminalSyncing = $true
+    try {
+        $list.Tag = $null
+        $list.Items.Clear()
+        $query = [string](Get-WinToolUi -Name "TerminalThemeSearch").Text
+        $note = Get-WinToolUi -Name "TerminalStyleNote"
+        $filter = [string]$script:WinToolTerminalFilter
+        if ([string]::IsNullOrWhiteSpace($filter)) { $filter = "all" }
+        $titles = Get-WinToolThemeTitle -PromptId $prompt
+        (Get-WinToolUi -Name "TerminalThemeTitle").Text = [string]$titles.Title
+        (Get-WinToolUi -Name "TerminalThemeSearchHint").Text = ([string]$titles.Hint + [string][char]0x2026)
+        $rows = @(Get-WinToolThemeRow -PromptId $prompt -OhMyPoshTheme @(Get-WinToolActiveOhMyPoshTheme))
+        $script:WinToolTerminalRows = $rows
+        $shown = @(Select-WinToolThemeRow -Row $rows -Query $query -Filter $filter)
+        $rowStyle = $list.FindResource("TerminalRow")
+        foreach ($row in $shown) {
+            $item = New-WinToolThemeItem -Row $row -Style $rowStyle
+            [void]$list.Items.Add($item)
+            if ([string]$row.Id -eq [string]$script:WinToolTerminalChoice.promptStyle) {
+                $list.SelectedItem = $item
+            }
+        }
+        (Get-WinToolUi -Name "TerminalThemeCount").Text = ([string]$shown.Count + " of " + [string]$rows.Count)
+        if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
+            $list.SelectedIndex = 0
+        }
+        if ($list.Items.Count -eq 0) {
+            $note.Visibility = "Visible"
+            if ($rows.Count -eq 0) { $note.Text = "This prompt has its own default look. The font and extras still apply." }
+            else { $note.Text = "No " + [string]$titles.Noun + " match the search or filter." }
+        }
+        else {
+            $note.Visibility = "Collapsed"
+        }
+        $list.Tag = $prompt
+        if ($null -ne $list.SelectedItem) {
+            $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
         }
     }
-    (Get-WinToolUi -Name "TerminalThemeCount").Text = ([string]$shown.Count + " of " + [string]$rows.Count)
-    if ($null -eq $list.SelectedItem -and $list.Items.Count -gt 0) {
-        $list.SelectedIndex = 0
-    }
-    if ($list.Items.Count -eq 0) {
-        $note.Visibility = "Visible"
-        if ($rows.Count -eq 0) { $note.Text = "This prompt has its own default look. The font and extras still apply." }
-        else { $note.Text = "No " + [string]$titles.Noun + " match the search or filter." }
-    }
-    else {
-        $note.Visibility = "Collapsed"
-    }
-    $list.Tag = $prompt
-    if ($null -ne $list.SelectedItem) {
-        $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
+    finally {
+        $script:WinToolTerminalSyncing = $wasSyncing
     }
     Show-WinToolTerminalSelection
 }
