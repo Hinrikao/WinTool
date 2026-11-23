@@ -232,6 +232,48 @@ function Set-WinToolCardButtonText {
     $Button.Content = $line
 }
 
+$script:WinToolIconBackplate = "#F3F5F8"
+
+function New-WinToolAppIconImage {
+    # A 32 px image in the same slot as the letter tile. Uniform keeps the
+    # picture's shape; HighQuality is the scale from the 48 px source.
+    param(
+        [Parameter(Mandatory = $true)][string]$FileName
+    )
+    $data = Get-WinToolAppIconData -FileName $FileName
+    if ($null -eq $data -or $data.Length -lt 8) {
+        return $null
+    }
+    if ($data[0] -ne 137 -or $data[1] -ne 80 -or $data[2] -ne 78 -or $data[3] -ne 71) {
+        return $null
+    }
+    try {
+        $stream = [System.IO.MemoryStream]::new($data)
+        $bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
+        $bitmap.BeginInit()
+        $bitmap.StreamSource = $stream
+        $bitmap.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+        $bitmap.DecodePixelWidth = 64
+        $bitmap.EndInit()
+        $bitmap.Freeze()
+        $stream.Dispose()
+    }
+    catch {
+        return $null
+    }
+    $image = New-Object System.Windows.Controls.Image
+    $image.Source = $bitmap
+    $image.Width = 32
+    $image.Height = 32
+    $image.Stretch = [System.Windows.Media.Stretch]::Uniform
+    $image.HorizontalAlignment = "Center"
+    $image.VerticalAlignment = "Center"
+    $image.IsHitTestVisible = $false
+    [System.Windows.Media.RenderOptions]::SetBitmapScalingMode($image, [System.Windows.Media.BitmapScalingMode]::HighQuality)
+    $image.Clip = New-Object System.Windows.Media.RectangleGeometry ([System.Windows.Rect]::new(0, 0, 32, 32), 8, 8)
+    return $image
+}
+
 function New-WinToolAppRow {
     param(
         $App,
@@ -274,6 +316,18 @@ function New-WinToolAppRow {
     $initial.HorizontalAlignment = "Center"
     $initial.VerticalAlignment = "Center"
     $icon.Child = $initial
+    $iconImage = $null
+    $iconFile = [string](Get-WinToolNote -Object $App -Name "icon" -Default "")
+    if (-not [string]::IsNullOrWhiteSpace($iconFile)) {
+        $iconImage = New-WinToolAppIconImage -FileName $iconFile
+    }
+    if ($null -ne $iconImage) {
+        # One light plate for every real icon, still exactly 32 px, so a dark
+        # logo stays visible on the dark card without moving the row.
+        $plate = [System.Windows.Media.Color]([System.Windows.Media.ColorConverter]::ConvertFromString($script:WinToolIconBackplate))
+        $icon.Background = [System.Windows.Media.SolidColorBrush]::new($plate)
+        $icon.Child = $iconImage
+    }
     [void]$head.Children.Add($icon)
 
     $names = New-Object System.Windows.Controls.StackPanel
@@ -334,6 +388,8 @@ function New-WinToolAppRow {
         Scope = [string](Get-WinToolNote -Object $App -Name "scope" -Default "")
         SearchText = $search
         Panel = $panel
+        IconHost = $icon
+        IconImage = $iconImage
         Checkbox = $checkbox
         InstallButton = $installButton
         UpdateButton = $updateButton

@@ -1747,6 +1747,41 @@ Invoke-WinToolCase -Name "Driver codes, Home history sync, profile BOM, non-zero
     Test-WinToolExpectation -Condition ($xaml -match 'x:Name="DnsAdapter"[^>]*Style="\{StaticResource TerminalCombo\}"' -and $xaml -match 'x:Name="DnsProvider"[^>]*Style="\{StaticResource TerminalCombo\}"') -Message "Config ComboBoxes use the dark 34 px TerminalCombo style."
     $builder = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "build/Build-WinTool.ps1"))
     Test-WinToolExpectation -Condition ($builder.Contains('$script:WinToolSelfText = [string]$MyInvocation.MyCommand.ScriptBlock')) -Message "Built wintool.ps1 saves its own ScriptBlock text for irm | iex relaunches."
+    Test-WinToolExpectation -Condition ($builder.Contains('$script:WinToolIcons')) -Message "The single-file build embeds the app icons."
+}
+
+Invoke-WinToolCase -Name "App icons are optional PNG files, never paths" -Body {
+    $icons = 0
+    $fallback = 0
+    foreach ($category in @((Get-WinToolAppCatalog).categories)) {
+        foreach ($app in @($category.apps)) {
+            $icon = [string](Get-WinToolNote -Object $app -Name "icon" -Default "")
+            if ([string]::IsNullOrWhiteSpace($icon)) {
+                $fallback++
+                continue
+            }
+            $icons++
+            $data = Get-WinToolAppIconData -FileName $icon
+            $png = ($null -ne $data -and $data.Length -gt 24 -and $data[0] -eq 137 -and $data[1] -eq 80 -and $data[2] -eq 78 -and $data[3] -eq 71)
+            Test-WinToolExpectation -Condition $png -Message ("Icon " + $icon + " should be a PNG.")
+        }
+    }
+    Test-WinToolExpectation -Condition ($icons -ge 100 -and $fallback -ge 1) -Message ("Expected mapped icons and letter tiles, got " + $icons + " icons and " + $fallback + " tiles.")
+    Test-WinToolExpectation -Condition ($null -eq (Get-WinToolAppIconData -FileName "../apps.json")) -Message "Icon names cannot be paths."
+    Test-WinToolExpectation -Condition ($null -eq (Get-WinToolAppIconData -FileName "missing.png")) -Message "A missing icon falls back to the letter tile."
+    $savedRoot = $script:WinToolRoot
+    $savedIcons = $script:WinToolIcons
+    try {
+        $script:WinToolRoot = $null
+        $payload = [Convert]::ToBase64String([byte[]](0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A))
+        $script:WinToolIcons = @{ "embedded.png" = $payload }
+        $embedded = Get-WinToolAppIconData -FileName "embedded.png"
+        Test-WinToolExpectation -Condition ($null -ne $embedded -and $embedded.Length -eq 8 -and $embedded[0] -eq 137) -Message "Embedded icon bytes decode without the repo beside the script."
+    }
+    finally {
+        $script:WinToolRoot = $savedRoot
+        $script:WinToolIcons = $savedIcons
+    }
 }
 
 if ($script:WinToolFailures.Count -gt 0) {

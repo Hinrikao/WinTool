@@ -85,7 +85,7 @@ Edit `data/apps.json`. Each app needs a unique `id`, a `name`, a short `descript
 }
 ```
 
-Put it in the category that fits. Optional `scope` is `user` or `machine` when a package needs one. Then rebuild `wintool.ps1` (see below) so the one-line installer picks up the change.
+Put it in the category that fits. Optional `scope` is `user` or `machine` when a package needs one. Optional `icon` is the file name of a PNG in `assets/icons/`, such as `firefox.png`. Leave it out to keep the colored letter tile. Then rebuild `wintool.ps1` (see below) so the one-line installer picks up the change.
 
 Check the id before you publish it:
 
@@ -198,3 +198,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to send a change.
 ## License
 
 [MIT](LICENSE). Copyright (c) 2026 Henrique.
+
+App icons from [ChrisTitusTech/winutil](https://github.com/ChrisTitusTech/winutil) (`config/icons`), MIT License.

@@ -34,13 +34,48 @@ function ConvertTo-BuildBase64 {
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text
     )
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
-    $encoded = [Convert]::ToBase64String($bytes)
+    return (ConvertTo-BuildWrappedBase64 -Bytes $bytes)
+}
+
+function ConvertTo-BuildWrappedBase64 {
+    param(
+        [Parameter(Mandatory = $true)][byte[]]$Bytes
+    )
+    $encoded = [Convert]::ToBase64String($Bytes)
     $lines = New-Object System.Collections.Generic.List[string]
     for ($index = 0; $index -lt $encoded.Length; $index += 80) {
         $length = [Math]::Min(80, $encoded.Length - $index)
         $lines.Add($encoded.Substring($index, $length))
     }
     return ($lines -join "`n")
+}
+
+function Get-BuildAppIcon {
+    $catalog = ConvertFrom-Json -InputObject (Read-BuildText -Path (Join-Path $root "data/apps.json"))
+    $names = New-Object System.Collections.Generic.List[string]
+    $seen = @{}
+    foreach ($category in @($catalog.categories)) {
+        foreach ($app in @($category.apps)) {
+            $icon = ""
+            if ($null -ne $app.PSObject.Properties["icon"]) {
+                $icon = [string]$app.icon
+            }
+            if ([string]::IsNullOrWhiteSpace($icon)) {
+                continue
+            }
+            if ($icon -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*\.png$') {
+                throw "App '$($app.id)' has an icon name that is not a PNG file name."
+            }
+            if ($seen.ContainsKey($icon)) {
+                continue
+            }
+            $seen[$icon] = $true
+            $names.Add($icon)
+        }
+    }
+    $sorted = $names.ToArray()
+    [Array]::Sort($sorted, [StringComparer]::Ordinal)
+    return $sorted
 }
 
 $version = (Read-BuildText -Path (Join-Path $root "build/version.txt")).Trim()
@@ -92,6 +127,22 @@ foreach ($name in $payloads.Keys) {
     [void]$builder.AppendLine("'@")
 }
 [void]$builder.AppendLine("}")
+[void]$builder.AppendLine('$script:WinToolIcons = @{')
+foreach ($iconName in @(Get-BuildAppIcon)) {
+    $iconPath = Join-Path $root ("assets/icons/" + $iconName)
+    if (-not (Test-Path -LiteralPath $iconPath)) {
+        throw "App icon '$iconName' is missing from assets/icons."
+    }
+    $iconBytes = [System.IO.File]::ReadAllBytes($iconPath)
+    $png = ($iconBytes.Length -ge 8 -and $iconBytes[0] -eq 137 -and $iconBytes[1] -eq 80 -and $iconBytes[2] -eq 78 -and $iconBytes[3] -eq 71)
+    if (-not $png) {
+        throw "App icon '$iconName' is not a PNG."
+    }
+    [void]$builder.AppendLine("    '$iconName' = @'")
+    [void]$builder.AppendLine((ConvertTo-BuildWrappedBase64 -Bytes $iconBytes))
+    [void]$builder.AppendLine("'@")
+}
+[void]$builder.AppendLine('}')
 [void]$builder.AppendLine("")
 
 $manifest = Read-BuildText -Path (Join-Path $root "build/files.txt")

@@ -9,6 +9,7 @@
       "apps": [
         {
           "id": "firefox",
+          "icon": "firefox.png",
           "name": "Firefox",
           "description": "A fast browser from Mozilla, with strong tracking protection.",
           "wingetId": "Mozilla.Firefox",
@@ -17,6 +18,7 @@
         },
         {
           "id": "chrome",
+          "icon": "chrome.png",
           "name": "Google Chrome",
           "description": "Google's browser, useful when a site expects it.",
           "wingetId": "Google.Chrome",
@@ -24,6 +26,7 @@
         },
         {
           "id": "brave",
+          "icon": "brave.png",
           "name": "Brave",
           "description": "A Chromium browser that blocks many ads and trackers.",
           "wingetId": "Brave.Brave",
@@ -31,6 +34,7 @@
         },
         {
           "id": "vivaldi",
+          "icon": "vivaldi.png",
           "name": "Vivaldi",
           "description": "A browser with panels, tab stacks, and lots of settings.",
           "wingetId": "Vivaldi.Vivaldi",
@@ -38,6 +42,7 @@
         },
         {
           "id": "librewolf",
+          "icon": "librewolf.png",
           "name": "LibreWolf",
           "description": "A Firefox build with stricter privacy defaults.",
           "wingetId": "LibreWolf.LibreWolf",
@@ -52,6 +57,7 @@
         },
         {
           "id": "tor-browser",
+          "icon": "tor.png",
           "name": "Tor Browser",
           "description": "Routes browsing through the Tor network for strong anonymity.",
           "wingetId": "TorProject.TorBrowser",
@@ -59,6 +65,7 @@
         },
         {
           "id": "floorp",
+          "icon": "floorp.png",
           "name": "Floorp",
           "description": "A Firefox-based browser with vertical tabs and many layout options.",
           "wingetId": "Ablaze.Floorp",
@@ -66,6 +73,7 @@
         },
         {
           "id": "waterfox",
+          "icon": "waterfox.png",
           "name": "Waterfox",
           "description": "A privacy-minded Firefox fork without telemetry.",
           "wingetId": "Waterfox.Waterfox",
@@ -73,6 +81,7 @@
         },
         {
           "id": "zen-browser",
+          "icon": "ZenBrowser.png",
           "name": "Zen Browser",
           "description": "A calm Firefox-based browser with workspaces and a sidebar.",
           "wingetId": "Zen-Team.Zen-Browser",
@@ -80,6 +89,7 @@
         },
         {
           "id": "mullvad-browser",
+          "icon": "mullvadbrowser.png",
           "name": "Mullvad Browser",
           "description": "The Tor Browser's privacy features without the Tor network.",
           "wingetId": "MullvadVPN.MullvadBrowser",
@@ -87,6 +97,7 @@
         },
         {
           "id": "edge",
+          "icon": "edge.png",
           "name": "Microsoft Edge",
           "description": "Windows' own browser. Useful to repair or reinstall it.",
           "wingetId": "Microsoft.Edge",
@@ -102,6 +113,7 @@
       "apps": [
         {
           "id": "discord",
+          "icon": "discord.png",
           "name": "Discord",
           "description": "Voice, video, and text for communities and friend groups.",
           "wingetId": "Discord.Discord",
@@ -109,6 +121,7 @@
         },
         {
           "id": "telegram",
+          "icon": "telegram.png",
           "name": "Telegram",
           "description": "A cloud messenger with desktop apps for personal chats.",
           "wingetId": "Telegram.TelegramDesktop",
@@ -117,6 +130,7 @@
         },
         {
           "id": "signal",
+          "icon": "signal.png",
           "name": "Signal",
           "description": "A private messenger with end-to-end encryption.",
           "wingetId": "OpenWhisperSystems.Signal",
@@ -124,6 +138,7 @@
         },
         {
           "id": "slack",
+          "icon": "slack.png",
           "name": "Slack",
           "description": "Work chat for teams that already use Slack.",
           "wingetId": "SlackTechnologies.Slack",
@@ -131,6 +146,7 @@
         },
         {
           "id": "teams",
+          "icon": "teams.png",
           "name": "Microsoft Teams",
           "description": "Meetings and work chat from Microsoft.",
           "wingetId": "Microsoft.Teams",
@@ -139,6 +155,7 @@
         },
         {
           "id": "zoom",
+          "icon": "zoom.png",
           "name": "Zoom",
           "description": "Video meetings that many schools and offices still use.",
           "wingetId": "Zoom.Zoom",
@@ -146,6 +163,7 @@
         },
         {
           "id": "element",
+          "icon": "matrix.png",
           "name": "Element",
           "description": "A Matrix chat client you can use with your own homeserver.",
           "wingetId": "Element.Element",
@@ -153,6 +171,7 @@
         },
         {
           "id": "thunderbird",
+          "icon": "thunderbird.png",
           "name": "Thunderbird",
           "description": "Mozilla's free email, calendar, and contacts app.",
           "wingetId": "Mozilla.Thunderbird",
@@ -161,6 +180,7 @@
         },
         {
           "id": "viber",
+          "icon": "viber.png",
           "name": "Viber",
           "description": "Messages and calls that sync with Viber on your phone.",
           "wingetId": "Rakuten.Viber",
@@ -175,6 +195,7 @@
         },
         {
           "id": "teamspeak",
+          "icon": "teamspeak3.png",
           "name": "TeamSpeak",
           "description": "Low-latency voice chat popular with gaming groups.",
           "wingetId": "TeamSpeakSystems.TeamSpeakClient",
@@ -189,6 +210,7 @@
         },
         {
           "id": "vesktop",
+          "icon": "vesktop.png",
           "name": "Vesktop",
           "description": "A Discord desktop client with screen-share audio on Linux and extra settings.",
           "wingetId": "Vencord.Vesktop",
@@ -204,6 +226,7 @@
       "apps": [
         {
           "id": "onlyoffice",
+          "icon": "onlyoffice.png",
           "name": "ONLYOFFICE",
           "description": "Documents, spreadsheets, and slides that work well with Office files.",
           "wingetId": "ONLYOFFICE.DesktopEditors",
@@ -211,6 +234,7 @@
         },
         {
           "id": "acrobat-reader",
+          "icon": "adobe.png",
           "name": "Adobe Acrobat Reader",
           "description": "Adobe's free PDF reader.",
           "wingetId": "Adobe.Acrobat.Reader.64-bit",
@@ -218,6 +242,7 @@
         },
         {
           "id": "joplin",
+          "icon": "joplin.png",
           "name": "Joplin",
           "description": "Notes and to-dos with sync and Markdown.",
           "wingetId": "Joplin.Joplin",
@@ -232,6 +257,7 @@
         },
         {
           "id": "zotero",
+          "icon": "zotero.png",
           "name": "Zotero",
           "description": "Collect and cite research sources.",
           "wingetId": "DigitalScholar.Zotero",
@@ -239,6 +265,7 @@
         },
         {
           "id": "calibre",
+          "icon": "calibre.png",
           "name": "calibre",
           "description": "Manage and convert e-books.",
           "wingetId": "calibre.calibre",
@@ -268,6 +295,7 @@
       "apps": [
         {
           "id": "vscode",
+          "icon": "vscode.png",
           "name": "Visual Studio Code",
           "description": "A popular editor for scripts, web apps, and notes.",
           "wingetId": "Microsoft.VisualStudioCode",
@@ -275,6 +303,7 @@
         },
         {
           "id": "visual-studio",
+          "icon": "visualstudio2022.png",
           "name": "Visual Studio 2022",
           "description": "Microsoft's full IDE. This install is large.",
           "wingetId": "Microsoft.VisualStudio.2022.Community",
@@ -282,6 +311,7 @@
         },
         {
           "id": "git",
+          "icon": "git.png",
           "name": "Git",
           "description": "Version control from the command line.",
           "wingetId": "Git.Git",
@@ -289,6 +319,7 @@
         },
         {
           "id": "github-desktop",
+          "icon": "githubdesktop.png",
           "name": "GitHub Desktop",
           "description": "A simple window for Git repositories hosted on GitHub.",
           "wingetId": "GitHub.GitHubDesktop",
@@ -296,6 +327,7 @@
         },
         {
           "id": "github-cli",
+          "icon": "githubcli.png",
           "name": "GitHub CLI",
           "description": "Work with pull requests and issues from the terminal.",
           "wingetId": "GitHub.cli",
@@ -303,6 +335,7 @@
         },
         {
           "id": "windows-terminal",
+          "icon": "terminal.png",
           "name": "Windows Terminal",
           "description": "A tabbed terminal. The Terminal tab can also set this up.",
           "wingetId": "Microsoft.WindowsTerminal",
@@ -311,6 +344,7 @@
         },
         {
           "id": "powershell-7",
+          "icon": "powershell.png",
           "name": "PowerShell 7",
           "description": "The current PowerShell, side by side with Windows PowerShell.",
           "wingetId": "Microsoft.PowerShell",
@@ -318,6 +352,7 @@
         },
         {
           "id": "nodejs-lts",
+          "icon": "nodejslts.png",
           "name": "Node.js LTS",
           "description": "The long-term support release of Node.js.",
           "wingetId": "OpenJS.NodeJS.LTS",
@@ -325,6 +360,7 @@
         },
         {
           "id": "python",
+          "icon": "python3.png",
           "name": "Python 3.13",
           "description": "Python for scripts and tools. Change the winget id if you want another version.",
           "wingetId": "Python.Python.3.13",
@@ -332,6 +368,7 @@
         },
         {
           "id": "go",
+          "icon": "golang.png",
           "name": "Go",
           "description": "The Go programming language.",
           "wingetId": "GoLang.Go",
@@ -346,6 +383,7 @@
         },
         {
           "id": "docker-desktop",
+          "icon": "dockerdesktop.png",
           "name": "Docker Desktop",
           "description": "Build and run containers. It needs a restart and a free Docker account for larger setups.",
           "wingetId": "Docker.DockerDesktop",
@@ -353,6 +391,7 @@
         },
         {
           "id": "postman",
+          "icon": "postman.png",
           "name": "Postman",
           "description": "A window for trying HTTP APIs.",
           "wingetId": "Postman.Postman",
@@ -360,6 +399,7 @@
         },
         {
           "id": "jetbrains-toolbox",
+          "icon": "jetbrains.png",
           "name": "JetBrains Toolbox",
           "description": "Installs and updates JetBrains IDEs.",
           "wingetId": "JetBrains.Toolbox",
@@ -374,6 +414,7 @@
         },
         {
           "id": "notepadpp",
+          "icon": "notepadplus.png",
           "name": "Notepad++",
           "description": "A light editor that opens big text files quickly.",
           "wingetId": "Notepad++.Notepad++",
@@ -381,6 +422,7 @@
         },
         {
           "id": "vscodium",
+          "icon": "vscodium.png",
           "name": "VSCodium",
           "description": "Visual Studio Code built without Microsoft's telemetry and branding.",
           "wingetId": "VSCodium.VSCodium",
@@ -402,6 +444,7 @@
         },
         {
           "id": "sublime-text",
+          "icon": "sublimetext.png",
           "name": "Sublime Text",
           "description": "A fast text editor with multiple cursors.",
           "wingetId": "SublimeHQ.SublimeText.4",
@@ -409,6 +452,7 @@
         },
         {
           "id": "neovim",
+          "icon": "neovim.png",
           "name": "Neovim",
           "description": "A modern, extensible Vim.",
           "wingetId": "Neovim.Neovim",
@@ -423,6 +467,7 @@
         },
         {
           "id": "zed",
+          "icon": "Zed.png",
           "name": "Zed",
           "description": "A fast, collaborative code editor.",
           "wingetId": "ZedIndustries.Zed",
@@ -444,6 +489,7 @@
         },
         {
           "id": "nodejs-current",
+          "icon": "nodejs.png",
           "name": "Node.js (current)",
           "description": "The latest Node.js release, newer than LTS.",
           "wingetId": "OpenJS.NodeJS",
@@ -458,6 +504,7 @@
         },
         {
           "id": "pnpm",
+          "icon": "pnpm.png",
           "name": "pnpm",
           "description": "A fast, disk-friendly JavaScript package manager.",
           "wingetId": "pnpm.pnpm",
@@ -472,6 +519,7 @@
         },
         {
           "id": "uv",
+          "icon": "uv.png",
           "name": "uv",
           "description": "A very fast Python package and project manager.",
           "wingetId": "astral-sh.uv",
@@ -479,6 +527,7 @@
         },
         {
           "id": "cmake",
+          "icon": "cmake.png",
           "name": "CMake",
           "description": "Cross-platform build system generator for C and C++.",
           "wingetId": "Kitware.CMake",
@@ -514,6 +563,7 @@
         },
         {
           "id": "bruno",
+          "icon": "bruno.png",
           "name": "Bruno",
           "description": "An offline API client that stores collections as files.",
           "wingetId": "Bruno.Bruno",
@@ -577,6 +627,7 @@
         },
         {
           "id": "lazygit",
+          "icon": "lazygit.png",
           "name": "lazygit",
           "description": "A simple terminal UI for Git.",
           "wingetId": "JesseDuffield.lazygit",
@@ -606,6 +657,7 @@
       "apps": [
         {
           "id": "steam",
+          "icon": "steam.png",
           "name": "Steam",
           "description": "Valve's game store and library.",
           "wingetId": "Valve.Steam",
@@ -613,6 +665,7 @@
         },
         {
           "id": "epic",
+          "icon": "epicgames.png",
           "name": "Epic Games Launcher",
           "description": "The launcher for the Epic Games Store.",
           "wingetId": "EpicGames.EpicGamesLauncher",
@@ -620,6 +673,7 @@
         },
         {
           "id": "gog-galaxy",
+          "icon": "gog.png",
           "name": "GOG GALAXY",
           "description": "A library for GOG and other stores you connect.",
           "wingetId": "GOG.Galaxy",
@@ -627,6 +681,7 @@
         },
         {
           "id": "ubisoft",
+          "icon": "ubisoft.png",
           "name": "Ubisoft Connect",
           "description": "The launcher for Ubisoft games.",
           "wingetId": "Ubisoft.Connect",
@@ -641,6 +696,7 @@
         },
         {
           "id": "prism",
+          "icon": "prismlauncher.png",
           "name": "Prism Launcher",
           "description": "A community launcher for managing Minecraft instances.",
           "wingetId": "PrismLauncher.PrismLauncher",
@@ -648,6 +704,7 @@
         },
         {
           "id": "heroic",
+          "icon": "heroiclauncher.png",
           "name": "Heroic Games Launcher",
           "description": "A community launcher for Epic and GOG libraries.",
           "wingetId": "HeroicGamesLauncher.HeroicGamesLauncher",
@@ -655,6 +712,7 @@
         },
         {
           "id": "playnite",
+          "icon": "playnite.png",
           "name": "Playnite",
           "description": "One library window for games from several stores.",
           "wingetId": "Playnite.Playnite",
@@ -662,6 +720,7 @@
         },
         {
           "id": "ea-app",
+          "icon": "eaapp.png",
           "name": "EA app",
           "description": "Electronic Arts' game launcher.",
           "wingetId": "ElectronicArts.EADesktop",
@@ -669,6 +728,7 @@
         },
         {
           "id": "battle-net",
+          "icon": "battlenet.png",
           "name": "Battle.net",
           "description": "Blizzard's launcher for its games.",
           "wingetId": "Blizzard.BattleNet",
@@ -683,6 +743,7 @@
         },
         {
           "id": "itch",
+          "icon": "itch.png",
           "name": "itch",
           "description": "The itch.io app for indie games.",
           "wingetId": "ItchIo.Itch",
@@ -690,6 +751,7 @@
         },
         {
           "id": "parsec",
+          "icon": "parsec.png",
           "name": "Parsec",
           "description": "Low-latency remote desktop for games.",
           "wingetId": "Parsec.Parsec",
@@ -697,6 +759,7 @@
         },
         {
           "id": "moonlight",
+          "icon": "moonlight.png",
           "name": "Moonlight",
           "description": "Stream games from another PC on your network.",
           "wingetId": "MoonlightGameStreamingProject.Moonlight",
@@ -711,6 +774,7 @@
         },
         {
           "id": "msi-afterburner",
+          "icon": "msiafterburner.png",
           "name": "MSI Afterburner",
           "description": "Graphics card monitoring, fan curves, and overclocking.",
           "wingetId": "Guru3D.Afterburner",
@@ -718,6 +782,7 @@
         },
         {
           "id": "curseforge",
+          "icon": "Overwolf.png",
           "name": "CurseForge",
           "description": "Mod manager for Minecraft and other games.",
           "wingetId": "Overwolf.CurseForge",
@@ -733,6 +798,7 @@
       "apps": [
         {
           "id": "vlc",
+          "icon": "vlc.png",
           "name": "VLC",
           "description": "Plays almost any video or audio file.",
           "wingetId": "VideoLAN.VLC",
@@ -748,6 +814,7 @@
         },
         {
           "id": "foobar2000",
+          "icon": "foobar.png",
           "name": "foobar2000",
           "description": "A compact music player for local files.",
           "wingetId": "PeterPawlowski.foobar2000",
@@ -755,6 +822,7 @@
         },
         {
           "id": "audacity",
+          "icon": "audacity.png",
           "name": "Audacity",
           "description": "Record and edit audio.",
           "wingetId": "Audacity.Audacity",
@@ -762,6 +830,7 @@
         },
         {
           "id": "obs",
+          "icon": "obs.png",
           "name": "OBS Studio",
           "description": "Record the screen and stream when you choose to.",
           "wingetId": "OBSProject.OBSStudio",
@@ -769,6 +838,7 @@
         },
         {
           "id": "handbrake",
+          "icon": "handbrake.png",
           "name": "HandBrake",
           "description": "Convert video files to smaller formats.",
           "wingetId": "HandBrake.HandBrake",
@@ -776,6 +846,7 @@
         },
         {
           "id": "gimp",
+          "icon": "gimp.png",
           "name": "GIMP",
           "description": "Edit photos and images.",
           "wingetId": "GIMP.GIMP",
@@ -790,6 +861,7 @@
         },
         {
           "id": "paint-net",
+          "icon": "Paintdotnet.png",
           "name": "Paint.NET",
           "description": "A straightforward image editor.",
           "wingetId": "dotPDN.PaintDotNet",
@@ -804,6 +876,7 @@
         },
         {
           "id": "blender",
+          "icon": "blender.png",
           "name": "Blender",
           "description": "3D modeling, animation, and rendering.",
           "wingetId": "BlenderFoundation.Blender",
@@ -825,6 +898,7 @@
         },
         {
           "id": "mpc-hc",
+          "icon": "mpchc.png",
           "name": "MPC-HC",
           "description": "A light video player with broad format support.",
           "wingetId": "clsid2.mpc-hc",
@@ -839,6 +913,7 @@
         },
         {
           "id": "mpv",
+          "icon": "mpv.png",
           "name": "mpv",
           "description": "A minimal, scriptable video player.",
           "wingetId": "shinchiro.mpv",
@@ -846,6 +921,7 @@
         },
         {
           "id": "k-lite",
+          "icon": "klite.png",
           "name": "K-Lite Codec Pack Standard",
           "description": "Audio and video codecs for players that need them.",
           "wingetId": "CodecGuide.K-LiteCodecPack.Standard",
@@ -853,6 +929,7 @@
         },
         {
           "id": "irfanview",
+          "icon": "irfanview.png",
           "name": "IrfanView",
           "description": "A fast image viewer with batch conversion.",
           "wingetId": "IrfanSkiljan.IrfanView",
@@ -860,6 +937,7 @@
         },
         {
           "id": "imageglass",
+          "icon": "imageglass.png",
           "name": "ImageGlass",
           "description": "A modern image viewer.",
           "wingetId": "DuongDieuPhap.ImageGlass",
@@ -874,6 +952,7 @@
         },
         {
           "id": "aimp",
+          "icon": "aimp.png",
           "name": "AIMP",
           "description": "A music player with a good equalizer.",
           "wingetId": "AIMP.AIMP",
@@ -881,6 +960,7 @@
         },
         {
           "id": "jellyfin-player",
+          "icon": "jellyfinmediaplayer.png",
           "name": "Jellyfin Media Player",
           "description": "Desktop player for a Jellyfin media server.",
           "wingetId": "Jellyfin.JellyfinMediaPlayer",
@@ -917,6 +997,7 @@
       "apps": [
         {
           "id": "powertoys",
+          "icon": "powertoys.png",
           "name": "PowerToys",
           "description": "Extra Windows tools such as FancyZones and PowerRename.",
           "wingetId": "Microsoft.PowerToys",
@@ -924,6 +1005,7 @@
         },
         {
           "id": "7zip",
+          "icon": "7zip.png",
           "name": "7-Zip",
           "description": "Open and create zip, 7z, and many other archives.",
           "wingetId": "7zip.7zip",
@@ -931,6 +1013,7 @@
         },
         {
           "id": "winrar",
+          "icon": "winrar.png",
           "name": "WinRAR",
           "description": "Open and create RAR, zip, and other archives. Free to try; RARLAB asks for a license after the trial.",
           "wingetId": "RARLab.WinRAR",
@@ -939,6 +1022,7 @@
         },
         {
           "id": "everything",
+          "icon": "everything.png",
           "name": "Everything",
           "description": "Find files by name almost instantly.",
           "wingetId": "voidtools.Everything",
@@ -946,6 +1030,7 @@
         },
         {
           "id": "wiztree",
+          "icon": "wiztree.png",
           "name": "WizTree",
           "description": "See which folders use the most disk space.",
           "wingetId": "AntibodySoftware.WizTree",
@@ -953,6 +1038,7 @@
         },
         {
           "id": "sharex",
+          "icon": "sharex.png",
           "name": "ShareX",
           "description": "Capture screenshots and short screen recordings.",
           "wingetId": "ShareX.ShareX",
@@ -960,6 +1046,7 @@
         },
         {
           "id": "bitwarden",
+          "icon": "bitwarden.png",
           "name": "Bitwarden",
           "description": "A password manager with a free personal vault.",
           "wingetId": "Bitwarden.Bitwarden",
@@ -967,6 +1054,7 @@
         },
         {
           "id": "keepassxc",
+          "icon": "keepassxc.png",
           "name": "KeePassXC",
           "description": "A password manager that keeps the database on your PC.",
           "wingetId": "KeePassXCTeam.KeePassXC",
@@ -974,6 +1062,7 @@
         },
         {
           "id": "sumatra",
+          "icon": "sumatra.png",
           "name": "SumatraPDF",
           "description": "A light reader for PDF and ebook files.",
           "wingetId": "SumatraPDF.SumatraPDF",
@@ -981,6 +1070,7 @@
         },
         {
           "id": "libreoffice",
+          "icon": "libreoffice.png",
           "name": "LibreOffice",
           "description": "Documents, spreadsheets, and slides without a subscription.",
           "wingetId": "TheDocumentFoundation.LibreOffice",
@@ -988,6 +1078,7 @@
         },
         {
           "id": "obsidian",
+          "icon": "obsidian.png",
           "name": "Obsidian",
           "description": "Notes stored as local Markdown files.",
           "wingetId": "Obsidian.Obsidian",
@@ -1002,6 +1093,7 @@
         },
         {
           "id": "hwinfo",
+          "icon": "hwinfo.png",
           "name": "HWiNFO",
           "description": "Read temperatures, voltages, and hardware details.",
           "wingetId": "REALiX.HWiNFO",
@@ -1009,6 +1101,7 @@
         },
         {
           "id": "putty",
+          "icon": "putty.png",
           "name": "PuTTY",
           "description": "SSH and serial connections.",
           "wingetId": "PuTTY.PuTTY",
@@ -1016,6 +1109,7 @@
         },
         {
           "id": "winscp",
+          "icon": "winscp.png",
           "name": "WinSCP",
           "description": "Copy files over SFTP, FTP, and SCP.",
           "wingetId": "WinSCP.WinSCP",
@@ -1023,6 +1117,7 @@
         },
         {
           "id": "qbittorrent",
+          "icon": "qbittorrent.png",
           "name": "qBittorrent",
           "description": "A BitTorrent client without ads.",
           "wingetId": "qBittorrent.qBittorrent",
@@ -1030,6 +1125,7 @@
         },
         {
           "id": "rufus",
+          "icon": "rufus.png",
           "name": "Rufus",
           "description": "Write a Windows or Linux installer to a USB drive.",
           "wingetId": "Rufus.Rufus",
@@ -1051,6 +1147,7 @@
         },
         {
           "id": "autohotkey",
+          "icon": "autohotkey.png",
           "name": "AutoHotkey",
           "description": "Automate keys, clicks, and windows with scripts.",
           "wingetId": "AutoHotkey.AutoHotkey",
@@ -1065,6 +1162,7 @@
         },
         {
           "id": "eartrumpet",
+          "icon": "eartrumpet.png",
           "name": "EarTrumpet",
           "description": "Per-app volume control from the taskbar.",
           "wingetId": "File-New-Project.EarTrumpet",
@@ -1072,6 +1170,7 @@
         },
         {
           "id": "bcu",
+          "icon": "bulkcrapuninstaller.png",
           "name": "Bulk Crap Uninstaller",
           "description": "Remove many apps at once, including leftovers.",
           "wingetId": "Klocman.BulkCrapUninstaller",
@@ -1079,6 +1178,7 @@
         },
         {
           "id": "revo",
+          "icon": "revo.png",
           "name": "Revo Uninstaller",
           "description": "An uninstaller that also cleans leftovers.",
           "wingetId": "RevoUninstaller.RevoUninstaller",
@@ -1086,6 +1186,7 @@
         },
         {
           "id": "crystaldiskinfo",
+          "icon": "crystaldiskinfo.png",
           "name": "CrystalDiskInfo",
           "description": "Check the health of drives with S.M.A.R.T. data.",
           "wingetId": "CrystalDewWorld.CrystalDiskInfo",
@@ -1093,6 +1194,7 @@
         },
         {
           "id": "crystaldiskmark",
+          "icon": "crystaldiskmark.png",
           "name": "CrystalDiskMark",
           "description": "Measure drive read and write speed.",
           "wingetId": "CrystalDewWorld.CrystalDiskMark",
@@ -1100,6 +1202,7 @@
         },
         {
           "id": "cpu-z",
+          "icon": "cpuz.png",
           "name": "CPU-Z",
           "description": "Details about the processor, memory, and motherboard.",
           "wingetId": "CPUID.CPU-Z",
@@ -1107,6 +1210,7 @@
         },
         {
           "id": "gpu-z",
+          "icon": "gpuz.png",
           "name": "GPU-Z",
           "description": "Details about the graphics card.",
           "wingetId": "TechPowerUp.GPU-Z",
@@ -1121,6 +1225,7 @@
         },
         {
           "id": "files-app",
+          "icon": "files.png",
           "name": "Files",
           "description": "A modern file manager with tabs.",
           "wingetId": "FilesCommunity.Files",
@@ -1135,6 +1240,7 @@
         },
         {
           "id": "localsend",
+          "icon": "localsend.png",
           "name": "LocalSend",
           "description": "Send files to nearby devices without the cloud.",
           "wingetId": "LocalSend.LocalSend",
@@ -1142,6 +1248,7 @@
         },
         {
           "id": "ventoy",
+          "icon": "ventoy.png",
           "name": "Ventoy",
           "description": "Make one USB drive that boots many ISO files.",
           "wingetId": "Ventoy.Ventoy",
@@ -1149,6 +1256,7 @@
         },
         {
           "id": "anydesk",
+          "icon": "anydesk.png",
           "name": "AnyDesk",
           "description": "Remote desktop for support sessions.",
           "wingetId": "AnyDesk.AnyDesk",
@@ -1156,6 +1264,7 @@
         },
         {
           "id": "teamviewer",
+          "icon": "teamviewer.png",
           "name": "TeamViewer",
           "description": "Remote desktop and support.",
           "wingetId": "TeamViewer.TeamViewer",
@@ -1163,6 +1272,7 @@
         },
         {
           "id": "google-drive",
+          "icon": "googledrive.png",
           "name": "Google Drive",
           "description": "Sync files with Google Drive.",
           "wingetId": "Google.GoogleDrive",
@@ -1170,6 +1280,7 @@
         },
         {
           "id": "dropbox",
+          "icon": "dropbox.png",
           "name": "Dropbox",
           "description": "Sync files with Dropbox.",
           "wingetId": "Dropbox.Dropbox",
@@ -1177,6 +1288,7 @@
         },
         {
           "id": "nextcloud",
+          "icon": "nextclouddesktop.png",
           "name": "Nextcloud",
           "description": "Sync files with a Nextcloud server.",
           "wingetId": "Nextcloud.NextcloudDesktop",
@@ -1206,6 +1318,7 @@
         },
         {
           "id": "wireguard",
+          "icon": "wireguard.png",
           "name": "WireGuard",
           "description": "A fast, modern VPN client.",
           "wingetId": "WireGuard.WireGuard",
@@ -1213,6 +1326,7 @@
         },
         {
           "id": "tailscale",
+          "icon": "tailscale.png",
           "name": "Tailscale",
           "description": "A private network between your devices, built on WireGuard.",
           "wingetId": "Tailscale.Tailscale",
@@ -1220,6 +1334,7 @@
         },
         {
           "id": "proton-vpn",
+          "icon": "protonvpn.png",
           "name": "Proton VPN",
           "description": "A VPN from the makers of Proton Mail.",
           "wingetId": "Proton.ProtonVPN",
@@ -1227,6 +1342,7 @@
         },
         {
           "id": "mullvad-vpn",
+          "icon": "mullvadvpn.png",
           "name": "Mullvad VPN",
           "description": "A privacy-first VPN with anonymous accounts.",
           "wingetId": "MullvadVPN.MullvadVPN",
@@ -1234,6 +1350,7 @@
         },
         {
           "id": "openvpn",
+          "icon": "OpenVPN.png",
           "name": "OpenVPN Connect",
           "description": "Client for OpenVPN servers.",
           "wingetId": "OpenVPNTechnologies.OpenVPNConnect",
@@ -1241,6 +1358,7 @@
         },
         {
           "id": "wireshark",
+          "icon": "wireshark.png",
           "name": "Wireshark",
           "description": "Capture and inspect network traffic.",
           "wingetId": "WiresharkFoundation.Wireshark",
@@ -1248,6 +1366,7 @@
         },
         {
           "id": "nmap",
+          "icon": "nmap.png",
           "name": "Nmap",
           "description": "Scan networks and see which ports are open.",
           "wingetId": "Insecure.Nmap",
@@ -1284,6 +1403,7 @@
       "apps": [
         {
           "id": "vcredist-x64",
+          "icon": "vc2015_64.png",
           "name": "Visual C++ Redistributable (x64)",
           "description": "Runtime many apps and games need.",
           "wingetId": "Microsoft.VCRedist.2015+.x64",
@@ -1291,6 +1411,7 @@
         },
         {
           "id": "vcredist-x86",
+          "icon": "vc2015_32.png",
           "name": "Visual C++ Redistributable (x86)",
           "description": "32-bit runtime many older apps and games need.",
           "wingetId": "Microsoft.VCRedist.2015+.x86",
@@ -1298,6 +1419,7 @@
         },
         {
           "id": "dotnet-desktop-8",
+          "icon": "dotnet8.png",
           "name": ".NET Desktop Runtime 8",
           "description": "Runs desktop apps built with .NET 8.",
           "wingetId": "Microsoft.DotNet.DesktopRuntime.8",

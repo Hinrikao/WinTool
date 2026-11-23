@@ -197,6 +197,18 @@ function Test-WinToolDataFile {
             if (-not [string]::IsNullOrWhiteSpace($scope) -and @("user", "machine") -notcontains $scope) {
                 Add-WinToolDataError -Errors $errors -Message "App '$id' has an unknown scope."
             }
+            $icon = [string](Get-WinToolNote -Object $app -Name "icon" -Default "")
+            if (-not [string]::IsNullOrWhiteSpace($icon)) {
+                if (-not (Test-WinToolAppIconName -FileName $icon)) {
+                    Add-WinToolDataError -Errors $errors -Message "App '$id' has an icon name that is not a PNG file name."
+                }
+                elseif (-not [string]::IsNullOrWhiteSpace($script:WinToolRoot)) {
+                    $iconPath = Join-Path $script:WinToolRoot ("assets/icons/" + $icon)
+                    if (-not (Test-Path -LiteralPath $iconPath)) {
+                        Add-WinToolDataError -Errors $errors -Message "App '$id' icon '$icon' is not in assets/icons."
+                    }
+                }
+            }
             foreach ($detectName in @(Get-WinToolNote -Object $app -Name "detectNames" -Default @())) {
                 if ([string]::IsNullOrWhiteSpace([string]$detectName) -or [string]$detectName -match '[\r\n]') {
                     Add-WinToolDataError -Errors $errors -Message "App '$id' has an empty or multi-line detect name."

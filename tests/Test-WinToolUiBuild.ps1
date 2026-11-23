@@ -70,11 +70,48 @@ if ($appRows.Count -lt 1) {
 if ($tweakRows.Count -lt 1) {
     throw "The Tweaks tab did not build any tweak rows."
 }
+$iconImages = 0
+$iconLetters = 0
 foreach ($row in $appRows) {
     if ($null -eq $row.Checkbox) {
         throw "An app row was built without a checkbox."
     }
+    if ($null -eq $row.IconHost -or [double]$row.IconHost.Width -ne 32 -or [double]$row.IconHost.Height -ne 32) {
+        throw ("The app icon slot must stay 32 px: " + $row.Id)
+    }
+    if ($null -ne $row.IconImage) {
+        $iconImages++
+        if ([double]$row.IconImage.Width -ne 32 -or [double]$row.IconImage.Height -ne 32) {
+            throw ($row.Id + " icon image is not 32 px.")
+        }
+        if ($row.IconImage.Stretch -ne [System.Windows.Media.Stretch]::Uniform) {
+            throw ($row.Id + " icon must keep its aspect ratio.")
+        }
+        $scaling = [System.Windows.Media.RenderOptions]::GetBitmapScalingMode($row.IconImage)
+        if ($scaling -ne [System.Windows.Media.BitmapScalingMode]::HighQuality) {
+            throw ($row.Id + " icon must use high-quality scaling.")
+        }
+        $plate = $row.IconHost.Background.Color
+        if ($plate.R -ne 0xF3 -or $plate.G -ne 0xF5 -or $plate.B -ne 0xF8) {
+            throw ($row.Id + " icon backplate should be the shared light plate.")
+        }
+    }
+    else {
+        $iconLetters++
+        if ($row.IconHost.Child -isnot [System.Windows.Controls.TextBlock]) {
+            throw ($row.Id + " should keep the letter tile.")
+        }
+    }
 }
+$firefoxIcon = @($appRows | Where-Object { $_.Id -eq "firefox" })[0]
+$operaIcon = @($appRows | Where-Object { $_.Id -eq "opera" })[0]
+if ($null -eq $firefoxIcon.IconImage -or $null -ne $operaIcon.IconImage) {
+    throw "Firefox should show its icon and Opera should keep the letter tile."
+}
+if ($iconImages -lt 100 -or $iconLetters -lt 1) {
+    throw ("Expected real icons and letter tiles, got " + $iconImages + " icons and " + $iconLetters + " tiles.")
+}
+Write-Output ("Install icons: " + $iconImages + " images, " + $iconLetters + " letter tiles.")
 foreach ($row in $tweakRows) {
     if ($null -eq $row.Checkbox) {
         throw "A tweak row was built without a checkbox."

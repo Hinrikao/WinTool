@@ -586,3 +586,54 @@ function Get-WinToolAppInitial {
     }
     return "?"
 }
+
+function Test-WinToolAppIconName {
+    # A file name only. Paths and other extensions never leave the letter tile.
+    param(
+        [string]$FileName
+    )
+    if ([string]::IsNullOrWhiteSpace($FileName)) {
+        return $false
+    }
+    if ($FileName.IndexOfAny([char[]]@("\", "/")) -ge 0) {
+        return $false
+    }
+    return ($FileName -match '^[A-Za-z0-9][A-Za-z0-9._-]*\.png$')
+}
+
+function Get-WinToolAppIconData {
+    # PNG bytes for one catalog icon. The single-file build carries them in
+    # $script:WinToolIcons. A source checkout reads assets/icons instead.
+    param(
+        [string]$FileName
+    )
+    if (-not (Test-WinToolAppIconName -FileName $FileName)) {
+        return $null
+    }
+    $icons = $script:WinToolIcons
+    if ($null -ne $icons -and $icons.Contains($FileName)) {
+        try {
+            $clean = ([string]$icons[$FileName]) -replace '\s', ''
+            if ([string]::IsNullOrWhiteSpace($clean)) {
+                return $null
+            }
+            return ,([Convert]::FromBase64String($clean))
+        }
+        catch {
+            return $null
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($script:WinToolRoot)) {
+        return $null
+    }
+    $path = Join-Path $script:WinToolRoot ("assets/icons/" + $FileName)
+    if (-not (Test-Path -LiteralPath $path)) {
+        return $null
+    }
+    try {
+        return ,([System.IO.File]::ReadAllBytes($path))
+    }
+    catch {
+        return $null
+    }
+}
