@@ -1085,7 +1085,7 @@ function Update-WinToolPromptStyleList {
             }
             $script:WinToolThemeEntries = $entries
             $script:WinToolThemeFilter = New-Object WinToolThemeFilter
-            $view = New-Object System.Windows.Data.ListCollectionView -ArgumentList $entries
+            $view = [System.Windows.Data.ListCollectionView]::new($entries)
             $view.Filter = $script:WinToolThemeFilter.GetMatch()
             $script:WinToolThemeView = $view
             $script:WinToolThemeEntryPrompt = $prompt
