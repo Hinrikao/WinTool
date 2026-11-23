@@ -673,6 +673,43 @@ Invoke-WinToolCase -Name "UI collection adds do not leak indexes" -Body {
     }
 }
 
+Invoke-WinToolCase -Name "Responsive columns and balanced Tweaks masonry" -Body {
+    . (Join-Path $script:WinToolRoot "src/UI/InstallView.ps1")
+    . (Join-Path $script:WinToolRoot "src/UI/TweaksView.ps1")
+    # Install: 160 px cards plus 10 px gaps; width = list width minus the scroll bar.
+    foreach ($case in @(@(726, 4), @(982, 5), @(966, 5), @(1622, 9))) {
+        $got = Get-WinToolColumnCount -Width ([double]$case[0]) -MinWidth 160 -Gap 10
+        Test-WinToolExpectation -Condition ($got -eq [int]$case[1]) -Message ("Install at " + $case[0] + " px: " + $got + " columns")
+    }
+    $counts = @{}
+    $order = New-Object System.Collections.Generic.List[string]
+    foreach ($tweak in @((Get-WinToolTweakCatalog).tweaks)) {
+        $name = [string]$tweak.category
+        if (-not $counts.ContainsKey($name)) { $counts[$name] = 0; $order.Add($name) }
+        $counts[$name]++
+    }
+    $rows = [int[]]@($order.ToArray() | ForEach-Object { $counts[$_] })
+    $tallest = 0
+    foreach ($count in $rows) { $tallest = [Math]::Max($tallest, (Get-WinToolTweakCardHeight -Rows $count)) }
+    foreach ($columns in @(1, 2, 3, 4, 5)) {
+        $plan = Get-WinToolTweakMasonryPlan -Rows $rows -Columns $columns
+        $placed = 0
+        foreach ($piece in @($plan.Pieces)) { $placed += $piece.Count }
+        $heights = @($plan.Heights)
+        $spread = ($heights | Measure-Object -Maximum).Maximum - ($heights | Measure-Object -Minimum).Minimum
+        $line = ($heights | ForEach-Object { [int]$_ }) -join "/"
+        Write-Output ("  " + $columns + " columns: heights " + $line + ", " + @($plan.Pieces).Count + " cards")
+        Test-WinToolExpectation -Condition ($placed -eq ($rows | Measure-Object -Sum).Sum) -Message ("Every tweak row is placed with " + $columns + " columns.")
+        Test-WinToolExpectation -Condition (@($heights | Where-Object { $_ -le 0 }).Count -eq 0) -Message ("No empty column with " + $columns + " columns.")
+        if ($columns -ge 2) {
+            Test-WinToolExpectation -Condition ($spread -le 0.6 * $tallest) -Message ("Columns are unbalanced with " + $columns + " columns: " + $line)
+        }
+    }
+    $split = Get-WinToolTweakMasonryPlan -Rows @(30, 2, 2) -Columns 3
+    $parts = @($split.Pieces | Where-Object { $_.Group -eq 0 })
+    Test-WinToolExpectation -Condition ($parts.Count -ge 2 -and $parts[1].Start -eq $parts[0].Count) -Message "A very long category is split into continuation cards in order."
+}
+
 Invoke-WinToolCase -Name "UI events reach WinTool state and survive errors" -Body {
     . (Join-Path $script:WinToolRoot "src/UI/Factory.ps1")
     if ($null -eq ("WinToolTestEventSource" -as [type])) {

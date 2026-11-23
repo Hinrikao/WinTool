@@ -113,13 +113,14 @@ function Initialize-WinToolInstallView {
 }
 
 function Get-WinToolInstallWidth {
-    # The width the cards can use: the list's viewport (which leaves out a
-    # visible scroll bar), or the page minus its margins before layout.
+    # ActualWidth is current inside SizeChanged; ViewportWidth can still hold
+    # the size from before the window was maximized, which left too few
+    # columns. Room for the 10 px scroll bar is always kept.
     $scroll = Get-WinToolUi -Name "AppScroll"
-    if ($null -ne $scroll -and $scroll.ViewportWidth -gt 0) {
-        return [double]$scroll.ViewportWidth
+    if ($null -ne $scroll -and $scroll.ActualWidth -gt 0) {
+        return ([double]$scroll.ActualWidth - 10)
     }
-    return ((Get-WinToolUi -Name "ViewInstall").ActualWidth - 40)
+    return ((Get-WinToolUi -Name "ViewInstall").ActualWidth - 50)
 }
 
 function Get-WinToolColumnCount {
@@ -140,11 +141,11 @@ function Update-WinToolInstallLayout {
     param(
         [double]$Width
     )
-    # Compact cards at least 185 px wide: 5 per row at 1280, more when wider.
+    # Compact cards at least 160 px wide: 5 per row at 1280, 9 at 1920.
     if ($Width -le 0) {
         return
     }
-    $columns = Get-WinToolColumnCount -Width $Width -MinWidth 185 -Gap 10
+    $columns = Get-WinToolColumnCount -Width $Width -MinWidth 160 -Gap 10
     $script:WinToolState.AppColumns = $columns
     foreach ($category in @($script:WinToolState.CategoryRows)) {
         if ($category.Grid.Columns -ne $columns) {

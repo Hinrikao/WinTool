@@ -633,16 +633,22 @@ if ($window.FindName("AppBulkBar").Visibility -ne "Collapsed") {
 $window.FindName("NavInstall").IsChecked = $true
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
-foreach ($size in @(@(1280, 760, "install-mockup"), @(1920, 1080, "install-1920"), @(1000, 760, "install-narrow"))) {
+# Sizes in WPF units (DIPs): 1024x576 is what a 1280x720 screen at 125% or a
+# 1536x864 screen at 150% gives; 1264 is a maximized 1280 window.
+$installExpect = @{ "install-1024" = 4; "install-mockup" = 5; "install-1264" = 5; "install-1920" = 9 }
+foreach ($size in @(@(1024, 576, "install-1024"), @(1264, 704, "install-1264"), @(1920, 1080, "install-1920"), @(1280, 760, "install-mockup"))) {
     Update-WinToolInstallLayout -Width ([double]$size[0] - 248 - 40)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
     # After layout the real list width decides the columns, like SizeChanged does.
     Update-WinToolInstallLayout -Width (Get-WinToolInstallWidth)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
     Write-Output ($size[2] + ": " + $script:WinToolState.CategoryRows[0].Grid.Columns + " cards per row, card width " + [int]$appRows[0].Panel.ActualWidth)
+    if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne $installExpect[$size[2]]) {
+        throw ($size[2] + " should show " + $installExpect[$size[2]] + " cards per row.")
+    }
 }
 # Responsive columns: as many 185 px cards as fit, stretched to fill the row.
-foreach ($case in @(@(992, 5), @(1632, 8), @(700, 3), @(380, 2), @(150, 1))) {
+foreach ($case in @(@(992, 5), @(1622, 9), @(726, 4), @(380, 2), @(150, 1))) {
     Update-WinToolInstallLayout -Width ([double]$case[0])
     if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne [int]$case[1]) {
         throw ("Install at " + $case[0] + " px should have " + $case[1] + " columns, got " + $script:WinToolState.CategoryRows[0].Grid.Columns)
@@ -685,12 +691,12 @@ $script:WinToolTweakRunnerOverride = $null
 $script:WinToolTweakProbeOverride = $null
 Update-WinToolTweakState
 $window.FindName("NavTweaks").IsChecked = $true
-foreach ($size in @(@(1280, 760, "tweaks-mockup"), @(1920, 1080, "tweaks-1920"), @(980, 760, "tweaks-narrow"))) {
+foreach ($size in @(@(1024, 576, "tweaks-1024"), @(1920, 1080, "tweaks-1920"), @(1280, 760, "tweaks-mockup"))) {
     Update-WinToolTweakLayout -Width ([double]$size[0] - 248 - 40)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
     Update-WinToolTweakLayout -Width (Get-WinToolTweakWidth)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
-    Write-Output ($size[2] + ": " + $script:WinToolState.TweakColumns + " tweak columns")
+    Write-Output ($size[2] + ": " + $script:WinToolState.TweakColumns + " tweak columns, planned heights " + ((@($script:WinToolState.TweakColumnHeights) | ForEach-Object { [int]$_ }) -join "/"))
 }
 foreach ($case in @(@(992, 3), @(1632, 5), @(640, 2), @(500, 1))) {
     Update-WinToolTweakLayout -Width ([double]$case[0])
@@ -698,20 +704,19 @@ foreach ($case in @(@(992, 3), @(1632, 5), @(640, 2), @(500, 1))) {
         throw ("Tweaks at " + $case[0] + " px should have " + $case[1] + " columns, got " + $script:WinToolState.TweakColumns)
     }
 }
-Update-WinToolTweakLayout -Width 992
+Update-WinToolTweakLayout -Width 1622
 $placed = @($script:WinToolState.TweakGroups | Where-Object { $_.Card.Visibility -eq "Visible" })
 if (@($placed | Where-Object { (Get-WinToolTweakCardColumn -Group $_) -lt 0 }).Count -gt 0) { throw "Every tweak card needs a column." }
-if ($placed.Count -ge 3 -and ((Get-WinToolTweakCardColumn -Group $placed[0]) -ne 0 -or (Get-WinToolTweakCardColumn -Group $placed[1]) -ne 1 -or (Get-WinToolTweakCardColumn -Group $placed[2]) -ne 2)) {
-    throw "The first three tweak cards should start the three columns."
-}
-if ($placed.Count -ge 4) {
-    # Masonry: the fourth card goes under the shortest of the first three.
-    $firstThree = @($placed[0], $placed[1], $placed[2])
-    $sizes = @($firstThree | ForEach-Object { @($_.Rows | Where-Object { $_.Panel.Visibility -eq "Visible" }).Count })
-    $shortest = 0
-    for ($i = 1; $i -lt 3; $i++) { if ($sizes[$i] -lt $sizes[$shortest]) { $shortest = $i } }
-    if ((Get-WinToolTweakCardColumn -Group $placed[3]) -ne $shortest) { throw "The fourth tweak card should go into the shortest column." }
-}
+$grid = $window.FindName("TweakCategories")
+$rootVisual.UpdateLayout()
+$real = @($grid.Children | ForEach-Object { $_.DesiredSize.Height })
+Write-Output ("Tweaks at 1920: real column heights " + (($real | ForEach-Object { [int]$_ }) -join "/"))
+$rowsShown = 0
+foreach ($column in @($grid.Children)) { foreach ($card in @($column.Children)) { $rowsShown += $card.Child.Children.Count - 1 } }
+if ($rowsShown -ne @($tweakRows).Count) { throw ("Every tweak row should sit in a card, got " + $rowsShown + " of " + @($tweakRows).Count) }
+$spread = ($real | Measure-Object -Maximum).Maximum - ($real | Measure-Object -Minimum).Minimum
+if ($spread -gt 300) { throw ("The tweak columns are unbalanced: " + (($real | ForEach-Object { [int]$_ }) -join "/")) }
+Update-WinToolTweakLayout -Width 992
 
 $uiErrors = Get-WinToolUiError
 if ($uiErrors.Count -gt 0) {

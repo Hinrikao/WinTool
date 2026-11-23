@@ -44,28 +44,10 @@ function Initialize-WinToolTweakView {
     # ToArray() keeps this on object[], which Windows PowerShell 5.1 can enumerate.
     # @() around a generic list throws "Argument types do not match" on 5.1.
     foreach ($categoryName in $order.ToArray()) {
-        $card = New-Object System.Windows.Controls.Border
-        $card.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushCard")
-        $card.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
-        $card.BorderThickness = [System.Windows.Thickness]::new(1)
-        $card.CornerRadius = [System.Windows.CornerRadius]::new(8)
-        $card.Padding = [System.Windows.Thickness]::new(10, 0, 10, 12)
-        $card.Margin = [System.Windows.Thickness]::new(0, 0, 0, 12)
-        $stack = New-Object System.Windows.Controls.StackPanel
-        $header = New-Object System.Windows.Controls.Grid
-        $header.Height = 36
-        $header.ColumnDefinitions.Add((New-WinToolColumn))
-        $header.ColumnDefinitions.Add((New-WinToolColumn -Auto))
-        $title = New-WinToolText -Text $categoryName -Size 12.5 -Weight "Bold"
-        $title.VerticalAlignment = "Center"
-        $title.Margin = [System.Windows.Thickness]::new(2, 0, 0, 0)
-        [void]$header.Children.Add($title)
-        $count = New-WinToolText -Text " " -Size 9.5 -Brush "BrushMuted"
-        $count.VerticalAlignment = "Center"
-        $count.Margin = [System.Windows.Thickness]::new(0, 0, 2, 0)
-        [System.Windows.Controls.Grid]::SetColumn($count, 1)
-        [void]$header.Children.Add($count)
-        [void]$stack.Children.Add($header)
+        $piece = New-WinToolTweakCard -Title $categoryName
+        $card = $piece.Card
+        $stack = $piece.Stack
+        $count = $piece.Count
         $rows = @()
         foreach ($tweak in $groups[$categoryName].ToArray()) {
             $row = New-WinToolTweakRow -Tweak $tweak -CategoryName $categoryName
@@ -73,12 +55,14 @@ function Initialize-WinToolTweakView {
             $rows += $row
             $script:WinToolState.TweakRows += $row
         }
-        $card.Child = $stack
+        $pieces = New-Object System.Collections.Generic.List[object]
+        $pieces.Add($piece)
         $script:WinToolState.TweakGroups += [pscustomobject]@{
             Name = $categoryName
             Card = $card
             Count = $count
             Rows = $rows
+            Pieces = $pieces
         }
     }
     Update-WinToolTweakCount
@@ -99,6 +83,100 @@ function Initialize-WinToolTweakView {
             Update-WinToolTweakState
         }
     }
+}
+
+function New-WinToolTweakCard {
+    param(
+        [Parameter(Mandatory = $true)][string]$Title,
+        [switch]$Continued
+    )
+    # A category card: title and "X of Y on" at the top, then the rows. A
+    # long category can carry on in a second card ("... (continued)").
+    $card = New-Object System.Windows.Controls.Border
+    $card.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushCard")
+    $card.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
+    $card.BorderThickness = [System.Windows.Thickness]::new(1)
+    $card.CornerRadius = [System.Windows.CornerRadius]::new(8)
+    $card.Padding = [System.Windows.Thickness]::new(10, 0, 10, 12)
+    $card.Margin = [System.Windows.Thickness]::new(0, 0, 0, 12)
+    $stack = New-Object System.Windows.Controls.StackPanel
+    $header = New-Object System.Windows.Controls.Grid
+    $header.Height = 36
+    $header.ColumnDefinitions.Add((New-WinToolColumn))
+    $header.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+    $text = $Title
+    if ($Continued) { $text = $Title + " (continued)" }
+    $titleText = New-WinToolText -Text $text -Size 12.5 -Weight "Bold"
+    $titleText.VerticalAlignment = "Center"
+    $titleText.TextTrimming = "CharacterEllipsis"
+    $titleText.Margin = [System.Windows.Thickness]::new(2, 0, 8, 0)
+    if ($Continued) { $titleText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted") }
+    [void]$header.Children.Add($titleText)
+    $count = New-WinToolText -Text " " -Size 9.5 -Brush "BrushMuted"
+    $count.VerticalAlignment = "Center"
+    $count.Margin = [System.Windows.Thickness]::new(0, 0, 2, 0)
+    [System.Windows.Controls.Grid]::SetColumn($count, 1)
+    [void]$header.Children.Add($count)
+    [void]$stack.Children.Add($header)
+    $card.Child = $stack
+    return [pscustomobject]@{ Card = $card; Stack = $stack; Count = $count }
+}
+
+function Get-WinToolTweakMasonryPlan {
+    param(
+        [int[]]$Rows,
+        [int]$Columns
+    )
+    # Plans the Tweaks columns. $Rows holds the visible rows of each category
+    # in catalog order. A category much taller than its share is split into
+    # continuation cards, then the tallest pieces go first into the shortest
+    # column, so the columns end at about the same height. Inside a column
+    # the pieces keep the catalog order.
+    if ($Columns -lt 1) { $Columns = 1 }
+    $pieces = New-Object System.Collections.Generic.List[object]
+    $total = 0.0
+    for ($i = 0; $i -lt $Rows.Count; $i++) {
+        if ($Rows[$i] -gt 0) { $total += (Get-WinToolTweakCardHeight -Rows $Rows[$i]) }
+    }
+    $target = $total / $Columns
+    for ($i = 0; $i -lt $Rows.Count; $i++) {
+        $count = $Rows[$i]
+        if ($count -le 0) { continue }
+        $parts = 1
+        $height = Get-WinToolTweakCardHeight -Rows $count
+        if ($Columns -ge 2 -and $count -ge 8 -and $height -gt ($target * 1.15)) {
+            $parts = [int][Math]::Ceiling($height / $target)
+            $parts = [Math]::Min($parts, [Math]::Min($Columns, [int][Math]::Floor($count / 4)))
+            if ($parts -lt 1) { $parts = 1 }
+        }
+        $start = 0
+        for ($part = 0; $part -lt $parts; $part++) {
+            $size = [int][Math]::Floor($count / $parts)
+            if ($part -lt ($count % $parts)) { $size++ }
+            $pieces.Add([pscustomobject]@{ Group = $i; Part = $part; Start = $start; Count = $size; Height = (Get-WinToolTweakCardHeight -Rows $size); Column = -1; Order = $pieces.Count })
+            $start += $size
+        }
+    }
+    $heights = New-Object double[] $Columns
+    $sorted = @($pieces.ToArray() | Sort-Object -Property @{ Expression = { $_.Height }; Descending = $true }, @{ Expression = { $_.Order }; Descending = $false })
+    foreach ($piece in $sorted) {
+        $shortest = 0
+        for ($c = 1; $c -lt $Columns; $c++) {
+            if ($heights[$c] -lt $heights[$shortest]) { $shortest = $c }
+        }
+        $piece.Column = $shortest
+        $heights[$shortest] += $piece.Height
+    }
+    return [pscustomobject]@{
+        Pieces = @($pieces.ToArray() | Sort-Object -Property Column, Order)
+        Heights = $heights
+    }
+}
+
+function Get-WinToolTweakCardHeight {
+    param([int]$Rows)
+    # Header 36, 24 per row, 12 bottom padding, 12 gap below the card.
+    return (36 + 24 * $Rows + 12 + 12)
 }
 
 function New-WinToolTweakRow {
@@ -187,19 +265,23 @@ function New-WinToolTweakRow {
 }
 
 function Get-WinToolTweakWidth {
+    # ActualWidth is current inside SizeChanged (ViewportWidth can still hold
+    # the size from before the window was maximized). Room for the 10 px
+    # scroll bar is always kept so the column count does not flip.
     $scroll = Get-WinToolUi -Name "TweakScroll"
-    if ($null -ne $scroll -and $scroll.ViewportWidth -gt 0) {
-        return [double]$scroll.ViewportWidth
+    if ($null -ne $scroll -and $scroll.ActualWidth -gt 0) {
+        return ([double]$scroll.ActualWidth - 10)
     }
-    return ((Get-WinToolUi -Name "ViewTweaks").ActualWidth - 40)
+    return ((Get-WinToolUi -Name "ViewTweaks").ActualWidth - 50)
 }
 
 function Update-WinToolTweakLayout {
     param(
         [double]$Width
     )
-    # Masonry: as many columns as fit at 300 px (3 at 1280, more when wider),
-    # each card goes into the shortest column so no column runs far longer.
+    # Masonry: as many columns as fit at 300 px (3 at 1280, 5 at 1920), long
+    # categories split into continuation cards, tallest pieces placed first
+    # in the shortest column (Get-WinToolTweakMasonryPlan).
     if ($Width -le 0) {
         return
     }
@@ -212,7 +294,6 @@ function Update-WinToolTweakLayout {
     $grid.Children.Clear()
     $grid.ColumnDefinitions.Clear()
     $panels = New-Object System.Collections.Generic.List[object]
-    $heights = New-Object System.Collections.Generic.List[double]
     for ($index = 0; $index -lt $columns; $index++) {
         if ($index -gt 0) {
             $gap = New-Object System.Windows.Controls.ColumnDefinition
@@ -224,17 +305,45 @@ function Update-WinToolTweakLayout {
         [System.Windows.Controls.Grid]::SetColumn($panel, $grid.ColumnDefinitions.Count - 1)
         [void]$grid.Children.Add($panel)
         $panels.Add($panel)
-        $heights.Add(0)
     }
-    foreach ($group in @($script:WinToolState.TweakGroups)) {
-        if ($group.Card.Visibility -ne "Visible") { continue }
-        $shortest = 0
-        for ($index = 1; $index -lt $heights.Count; $index++) {
-            if ($heights[$index] -lt $heights[$shortest]) { $shortest = $index }
+    $groups = @($script:WinToolState.TweakGroups)
+    $sizes = New-Object int[] $groups.Count
+    for ($g = 0; $g -lt $groups.Count; $g++) {
+        if ($groups[$g].Card.Visibility -eq "Visible") {
+            $sizes[$g] = @($groups[$g].Rows | Where-Object { $_.Panel.Visibility -eq "Visible" }).Count
         }
-        [void]$panels[$shortest].Children.Add($group.Card)
-        $rows = @($group.Rows | Where-Object { $_.Panel.Visibility -eq "Visible" }).Count
-        $heights[$shortest] = $heights[$shortest] + 36 + 24 * $rows + 12 + 12
+    }
+    $plan = Get-WinToolTweakMasonryPlan -Rows $sizes -Columns $columns
+    $script:WinToolState.TweakColumnHeights = $plan.Heights
+
+    for ($g = 0; $g -lt $groups.Count; $g++) {
+        $group = $groups[$g]
+        $mine = @($plan.Pieces | Where-Object { $_.Group -eq $g } | Sort-Object -Property Part)
+        while ($group.Pieces.Count -lt [Math]::Max(1, $mine.Count)) {
+            $group.Pieces.Add((New-WinToolTweakCard -Title ([string]$group.Name) -Continued))
+        }
+        # Move every row back into the right piece; hidden (filtered) rows
+        # travel with the visible row before them.
+        foreach ($row in @($group.Rows)) {
+            $parent = $row.Panel.Parent
+            if ($null -ne $parent) { $parent.Children.Remove($row.Panel) }
+        }
+        $partIndex = 0
+        $seen = 0
+        foreach ($row in @($group.Rows)) {
+            if ($row.Panel.Visibility -eq "Visible") {
+                while ($partIndex -lt ($mine.Count - 1) -and $seen -ge ($mine[$partIndex].Start + $mine[$partIndex].Count)) { $partIndex++ }
+                $seen++
+            }
+            [void]$group.Pieces[$partIndex].Stack.Children.Add($row.Panel)
+        }
+        for ($p = 1; $p -lt $group.Pieces.Count; $p++) {
+            if ($p -lt $mine.Count) { $group.Pieces[$p].Card.Visibility = "Visible" }
+            else { $group.Pieces[$p].Card.Visibility = "Collapsed" }
+        }
+    }
+    foreach ($piece in @($plan.Pieces)) {
+        [void]$panels[[int]$piece.Column].Children.Add($groups[[int]$piece.Group].Pieces[[int]$piece.Part].Card)
     }
 }
 

@@ -581,21 +581,23 @@
               <TextBlock Text="Presets:" FontSize="10" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
               <StackPanel x:Name="TweakPresets" Orientation="Horizontal" VerticalAlignment="Center"/>
             </StackPanel>
-            <TextBlock x:Name="TweakRestoreNote" Grid.Column="2" Text="Restore point is created before the first change" FontSize="10" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            <DockPanel Grid.Column="2" LastChildFill="True" VerticalAlignment="Center">
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+                <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushOk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Text="Safe" FontSize="10" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushWarn}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Text="Caution" FontSize="10" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
+              </StackPanel>
+              <TextBlock x:Name="TweakRestoreNote" Text="Restore point is created before the first change" FontSize="10" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
           </Grid>
-          <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,10,20,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,10,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
               <TextBlock x:Name="TweakEmpty" Text="No tweaks match that search." Foreground="{DynamicResource BrushMuted}" Margin="0,8,0,0" Visibility="Collapsed"/>
               <!-- Masonry columns, built in code from the available width. -->
               <Grid x:Name="TweakCategories"/>
             </StackPanel>
           </ScrollViewer>
-          <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,2,20,4">
-            <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushOk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <TextBlock Text="Safe" FontSize="9.5" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushWarn}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-            <TextBlock Text="Caution" FontSize="9.5" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
-          </StackPanel>
         </Grid>
 
         <ScrollViewer x:Name="ViewTerminal" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
