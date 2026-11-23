@@ -721,7 +721,7 @@
                       </Grid.ColumnDefinitions>
                       <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Needs attention" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-                        <TextBlock x:Name="HomeCheckCount" Text="0 of 5 complete" Margin="10,0,0,0" Foreground="{DynamicResource BrushMuted}"/>
+                        <TextBlock x:Name="HomeCheckCount" Text="0 of 5 complete" Width="160" TextTrimming="CharacterEllipsis" Margin="10,0,0,0" Foreground="{DynamicResource BrushMuted}"/>
                       </StackPanel>
                       <Button x:Name="HomeFixAll" Grid.Column="2" Content="Fix all" Width="88" Height="32" Style="{StaticResource HomeGradientButton}" IsEnabled="False"/>
                     </Grid>
