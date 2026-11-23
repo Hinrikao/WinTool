@@ -174,7 +174,7 @@ function Initialize-WinToolUpdateModeView {
         $radio.Margin = [System.Windows.Thickness]::new(0, 0, 0, 10)
         $content = New-Object System.Windows.Controls.StackPanel
         [void]$content.Children.Add((New-WinToolText -Text ([string]$mode.name) -Weight "SemiBold"))
-        [void]$content.Children.Add((New-WinToolText -Text ([string]$mode.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
+        [void]$content.Children.Add((New-WinToolText -Text ([string]$mode.description) -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
         $radio.Content = $content
         Register-WinToolUiEvent -Control $radio -EventName "Checked" -Name "Updates: pick mode" -Data ([string]$mode.id) -Action {
             param($source, $eventData, $modeId)

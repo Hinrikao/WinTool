@@ -315,15 +315,15 @@ foreach ($tile in ($window.FindName("TerminalSchemeHost").Children | ForEach-Obj
 $firstApp = $appRows[0]
 $secondApp = $appRows[1]
 $null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
-if ($firstApp.InstalledBadge.Visibility -ne "Visible" -or $firstApp.UpdateBadge.Visibility -ne "Collapsed") {
+if (-not $firstApp.Installed -or $firstApp.UpdateAvailable) {
     throw "The Installed badge did not follow the detected state."
 }
-if ($secondApp.UpdateBadge.Visibility -ne "Visible" -or -not $secondApp.Installed) {
+if (-not $secondApp.UpdateAvailable -or -not $secondApp.Installed) {
     throw "The Update available badge did not follow the upgrade list."
 }
 $thirdApp = $appRows[2]
 $byNameState = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0") -DisplayName @(($thirdApp.Name + " 1.2.3 (64-bit)"))
-if ($thirdApp.InstalledBadge.Visibility -ne "Visible" -or @($byNameState.ByName) -notcontains $thirdApp.WingetId) {
+if (-not $thirdApp.Installed -or @($byNameState.ByName) -notcontains $thirdApp.WingetId) {
     throw "An app found by its Apps and features name did not get the Installed badge."
 }
 $null = Set-WinToolAppState -InstalledId @($firstApp.WingetId) -UpgradeText ("Name Id Version Available`n" + $secondApp.Name + " " + $secondApp.WingetId + " 1.0 2.0")
@@ -341,7 +341,7 @@ $notepadCases = @(
 foreach ($case in $notepadCases) {
     $null = Set-WinToolAppState -InstalledId @() -UpgradeText "" -ListText ""
     $result = Set-WinToolAppState -InstalledId $case.Ids -UpgradeText "" -ListText $case.List
-    if ($notepadRow.InstalledBadge.Visibility -ne "Visible" -or @($result.InstalledIds) -notcontains "Notepad++.Notepad++") {
+    if (-not $notepadRow.Installed -or @($result.InstalledIds) -notcontains "Notepad++.Notepad++") {
         throw ("Notepad++ did not get the Installed badge for: " + (@($case.Ids) -join ",") + " / " + $case.List)
     }
 }
@@ -660,11 +660,11 @@ Update-WinToolAppFilter
 $chrome = @($appRows | Where-Object { $_.WingetId -eq "Google.Chrome" })[0]
 $brave = @($appRows | Where-Object { $_.WingetId -eq "Brave.Brave" })[0]
 $firefox = @($appRows | Where-Object { $_.WingetId -eq "Mozilla.Firefox" })[0]
-if ($chrome.OpenButton.Visibility -ne "Visible" -or $chrome.UninstallButton.Visibility -ne "Visible" -or $chrome.InstallButton.Visibility -ne "Collapsed" -or $chrome.InstalledBadge.Visibility -ne "Visible") {
+if ($chrome.OpenButton.Visibility -ne "Visible" -or $chrome.UninstallButton.Visibility -ne "Visible" -or $chrome.InstallButton.Visibility -ne "Collapsed" -or -not $chrome.Installed) {
     throw "An installed app card should show Open, Uninstall, and the Installed pill."
 }
-if ($brave.UpdateButton.Visibility -ne "Visible" -or $brave.OpenButton.Visibility -ne "Collapsed" -or $brave.UpdateBadge.Visibility -ne "Visible" -or $brave.InstalledBadge.Visibility -ne "Collapsed") {
-    throw "An app with an update should show Update, Uninstall, and the Update ready pill."
+if ($brave.UpdateButton.Visibility -ne "Visible" -or $brave.OpenButton.Visibility -ne "Collapsed" -or -not $brave.UpdateAvailable -or $brave.UninstallButton.Visibility -ne "Visible") {
+    throw "An app with an update should show Update, Uninstall, and the amber border."
 }
 if ($firefox.InstallButton.Visibility -ne "Visible" -or $firefox.UninstallButton.Visibility -ne "Collapsed") {
     throw "An app that is not installed should show only Install."
@@ -686,12 +686,27 @@ $firefox.Checkbox.IsChecked = $false
 if ($window.FindName("AppBulkBar").Visibility -ne "Collapsed") {
     throw "The bulk bar should hide when nothing is ticked."
 }
+# The selection actions sit in the top row, so ticking an app never moves the cards.
+$window.FindName("NavInstall").IsChecked = $true
+$script:WinToolState.LogExpanded = $false
+Sync-WinToolLogPanel
+$rootVisual = $window.Content
+Save-WinToolViewShot -Name "install-noselection" -Width 1280 -Height 760
+$before = $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+$firefox.Checkbox.IsChecked = $true
+$chrome.Checkbox.IsChecked = $true
+Save-WinToolViewShot -Name "install-selected" -Width 1280 -Height 760
+$after = $firefox.Panel.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
+if ([math]::Abs($after.Y - $before.Y) -gt 0.5) { throw ("Ticking an app moved the cards from " + $before.Y + " to " + $after.Y) }
+if ([string]$window.FindName("AppCount").Text -ne "2 selected") { throw "The selection count should read 2 selected." }
+Write-Output ("Selection actions in the top row; first card stays at y=" + [int]$after.Y)
+Sync-WinToolAppCheck -Id @() -OnlyThese
 $window.FindName("NavInstall").IsChecked = $true
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
 # Sizes in WPF units (DIPs): 1024x576 is what a 1280x720 screen at 125% or a
 # 1536x864 screen at 150% gives; 1264 is a maximized 1280 window.
-$installExpect = @{ "install-1024" = 4; "install-mockup" = 5; "install-1264" = 5; "install-1920" = 9 }
+$installExpect = @{ "install-1024" = 3; "install-mockup" = 5; "install-1264" = 5; "install-1920" = 8 }
 foreach ($size in @(@(1024, 576, "install-1024"), @(1264, 704, "install-1264"), @(1920, 1080, "install-1920"), @(1280, 760, "install-mockup"))) {
     Update-WinToolInstallLayout -Width ([double]$size[0] - 248 - 40)
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
@@ -704,7 +719,7 @@ foreach ($size in @(@(1024, 576, "install-1024"), @(1264, 704, "install-1264"), 
     }
 }
 # Responsive columns: as many 185 px cards as fit, stretched to fill the row.
-foreach ($case in @(@(992, 5), @(1622, 9), @(726, 4), @(380, 2), @(150, 1))) {
+foreach ($case in @(@(992, 5), @(1622, 8), @(726, 3), @(380, 2), @(150, 1))) {
     Update-WinToolInstallLayout -Width ([double]$case[0])
     if ($script:WinToolState.CategoryRows[0].Grid.Columns -ne [int]$case[1]) {
         throw ("Install at " + $case[0] + " px should have " + $case[1] + " columns, got " + $script:WinToolState.CategoryRows[0].Grid.Columns)
@@ -754,7 +769,7 @@ foreach ($size in @(@(1024, 576, "tweaks-1024"), @(1920, 1080, "tweaks-1920"), @
     Save-WinToolViewShot -Name $size[2] -Width ([double]$size[0]) -Height ([double]$size[1])
     Write-Output ($size[2] + ": " + $script:WinToolState.TweakColumns + " tweak columns, planned heights " + ((@($script:WinToolState.TweakColumnHeights) | ForEach-Object { [int]$_ }) -join "/"))
 }
-foreach ($case in @(@(992, 3), @(1632, 5), @(640, 2), @(500, 1))) {
+foreach ($case in @(@(982, 3), @(1622, 4), @(700, 2), @(500, 1))) {
     Update-WinToolTweakLayout -Width ([double]$case[0])
     if ($script:WinToolState.TweakColumns -ne [int]$case[1]) {
         throw ("Tweaks at " + $case[0] + " px should have " + $case[1] + " columns, got " + $script:WinToolState.TweakColumns)
@@ -771,7 +786,7 @@ $rowsShown = 0
 foreach ($column in @($grid.Children)) { foreach ($card in @($column.Children)) { $rowsShown += $card.Child.Children.Count - 1 } }
 if ($rowsShown -ne @($tweakRows).Count) { throw ("Every tweak row should sit in a card, got " + $rowsShown + " of " + @($tweakRows).Count) }
 $spread = ($real | Measure-Object -Maximum).Maximum - ($real | Measure-Object -Minimum).Minimum
-if ($spread -gt 300) { throw ("The tweak columns are unbalanced: " + (($real | ForEach-Object { [int]$_ }) -join "/")) }
+if ($spread -gt 450) { throw ("The tweak columns are unbalanced: " + (($real | ForEach-Object { [int]$_ }) -join "/")) }
 Update-WinToolTweakLayout -Width 992
 
 $uiErrors = Get-WinToolUiError

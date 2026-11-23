@@ -19,10 +19,10 @@ function Initialize-WinToolFeatureView {
         [void]$panel.Children.Add($checkbox)
         $text = New-Object System.Windows.Controls.StackPanel
         [void]$text.Children.Add((New-WinToolText -Text ([string]$feature.name) -Weight "SemiBold"))
-        [void]$text.Children.Add((New-WinToolText -Text ([string]$feature.description) -Size 13 -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 16, 0))))
+        [void]$text.Children.Add((New-WinToolText -Text ([string]$feature.description) -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 2, 16, 0))))
         [System.Windows.Controls.Grid]::SetColumn($text, 1)
         [void]$panel.Children.Add($text)
-        $state = New-WinToolText -Text "Checking..." -Size 12 -Brush "BrushMuted"
+        $state = New-WinToolText -Text "Checking..." -Brush "BrushMuted"
         $state.VerticalAlignment = "Top"
         [System.Windows.Controls.Grid]::SetColumn($state, 2)
         [void]$panel.Children.Add($state)

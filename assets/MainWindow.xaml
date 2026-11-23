@@ -1,6 +1,7 @@
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
     x:Name="Root"
     Title="WinTool"
     Width="1120"
@@ -10,11 +11,14 @@
     WindowStartupLocation="CenterScreen"
     Background="{DynamicResource BrushCanvas}" Foreground="{DynamicResource BrushInk}"
     FontFamily="Segoe UI"
-    FontSize="14"
+   
     UseLayoutRounding="True"
     SnapsToDevicePixels="True"
     TextOptions.TextFormattingMode="Display">
   <Window.Resources>
+    <!-- One text size for the whole app. Only page titles and the app name are larger. -->
+    <sys:Double x:Key="FontSizeBody">14</sys:Double>
+    <sys:Double x:Key="FontSizeTitle">28</sys:Double>
     <SolidColorBrush x:Key="BrushCanvas" Color="#1B2230"/>
     <SolidColorBrush x:Key="BrushCard" Color="#262E40"/>
     <SolidColorBrush x:Key="BrushLine" Color="#3A445C"/>
@@ -50,9 +54,9 @@
     <!-- Small rounded button used on app cards; colors are set per button. -->
     <Style x:Key="CardButton" TargetType="Button">
       <Setter Property="Width" Value="96"/>
-      <Setter Property="Height" Value="26"/>
+      <Setter Property="Height" Value="32"/>
       <Setter Property="Padding" Value="0"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
       <Setter Property="Margin" Value="0,0,8,0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Background" Value="{DynamicResource BrushNavHover}"/>
@@ -79,15 +83,15 @@
     <!-- Pill chips: filters on Install (radio) and presets on Tweaks (button). -->
     <Style x:Key="ChipRadio" TargetType="RadioButton">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-      <Setter Property="FontSize" Value="10"/>
-      <Setter Property="Height" Value="22"/>
-      <Setter Property="Margin" Value="0,0,4,0"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Margin" Value="0,0,6,0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="11" Padding="8,0">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="16" Padding="14,0">
               <ContentPresenter VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -105,14 +109,14 @@
     </Style>
     <Style x:Key="ChipButton" TargetType="Button">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-      <Setter Property="FontSize" Value="10"/>
-      <Setter Property="Height" Value="22"/>
-      <Setter Property="Margin" Value="0,0,4,0"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Margin" Value="0,0,6,0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="11" Padding="8,0">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="16" Padding="14,0">
               <ContentPresenter VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -129,8 +133,8 @@
     </Style>
     <Style x:Key="ToolbarButton" TargetType="Button">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
-      <Setter Property="FontSize" Value="11"/>
-      <Setter Property="Height" Value="28"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="32"/>
       <Setter Property="Padding" Value="12,0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
@@ -205,7 +209,7 @@
 
     <Style x:Key="NavButton" TargetType="RadioButton">
       <Setter Property="Foreground" Value="{DynamicResource BrushSidebarText}"/>
-      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
       <Setter Property="Margin" Value="0,0,0,6"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -313,13 +317,13 @@
       <Setter Property="BorderBrush" Value="{DynamicResource BrushInputBorder}"/>
       <Setter Property="CaretBrush" Value="{DynamicResource BrushInk}"/>
       <Setter Property="Padding" Value="10,8"/>
-      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style x:Key="PageSearch" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-      <Setter Property="Height" Value="28"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
       <Setter Property="Padding" Value="9,0"/>
     </Style>
     <Style TargetType="CheckBox">
@@ -445,19 +449,19 @@
     <Border Grid.Column="0" Background="{StaticResource BrushSidebar}">
       <DockPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="20,0,20,20">
-          <TextBlock Text="Appearance" FontSize="12" Margin="0,0,0,6" Foreground="{DynamicResource BrushSidebarMuted}"/>
+          <TextBlock Text="Appearance" Margin="0,0,0,6" Foreground="{DynamicResource BrushSidebarMuted}"/>
           <ComboBox x:Name="ThemePicker" Margin="0,0,0,8" AutomationProperties.Name="Theme"/>
           <StackPanel x:Name="AccentSwatches" Orientation="Horizontal" Margin="0,0,0,14"/>
-          <TextBlock x:Name="VersionText" Text="Version" Foreground="{DynamicResource BrushSidebarMuted}" FontSize="12"/>
-          <TextBlock FontSize="12" Margin="0,8,0,0" Foreground="{DynamicResource BrushSidebarText}" TextWrapping="Wrap">
+          <TextBlock x:Name="VersionText" Text="Version" Foreground="{DynamicResource BrushSidebarMuted}"/>
+          <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource BrushSidebarText}" TextWrapping="Wrap">
             <Hyperlink x:Name="ProjectLink" Foreground="{DynamicResource BrushSidebarText}" NavigateUri="https://github.com/Hinrikao/WinTool">
               Hinrikao/WinTool
             </Hyperlink>
           </TextBlock>
         </StackPanel>
         <StackPanel Margin="16,22,16,0">
-          <TextBlock Text="WinTool" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarText}"/>
-          <TextBlock Text="A calm setup helper for a fresh Windows 11 PC." Foreground="{DynamicResource BrushSidebarMuted}" TextWrapping="Wrap" Margin="0,8,0,22" FontSize="13"/>
+          <TextBlock Text="WinTool" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarText}"/>
+          <TextBlock Text="A calm setup helper for a fresh Windows 11 PC." Foreground="{DynamicResource BrushSidebarMuted}" TextWrapping="Wrap" Margin="0,8,0,22"/>
 
           <RadioButton x:Name="NavInstall" GroupName="WinToolNav" Style="{StaticResource NavButton}" IsChecked="True" AutomationProperties.Name="Install">
             <StackPanel Orientation="Horizontal">
@@ -519,37 +523,37 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
-          <TextBlock Grid.Row="0" Margin="20,15,20,0" Text="Install" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+          <TextBlock Grid.Row="0" Margin="20,15,20,0" Text="Install" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
           <Grid Grid.Row="1" Margin="20,7,20,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="220"/>
               <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" Height="26" VerticalAlignment="Top">
-              <TextBox x:Name="AppSearch" Style="{StaticResource PageSearch}" Height="26" FontSize="11" AutomationProperties.Name="Search apps"/>
-              <TextBlock x:Name="AppSearchHint" Text="Search apps&#x2026;" FontSize="11" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
+            <Grid Grid.Column="0" Height="34" VerticalAlignment="Top">
+              <TextBox x:Name="AppSearch" Style="{StaticResource PageSearch}" Height="34" AutomationProperties.Name="Search apps"/>
+              <TextBlock x:Name="AppSearchHint" Text="Search apps&#x2026;" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
             </Grid>
             <!-- One row of chips that never wraps: it scrolls sideways (mouse wheel) when the window is narrow. -->
-            <ScrollViewer x:Name="AppFilterScroll" Grid.Column="1" Margin="12,0,8,0" Height="26" VerticalAlignment="Top" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+            <ScrollViewer x:Name="AppFilterScroll" Grid.Column="1" Margin="12,0,8,0" Height="34" VerticalAlignment="Top" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
               <StackPanel x:Name="AppFilters" Orientation="Horizontal" VerticalAlignment="Center"/>
             </ScrollViewer>
-            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-              <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Height="26" Padding="10,0" FontSize="10" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
-              <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="26" Height="26" Padding="0" FontFamily="Segoe MDL2 Assets" FontSize="11" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
+            <!-- Shown only while apps are ticked; the chips give up the room, so the cards never move. -->
+            <StackPanel x:Name="AppBulkBar" Grid.Column="2" Orientation="Horizontal" Height="34" VerticalAlignment="Top" Margin="0,0,8,0" Visibility="Collapsed">
+              <TextBlock x:Name="AppCount" Text="0 selected" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,8,0"/>
+              <Button x:Name="AppInstall" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushAccent}" Foreground="{DynamicResource BrushOnAccent}" FontWeight="SemiBold"/>
+              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
+              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
+              <Button x:Name="AppClear" Content="Clear" Style="{StaticResource ToolbarButton}" Height="32" Padding="14,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top">
+              <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Height="32" Padding="14,0" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
+              <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="32" Height="32" Padding="0" FontFamily="Segoe MDL2 Assets" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
             </StackPanel>
           </Grid>
           <StackPanel Grid.Row="2" Margin="20,6,20,0">
-            <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." FontSize="11" Foreground="{DynamicResource BrushMuted}" Visibility="Collapsed" Margin="0,0,0,4"/>
-            <Border x:Name="AppBulkBar" Visibility="Collapsed" Background="{DynamicResource BrushAccentSoft}" CornerRadius="8" Padding="12,6" Margin="0,0,0,4">
-              <DockPanel LastChildFill="False">
-                <TextBlock x:Name="AppCount" DockPanel.Dock="Left" Text="0 selected" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,16,0"/>
-                <Button x:Name="AppInstall" DockPanel.Dock="Left" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushAccent}" Foreground="White" FontWeight="SemiBold"/>
-                <Button x:Name="AppUpdate" DockPanel.Dock="Left" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
-                <Button x:Name="AppUninstall" DockPanel.Dock="Left" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
-                <Button x:Name="AppClear" DockPanel.Dock="Right" Content="Clear" Style="{StaticResource CardButton}" Width="Auto" Padding="12,0" Margin="0"/>
-              </DockPanel>
-            </Border>
+            <TextBlock x:Name="AppInstalledStatus" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" Visibility="Collapsed" Margin="0,0,0,4"/>
           </StackPanel>
           <ScrollViewer x:Name="AppScroll" Grid.Row="3" Margin="20,0,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
@@ -566,29 +570,29 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
-          <TextBlock Grid.Row="0" Margin="20,15,20,0" Text="Tweaks" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+          <TextBlock Grid.Row="0" Margin="20,15,20,0" Text="Tweaks" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
           <Grid Grid.Row="1" Margin="20,7,20,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="220"/>
               <ColumnDefinition Width="Auto"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" Height="26">
-              <TextBox x:Name="TweakSearch" Style="{StaticResource PageSearch}" Height="26" FontSize="11" AutomationProperties.Name="Search tweaks"/>
-              <TextBlock x:Name="TweakSearchHint" Text="Search tweaks&#x2026;" FontSize="11" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
+            <Grid Grid.Column="0" Height="34">
+              <TextBox x:Name="TweakSearch" Style="{StaticResource PageSearch}" Height="34" AutomationProperties.Name="Search tweaks"/>
+              <TextBlock x:Name="TweakSearchHint" Text="Search tweaks&#x2026;" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
             </Grid>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,12,0">
-              <TextBlock Text="Presets:" FontSize="10" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <TextBlock Text="Presets:" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
               <StackPanel x:Name="TweakPresets" Orientation="Horizontal" VerticalAlignment="Center"/>
             </StackPanel>
             <DockPanel Grid.Column="2" LastChildFill="True" VerticalAlignment="Center">
               <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
                 <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushOk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <TextBlock Text="Safe" FontSize="10" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="Safe" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushWarn}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <TextBlock Text="Caution" FontSize="10" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
+                <TextBlock Text="Caution" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
               </StackPanel>
-              <TextBlock x:Name="TweakRestoreNote" Text="Restore point is created before the first change" FontSize="10" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="TweakRestoreNote" Text="Restore point is created before the first change" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
             </DockPanel>
           </Grid>
           <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,10,20,8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -988,12 +992,12 @@
 
         <ScrollViewer x:Name="ViewUpdates" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
           <StackPanel Margin="24,22,24,12">
-            <TextBlock Text="Drivers and updates" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock Text="Drivers and updates" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
 
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
               <StackPanel>
-                <TextBlock Text="Graphics on this PC" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Graphics on this PC" FontWeight="SemiBold"/>
                 <TextBlock x:Name="GpuSummary" Text="Looking up graphics adapters..." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,8,0,12"/>
                 <WrapPanel x:Name="VendorLinks"/>
               </StackPanel>
@@ -1001,7 +1005,7 @@
 
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
               <StackPanel>
-                <TextBlock Text="Update mode" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Update mode" FontWeight="SemiBold"/>
                 <TextBlock Text="Choose how Windows Update behaves on this PC. WinTool only writes Windows Update policies and service settings, and Default removes them all again." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
                 <TextBlock x:Name="UpdateModeCurrent" Text="Current mode: checking..." FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <StackPanel x:Name="UpdateModeList" Margin="0,0,0,12"/>
@@ -1014,7 +1018,7 @@
 
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
               <StackPanel>
-                <TextBlock Text="Windows Update" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Windows Update" FontWeight="SemiBold"/>
                 <TextBlock Text="The scan lists driver updates Windows Update is offering right now. Optional updates are easier to review in Settings. Installing can take a while and may ask for a restart." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
                 <CheckBox x:Name="IncludeSoftwareUpdates" Content="Include software updates, not only drivers" Margin="0,0,0,12"/>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
@@ -1032,7 +1036,7 @@
 
         <ScrollViewer x:Name="ViewFixes" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
           <StackPanel Margin="24,22,24,12">
-            <TextBlock Text="Fixes" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock Text="Fixes" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Repairs for common Windows problems. Each one asks first and writes what it does to the log." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
             <StackPanel x:Name="FixList"/>
           </StackPanel>
@@ -1040,7 +1044,7 @@
 
         <ScrollViewer x:Name="ViewFeatures" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
           <StackPanel Margin="24,22,24,12">
-            <TextBlock Text="Windows features" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock Text="Windows features" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Optional parts of Windows. Ticked means on. Change the ticks and press Apply. Windows needs a restart after a change." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
               <StackPanel>
@@ -1057,25 +1061,25 @@
 
         <ScrollViewer x:Name="ViewConfig" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
           <StackPanel Margin="24,22,24,12">
-            <TextBlock Text="Config" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock Text="Config" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
             <TextBlock Text="Save what you picked and use it again after the next format." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,16"/>
 
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,12">
               <StackPanel>
-                <TextBlock Text="WinTool profile" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="WinTool profile" FontWeight="SemiBold"/>
                 <TextBlock Text="A profile remembers the apps, tweaks, and terminal choices. Loading it selects them in this window. It does not install anything until you press Install, Apply, or Set up terminal." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
                 <TextBlock x:Name="ProfileSummary" Text="Nothing selected yet." Foreground="{DynamicResource BrushInk}" Margin="0,0,0,12"/>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                   <Button x:Name="SaveProfile" Content="Save profile" Style="{StaticResource PrimaryButton}" Margin="0"/>
                   <Button x:Name="LoadProfile" Content="Load profile" Style="{StaticResource SecondaryButton}"/>
                 </StackPanel>
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" FontSize="13" Text="To replay a profile from a command after the next format, run PowerShell as admin:  powershell -STA -ExecutionPolicy Bypass -File .\wintool.ps1 -ApplyProfile .\wintool-profile.json -Unattended"/>
+                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="To replay a profile from a command after the next format, run PowerShell as admin:  powershell -STA -ExecutionPolicy Bypass -File .\wintool.ps1 -ApplyProfile .\wintool-profile.json -Unattended"/>
               </StackPanel>
             </Border>
 
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
               <StackPanel>
-                <TextBlock Text="winget package list" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="winget package list" FontWeight="SemiBold"/>
                 <TextBlock Text="This is winget's own export file, which can include apps that were not installed by WinTool. Import asks winget to install every package in the file." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
                 <StackPanel Orientation="Horizontal">
                   <Button x:Name="ExportWinget" Content="Export winget list" Style="{StaticResource SecondaryButton}" Margin="0"/>
@@ -1086,7 +1090,7 @@
 
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,12,0,0">
               <StackPanel>
-                <TextBlock Text="Tweaks" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Tweaks" FontWeight="SemiBold"/>
                 <TextBlock Text="Some tweaks only show up after File Explorer restarts." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
                 <CheckBox x:Name="TweakRestartExplorer" Content="Restart File Explorer when a tweak needs it" IsChecked="True"/>
               </StackPanel>
@@ -1094,7 +1098,7 @@
 
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,12,0,0">
               <StackPanel>
-                <TextBlock Text="DNS servers" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="DNS servers" FontWeight="SemiBold"/>
                 <TextBlock Text="Pick which DNS servers a network adapter uses. Automatic goes back to what your router hands out." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
                 <Grid Margin="0,0,0,8">
                   <Grid.ColumnDefinitions>
@@ -1121,7 +1125,7 @@
 
             <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,12,0,0">
               <StackPanel>
-                <TextBlock Text="Ultimate Performance power plan" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Ultimate Performance power plan" FontWeight="SemiBold"/>
                 <TextBlock x:Name="PowerPlanDescription" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
                 <TextBlock x:Name="PowerPlanStatus" Text="Checking..." FontWeight="SemiBold" Margin="0,0,0,12"/>
                 <StackPanel Orientation="Horizontal">
@@ -1146,7 +1150,7 @@
           </DockPanel>
           <ProgressBar x:Name="MainProgress" Height="8" Minimum="0" Maximum="100" Value="0" Foreground="{DynamicResource BrushProgress}" Background="{DynamicResource BrushProgressTrack}" BorderThickness="0" Margin="0,10,0,0" DockPanel.Dock="Top" Visibility="Collapsed"/>
           <Border x:Name="LogPanel" Height="168" Margin="0,10,0,0" Visibility="Collapsed">
-            <TextBox x:Name="LogBox" IsReadOnly="True" IsReadOnlyCaretVisible="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AcceptsReturn="True" Background="Transparent" Foreground="{DynamicResource BrushLogText}" CaretBrush="{DynamicResource BrushLogText}" BorderThickness="0" FontFamily="Consolas" FontSize="12" Padding="0"/>
+            <TextBox x:Name="LogBox" IsReadOnly="True" IsReadOnlyCaretVisible="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AcceptsReturn="True" Background="Transparent" Foreground="{DynamicResource BrushLogText}" CaretBrush="{DynamicResource BrushLogText}" BorderThickness="0" FontFamily="Consolas" Padding="0"/>
           </Border>
         </DockPanel>
       </Border>

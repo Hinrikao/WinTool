@@ -505,9 +505,7 @@ function Initialize-WinToolShellEvent {
         }
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Closed" -Name "Window closed" -Action {
-        if ($null -ne $script:WinToolState.Pump) {
-            $script:WinToolState.Pump.Stop()
-        }
+        Stop-WinToolBackgroundWork
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Window loaded" -Action {
         Write-WinToolLog -Message "Welcome to WinTool. Choose what you want, then run it when you are ready." -Level "info"
@@ -606,16 +604,110 @@ function New-WinToolWindow {
     return $window
 }
 
-function Show-WinToolWindow {
-    $window = New-WinToolWindow
-    Enable-WinToolLogPump
-    Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Hide the console" -Action { Hide-WinToolConsole }
+function Stop-WinToolBackgroundWork {
+    # Stops the log timer, a running plan, and every background runspace, so
+    # nothing keeps powershell.exe alive after the window is gone.
+    if ($null -eq $script:WinToolState) { return }
+    if ($null -ne $script:WinToolState.Pump) {
+        try { $script:WinToolState.Pump.Stop() } catch { $null = $_.Exception.Message }
+        $script:WinToolState.Pump = $null
+    }
+    $run = $script:WinToolState.Run
+    if ($null -ne $run -and $null -ne $run.Process) {
+        try { if (-not $run.Process.HasExited) { $run.Process.Kill() } } catch { $null = $_.Exception.Message }
+    }
+    $script:WinToolState.Run = $null
+    foreach ($key in @($script:WinToolState.Keys)) {
+        $value = $script:WinToolState[$key]
+        if ($null -ne $value -and $null -ne $value.PSObject -and $null -ne $value.PSObject.Properties["Runspace"]) {
+            # Asynchronous stop: a runspace still waiting on winget must not
+            # hold the window open while it closes.
+            try { $null = $value.PowerShell.BeginStop($null, $null) } catch { $null = $_.Exception.Message }
+            try { $value.Runspace.CloseAsync() } catch { $null = $_.Exception.Message }
+            $script:WinToolState[$key] = $null
+        }
+    }
+    try { Get-Job | Remove-Job -Force -ErrorAction SilentlyContinue } catch { $null = $_.Exception.Message }
+}
+
+function Stop-WinToolChildProcess {
+    # Ends what this process started (winget, installers, helpers), children
+    # first. conhost.exe is the console itself and is left alone.
+    param([int]$ParentId = $PID)
+    $children = @()
+    try { $children = @(Get-CimInstance -ClassName Win32_Process -Filter ("ParentProcessId = {0}" -f $ParentId) -ErrorAction Stop) }
+    catch { return }
+    foreach ($child in $children) {
+        if ([string]$child.Name -eq "conhost.exe") { continue }
+        Stop-WinToolChildProcess -ParentId ([int]$child.ProcessId)
+        try { Stop-Process -Id ([int]$child.ProcessId) -Force -ErrorAction Stop } catch { $null = $_.Exception.Message }
+    }
+}
+
+function Enter-WinToolSingleInstance {
+    # One WinTool window per session. A second launch brings the first window
+    # to the front and leaves.
+    $created = $false
     try {
+        $script:WinToolMutex = [System.Threading.Mutex]::new($true, "Local\WinTool.Hinrikao.Window", [ref]$created)
+    }
+    catch {
+        $script:WinToolMutex = $null
+        $created = $false
+    }
+    if ($created) { return $true }
+    if ($null -ne $script:WinToolMutex) {
+        $script:WinToolMutex.Dispose()
+        $script:WinToolMutex = $null
+    }
+    if (Initialize-WinToolConsoleApi) {
+        try {
+            $handle = [WinToolConsoleApi]::FindWindow($null, "WinTool")
+            if ($handle -ne [IntPtr]::Zero) {
+                $null = [WinToolConsoleApi]::ShowWindow($handle, 9)
+                $null = [WinToolConsoleApi]::SetForegroundWindow($handle)
+            }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+    }
+    Write-Host "WinTool is already open. Its window was brought to the front."
+    return $false
+}
+
+function Exit-WinToolSingleInstance {
+    if ($null -eq $script:WinToolMutex) { return }
+    try { $script:WinToolMutex.ReleaseMutex() } catch { $null = $_.Exception.Message }
+    try { $script:WinToolMutex.Dispose() } catch { $null = $_.Exception.Message }
+    $script:WinToolMutex = $null
+}
+
+function Show-WinToolWindow {
+    if (-not (Enter-WinToolSingleInstance)) {
+        Exit-WinToolOwnedHost
+        return
+    }
+    $closedNormally = $false
+    try {
+        $window = New-WinToolWindow
+        Enable-WinToolLogPump
+        Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Hide the console" -Action { Hide-WinToolConsole }
         $null = $window.ShowDialog()
+        $closedNormally = $true
     }
     finally {
-        # Give a console the user opened back to them. A hidden relaunch just exits.
-        if ($script:WinToolConsoleHidden -and $env:WINTOOL_HIDDEN -ne "1") {
+        Stop-WinToolBackgroundWork
+        Exit-WinToolSingleInstance
+        # Give a console the user opened back to them. A hidden relaunch is
+        # WinTool's own process: end it and everything it started, so no
+        # hidden powershell.exe is left behind.
+        # After a startup error the failure screen runs first and exits itself.
+        if ($closedNormally -and (Test-WinToolOwnedHost)) {
+            Stop-WinToolChildProcess
+            [Environment]::Exit(0)
+        }
+        if ($script:WinToolConsoleHidden) {
             $null = Set-WinToolConsoleVisible -Visible $true
         }
     }

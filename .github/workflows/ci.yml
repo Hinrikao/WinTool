@@ -31,6 +31,10 @@ jobs:
           WINTOOL_SHOT_DIR: ${{ runner.temp }}\wintool-shots
         run: powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolUiBuild.ps1
 
+      - name: Open and close WinTool, then check nothing is left running
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolLifecycle.ps1
+
       - name: Upload window screenshots
         if: always()
         uses: actions/upload-artifact@v4
