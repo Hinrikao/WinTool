@@ -11558,6 +11558,105 @@ function Test-WinToolGlyphMapped {
     return [WinToolGlyphMap]::Has($Glyph, [int]$Code)
 }
 
+function Initialize-WinToolGlyphDraw {
+    # GlyphRun and GetGlyphOutline live here so previews can paint a file
+    # face without going through FontFamily by name.
+    if ($null -ne ("WinToolGlyphDraw" -as [type])) { return }
+    Add-Type -AssemblyName PresentationCore
+    Add-Type -AssemblyName WindowsBase
+    $refs = @(
+        [System.Windows.Media.GlyphTypeface].Assembly.Location,
+        [System.Windows.Point].Assembly.Location
+    )
+    Add-Type -ReferencedAssemblies $refs -TypeDefinition @"
+using System;
+using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Media;
+public static class WinToolGlyphDraw {
+    public static bool HasOutline(GlyphTypeface face, int code) {
+        if (face == null) return false;
+        ushort index;
+        if (!face.CharacterToGlyphMap.TryGetValue(code, out index) || index == 0) return false;
+        try {
+            Geometry geometry = face.GetGlyphOutline(index, 12.0, 12.0);
+            if (geometry == null || geometry.IsEmpty()) return false;
+            Rect bounds = geometry.Bounds;
+            return bounds.Width > 0.15 || bounds.Height > 0.15;
+        }
+        catch {
+            return false;
+        }
+    }
+
+    public static GlyphRun MakeRun(GlyphTypeface face, int[] codes, double emSize, double x, double y) {
+        if (face == null || codes == null || codes.Length == 0 || emSize <= 0) return null;
+        List<ushort> indices = new List<ushort>();
+        List<double> advances = new List<double>();
+        for (int i = 0; i < codes.Length; i++) {
+            ushort index;
+            if (!face.CharacterToGlyphMap.TryGetValue(codes[i], out index) || index == 0) continue;
+            indices.Add(index);
+            advances.Add(face.AdvanceWidths[index] * emSize);
+        }
+        if (indices.Count == 0) return null;
+        return new GlyphRun(
+            face,
+            0,
+            false,
+            emSize,
+            indices,
+            new Point(x, y),
+            advances,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
+    }
+
+    public static double Measure(GlyphTypeface face, int[] codes, double emSize) {
+        if (face == null || codes == null || emSize <= 0) return 0;
+        double width = 0;
+        for (int i = 0; i < codes.Length; i++) {
+            ushort index;
+            if (!face.CharacterToGlyphMap.TryGetValue(codes[i], out index) || index == 0) continue;
+            width += face.AdvanceWidths[index] * emSize;
+        }
+        return width;
+    }
+
+    public static double LineHeight(GlyphTypeface face, double emSize) {
+        if (face == null || emSize <= 0) return emSize;
+        double height = face.Height * emSize;
+        if (height <= 0) return emSize * 1.2;
+        return height;
+    }
+
+    public static double Baseline(GlyphTypeface face, double emSize) {
+        if (face == null || emSize <= 0) return emSize * 0.8;
+        double baseline = face.Baseline * emSize;
+        if (baseline <= 0) return emSize * 0.8;
+        return baseline;
+    }
+}
+"@
+}
+
+function Test-WinToolGlyphDrawable {
+    param(
+        $Glyph,
+        [int]$Code
+    )
+    # A cmap hit is not enough: some faces reserve a private-use slot and
+    # still draw an empty box. Spaces are advance-only and have no outline.
+    if (-not (Test-WinToolGlyphMapped -Glyph $Glyph -Code $Code)) { return $false }
+    if ($Code -eq 0x20 -or $Code -eq 0xA0 -or $Code -eq 0x3000) { return $true }
+    Initialize-WinToolGlyphDraw
+    return [WinToolGlyphDraw]::HasOutline($Glyph, [int]$Code)
+}
+
 function Test-WinToolSameFontFile {
     param(
         $Glyph,
@@ -11580,6 +11679,20 @@ function Test-WinToolSameFontFile {
     }
 }
 
+function Get-WinToolFontFolderUri {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path
+    )
+    # WPF wants the folder, with a trailing slash, as the base URI.
+    $full = [System.IO.Path]::GetFullPath($Path)
+    $folder = [System.IO.Path]::GetDirectoryName($full)
+    $slash = [System.IO.Path]::DirectorySeparatorChar
+    if (-not $folder.EndsWith([string]$slash) -and -not $folder.EndsWith("/")) {
+        $folder = $folder + $slash
+    }
+    return New-Object System.Uri -ArgumentList $folder, ([System.UriKind]::Absolute)
+}
+
 function Test-WinToolFileTypeface {
     param(
         [string]$Path,
@@ -11587,25 +11700,32 @@ function Test-WinToolFileTypeface {
     )
     if ([string]::IsNullOrWhiteSpace($Path) -or [string]::IsNullOrWhiteSpace($FamilyName)) { return $null }
     if ($null -eq $script:WinToolFileFamilyCache) { $script:WinToolFileFamilyCache = @{} }
-    $uri = New-Object System.Uri -ArgumentList $Path
+    $full = [System.IO.Path]::GetFullPath($Path)
+    $fileName = [System.IO.Path]::GetFileName($full)
+    $baseUri = $null
+    try {
+        $baseUri = Get-WinToolFontFolderUri -Path $full
+    }
+    catch {
+        $null = $_.Exception.Message
+        return $null
+    }
+    # Folder URI plus ./file.ttf#Family is the documented WPF form. ./#Family
+    # loads any face in that folder and is the fallback when the file name
+    # is not accepted.
     $forms = @(
-        ($uri.AbsoluteUri + "#" + $FamilyName),
+        ("./" + $fileName + "#" + $FamilyName),
         ("./#" + $FamilyName)
     )
     foreach ($form in $forms) {
-        $familyKey = $Path + "|" + $form
+        $familyKey = $full + "|" + $form
         $family = $null
         if ($script:WinToolFileFamilyCache.ContainsKey($familyKey)) {
             $family = $script:WinToolFileFamilyCache[$familyKey]
         }
         else {
             try {
-                if ($form.StartsWith(".")) {
-                    $family = New-Object System.Windows.Media.FontFamily -ArgumentList $uri, $form
-                }
-                else {
-                    $family = [System.Windows.Media.FontFamily]::new($form)
-                }
+                $family = New-Object System.Windows.Media.FontFamily -ArgumentList $baseUri, $form
             }
             catch {
                 $null = $_.Exception.Message
@@ -11648,8 +11768,8 @@ function New-WinToolLoadedFont {
         [string]$Name = "",
         [string]$Source = ""
     )
-    # WPF does not see per-user fonts by family name. A file URI
-    # (file:///.../#Family Name) loads the face from HKCU or HKLM.
+    # WPF does not see per-user fonts by family name. The face is opened
+    # from the file, and FontFamily uses the folder URI plus ./file.ttf#Name.
     if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) { return $null }
     if ($null -eq $script:WinToolLoadedFontCache) { $script:WinToolLoadedFontCache = @{} }
     $cacheKey = $Path + "|" + $Id
@@ -11893,7 +12013,7 @@ function Split-WinToolCoveredText {
             # A system face can claim a private-use slot and still draw an empty
             # box. Those icons stay only when the face is a Nerd Font.
             if ($privateUse -and -not $item.Nerd) { continue }
-            if (Test-WinToolGlyphMapped -Glyph $item.Glyph -Code $code) { $face = $item; break }
+            if (Test-WinToolGlyphDrawable -Glyph $item.Glyph -Code $code) { $face = $item; break }
         }
         $chunk = [char]::ConvertFromUtf32($code)
         if ($null -eq $face) {
@@ -11902,7 +12022,7 @@ function Split-WinToolCoveredText {
             foreach ($item in $chain) {
                 $fits = $true
                 foreach ($part in @(Get-WinToolTextCode -Text $chunk)) {
-                    if (-not (Test-WinToolGlyphMapped -Glyph $item.Glyph -Code $part)) { $fits = $false; break }
+                    if (-not (Test-WinToolGlyphDrawable -Glyph $item.Glyph -Code $part)) { $fits = $false; break }
                 }
                 if ($fits) { $face = $item; break }
             }
@@ -11948,7 +12068,7 @@ function Test-WinToolPreviewTextCovered {
         $pieceText = [string]$piece.Text
         if ([string]::IsNullOrEmpty($pieceText)) { return $false }
         foreach ($code in @(Get-WinToolTextCode -Text $pieceText)) {
-            if (-not (Test-WinToolGlyphMapped -Glyph $piece.Glyph -Code $code)) { return $false }
+            if (-not (Test-WinToolGlyphDrawable -Glyph $piece.Glyph -Code $code)) { return $false }
         }
     }
     return $true
@@ -18144,12 +18264,12 @@ function Update-WinToolSimplePreview {
     $yellow = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "yellow" -Default "#EED49F")) -Palette $null
     $blue = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "blue" -Default "#6C9BFF")) -Palette $null
     $dim = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "brightBlack" -Default "#5B6680")) -Palette $null
+    $script:WinToolPreviewEmSize = [double]$sample.FontSize
     $sample.Inlines.Clear()
     $text = { param([string]$Value, [string]$Color) New-WinToolPreviewSegment -Text $Value -Foreground $Color }
     $addLine = {
         param([object[]]$Parts)
-        if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
-        foreach ($part in @($Parts)) { Add-WinToolPreviewRun -Inlines $sample.Inlines -Segment $part }
+        Add-WinToolPreviewLine -Inlines $sample.Inlines -Segment $Parts -EmSize ([double]$sample.FontSize) -Break
     }
     & $addLine @((& $text "PowerShell 7" $dim))
     & $addLine @((& $text " " ""))
@@ -18946,44 +19066,53 @@ public class WinToolThemeFilter {
 }
 
 function New-WinToolPreviewImage {
-    param([object[]]$Segment)
-    # One frozen drawing per theme. Each run uses a face that actually has
-    # those glyphs, so a missing Nerd Font becomes ASCII instead of an empty box.
+    param(
+        [object[]]$Segment,
+        [double]$EmSize = 14.0
+    )
+    # One frozen drawing per theme line, painted from each face's GlyphTypeface
+    # (GlyphRun). FontFamily by name is not used, so a per-user Nerd Font is
+    # not drawn as an empty box.
     $segments = @($Segment | Where-Object { $null -ne $_ -and -not [string]::IsNullOrEmpty([string]$_.Text) })
     if ($segments.Count -eq 0) { return $null }
-    $group = New-Object System.Windows.Media.DrawingGroup
-    $x = 0.0
-    $emSize = 14.0
-    $culture = [System.Globalization.CultureInfo]::CurrentUICulture
+    if ($EmSize -le 0) { $EmSize = 14.0 }
+    Initialize-WinToolGlyphDraw
+    $rows = New-Object System.Collections.Generic.List[object]
+    $lineHeight = $EmSize
+    $baseline = $EmSize * 0.8
     foreach ($segment in $segments) {
         $color = [string]$segment.Foreground
         if ([string]::IsNullOrWhiteSpace($color)) { $color = "#E8EDF7" }
         $fg = ConvertTo-WinToolPreviewBrush -Color $color
         if ($null -eq $fg) { continue }
-        $pieces = @(Split-WinToolCoveredText -Text ([string]$segment.Text))
-        $drawn = New-Object System.Collections.Generic.List[object]
+        $parts = New-Object System.Collections.Generic.List[object]
         $width = 0.0
-        $height = 1.0
-        foreach ($piece in $pieces) {
-            if ($null -eq $piece.Typeface -or [string]::IsNullOrEmpty([string]$piece.Text)) { continue }
-            try {
-                $formatted = New-Object System.Windows.Media.FormattedText ([string]$piece.Text), $culture, ([System.Windows.FlowDirection]::LeftToRight), $piece.Typeface, $emSize, $fg
-            }
-            catch {
-                $null = $_.Exception.Message
-                continue
-            }
-            $pieceWidth = [Math]::Max(0.0, $formatted.WidthIncludingTrailingWhitespace)
-            $height = [Math]::Max($height, [Math]::Max(1.0, $formatted.Height))
-            [void]$drawn.Add([pscustomobject]@{ Formatted = $formatted; Width = $pieceWidth })
+        foreach ($piece in @(Split-WinToolCoveredText -Text ([string]$segment.Text))) {
+            if ($null -eq $piece.Glyph -or [string]::IsNullOrEmpty([string]$piece.Text)) { continue }
+            $codes = [int[]]@(Get-WinToolTextCode -Text ([string]$piece.Text))
+            if ($codes.Count -eq 0) { continue }
+            $pieceWidth = [WinToolGlyphDraw]::Measure($piece.Glyph, $codes, $EmSize)
+            $lineHeight = [Math]::Max($lineHeight, [WinToolGlyphDraw]::LineHeight($piece.Glyph, $EmSize))
+            $baseline = [Math]::Max($baseline, [WinToolGlyphDraw]::Baseline($piece.Glyph, $EmSize))
+            [void]$parts.Add([pscustomobject]@{ Glyph = $piece.Glyph; Codes = $codes; Width = $pieceWidth; Brush = $fg })
             $width += $pieceWidth
         }
-        if ($drawn.Count -eq 0) { continue }
-        $fillName = [string]$segment.Background
+        if ($parts.Count -eq 0) { continue }
+        [void]$rows.Add([pscustomobject]@{
+            Parts = $parts.ToArray()
+            Width = $width
+            Background = [string]$segment.Background
+        })
+    }
+    if ($rows.Count -eq 0) { return $null }
+    $group = New-Object System.Windows.Media.DrawingGroup
+    $x = 0.0
+    foreach ($row in $rows) {
+        $fillName = [string]$row.Background
         if (-not [string]::IsNullOrWhiteSpace($fillName)) {
             $fill = ConvertTo-WinToolPreviewBrush -Color $fillName
             if ($null -ne $fill) {
-                $rect = New-Object System.Windows.Media.RectangleGeometry ([System.Windows.Rect]::new($x, 0.0, $width, $height))
+                $rect = New-Object System.Windows.Media.RectangleGeometry ([System.Windows.Rect]::new($x, 0.0, [double]$row.Width, $lineHeight))
                 if ($rect.CanFreeze) { $rect.Freeze() }
                 $back = New-Object System.Windows.Media.GeometryDrawing $fill, $null, $rect
                 if ($back.CanFreeze) { $back.Freeze() }
@@ -18991,20 +19120,17 @@ function New-WinToolPreviewImage {
             }
         }
         $pieceX = $x
-        for ($pieceIndex = 0; $pieceIndex -lt $drawn.Count; $pieceIndex++) {
-            $item = $drawn[$pieceIndex]
-            $geo = $null
-            try { $geo = $item.Formatted.BuildGeometry([System.Windows.Point]::new($pieceX, 0.0)) }
-            catch { $null = $_.Exception.Message }
-            if ($null -ne $geo) {
-                if ($geo.CanFreeze) { $geo.Freeze() }
-                $glyph = New-Object System.Windows.Media.GeometryDrawing $fg, $null, $geo
+        foreach ($part in @($row.Parts)) {
+            $run = $null
+            try { $run = [WinToolGlyphDraw]::MakeRun($part.Glyph, [int[]]$part.Codes, $EmSize, $pieceX, $baseline) } catch { $null = $_.Exception.Message }
+            if ($null -ne $run) {
+                $glyph = New-Object System.Windows.Media.GlyphRunDrawing $part.Brush, $run
                 if ($glyph.CanFreeze) { $glyph.Freeze() }
                 [void]$group.Children.Add($glyph)
             }
-            $pieceX += [double]$item.Width
+            $pieceX += [double]$part.Width
         }
-        $x += $width
+        $x += [double]$row.Width
     }
     if ($group.Children.Count -eq 0) { return $null }
     if ($group.CanFreeze) { $group.Freeze() }
@@ -19181,24 +19307,44 @@ function Set-WinToolLigatureTypography {
     [System.Windows.Documents.Typography]::SetContextualAlternates($Element, $true)
 }
 
+function Add-WinToolPreviewLine {
+    param(
+        $Inlines,
+        [object[]]$Segment,
+        [double]$EmSize = 0,
+        [switch]$Break
+    )
+    # One GlyphRun image for the whole line, so every icon is painted from
+    # the file face that covers it.
+    if ($null -eq $Inlines) { return }
+    if ($EmSize -le 0) { $EmSize = [double]$script:WinToolPreviewEmSize }
+    if ($EmSize -le 0) { $EmSize = 14.0 }
+    $parts = @($Segment | Where-Object { $null -ne $_ })
+    $source = New-WinToolPreviewImage -Segment $parts -EmSize $EmSize
+    if ($null -eq $source) { return }
+    if ($Break -and $Inlines.Count -gt 0) {
+        [void]$Inlines.Add((New-Object System.Windows.Documents.LineBreak))
+    }
+    $image = New-Object System.Windows.Controls.Image
+    $image.Source = $source
+    $image.Stretch = [System.Windows.Media.Stretch]::None
+    $image.SnapsToDevicePixels = $true
+    $text = ""
+    foreach ($part in $parts) { $text += [string]$part.Text }
+    $image.Tag = [pscustomobject]@{ Text = $text; Parts = $parts }
+    $container = New-Object System.Windows.Documents.InlineUIContainer
+    $container.Child = $image
+    $container.BaselineAlignment = "Bottom"
+    [void]$Inlines.Add($container)
+}
+
 function Add-WinToolPreviewRun {
     param(
         $Inlines,
-        $Segment
+        $Segment,
+        [double]$EmSize = 0
     )
-    # One run per face, so a glyph the chosen font lacks is drawn by the next
-    # face in the chain, or by an ASCII stand-in.
-    $pieces = @(Split-WinToolCoveredText -Text ([string]$Segment.Text))
-    if ($pieces.Count -eq 0) { return }
-    $brush = ConvertTo-WinToolPreviewBrush -Color ([string]$Segment.Foreground)
-    $fill = ConvertTo-WinToolPreviewBrush -Color ([string]$Segment.Background)
-    foreach ($piece in $pieces) {
-        $run = New-Object System.Windows.Documents.Run -ArgumentList ([string]$piece.Text)
-        if ($null -ne $piece.Family) { $run.FontFamily = $piece.Family }
-        if ($null -ne $brush) { $run.Foreground = $brush }
-        if ($null -ne $fill) { $run.Background = $fill }
-        [void]$Inlines.Add($run)
-    }
+    Add-WinToolPreviewLine -Inlines $Inlines -Segment @($Segment) -EmSize $EmSize
 }
 
 function Build-WinToolExtraToggle {
@@ -19663,11 +19809,11 @@ function Update-WinToolTerminalPreview {
         $blue = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "blue" -Default "#6C9BFF")) -Palette $null
         $dim = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "brightBlack" -Default "#5B6680")) -Palette $null
 
+        $script:WinToolPreviewEmSize = [double]$sample.FontSize
         $sample.Inlines.Clear()
         $addLine = {
             param([object[]]$Parts)
-            if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
-            foreach ($part in @($Parts)) { Add-WinToolPreviewRun -Inlines $sample.Inlines -Segment $part }
+            Add-WinToolPreviewLine -Inlines $sample.Inlines -Segment $Parts -EmSize ([double]$sample.FontSize) -Break
         }
         $text = { param([string]$Value, [string]$Color) New-WinToolPreviewSegment -Text $Value -Foreground $Color }
         $header = "PowerShell 7"

@@ -1124,6 +1124,13 @@ Invoke-WinToolCase -Name "Prompt glyphs have an ASCII fallback" -Body {
     }
 }
 
+Invoke-WinToolCase -Name "Font folder URIs end with a slash" -Body {
+    $path = Join-Path ([System.IO.Path]::GetTempPath()) "WinTool-font-check.ttf"
+    $uri = Get-WinToolFontFolderUri -Path $path
+    Test-WinToolExpectation -Condition ($null -ne $uri -and $uri.IsAbsoluteUri) -Message "The font folder URI is absolute."
+    Test-WinToolExpectation -Condition ($uri.AbsoluteUri.EndsWith("/")) -Message "The font folder URI ends with a slash."
+}
+
 Invoke-WinToolCase -Name "Prompt styles: preview, WSL setup, and powerline-go flags" -Body {
     $catalog = Get-WinToolTerminalCatalog
     foreach ($property in @((Get-WinToolNote -Object $catalog -Name "promptVariants").PSObject.Properties)) {

@@ -800,6 +800,165 @@ function Test-WinToolPrivateUseText {
     return $false
 }
 
+function Get-WinToolPreviewSamplePiece {
+    param($Sample)
+    $list = New-Object System.Collections.Generic.List[object]
+    if ($null -eq $Sample) { return @() }
+    foreach ($inline in @($Sample.Inlines)) {
+        if ($inline -is [System.Windows.Documents.Run]) {
+            $fill = $null
+            if ($null -ne $inline.Background) { $fill = [string]$inline.Background }
+            [void]$list.Add([pscustomobject]@{ Text = [string]$inline.Text; Background = $fill })
+            continue
+        }
+        if ($inline -isnot [System.Windows.Documents.InlineUIContainer] -or $null -eq $inline.Child) { continue }
+        $tag = $inline.Child.Tag
+        if ($null -eq $tag) { continue }
+        $parts = $null
+        if ($null -ne $tag.PSObject.Properties["Parts"]) { $parts = @($tag.Parts) }
+        if ($null -ne $parts -and $parts.Count -gt 0) {
+            foreach ($part in $parts) { [void]$list.Add($part) }
+        }
+        else {
+            [void]$list.Add($tag)
+        }
+    }
+    return $list.ToArray()
+}
+
+function Get-WinToolSampleInlineText {
+    param($Sample)
+    $drawn = New-Object System.Text.StringBuilder
+    foreach ($piece in @(Get-WinToolPreviewSamplePiece -Sample $Sample)) {
+        [void]$drawn.Append([string]$piece.Text)
+    }
+    return $drawn.ToString()
+}
+
+function Assert-WinToolPreviewImagePixel {
+    param(
+        $Image,
+        [int]$Code,
+        [string]$Label
+    )
+    if ($null -eq $Image) { throw ($Label + " U+" + $Code.ToString("X") + " produced no preview image.") }
+    $imageWidth = $Image.Width
+    $imageHeight = $Image.Height
+    if ([double]::IsNaN($imageWidth) -or $imageWidth -le 0) { $imageWidth = 48 }
+    if ([double]::IsNaN($imageHeight) -or $imageHeight -le 0) { $imageHeight = 48 }
+    $width = [Math]::Max(16, [int][Math]::Ceiling($imageWidth) + 8)
+    $height = [Math]::Max(16, [int][Math]::Ceiling($imageHeight) + 8)
+    $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap($width, $height, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    $visual = New-Object System.Windows.Media.DrawingVisual
+    $context = $visual.RenderOpen()
+    $context.DrawImage($Image, [System.Windows.Rect]::new(2, 2, $imageWidth, $imageHeight))
+    $context.Close()
+    $bitmap.Render($visual)
+    $pixels = New-Object byte[] ($width * $height * 4)
+    $bitmap.CopyPixels($pixels, $width * 4, 0)
+    $lit = 0
+    $minX = $width
+    $minY = $height
+    $maxX = -1
+    $maxY = -1
+    for ($y = 0; $y -lt $height; $y++) {
+        for ($x = 0; $x -lt $width; $x++) {
+            $index = (($y * $width) + $x) * 4
+            if ($pixels[$index + 3] -lt 32) { continue }
+            $lit++
+            if ($x -lt $minX) { $minX = $x }
+            if ($y -lt $minY) { $minY = $y }
+            if ($x -gt $maxX) { $maxX = $x }
+            if ($y -gt $maxY) { $maxY = $y }
+        }
+    }
+    if ($lit -lt 8) {
+        throw ($Label + " U+" + $Code.ToString("X") + " drew too few pixels (" + $lit + ").")
+    }
+    if ($Code -eq 0xE0B0) {
+        $area = ($maxX - $minX + 1) * ($maxY - $minY + 1)
+        if ($area -le 0) { throw ($Label + " U+E0B0 has an empty bounding box.") }
+        $ratio = $lit / $area
+        # A powerline arrow is a triangle. A solid tofu box fills almost all of
+        # its bounds; a hollow .notdef box has a similar left and right edge.
+        if ($ratio -gt 0.92) {
+            throw ($Label + " U+E0B0 looks like a solid box (fill " + ("{0:0.00}" -f $ratio) + ").")
+        }
+        $span = $maxX - $minX + 1
+        $edge = [Math]::Max(1, [int]($span * 0.28))
+        $leftLit = 0
+        $rightLit = 0
+        for ($y = $minY; $y -le $maxY; $y++) {
+            for ($x = $minX; $x -lt ($minX + $edge); $x++) {
+                $index = (($y * $width) + $x) * 4
+                if ($pixels[$index + 3] -ge 32) { $leftLit++ }
+            }
+            for ($x = ($maxX - $edge + 1); $x -le $maxX; $x++) {
+                $index = (($y * $width) + $x) * 4
+                if ($pixels[$index + 3] -ge 32) { $rightLit++ }
+            }
+        }
+        if ($rightLit -ge ($leftLit * 0.7) -and $ratio -lt 0.35) {
+            throw ($Label + " U+E0B0 looks like a hollow box (fill " + ("{0:0.00}" -f $ratio) + ").")
+        }
+    }
+}
+
+function Assert-WinToolNerdFontGeometry {
+    $best = Get-WinToolBestNerdFont
+    if ($null -eq $best -or $null -eq $best.Glyph) { throw "No Nerd Font loaded for the outline check." }
+    $codes = @(0xE0B0, 0xE0A0, 0xF07B, 0xE0B4, 0xE0B6, 0xF418, 0xE718, 0xF489, 0xF126)
+    foreach ($code in $codes) {
+        if (-not (Test-WinToolGlyphDrawable -Glyph $best.Glyph -Code $code)) {
+            throw ("U+" + $code.ToString("X") + " is not drawable in " + [string]$best.FamilyName + ".")
+        }
+        $probe = [char]::ConvertFromUtf32([int]$code)
+        $pieces = @(Split-WinToolCoveredText -Text $probe)
+        if ($pieces.Count -ne 1 -or [string]$pieces[0].Text -ne $probe -or [string]$pieces[0].Path -ne [string]$best.Path) {
+            throw ("U+" + $code.ToString("X") + " was not kept on " + [string]$best.FamilyName + ".")
+        }
+        $image = New-WinToolPreviewImage -Segment @([pscustomobject]@{ Text = $probe; Foreground = "#FFFF00"; Background = $null }) -EmSize 48
+        Assert-WinToolPreviewImagePixel -Image $image -Code $code -Label ([string]$best.FamilyName)
+    }
+    Write-Output ("Outlined " + $codes.Count + " Nerd Font icons from " + [string]$best.FamilyName)
+}
+
+function Assert-WinToolLivePreviewPixel {
+    param([string]$Label)
+    $preview = $window.FindName("TerminalFontPreview")
+    if ($null -eq $preview) { throw ($Label + ": TerminalFontPreview is missing.") }
+    $rootVisual.UpdateLayout()
+    $width = [Math]::Max(1, [int][Math]::Ceiling($preview.ActualWidth))
+    $height = [Math]::Max(1, [int][Math]::Ceiling($preview.ActualHeight))
+    if ($width -lt 16 -or $height -lt 16) {
+        throw ($Label + " live preview was too small to inspect: " + $width + "x" + $height + ".")
+    }
+    $bitmap = New-Object System.Windows.Media.Imaging.RenderTargetBitmap($width, $height, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    $bitmap.Render($preview)
+    $pixels = New-Object byte[] ($width * $height * 4)
+    $bitmap.CopyPixels($pixels, $width * 4, 0)
+    $scheme = Get-WinToolTerminalScheme
+    $background = ConvertTo-WinToolPreviewColor -Value ([string]$scheme.background) -Palette $null
+    $bgR = 27; $bgG = 34; $bgB = 48
+    if ($background -match '^#(?<a>[0-9A-Fa-f]{2})?(?<r>[0-9A-Fa-f]{2})(?<g>[0-9A-Fa-f]{2})(?<b>[0-9A-Fa-f]{2})$') {
+        $bgR = [Convert]::ToInt32($Matches.r, 16)
+        $bgG = [Convert]::ToInt32($Matches.g, 16)
+        $bgB = [Convert]::ToInt32($Matches.b, 16)
+    }
+    $lit = 0
+    for ($index = 0; $index -lt $pixels.Length; $index += 4) {
+        if ($pixels[$index + 3] -lt 32) { continue }
+        $db = [Math]::Abs([int]$pixels[$index] - $bgB)
+        $dg = [Math]::Abs([int]$pixels[$index + 1] - $bgG)
+        $dr = [Math]::Abs([int]$pixels[$index + 2] - $bgR)
+        if (($dr + $dg + $db) -gt 36) { $lit++ }
+    }
+    if ($lit -lt 40) {
+        throw ($Label + " live preview has too few non-background pixels (" + $lit + ").")
+    }
+    Write-Output ($Label + " live preview has " + $lit + " non-background pixels.")
+}
+
 function Assert-WinToolSampleGlyph {
     param(
         $Sample,
@@ -807,31 +966,19 @@ function Assert-WinToolSampleGlyph {
         [switch]$ForbidPrivateUse
     )
     if ($null -eq $Sample) { throw ($Label + " sample is missing.") }
-    $drawn = New-Object System.Text.StringBuilder
-    $runCount = 0
-    foreach ($inline in @($Sample.Inlines)) {
-        if ($inline -isnot [System.Windows.Documents.Run]) { continue }
-        $runCount++
-        $runText = [string]$inline.Text
-        [void]$drawn.Append($runText)
-        $family = $inline.FontFamily
-        if ($null -eq $family) { $family = $Sample.FontFamily }
-        $typeface = New-Object System.Windows.Media.Typeface(
-            $family,
-            [System.Windows.FontStyles]::Normal,
-            [System.Windows.FontWeights]::Normal,
-            [System.Windows.FontStretches]::Normal)
-        $glyph = Get-WinToolTypefaceGlyph -Typeface $typeface
-        if ($null -eq $glyph) { throw ($Label + " run has no glyph face for '" + $runText + "'.") }
-        foreach ($code in @(Get-WinToolTextCode -Text $runText)) {
-            if (-not (Test-WinToolGlyphMapped -Glyph $glyph -Code $code)) {
-                throw ($Label + " is missing U+" + $code.ToString("X") + " in " + [string]$family.Source)
-            }
-        }
-    }
-    if ($runCount -eq 0 -or $drawn.Length -eq 0) { throw ($Label + " drew no text.") }
-    if ($ForbidPrivateUse -and (Test-WinToolPrivateUseText -Text $drawn.ToString())) {
+    $drawn = Get-WinToolSampleInlineText -Sample $Sample
+    if ([string]::IsNullOrEmpty($drawn)) { throw ($Label + " drew no text.") }
+    if ($ForbidPrivateUse -and (Test-WinToolPrivateUseText -Text $drawn)) {
         throw ($Label + " still draws a private-use glyph.")
+    }
+    if ($ForbidPrivateUse) { return }
+    $best = Get-WinToolBestNerdFont
+    if ($null -eq $best -or $null -eq $best.Glyph) { return }
+    foreach ($code in @(Get-WinToolTextCode -Text $drawn)) {
+        if ($code -lt 0xE000 -or $code -gt 0xF8FF) { continue }
+        if (-not (Test-WinToolGlyphDrawable -Glyph $best.Glyph -Code $code)) {
+            throw ($Label + " U+" + $code.ToString("X") + " has no outline in " + [string]$best.FamilyName + ".")
+        }
     }
 }
 
@@ -863,6 +1010,9 @@ function Assert-WinToolCatalogGlyph {
             $pieces = @(Split-WinToolCoveredText -Text $probe)
             if ($pieces.Count -ne 1 -or [string]$pieces[0].Text -ne $probe -or [string]$pieces[0].Path -ne [string]$best.Path) {
                 throw ("U+" + ([int]$code).ToString("X") + " was not drawn from " + [string]$best.FamilyName + ".")
+            }
+            if (-not (Test-WinToolGlyphDrawable -Glyph $best.Glyph -Code $code)) {
+                throw ("U+" + ([int]$code).ToString("X") + " has no outline in " + [string]$best.FamilyName + ".")
             }
         }
     }
@@ -1033,7 +1183,7 @@ Update-WinToolTerminalPreview
 if ([string]$styleList.SelectedItem.Tag -ne "rainbow" -or $styleList.Items.Count -lt 4) {
     throw "Powerlevel10k should list its styles with Rainbow selected."
 }
-$blocks = @($window.FindName("TerminalFontSample").Inlines | Where-Object { $_ -is [System.Windows.Documents.Run] -and $null -ne $_.Background })
+$blocks = @(Get-WinToolPreviewSamplePiece -Sample $window.FindName("TerminalFontSample") | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Background) })
 if ($blocks.Count -lt 2) { throw "The Rainbow preview should draw colored blocks." }
 $planText = (@(Get-WinToolTerminalPlan -Selection $script:WinToolTerminalChoice | ForEach-Object { [string]$_.Label }) -join " | ")
 Write-Output ("Powerlevel10k plan: " + $planText)
@@ -1048,7 +1198,7 @@ $script:WinToolTerminalChoice.promptStyle = "pastel-powerline"
 Update-WinToolPromptStyleList
 Update-WinToolTerminalSummary
 Update-WinToolTerminalPreview
-$blocks = @($window.FindName("TerminalFontSample").Inlines | Where-Object { $_ -is [System.Windows.Documents.Run] -and $null -ne $_.Background })
+$blocks = @(Get-WinToolPreviewSamplePiece -Sample $window.FindName("TerminalFontSample") | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.Background) })
 if ($blocks.Count -lt 2) { throw "The Starship Pastel powerline preview should draw colored blocks." }
 Save-WinToolTerminalShot -Name "terminal-starship" -Width 1280 -Height 800
 Save-WinToolTerminalShot -Name "terminal-starship-no-nerd" -Width 1280 -Height 800
@@ -1056,26 +1206,22 @@ Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label 
 Install-WinToolPerUserNerdFont
 Assert-WinToolCatalogGlyph -RequireNerd
 Update-WinToolTerminalPreview
+Assert-WinToolNerdFontGeometry
 Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label "Starship with a Nerd Font"
-$withNerd = New-Object System.Text.StringBuilder
-foreach ($inline in @($window.FindName("TerminalFontSample").Inlines)) {
-    if ($inline -is [System.Windows.Documents.Run]) { [void]$withNerd.Append([string]$inline.Text) }
-}
-if (-not (Test-WinToolPrivateUseText -Text $withNerd.ToString())) {
+$withNerd = Get-WinToolSampleInlineText -Sample $window.FindName("TerminalFontSample")
+if (-not (Test-WinToolPrivateUseText -Text $withNerd)) {
     throw "The Nerd Font preview substituted the icons instead of drawing them."
 }
 Save-WinToolTerminalShot -Name "terminal-starship-with-nerd" -Width 1280 -Height 800
+Assert-WinToolLivePreviewPixel -Label "Starship with a Nerd Font"
 foreach ($engine in $engines) {
     Select-WinToolTerminalPrompt -PromptId ([string]$engine.id)
     Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label ([string]$engine.id + " with a Nerd Font")
 }
 Update-WinToolSimplePreview
 Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalSimpleSample") -Label "Simple with a Nerd Font"
-$simpleDrawn = New-Object System.Text.StringBuilder
-foreach ($inline in @($window.FindName("TerminalSimpleSample").Inlines)) {
-    if ($inline -is [System.Windows.Documents.Run]) { [void]$simpleDrawn.Append([string]$inline.Text) }
-}
-if (-not (Test-WinToolPrivateUseText -Text $simpleDrawn.ToString())) {
+$simpleDrawn = Get-WinToolSampleInlineText -Sample $window.FindName("TerminalSimpleSample")
+if (-not (Test-WinToolPrivateUseText -Text $simpleDrawn)) {
     throw "The Simple preview substituted the icons instead of drawing them."
 }
 $script:WinToolTerminalChoice.prompt = "oh-my-zsh"

@@ -849,6 +849,105 @@ function Test-WinToolGlyphMapped {
     return [WinToolGlyphMap]::Has($Glyph, [int]$Code)
 }
 
+function Initialize-WinToolGlyphDraw {
+    # GlyphRun and GetGlyphOutline live here so previews can paint a file
+    # face without going through FontFamily by name.
+    if ($null -ne ("WinToolGlyphDraw" -as [type])) { return }
+    Add-Type -AssemblyName PresentationCore
+    Add-Type -AssemblyName WindowsBase
+    $refs = @(
+        [System.Windows.Media.GlyphTypeface].Assembly.Location,
+        [System.Windows.Point].Assembly.Location
+    )
+    Add-Type -ReferencedAssemblies $refs -TypeDefinition @"
+using System;
+using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Media;
+public static class WinToolGlyphDraw {
+    public static bool HasOutline(GlyphTypeface face, int code) {
+        if (face == null) return false;
+        ushort index;
+        if (!face.CharacterToGlyphMap.TryGetValue(code, out index) || index == 0) return false;
+        try {
+            Geometry geometry = face.GetGlyphOutline(index, 12.0, 12.0);
+            if (geometry == null || geometry.IsEmpty()) return false;
+            Rect bounds = geometry.Bounds;
+            return bounds.Width > 0.15 || bounds.Height > 0.15;
+        }
+        catch {
+            return false;
+        }
+    }
+
+    public static GlyphRun MakeRun(GlyphTypeface face, int[] codes, double emSize, double x, double y) {
+        if (face == null || codes == null || codes.Length == 0 || emSize <= 0) return null;
+        List<ushort> indices = new List<ushort>();
+        List<double> advances = new List<double>();
+        for (int i = 0; i < codes.Length; i++) {
+            ushort index;
+            if (!face.CharacterToGlyphMap.TryGetValue(codes[i], out index) || index == 0) continue;
+            indices.Add(index);
+            advances.Add(face.AdvanceWidths[index] * emSize);
+        }
+        if (indices.Count == 0) return null;
+        return new GlyphRun(
+            face,
+            0,
+            false,
+            emSize,
+            indices,
+            new Point(x, y),
+            advances,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
+    }
+
+    public static double Measure(GlyphTypeface face, int[] codes, double emSize) {
+        if (face == null || codes == null || emSize <= 0) return 0;
+        double width = 0;
+        for (int i = 0; i < codes.Length; i++) {
+            ushort index;
+            if (!face.CharacterToGlyphMap.TryGetValue(codes[i], out index) || index == 0) continue;
+            width += face.AdvanceWidths[index] * emSize;
+        }
+        return width;
+    }
+
+    public static double LineHeight(GlyphTypeface face, double emSize) {
+        if (face == null || emSize <= 0) return emSize;
+        double height = face.Height * emSize;
+        if (height <= 0) return emSize * 1.2;
+        return height;
+    }
+
+    public static double Baseline(GlyphTypeface face, double emSize) {
+        if (face == null || emSize <= 0) return emSize * 0.8;
+        double baseline = face.Baseline * emSize;
+        if (baseline <= 0) return emSize * 0.8;
+        return baseline;
+    }
+}
+"@
+}
+
+function Test-WinToolGlyphDrawable {
+    param(
+        $Glyph,
+        [int]$Code
+    )
+    # A cmap hit is not enough: some faces reserve a private-use slot and
+    # still draw an empty box. Spaces are advance-only and have no outline.
+    if (-not (Test-WinToolGlyphMapped -Glyph $Glyph -Code $Code)) { return $false }
+    if ($Code -eq 0x20 -or $Code -eq 0xA0 -or $Code -eq 0x3000) { return $true }
+    Initialize-WinToolGlyphDraw
+    return [WinToolGlyphDraw]::HasOutline($Glyph, [int]$Code)
+}
+
 function Test-WinToolSameFontFile {
     param(
         $Glyph,
@@ -871,6 +970,20 @@ function Test-WinToolSameFontFile {
     }
 }
 
+function Get-WinToolFontFolderUri {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path
+    )
+    # WPF wants the folder, with a trailing slash, as the base URI.
+    $full = [System.IO.Path]::GetFullPath($Path)
+    $folder = [System.IO.Path]::GetDirectoryName($full)
+    $slash = [System.IO.Path]::DirectorySeparatorChar
+    if (-not $folder.EndsWith([string]$slash) -and -not $folder.EndsWith("/")) {
+        $folder = $folder + $slash
+    }
+    return New-Object System.Uri -ArgumentList $folder, ([System.UriKind]::Absolute)
+}
+
 function Test-WinToolFileTypeface {
     param(
         [string]$Path,
@@ -878,25 +991,32 @@ function Test-WinToolFileTypeface {
     )
     if ([string]::IsNullOrWhiteSpace($Path) -or [string]::IsNullOrWhiteSpace($FamilyName)) { return $null }
     if ($null -eq $script:WinToolFileFamilyCache) { $script:WinToolFileFamilyCache = @{} }
-    $uri = New-Object System.Uri -ArgumentList $Path
+    $full = [System.IO.Path]::GetFullPath($Path)
+    $fileName = [System.IO.Path]::GetFileName($full)
+    $baseUri = $null
+    try {
+        $baseUri = Get-WinToolFontFolderUri -Path $full
+    }
+    catch {
+        $null = $_.Exception.Message
+        return $null
+    }
+    # Folder URI plus ./file.ttf#Family is the documented WPF form. ./#Family
+    # loads any face in that folder and is the fallback when the file name
+    # is not accepted.
     $forms = @(
-        ($uri.AbsoluteUri + "#" + $FamilyName),
+        ("./" + $fileName + "#" + $FamilyName),
         ("./#" + $FamilyName)
     )
     foreach ($form in $forms) {
-        $familyKey = $Path + "|" + $form
+        $familyKey = $full + "|" + $form
         $family = $null
         if ($script:WinToolFileFamilyCache.ContainsKey($familyKey)) {
             $family = $script:WinToolFileFamilyCache[$familyKey]
         }
         else {
             try {
-                if ($form.StartsWith(".")) {
-                    $family = New-Object System.Windows.Media.FontFamily -ArgumentList $uri, $form
-                }
-                else {
-                    $family = [System.Windows.Media.FontFamily]::new($form)
-                }
+                $family = New-Object System.Windows.Media.FontFamily -ArgumentList $baseUri, $form
             }
             catch {
                 $null = $_.Exception.Message
@@ -939,8 +1059,8 @@ function New-WinToolLoadedFont {
         [string]$Name = "",
         [string]$Source = ""
     )
-    # WPF does not see per-user fonts by family name. A file URI
-    # (file:///.../#Family Name) loads the face from HKCU or HKLM.
+    # WPF does not see per-user fonts by family name. The face is opened
+    # from the file, and FontFamily uses the folder URI plus ./file.ttf#Name.
     if ([string]::IsNullOrWhiteSpace($Path) -or -not (Test-Path -LiteralPath $Path)) { return $null }
     if ($null -eq $script:WinToolLoadedFontCache) { $script:WinToolLoadedFontCache = @{} }
     $cacheKey = $Path + "|" + $Id
@@ -1184,7 +1304,7 @@ function Split-WinToolCoveredText {
             # A system face can claim a private-use slot and still draw an empty
             # box. Those icons stay only when the face is a Nerd Font.
             if ($privateUse -and -not $item.Nerd) { continue }
-            if (Test-WinToolGlyphMapped -Glyph $item.Glyph -Code $code) { $face = $item; break }
+            if (Test-WinToolGlyphDrawable -Glyph $item.Glyph -Code $code) { $face = $item; break }
         }
         $chunk = [char]::ConvertFromUtf32($code)
         if ($null -eq $face) {
@@ -1193,7 +1313,7 @@ function Split-WinToolCoveredText {
             foreach ($item in $chain) {
                 $fits = $true
                 foreach ($part in @(Get-WinToolTextCode -Text $chunk)) {
-                    if (-not (Test-WinToolGlyphMapped -Glyph $item.Glyph -Code $part)) { $fits = $false; break }
+                    if (-not (Test-WinToolGlyphDrawable -Glyph $item.Glyph -Code $part)) { $fits = $false; break }
                 }
                 if ($fits) { $face = $item; break }
             }
@@ -1239,7 +1359,7 @@ function Test-WinToolPreviewTextCovered {
         $pieceText = [string]$piece.Text
         if ([string]::IsNullOrEmpty($pieceText)) { return $false }
         foreach ($code in @(Get-WinToolTextCode -Text $pieceText)) {
-            if (-not (Test-WinToolGlyphMapped -Glyph $piece.Glyph -Code $code)) { return $false }
+            if (-not (Test-WinToolGlyphDrawable -Glyph $piece.Glyph -Code $code)) { return $false }
         }
     }
     return $true

@@ -166,12 +166,12 @@ function Update-WinToolSimplePreview {
     $yellow = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "yellow" -Default "#EED49F")) -Palette $null
     $blue = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "blue" -Default "#6C9BFF")) -Palette $null
     $dim = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "brightBlack" -Default "#5B6680")) -Palette $null
+    $script:WinToolPreviewEmSize = [double]$sample.FontSize
     $sample.Inlines.Clear()
     $text = { param([string]$Value, [string]$Color) New-WinToolPreviewSegment -Text $Value -Foreground $Color }
     $addLine = {
         param([object[]]$Parts)
-        if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
-        foreach ($part in @($Parts)) { Add-WinToolPreviewRun -Inlines $sample.Inlines -Segment $part }
+        Add-WinToolPreviewLine -Inlines $sample.Inlines -Segment $Parts -EmSize ([double]$sample.FontSize) -Break
     }
     & $addLine @((& $text "PowerShell 7" $dim))
     & $addLine @((& $text " " ""))
@@ -968,44 +968,53 @@ public class WinToolThemeFilter {
 }
 
 function New-WinToolPreviewImage {
-    param([object[]]$Segment)
-    # One frozen drawing per theme. Each run uses a face that actually has
-    # those glyphs, so a missing Nerd Font becomes ASCII instead of an empty box.
+    param(
+        [object[]]$Segment,
+        [double]$EmSize = 14.0
+    )
+    # One frozen drawing per theme line, painted from each face's GlyphTypeface
+    # (GlyphRun). FontFamily by name is not used, so a per-user Nerd Font is
+    # not drawn as an empty box.
     $segments = @($Segment | Where-Object { $null -ne $_ -and -not [string]::IsNullOrEmpty([string]$_.Text) })
     if ($segments.Count -eq 0) { return $null }
-    $group = New-Object System.Windows.Media.DrawingGroup
-    $x = 0.0
-    $emSize = 14.0
-    $culture = [System.Globalization.CultureInfo]::CurrentUICulture
+    if ($EmSize -le 0) { $EmSize = 14.0 }
+    Initialize-WinToolGlyphDraw
+    $rows = New-Object System.Collections.Generic.List[object]
+    $lineHeight = $EmSize
+    $baseline = $EmSize * 0.8
     foreach ($segment in $segments) {
         $color = [string]$segment.Foreground
         if ([string]::IsNullOrWhiteSpace($color)) { $color = "#E8EDF7" }
         $fg = ConvertTo-WinToolPreviewBrush -Color $color
         if ($null -eq $fg) { continue }
-        $pieces = @(Split-WinToolCoveredText -Text ([string]$segment.Text))
-        $drawn = New-Object System.Collections.Generic.List[object]
+        $parts = New-Object System.Collections.Generic.List[object]
         $width = 0.0
-        $height = 1.0
-        foreach ($piece in $pieces) {
-            if ($null -eq $piece.Typeface -or [string]::IsNullOrEmpty([string]$piece.Text)) { continue }
-            try {
-                $formatted = New-Object System.Windows.Media.FormattedText ([string]$piece.Text), $culture, ([System.Windows.FlowDirection]::LeftToRight), $piece.Typeface, $emSize, $fg
-            }
-            catch {
-                $null = $_.Exception.Message
-                continue
-            }
-            $pieceWidth = [Math]::Max(0.0, $formatted.WidthIncludingTrailingWhitespace)
-            $height = [Math]::Max($height, [Math]::Max(1.0, $formatted.Height))
-            [void]$drawn.Add([pscustomobject]@{ Formatted = $formatted; Width = $pieceWidth })
+        foreach ($piece in @(Split-WinToolCoveredText -Text ([string]$segment.Text))) {
+            if ($null -eq $piece.Glyph -or [string]::IsNullOrEmpty([string]$piece.Text)) { continue }
+            $codes = [int[]]@(Get-WinToolTextCode -Text ([string]$piece.Text))
+            if ($codes.Count -eq 0) { continue }
+            $pieceWidth = [WinToolGlyphDraw]::Measure($piece.Glyph, $codes, $EmSize)
+            $lineHeight = [Math]::Max($lineHeight, [WinToolGlyphDraw]::LineHeight($piece.Glyph, $EmSize))
+            $baseline = [Math]::Max($baseline, [WinToolGlyphDraw]::Baseline($piece.Glyph, $EmSize))
+            [void]$parts.Add([pscustomobject]@{ Glyph = $piece.Glyph; Codes = $codes; Width = $pieceWidth; Brush = $fg })
             $width += $pieceWidth
         }
-        if ($drawn.Count -eq 0) { continue }
-        $fillName = [string]$segment.Background
+        if ($parts.Count -eq 0) { continue }
+        [void]$rows.Add([pscustomobject]@{
+            Parts = $parts.ToArray()
+            Width = $width
+            Background = [string]$segment.Background
+        })
+    }
+    if ($rows.Count -eq 0) { return $null }
+    $group = New-Object System.Windows.Media.DrawingGroup
+    $x = 0.0
+    foreach ($row in $rows) {
+        $fillName = [string]$row.Background
         if (-not [string]::IsNullOrWhiteSpace($fillName)) {
             $fill = ConvertTo-WinToolPreviewBrush -Color $fillName
             if ($null -ne $fill) {
-                $rect = New-Object System.Windows.Media.RectangleGeometry ([System.Windows.Rect]::new($x, 0.0, $width, $height))
+                $rect = New-Object System.Windows.Media.RectangleGeometry ([System.Windows.Rect]::new($x, 0.0, [double]$row.Width, $lineHeight))
                 if ($rect.CanFreeze) { $rect.Freeze() }
                 $back = New-Object System.Windows.Media.GeometryDrawing $fill, $null, $rect
                 if ($back.CanFreeze) { $back.Freeze() }
@@ -1013,20 +1022,17 @@ function New-WinToolPreviewImage {
             }
         }
         $pieceX = $x
-        for ($pieceIndex = 0; $pieceIndex -lt $drawn.Count; $pieceIndex++) {
-            $item = $drawn[$pieceIndex]
-            $geo = $null
-            try { $geo = $item.Formatted.BuildGeometry([System.Windows.Point]::new($pieceX, 0.0)) }
-            catch { $null = $_.Exception.Message }
-            if ($null -ne $geo) {
-                if ($geo.CanFreeze) { $geo.Freeze() }
-                $glyph = New-Object System.Windows.Media.GeometryDrawing $fg, $null, $geo
+        foreach ($part in @($row.Parts)) {
+            $run = $null
+            try { $run = [WinToolGlyphDraw]::MakeRun($part.Glyph, [int[]]$part.Codes, $EmSize, $pieceX, $baseline) } catch { $null = $_.Exception.Message }
+            if ($null -ne $run) {
+                $glyph = New-Object System.Windows.Media.GlyphRunDrawing $part.Brush, $run
                 if ($glyph.CanFreeze) { $glyph.Freeze() }
                 [void]$group.Children.Add($glyph)
             }
-            $pieceX += [double]$item.Width
+            $pieceX += [double]$part.Width
         }
-        $x += $width
+        $x += [double]$row.Width
     }
     if ($group.Children.Count -eq 0) { return $null }
     if ($group.CanFreeze) { $group.Freeze() }
@@ -1203,24 +1209,44 @@ function Set-WinToolLigatureTypography {
     [System.Windows.Documents.Typography]::SetContextualAlternates($Element, $true)
 }
 
+function Add-WinToolPreviewLine {
+    param(
+        $Inlines,
+        [object[]]$Segment,
+        [double]$EmSize = 0,
+        [switch]$Break
+    )
+    # One GlyphRun image for the whole line, so every icon is painted from
+    # the file face that covers it.
+    if ($null -eq $Inlines) { return }
+    if ($EmSize -le 0) { $EmSize = [double]$script:WinToolPreviewEmSize }
+    if ($EmSize -le 0) { $EmSize = 14.0 }
+    $parts = @($Segment | Where-Object { $null -ne $_ })
+    $source = New-WinToolPreviewImage -Segment $parts -EmSize $EmSize
+    if ($null -eq $source) { return }
+    if ($Break -and $Inlines.Count -gt 0) {
+        [void]$Inlines.Add((New-Object System.Windows.Documents.LineBreak))
+    }
+    $image = New-Object System.Windows.Controls.Image
+    $image.Source = $source
+    $image.Stretch = [System.Windows.Media.Stretch]::None
+    $image.SnapsToDevicePixels = $true
+    $text = ""
+    foreach ($part in $parts) { $text += [string]$part.Text }
+    $image.Tag = [pscustomobject]@{ Text = $text; Parts = $parts }
+    $container = New-Object System.Windows.Documents.InlineUIContainer
+    $container.Child = $image
+    $container.BaselineAlignment = "Bottom"
+    [void]$Inlines.Add($container)
+}
+
 function Add-WinToolPreviewRun {
     param(
         $Inlines,
-        $Segment
+        $Segment,
+        [double]$EmSize = 0
     )
-    # One run per face, so a glyph the chosen font lacks is drawn by the next
-    # face in the chain, or by an ASCII stand-in.
-    $pieces = @(Split-WinToolCoveredText -Text ([string]$Segment.Text))
-    if ($pieces.Count -eq 0) { return }
-    $brush = ConvertTo-WinToolPreviewBrush -Color ([string]$Segment.Foreground)
-    $fill = ConvertTo-WinToolPreviewBrush -Color ([string]$Segment.Background)
-    foreach ($piece in $pieces) {
-        $run = New-Object System.Windows.Documents.Run -ArgumentList ([string]$piece.Text)
-        if ($null -ne $piece.Family) { $run.FontFamily = $piece.Family }
-        if ($null -ne $brush) { $run.Foreground = $brush }
-        if ($null -ne $fill) { $run.Background = $fill }
-        [void]$Inlines.Add($run)
-    }
+    Add-WinToolPreviewLine -Inlines $Inlines -Segment @($Segment) -EmSize $EmSize
 }
 
 function Build-WinToolExtraToggle {
@@ -1685,11 +1711,11 @@ function Update-WinToolTerminalPreview {
         $blue = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "blue" -Default "#6C9BFF")) -Palette $null
         $dim = ConvertTo-WinToolPreviewColor -Value ([string](Get-WinToolNote -Object $palette -Name "brightBlack" -Default "#5B6680")) -Palette $null
 
+        $script:WinToolPreviewEmSize = [double]$sample.FontSize
         $sample.Inlines.Clear()
         $addLine = {
             param([object[]]$Parts)
-            if ($sample.Inlines.Count -gt 0) { $sample.Inlines.Add((New-Object System.Windows.Documents.LineBreak)) }
-            foreach ($part in @($Parts)) { Add-WinToolPreviewRun -Inlines $sample.Inlines -Segment $part }
+            Add-WinToolPreviewLine -Inlines $sample.Inlines -Segment $Parts -EmSize ([double]$sample.FontSize) -Break
         }
         $text = { param([string]$Value, [string]$Color) New-WinToolPreviewSegment -Text $Value -Foreground $Color }
         $header = "PowerShell 7"
