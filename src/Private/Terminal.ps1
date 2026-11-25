@@ -636,6 +636,15 @@ function Reset-WinToolFontResolution {
     $script:WinToolPreviewFontChain = $null
     $script:WinToolPreviewFontChainKey = $null
     $script:WinToolThemePreviewFontKey = $null
+    Reset-WinToolPreviewDrawCache
+}
+
+function Reset-WinToolPreviewDrawCache {
+    # Outline and picture caches are filled while painting. Drop them when a
+    # font is installed or a test wants a cold measurement.
+    if ($null -ne ("WinToolGlyphDraw" -as [type])) { [WinToolGlyphDraw]::Clear() }
+    $script:WinToolPreviewImageCache = @{}
+    $script:WinToolLastPreviewDrawn = @()
 }
 
 function Get-WinToolTextCode {
@@ -865,8 +874,39 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 public static class WinToolGlyphDraw {
+    static readonly Dictionary<string, Dictionary<int, bool>> OutlineCache = new Dictionary<string, Dictionary<int, bool>>(StringComparer.OrdinalIgnoreCase);
+
+    static string FaceKey(GlyphTypeface face) {
+        if (face == null) return "";
+        try {
+            Uri uri = face.FontUri;
+            if (uri != null) return uri.ToString();
+        }
+        catch {
+        }
+        return "h:" + face.GetHashCode().ToString();
+    }
+
+    public static void Clear() {
+        OutlineCache.Clear();
+    }
+
     public static bool HasOutline(GlyphTypeface face, int code) {
         if (face == null) return false;
+        string key = FaceKey(face);
+        Dictionary<int, bool> map;
+        if (!OutlineCache.TryGetValue(key, out map)) {
+            map = new Dictionary<int, bool>();
+            OutlineCache[key] = map;
+        }
+        bool cached;
+        if (map.TryGetValue(code, out cached)) return cached;
+        bool drawn = MeasureOutline(face, code);
+        map[code] = drawn;
+        return drawn;
+    }
+
+    static bool MeasureOutline(GlyphTypeface face, int code) {
         ushort index;
         if (!face.CharacterToGlyphMap.TryGetValue(code, out index) || index == 0) return false;
         try {
@@ -1364,6 +1404,21 @@ function Test-WinToolPreviewTextCovered {
         }
     }
     return $true
+}
+
+function Sync-WinToolPreviewGlyphCache {
+    # Fill the outline cache for the visible theme samples and the live
+    # preview alphabet so a later click does not call GetGlyphOutline.
+    $builder = New-Object System.Text.StringBuilder
+    foreach ($row in @($script:WinToolTerminalRows)) {
+        if ($null -eq $row) { continue }
+        foreach ($segment in @($row.Preview)) {
+            if ($null -ne $segment) { [void]$builder.Append([string]$segment.Text) }
+        }
+    }
+    [void]$builder.Append(" PowerShell 7 Ubuntu on WSL zsh fish git status On branch main Changes not staged for commit: modified: src/app.ts const same = (a, b) => a === b || a >= b; cd wintool z wintool ls assets build data src wintool.ps1 head -1 ")
+    if ($builder.Length -eq 0) { return }
+    $null = Split-WinToolCoveredText -Text $builder.ToString()
 }
 
 function Resolve-WinToolInstalledFontFace {

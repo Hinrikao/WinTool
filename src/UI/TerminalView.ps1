@@ -607,6 +607,12 @@ function Initialize-WinToolTerminalView {
         # While the list is rebuilt for another engine, its selection changes
         # are not clicks: they must not copy other controls into the choice.
         if ($script:WinToolTerminalSyncing) { return }
+        # The theme-row pictures stay cached. A click stores the style, updates
+        # the plan text, and queues only the large live preview.
+        $list = Get-WinToolUi -Name "TerminalStyleList"
+        if ($null -ne $list.SelectedItem -and [string]$list.Tag -eq [string]$script:WinToolTerminalChoice.prompt) {
+            $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
+        }
         Update-WinToolTerminalSummary
         Request-WinToolTerminalPreview
     }
@@ -976,10 +982,21 @@ function New-WinToolPreviewImage {
     # (GlyphRun). FontFamily by name is not used, so a per-user Nerd Font is
     # not drawn as an empty box.
     $segments = @($Segment | Where-Object { $null -ne $_ -and -not [string]::IsNullOrEmpty([string]$_.Text) })
-    if ($segments.Count -eq 0) { return $null }
+    if ($segments.Count -eq 0) {
+        $script:WinToolLastPreviewDrawn = @()
+        return $null
+    }
     if ($EmSize -le 0) { $EmSize = 14.0 }
+    $cacheKey = Get-WinToolPreviewImageCacheKey -Segment $segments -EmSize $EmSize
+    if ($null -eq $script:WinToolPreviewImageCache) { $script:WinToolPreviewImageCache = @{} }
+    if ($script:WinToolPreviewImageCache.ContainsKey($cacheKey)) {
+        $hit = $script:WinToolPreviewImageCache[$cacheKey]
+        $script:WinToolLastPreviewDrawn = @($hit.Drawn)
+        return $hit.Image
+    }
     Initialize-WinToolGlyphDraw
     $rows = New-Object System.Collections.Generic.List[object]
+    $drawn = New-Object System.Collections.Generic.List[object]
     $lineHeight = $EmSize
     $baseline = $EmSize * 0.8
     foreach ($segment in $segments) {
@@ -997,6 +1014,11 @@ function New-WinToolPreviewImage {
             $lineHeight = [Math]::Max($lineHeight, [WinToolGlyphDraw]::LineHeight($piece.Glyph, $EmSize))
             $baseline = [Math]::Max($baseline, [WinToolGlyphDraw]::Baseline($piece.Glyph, $EmSize))
             [void]$parts.Add([pscustomobject]@{ Glyph = $piece.Glyph; Codes = $codes; Width = $pieceWidth; Brush = $fg })
+            [void]$drawn.Add([pscustomobject]@{
+                Text = [string]$piece.Text
+                Foreground = $color
+                Background = [string]$segment.Background
+            })
             $width += $pieceWidth
         }
         if ($parts.Count -eq 0) { continue }
@@ -1006,7 +1028,10 @@ function New-WinToolPreviewImage {
             Background = [string]$segment.Background
         })
     }
-    if ($rows.Count -eq 0) { return $null }
+    if ($rows.Count -eq 0) {
+        $script:WinToolLastPreviewDrawn = @()
+        return $null
+    }
     $group = New-Object System.Windows.Media.DrawingGroup
     $x = 0.0
     foreach ($row in $rows) {
@@ -1034,11 +1059,37 @@ function New-WinToolPreviewImage {
         }
         $x += [double]$row.Width
     }
-    if ($group.Children.Count -eq 0) { return $null }
+    if ($group.Children.Count -eq 0) {
+        $script:WinToolLastPreviewDrawn = @()
+        return $null
+    }
     if ($group.CanFreeze) { $group.Freeze() }
     $image = New-Object System.Windows.Media.DrawingImage $group
     if ($image.CanFreeze) { $image.Freeze() }
+    $script:WinToolLastPreviewDrawn = $drawn.ToArray()
+    if ($script:WinToolPreviewImageCache.Count -ge 256) { $script:WinToolPreviewImageCache = @{} }
+    $script:WinToolPreviewImageCache[$cacheKey] = [pscustomobject]@{ Image = $image; Drawn = $script:WinToolLastPreviewDrawn }
     return $image
+}
+
+function Get-WinToolPreviewImageCacheKey {
+    param(
+        [object[]]$Segment,
+        [double]$EmSize
+    )
+    $builder = New-Object System.Text.StringBuilder
+    [void]$builder.Append((Get-WinToolPreviewFontKey))
+    [void]$builder.Append("|")
+    [void]$builder.Append($EmSize.ToString([System.Globalization.CultureInfo]::InvariantCulture))
+    foreach ($part in @($Segment)) {
+        [void]$builder.Append("`n")
+        [void]$builder.Append([string]$part.Text)
+        [void]$builder.Append("`t")
+        [void]$builder.Append([string]$part.Foreground)
+        [void]$builder.Append("`t")
+        [void]$builder.Append([string]$part.Background)
+    }
+    return $builder.ToString()
 }
 
 function Get-WinToolCachedThemeEntry {
@@ -1076,11 +1127,12 @@ function Get-WinToolCachedThemeEntry {
 
 function Update-WinToolThemePreviewImage {
     # The pictures stay cached until the preview font changes. Rebuilding them
-    # is not part of a Simple / Advanced click.
+    # is not part of picking a theme in the list.
     $key = Get-WinToolPreviewFontKey
     if ($key -eq [string]$script:WinToolThemePreviewFontKey) { return }
     $script:WinToolThemePreviewFontKey = $key
     $script:WinToolThemeItemCache = @{}
+    $script:WinToolPreviewImageCache = @{}
     if ($null -eq $script:WinToolThemeEntries) { return }
     $byId = @{}
     foreach ($row in @($script:WinToolTerminalRows)) {
@@ -1181,6 +1233,7 @@ function Update-WinToolPromptStyleList {
         if ($null -ne $list.SelectedItem) {
             $script:WinToolTerminalChoice.promptStyle = [string]$list.SelectedItem.Tag
         }
+        Sync-WinToolPreviewGlyphCache
     }
     finally {
         $script:WinToolTerminalSyncing = $wasSyncing
@@ -1233,19 +1286,10 @@ function Add-WinToolPreviewLine {
     $image.SnapsToDevicePixels = $true
     # Tag holds the text after coverage and ASCII fallback, which is what
     # was actually painted, not the raw prompt string.
-    $drawn = New-Object System.Collections.Generic.List[object]
+    $drawn = @($script:WinToolLastPreviewDrawn)
     $text = New-Object System.Text.StringBuilder
-    foreach ($part in $parts) {
-        foreach ($piece in @(Split-WinToolCoveredText -Text ([string]$part.Text))) {
-            [void]$drawn.Add([pscustomobject]@{
-                Text = [string]$piece.Text
-                Foreground = [string]$part.Foreground
-                Background = [string]$part.Background
-            })
-            [void]$text.Append([string]$piece.Text)
-        }
-    }
-    $image.Tag = [pscustomobject]@{ Text = $text.ToString(); Parts = $drawn.ToArray() }
+    foreach ($piece in $drawn) { [void]$text.Append([string]$piece.Text) }
+    $image.Tag = [pscustomobject]@{ Text = $text.ToString(); Parts = $drawn }
     $container = New-Object System.Windows.Documents.InlineUIContainer
     $container.Child = $image
     $container.BaselineAlignment = "Bottom"
@@ -1659,6 +1703,14 @@ function Complete-WinToolQueuedPreview {
     Update-WinToolTerminalPreview
 }
 
+function Complete-WinToolStyleSelectionWork {
+    # Tests and timing flush any coalesced click work on this thread.
+    $script:WinToolChoicePaintQueued = $false
+    $script:WinToolPreviewQueued = $false
+    Update-WinToolTerminalSummary
+    Update-WinToolTerminalPreview
+}
+
 function Update-WinToolTerminalPreview {
     # Draws a short terminal session with the chosen prompt and theme, in the
     # chosen font and size, on the chosen color scheme. Never throws: a
@@ -1700,7 +1752,9 @@ function Update-WinToolTerminalPreview {
         Set-WinToolPreviewFontFamily -Element $sample
         Set-WinToolLigatureTypography -Element $sample
         $styleList = Get-WinToolUi -Name "TerminalStyleList"
-        if ($null -ne $styleList) { $styleList.Resources["TerminalPreviewFont"] = $sample.FontFamily }
+        if ($null -ne $styleList -and -not [object]::Equals($styleList.Resources["TerminalPreviewFont"], $sample.FontFamily)) {
+            $styleList.Resources["TerminalPreviewFont"] = $sample.FontFamily
+        }
         $size = 12
         $sizeValue = Get-WinToolNote -Object $choice -Name "fontSize"
         if ($null -ne $sizeValue -and [int]$sizeValue -gt 0) { $size = [int]$sizeValue }
@@ -1816,7 +1870,10 @@ function Update-WinToolTerminalSummary {
     }
     $steps = @(Get-WinToolTerminalPlan -Selection $script:WinToolTerminalChoice)
     $lines = @($steps | ForEach-Object { [string]$_.Label })
-    (Get-WinToolUi -Name "TerminalSummary").Text = ($lines -join "`n")
+    $planText = ($lines -join "`n")
+    $planChanged = ($planText -ne [string]$script:WinToolSummaryPlanKey)
+    $script:WinToolSummaryPlanKey = $planText
+    (Get-WinToolUi -Name "TerminalSummary").Text = $planText
     $extrasCount = Get-WinToolUi -Name "TerminalExtrasCount"
     if ($null -ne $extrasCount) {
         $flags = Read-WinToolExtraSelection
@@ -1826,6 +1883,7 @@ function Update-WinToolTerminalSummary {
     }
     $summaryHost = Get-WinToolUi -Name "TerminalSummaryHost"
     if ($null -eq $summaryHost) { return }
+    if (-not $planChanged -and $summaryHost.Children.Count -gt 0) { return }
     # One wrapping row of chips: what gets installed (+), then what gets changed (~).
     $summaryHost.Children.Clear()
     $summaryHost.ToolTip = ($lines -join "`n")

@@ -1018,6 +1018,58 @@ function Assert-WinToolCatalogGlyph {
     }
 }
 
+function Assert-WinToolStyleSwitchSpeed {
+    param(
+        [string]$PromptId = "starship",
+        [int]$LimitMs = 150
+    )
+    if ([string]$script:WinToolTerminalChoice.prompt -ne $PromptId) {
+        Select-WinToolTerminalPrompt -PromptId $PromptId
+    }
+    $list = $window.FindName("TerminalStyleList")
+    $entryList = @($list.Items)
+    if ($entryList.Count -lt 8) {
+        throw ("The " + $PromptId + " list is too short to time style switches: " + $entryList.Count)
+    }
+    $format = [System.Globalization.CultureInfo]::InvariantCulture
+
+    function Measure-WinToolStylePaint {
+        param($Entry)
+        $watch = [System.Diagnostics.Stopwatch]::StartNew()
+        $list.SelectedItem = $Entry
+        Complete-WinToolStyleSelectionWork
+        $watch.Stop()
+        return $watch.Elapsed.TotalMilliseconds
+    }
+
+    # Cold paint: empty outline and picture caches, same work as a click.
+    Reset-WinToolPreviewDrawCache
+    $coldMs = Measure-WinToolStylePaint -Entry $entryList[0]
+    Write-Output ("Starship style switch uncached: " + $coldMs.ToString("0.0", $format) + " ms (" + [string]$entryList[0].Name + ")")
+
+    $warmPart = New-Object System.Collections.Generic.List[string]
+    foreach ($entry in $entryList) {
+        $ms = Measure-WinToolStylePaint -Entry $entry
+        [void]$warmPart.Add(([string]$entry.Name + " " + $ms.ToString("0.0", $format) + "ms"))
+    }
+    Write-Output ("Starship style switch warmup: " + ($warmPart -join ", "))
+
+    $times = New-Object System.Collections.Generic.List[object]
+    $parts = New-Object System.Collections.Generic.List[string]
+    foreach ($entry in $entryList) {
+        $ms = Measure-WinToolStylePaint -Entry $entry
+        [void]$times.Add([pscustomobject]@{ Name = [string]$entry.Name; Id = [string]$entry.Tag; Ms = $ms })
+        [void]$parts.Add(([string]$entry.Name + " " + $ms.ToString("0.0", $format) + "ms"))
+    }
+    $max = ($times | Measure-Object -Property Ms -Maximum).Maximum
+    $avg = ($times | Measure-Object -Property Ms -Average).Average
+    Write-Output ("Starship style switch after warmup: " + ($parts -join ", "))
+    Write-Output ("Starship style switch after warmup: max " + $max.ToString("0.0", $format) + " ms, average " + $avg.ToString("0.0", $format) + " ms, limit " + $LimitMs + " ms.")
+    if ($max -ge $LimitMs) {
+        throw ("Picking a Starship preset took " + $max.ToString("0.0", $format) + " ms after warmup; expected well under " + $LimitMs + " ms.")
+    }
+}
+
 function Install-WinToolPerUserNerdFont {
     $zip = Join-Path ([System.IO.Path]::GetTempPath()) "wintool-cascadia-nf.zip"
     $url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/CascadiaCode.zip"
@@ -1214,6 +1266,7 @@ if (-not (Test-WinToolPrivateUseText -Text $withNerd)) {
 }
 Save-WinToolTerminalShot -Name "terminal-starship-with-nerd" -Width 1280 -Height 800
 Assert-WinToolLivePreviewPixel -Label "Starship with a Nerd Font"
+Assert-WinToolStyleSwitchSpeed
 foreach ($engine in $engines) {
     Select-WinToolTerminalPrompt -PromptId ([string]$engine.id)
     Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label ([string]$engine.id + " with a Nerd Font")
