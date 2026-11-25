@@ -1231,9 +1231,21 @@ function Add-WinToolPreviewLine {
     $image.Source = $source
     $image.Stretch = [System.Windows.Media.Stretch]::None
     $image.SnapsToDevicePixels = $true
-    $text = ""
-    foreach ($part in $parts) { $text += [string]$part.Text }
-    $image.Tag = [pscustomobject]@{ Text = $text; Parts = $parts }
+    # Tag holds the text after coverage and ASCII fallback, which is what
+    # was actually painted, not the raw prompt string.
+    $drawn = New-Object System.Collections.Generic.List[object]
+    $text = New-Object System.Text.StringBuilder
+    foreach ($part in $parts) {
+        foreach ($piece in @(Split-WinToolCoveredText -Text ([string]$part.Text))) {
+            [void]$drawn.Add([pscustomobject]@{
+                Text = [string]$piece.Text
+                Foreground = [string]$part.Foreground
+                Background = [string]$part.Background
+            })
+            [void]$text.Append([string]$piece.Text)
+        }
+    }
+    $image.Tag = [pscustomobject]@{ Text = $text.ToString(); Parts = $drawn.ToArray() }
     $container = New-Object System.Windows.Documents.InlineUIContainer
     $container.Child = $image
     $container.BaselineAlignment = "Bottom"
