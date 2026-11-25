@@ -11605,6 +11605,7 @@ public static class WinToolGlyphDraw {
             0,
             false,
             emSize,
+            1.0f,
             indices,
             new Point(x, y),
             advances,
