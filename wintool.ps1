@@ -8784,6 +8784,7 @@ function Write-WinToolUtf8File {
 
 $script:WinToolText = [ordered]@{
     "status.ready" = "Ready"
+    "status.wingetMissing" = "winget not found"
     "status.wait" = "Wait for the current task to finish."
     "status.cancelled" = "Cancelled"
     "status.scanFinished" = "Scan finished"
@@ -21789,7 +21790,8 @@ function Initialize-WinToolActivityView {
         )) {
         Register-WinToolUiEvent -Control (Get-WinToolUi -Name $pair[0]) -EventName "Checked" -Name ("Activity filter " + $pair[1]) -Data $pair[1] -Action {
             param($source, $eventData, $boundFilter)
-            $null = $source, $eventData
+            $null = $eventData
+            if ($source -is [System.Windows.Controls.RadioButton] -and $source.IsChecked -ne $true) { return }
             Set-WinToolActivityFilter -Filter ([string]$boundFilter)
         }
     }
@@ -26609,7 +26611,8 @@ function Initialize-WinToolDriverView {
         )) {
         Register-WinToolUiEvent -Control (Get-WinToolUi -Name $pair[0]) -EventName "Checked" -Name ("Drivers mode " + $pair[1]) -Data $pair[1] -Action {
             param($source, $eventData, $boundMode)
-            $null = $source, $eventData
+            $null = $eventData
+            if ($source -is [System.Windows.Controls.RadioButton] -and $source.IsChecked -ne $true) { return }
             Set-WinToolDriverMode -Mode ([string]$boundMode)
         }
     }
@@ -26619,6 +26622,7 @@ function Initialize-WinToolDriverView {
     }
 
     Initialize-WinToolDriverToolList
+    Show-WinToolDriverMode
 }
 
 function Set-WinToolDriverUiText {
@@ -27031,11 +27035,11 @@ function Complete-WinToolDriverScan {
         Show-WinToolDriverScanEnd
         Sync-WinToolBusyState -Busy $false
         if ($cancelled) {
-            Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.cancelled") -Indeterminate $false
+            Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.cancelled") -Summary "" -Indeterminate $false
             $run = Complete-WinToolActivity -Summary (Get-WinToolText "activity.cancelled") -Status "warn"
         }
         else {
-            Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Indeterminate $false
+            Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Summary "" -Indeterminate $false
             Write-WinToolLog -Message (Get-WinToolText "drivers.scan.failed" $errorMessage) -Level "error"
             $run = Complete-WinToolActivity -Summary (Get-WinToolText "drivers.scan.failed" $errorMessage) -Status "error"
         }
@@ -27443,7 +27447,7 @@ function Complete-WinToolDriverRestore {
         if (-not $continue) {
             $script:WinToolState.DriverPending = $null
             Sync-WinToolBusyState -Busy $false
-            Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Indeterminate $false
+            Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Summary "" -Indeterminate $false
             Write-WinToolLog -Message (Get-WinToolText "drivers.restore.notApplied") -Level "warn"
             return
         }
@@ -27455,7 +27459,7 @@ function Complete-WinToolDriverRestore {
     }
     $script:WinToolState.DriverPending = $null
     Sync-WinToolBusyState -Busy $false
-    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Indeterminate $false
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Summary "" -Indeterminate $false
     if (-not [string]::IsNullOrWhiteSpace([string]$action)) {
         & ([string]$action)
     }
@@ -27736,7 +27740,7 @@ function Complete-WinToolDriverTool {
     $script:WinToolState.DriverToolJob = $null
     $script:WinToolState.DriverToolKind = ""
     Sync-WinToolBusyState -Busy $false
-    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Indeterminate $false
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Summary "" -Indeterminate $false
     foreach ($line in $log) {
         if (-not [string]::IsNullOrWhiteSpace([string]$line)) {
             Write-WinToolLog -Message ([string]$line) -Level "info"
@@ -30769,7 +30773,7 @@ function Stop-WinToolRun {
         Complete-WinToolDriverScanCancel
     }
     Sync-WinToolBusyState -Busy $false
-    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.cancelled") -Indeterminate $false
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.cancelled") -Summary "" -Indeterminate $false
     Write-WinToolLog -Message (Get-WinToolText "activity.cancelled") -Level "warn"
     $run = Complete-WinToolActivity -Summary (Get-WinToolText "activity.cancelled") -Status "warn"
     if ($null -ne $run) { Show-WinToolActivityToast -Run $run }
@@ -31004,11 +31008,11 @@ function Initialize-WinToolShellEvent {
         $winget = Get-WinToolWingetPath
         if ([string]::IsNullOrWhiteSpace($winget)) {
             Write-WinToolLog -Message "winget was not found. Install App Installer from the Microsoft Store before installing apps." -Level "warn"
-            Sync-WinToolStatus -Text "winget not found"
+            Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
         }
         else {
             Write-WinToolLog -Message "winget is available." -Level "ok"
-            Sync-WinToolStatus -Text "Ready"
+            Sync-WinToolStatus -Text (Get-WinToolText "status.ready") -Summary ""
         }
         Start-WinToolTweakStateRead
         Start-WinToolNavWarmup

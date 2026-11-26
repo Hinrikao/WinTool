@@ -8,6 +8,7 @@
 
 $script:WinToolText = [ordered]@{
     "status.ready" = "Ready"
+    "status.wingetMissing" = "winget not found"
     "status.wait" = "Wait for the current task to finish."
     "status.cancelled" = "Cancelled"
     "status.scanFinished" = "Scan finished"

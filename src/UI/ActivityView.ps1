@@ -34,7 +34,8 @@ function Initialize-WinToolActivityView {
         )) {
         Register-WinToolUiEvent -Control (Get-WinToolUi -Name $pair[0]) -EventName "Checked" -Name ("Activity filter " + $pair[1]) -Data $pair[1] -Action {
             param($source, $eventData, $boundFilter)
-            $null = $source, $eventData
+            $null = $eventData
+            if ($source -is [System.Windows.Controls.RadioButton] -and $source.IsChecked -ne $true) { return }
             Set-WinToolActivityFilter -Filter ([string]$boundFilter)
         }
     }

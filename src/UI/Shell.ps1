@@ -760,7 +760,7 @@ function Stop-WinToolRun {
         Complete-WinToolDriverScanCancel
     }
     Sync-WinToolBusyState -Busy $false
-    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.cancelled") -Indeterminate $false
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.cancelled") -Summary "" -Indeterminate $false
     Write-WinToolLog -Message (Get-WinToolText "activity.cancelled") -Level "warn"
     $run = Complete-WinToolActivity -Summary (Get-WinToolText "activity.cancelled") -Status "warn"
     if ($null -ne $run) { Show-WinToolActivityToast -Run $run }
@@ -995,11 +995,11 @@ function Initialize-WinToolShellEvent {
         $winget = Get-WinToolWingetPath
         if ([string]::IsNullOrWhiteSpace($winget)) {
             Write-WinToolLog -Message "winget was not found. Install App Installer from the Microsoft Store before installing apps." -Level "warn"
-            Sync-WinToolStatus -Text "winget not found"
+            Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
         }
         else {
             Write-WinToolLog -Message "winget is available." -Level "ok"
-            Sync-WinToolStatus -Text "Ready"
+            Sync-WinToolStatus -Text (Get-WinToolText "status.ready") -Summary ""
         }
         Start-WinToolTweakStateRead
         Start-WinToolNavWarmup
