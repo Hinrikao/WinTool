@@ -1463,9 +1463,9 @@
             <TextBlock x:Name="DriversTitle" DockPanel.Dock="Left" Text="Drivers" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
             <Border DockPanel.Dock="Left" Margin="16,0,0,0" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8">
               <StackPanel Orientation="Horizontal">
-                <RadioButton x:Name="DriversModeSimple" GroupName="DriversMode" Content="Simple" IsChecked="True" Style="{StaticResource TerminalSegment}" ToolTip="A short list of outdated or missing drivers and the game runtimes that usually need attention."/>
-                <RadioButton x:Name="DriversModeAdvanced" GroupName="DriversMode" Content="Advanced" Style="{StaticResource TerminalSegment}" ToolTip="Browse by category, inspect a device, and choose an action."/>
-                <RadioButton x:Name="DriversModeTools" GroupName="DriversMode" Content="Tools" Style="{StaticResource TerminalSegment}" ToolTip="Backup, repair, and other driver utilities."/>
+                <RadioButton x:Name="DriversModeSimple" GroupName="DriversMode" Content="Simple" IsChecked="True" Style="{StaticResource SegmentRadio}" ToolTip="A short list of outdated or missing drivers and the game runtimes that usually need attention."/>
+                <RadioButton x:Name="DriversModeAdvanced" GroupName="DriversMode" Content="Advanced" Style="{StaticResource SegmentRadio}" ToolTip="Browse by category, inspect a device, and choose an action."/>
+                <RadioButton x:Name="DriversModeTools" GroupName="DriversMode" Content="Tools" Style="{StaticResource SegmentRadio}" ToolTip="Backup, repair, and other driver utilities."/>
               </StackPanel>
             </Border>
           </DockPanel>
