@@ -53,7 +53,7 @@ public static class WinToolProcessPipe
     }
 }
 "@
-    Add-Type -TypeDefinition $source -Language CSharp
+    $null = Add-WinToolCSharpType -Name "WinToolProcessPipe" -ReferenceType @([object], [System.Diagnostics.Process], [System.Collections.Concurrent.ConcurrentQueue[string]]) -TypeDefinition $source
 }
 
 function Start-WinToolAsyncProcess {

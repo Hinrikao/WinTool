@@ -97,6 +97,7 @@ try {
 catch {
     Write-Output ("The module repair did not work: " + $_.Exception.Message)
     Write-Output "Registering App Installer again from the copy Windows has."
+    Import-WinToolAppxModule
     Add-AppxPackage -RegisterByFamilyName -MainPackage "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
     Write-Output "App Installer was registered again. Open a new window and try winget."
 }

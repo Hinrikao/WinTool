@@ -266,15 +266,15 @@ function New-WinToolHomeMini {
     }
     $card.Child = $grid
 
-    $titleRow = New-Object System.Windows.Controls.Grid
-    $titleRow.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }))
-    $titleRow.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::Auto }))
+    $titleRow = New-Object System.Windows.Controls.StackPanel
+    $titleRow.Orientation = "Vertical"
     $null = $grid.Children.Add($titleRow)
     $titleText = New-Object System.Windows.Controls.TextBlock
     $titleText.Text = $Title
     $titleText.FontWeight = "SemiBold"
     $titleText.VerticalAlignment = "Center"
-    $titleText.TextWrapping = "Wrap"
+    $titleText.TextWrapping = "NoWrap"
+    $titleText.TextTrimming = "CharacterEllipsis"
     $titleText.ToolTip = $Title
     $titleText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
     $null = $titleRow.Children.Add($titleText)
@@ -283,10 +283,9 @@ function New-WinToolHomeMini {
     $tag.MinHeight = 22
     $tag.CornerRadius = [System.Windows.CornerRadius]::new(11)
     $tag.Padding = [System.Windows.Thickness]::new(8, 2, 8, 2)
-    $tag.HorizontalAlignment = "Right"
+    $tag.HorizontalAlignment = "Left"
     $tag.VerticalAlignment = "Center"
-    $tag.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
-    [System.Windows.Controls.Grid]::SetColumn($tag, 1)
+    $tag.Margin = [System.Windows.Thickness]::new(0, 4, 8, 0)
     $tagText = New-Object System.Windows.Controls.TextBlock
     $tagText.FontWeight = "SemiBold"
     $tagText.HorizontalAlignment = "Center"
@@ -355,6 +354,7 @@ function New-WinToolHomeMini {
     $mini = [pscustomobject]@{
         Key = $Key
         Card = $card
+        TitleText = $titleText
         Arc = $arc
         Tag = $tag
         TagText = $tagText

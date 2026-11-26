@@ -47,43 +47,12 @@ function Test-WinToolWindowsTerminalInstalled {
     return $false
 }
 
-function Test-WinToolModernHostOfferDismissed {
-    $value = Get-WinToolNote -Object (Get-WinToolPreference) -Name "modernHostOfferDismissed" -Default $false
-    if ($value -is [bool]) {
-        return $value
-    }
-    return [string]$value -eq "True" -or [string]$value -eq "1"
-}
-
-function Save-WinToolModernHostOfferDismissed {
-    $prefs = Get-WinToolPreference
-    $prefs | Add-Member -NotePropertyName "modernHostOfferDismissed" -NotePropertyValue $true -Force
-    Save-WinToolPreference -Preferences $prefs
-}
-
-function Test-WinToolModernHostOffer {
-    param(
-        [Parameter(Mandatory = $true)][bool]$IsWindowsPowerShell,
-        [Parameter(Mandatory = $true)][bool]$PowerShell7Installed,
-        [Parameter(Mandatory = $true)][bool]$WindowsTerminalInstalled,
-        [bool]$Dismissed = $false
-    )
-    if (-not $IsWindowsPowerShell -or $Dismissed) {
-        return $false
-    }
-    return -not ($PowerShell7Installed -and $WindowsTerminalInstalled)
-}
-
-function Test-WinToolShouldShowModernHostOffer {
-    return [bool](Test-WinToolModernHostOffer -IsWindowsPowerShell (Test-WinToolIsWindowsPowerShell) -PowerShell7Installed (Test-WinToolPowerShell7Installed) -WindowsTerminalInstalled (Test-WinToolWindowsTerminalInstalled) -Dismissed (Test-WinToolModernHostOfferDismissed))
+function Test-WinToolIsPowerShell7 {
+    return ([int]$PSVersionTable.PSVersion.Major -ge 7)
 }
 
 function Get-WinToolPreferredGuiHostPath {
-    $pwsh = Get-WinToolPowerShell7Path
-    if (-not [string]::IsNullOrWhiteSpace($pwsh)) {
-        return $pwsh
-    }
-    return (Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe")
+    return (Get-WinToolPowerShell7Path)
 }
 
 function Get-WinToolLaunchSwapMode {
@@ -316,6 +285,7 @@ function Get-WinToolGuiChildEnvironment {
         WINTOOL_LAUNCH_RECT   = [string]$Snapshot.Rect
         WINTOOL_LAUNCH_SIGNAL = [string]$SignalPath
         WINTOOL_SHOW_CONSOLE  = ""
+        WINTOOL_LAUNCH_T0     = [string][DateTime]::UtcNow.Ticks
     }
     return $values
 }
@@ -596,172 +566,79 @@ function Complete-WinToolLaunchHostRestore {
     }
 }
 
-function Get-WinToolModernHostPackageId {
-    $ids = New-Object System.Collections.Generic.List[string]
-    if (-not (Test-WinToolPowerShell7Installed)) {
-        [void]$ids.Add("Microsoft.PowerShell")
-    }
-    if (-not (Test-WinToolWindowsTerminalInstalled)) {
-        [void]$ids.Add("Microsoft.WindowsTerminal")
-    }
-    return @($ids.ToArray())
-}
-
-function Start-WinToolModernHostInstall {
-    param($Status, $Install, $Stay)
-    $winget = Get-WinToolWingetPath
-    $ids = @(Get-WinToolModernHostPackageId)
-    if ([string]::IsNullOrWhiteSpace($winget) -or $ids.Count -eq 0) {
-        if ($null -ne $Status) {
-            $Status.Text = Get-WinToolText "shell.hostOffer.failed"
+function Get-WinToolPowerShell7MsiUri {
+    try {
+        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/PowerShell/PowerShell/releases/latest" -Headers @{ "User-Agent" = "WinTool" }
+        foreach ($asset in @($release.assets)) {
+            $name = [string]$asset.name
+            if ($name -match "PowerShell-.*-win-x64\.msi$") {
+                return [string]$asset.browser_download_url
+            }
         }
-        if ($null -ne $Install) { $Install.IsEnabled = $true }
-        if ($null -ne $Stay) { $Stay.IsEnabled = $true }
-        return
     }
-    if ($null -ne $Status) {
-        $Status.Text = Get-WinToolText "shell.hostOffer.installing"
+    catch {
+        $null = $_.Exception.Message
     }
-    if ($null -ne $Install) { $Install.IsEnabled = $false }
-    if ($null -ne $Stay) { $Stay.IsEnabled = $false }
-    $runner = [System.Management.Automation.PowerShell]::Create()
-    $null = $runner.AddScript({
-            param($Winget, $Ids)
-            $failed = $false
-            foreach ($id in @($Ids)) {
-                $output = & $Winget @("install", "--id", $id, "-e", "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity") 2>&1
-                if ($LASTEXITCODE -ne 0) {
-                    $failed = $true
-                    $null = $output
-                }
-            }
-            return (-not $failed)
-        }).AddArgument($winget).AddArgument($ids)
-    $handle = $runner.BeginInvoke()
-    $timer = New-Object System.Windows.Threading.DispatcherTimer
-    $timer.Interval = [TimeSpan]::FromMilliseconds(400)
-    $timer.add_Tick({
-            if (-not $handle.IsCompleted) {
-                return
-            }
-            $timer.Stop()
-            $ok = $false
-            try {
-                $result = $runner.EndInvoke($handle)
-                if ($result -is [bool]) { $ok = $result }
-                elseif ($result -and $result.Count -gt 0) { $ok = [bool]$result[0] }
-            }
-            catch {
-                $null = $_.Exception.Message
-                $ok = $false
-            }
-            finally {
-                $runner.Dispose()
-            }
-            if ($ok -and -not (Test-WinToolShouldShowModernHostOffer)) {
-                if ($null -ne $Status) {
-                    $Status.Text = Get-WinToolText "shell.hostOffer.installed"
-                }
-                if ($null -ne $Install) { $Install.Visibility = [System.Windows.Visibility]::Collapsed }
-                if ($null -ne $Stay) { $Stay.Content = Get-WinToolText "shell.hostOffer.stay"; $Stay.IsEnabled = $true }
-            }
-            else {
-                if ($null -ne $Status) {
-                    $Status.Text = Get-WinToolText "shell.hostOffer.failed"
-                }
-                if ($null -ne $Install) { $Install.IsEnabled = $true }
-                if ($null -ne $Stay) { $Stay.IsEnabled = $true }
-            }
-        }.GetNewClosure())
-    $timer.Start()
+    return $null
 }
 
-function Show-WinToolModernHostOffer {
-    if (-not (Test-WinToolShouldShowModernHostOffer)) {
-        return
+function Install-WinToolPowerShell7IfMissing {
+    $existing = Get-WinToolPowerShell7Path
+    if (-not [string]::IsNullOrWhiteSpace($existing)) {
+        return $true
     }
-    $window = $script:WinToolWindow
-    if ($null -eq $window) {
-        return
+    Write-Host (Get-WinToolText "shell.installingPowerShell7")
+    $winget = Get-WinToolWingetPath
+    if (-not [string]::IsNullOrWhiteSpace($winget)) {
+        try {
+            $null = & $winget @("install", "--id", "Microsoft.PowerShell", "-e", "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity")
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+        Sync-WinToolProcessPath
+        $existing = Get-WinToolPowerShell7Path
+        if (-not [string]::IsNullOrWhiteSpace($existing)) {
+            Write-Host (Get-WinToolText "shell.installedPowerShell7")
+            return $true
+        }
     }
-    $root = $window.Content
-    if ($root -isnot [System.Windows.Controls.Grid]) {
-        return
+    $uri = Get-WinToolPowerShell7MsiUri
+    if ([string]::IsNullOrWhiteSpace($uri)) {
+        return $false
     }
-    $existing = [System.Windows.LogicalTreeHelper]::FindLogicalNode($window, "ModernHostOffer")
-    if ($null -ne $existing) {
-        return
+    Write-Host (Get-WinToolText "shell.downloadingPowerShell7")
+    $msi = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-PowerShell7-" + [guid]::NewGuid().ToString("N") + ".msi")
+    try {
+        $client = New-Object System.Net.WebClient
+        $client.Headers["User-Agent"] = "WinTool"
+        $client.DownloadFile($uri, $msi)
+        $msiexec = Join-Path $env:SystemRoot "System32\msiexec.exe"
+        $install = Start-Process -FilePath $msiexec -ArgumentList @("/i", $msi, "/qn", "/norestart") -Wait -PassThru -WindowStyle Normal
+        $null = $install
     }
-    $banner = New-Object System.Windows.Controls.Border
-    $banner.Name = "ModernHostOffer"
-    $banner.SetValue([System.Windows.Controls.Grid]::ColumnProperty, 1)
-    $banner.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
-    $banner.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Stretch
-    $banner.Margin = New-Object System.Windows.Thickness 16, 16, 16, 0
-    $banner.Padding = New-Object System.Windows.Thickness 16, 12, 16, 12
-    $banner.CornerRadius = New-Object System.Windows.CornerRadius 10
-    $banner.BorderThickness = New-Object System.Windows.Thickness 1
-    $null = $banner.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushAccentSoft")
-    $null = $banner.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BrushLine")
-    [System.Windows.Controls.Panel]::SetZIndex($banner, 40)
-
-    $grid = New-Object System.Windows.Controls.Grid
-    $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::Auto }))
-    $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::Auto }))
-    $null = $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::Auto }))
-
-    $title = New-Object System.Windows.Controls.TextBlock
-    $title.Text = Get-WinToolText "shell.hostOffer.title"
-    $title.FontWeight = [System.Windows.FontWeights]::SemiBold
-    $title.TextWrapping = [System.Windows.TextWrapping]::Wrap
-    $null = $title.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushInk")
-    $grid.Children.Add($title) | Out-Null
-
-    $status = New-Object System.Windows.Controls.TextBlock
-    $status.Name = "ModernHostOfferStatus"
-    $status.Text = Get-WinToolText "shell.hostOffer.body"
-    $status.Margin = New-Object System.Windows.Thickness 0, 4, 0, 10
-    $status.TextWrapping = [System.Windows.TextWrapping]::Wrap
-    $null = $status.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
-    $status.SetValue([System.Windows.Controls.Grid]::RowProperty, 1)
-    $grid.Children.Add($status) | Out-Null
-
-    $buttons = New-Object System.Windows.Controls.StackPanel
-    $buttons.Orientation = [System.Windows.Controls.Orientation]::Horizontal
-    $buttons.SetValue([System.Windows.Controls.Grid]::RowProperty, 2)
-
-    $install = New-Object System.Windows.Controls.Button
-    $install.Name = "ModernHostOfferInstall"
-    $install.Content = Get-WinToolText "shell.hostOffer.install"
-    $install.MinHeight = 32
-    $install.MinWidth = 140
-    $install.Margin = New-Object System.Windows.Thickness 0, 0, 8, 0
-    $primary = $window.TryFindResource("PrimaryButton")
-    if ($null -ne $primary) { $install.Style = $primary }
-
-    $stay = New-Object System.Windows.Controls.Button
-    $stay.Name = "ModernHostOfferStay"
-    $stay.Content = Get-WinToolText "shell.hostOffer.stay"
-    $stay.MinHeight = 32
-    $stay.MinWidth = 140
-    $secondary = $window.TryFindResource("SecondaryButton")
-    if ($null -ne $secondary) { $stay.Style = $secondary }
-
-    $buttons.Children.Add($install) | Out-Null
-    $buttons.Children.Add($stay) | Out-Null
-    $grid.Children.Add($buttons) | Out-Null
-    $banner.Child = $grid
-
-    $hideOffer = {
-        $banner.Visibility = [System.Windows.Visibility]::Collapsed
+    catch {
+        $null = $_.Exception.Message
+        return $false
     }
-    $stay.add_Click({
-            Save-WinToolModernHostOfferDismissed
-            & $hideOffer
-        }.GetNewClosure())
-    $install.add_Click({
-            Start-WinToolModernHostInstall -Status $status -Install $install -Stay $stay
-        }.GetNewClosure())
+    finally {
+        Remove-Item -LiteralPath $msi -Force -ErrorAction SilentlyContinue
+    }
+    Sync-WinToolProcessPath
+    $existing = Get-WinToolPowerShell7Path
+    if (-not [string]::IsNullOrWhiteSpace($existing)) {
+        Write-Host (Get-WinToolText "shell.installedPowerShell7")
+        return $true
+    }
+    return $false
+}
 
-    $root.Children.Add($banner) | Out-Null
+function Invoke-WinToolPowerShell7Handoff {
+    if (-not (Install-WinToolPowerShell7IfMissing)) {
+        throw (Get-WinToolText "shell.installPowerShell7Failed")
+    }
+    if ([string]::IsNullOrWhiteSpace((Get-WinToolPreferredGuiHostPath))) {
+        throw (Get-WinToolText "shell.installPowerShell7Failed")
+    }
+    Start-WinToolRelaunch
 }

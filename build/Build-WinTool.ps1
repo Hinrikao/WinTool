@@ -228,7 +228,7 @@ $builder = New-Object System.Text.StringBuilder
 [void]$builder.AppendLine('$script:WinToolEmbedded = @{')
 foreach ($name in $payloads.Keys) {
     $payloadText = Read-BuildText -Path (Join-Path $root $payloads[$name])
-    $encoded = ConvertTo-BuildBase64 -Text $payloadText
+    $encoded = ConvertTo-BuildGzipBase64 -Bytes ([System.Text.Encoding]::UTF8.GetBytes($payloadText))
     [void]$builder.AppendLine("    $name = @'")
     [void]$builder.AppendLine($encoded)
     [void]$builder.AppendLine("'@")
@@ -238,7 +238,7 @@ foreach ($localeCode in $localeCodes) {
     $localeJson = Get-BuildLocaleJson -Code $localeCode
     if ([string]::IsNullOrWhiteSpace($localeJson)) { continue }
     [void]$builder.AppendLine("    'Locales:$localeCode' = @'")
-    [void]$builder.AppendLine((ConvertTo-BuildBase64 -Text $localeJson))
+    [void]$builder.AppendLine((ConvertTo-BuildGzipBase64 -Bytes ([System.Text.Encoding]::UTF8.GetBytes($localeJson))))
     [void]$builder.AppendLine("'@")
 }
 [void]$builder.AppendLine("}")

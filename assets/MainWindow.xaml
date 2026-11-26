@@ -9,6 +9,7 @@
     MinWidth="980"
     MinHeight="680"
     WindowStartupLocation="CenterScreen"
+    Opacity="0"
     Background="{DynamicResource BrushCanvas}" Foreground="{DynamicResource BrushInk}"
     FontFamily="Segoe UI"
    

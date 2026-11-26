@@ -43,12 +43,29 @@ function Invoke-WinToolUnattended {
 
 function Start-WinTool {
     try {
+        if ($null -eq $script:WinToolStartupStamp) {
+            $script:WinToolStartupStamp = [System.Diagnostics.Stopwatch]::StartNew()
+        }
+        $t0 = [string]$env:WINTOOL_LAUNCH_T0
+        if (-not [string]::IsNullOrWhiteSpace($t0)) {
+            try {
+                $started = [datetime]::SpecifyKind((New-Object datetime ([int64]$t0)), [datetimekind]::Utc)
+                Write-WinToolStartupMark -Name "parseMs" -Started $started.ToLocalTime()
+            }
+            catch {
+                $null = $_.Exception.Message
+            }
+        }
         if ($env:WINTOOL_HELPER -eq "1") {
             Invoke-WinToolElevatedHelperHost
             return
         }
         if (-not (Test-WinToolWindows)) {
             throw (Get-WinToolText "error.windows11")
+        }
+        if (-not (Test-WinToolIsPowerShell7)) {
+            Invoke-WinToolPowerShell7Handoff
+            return
         }
         if (-not $script:WinToolUnattended -and (Test-WinToolAlreadyRunning)) {
             Write-Host (Get-WinToolText "error.alreadyOpen")

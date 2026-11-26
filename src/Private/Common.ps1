@@ -43,6 +43,30 @@ function Test-WinToolTextMatch {
     return ($Haystack.IndexOf($Query.Trim(), [System.StringComparison]::OrdinalIgnoreCase) -ge 0)
 }
 
+function ConvertFrom-WinToolEmbeddedPayload {
+    param(
+        [Parameter(Mandatory = $true)][byte[]]$Bytes
+    )
+    if ($null -eq $Bytes -or $Bytes.Length -lt 2) {
+        return [System.Text.Encoding]::UTF8.GetString($Bytes)
+    }
+    # Gzip magic 1F 8B. Older builds stored raw UTF-8.
+    if ($Bytes[0] -eq 0x1F -and $Bytes[1] -eq 0x8B) {
+        $sourceStream = New-Object System.IO.MemoryStream(,$Bytes)
+        $gzip = New-Object System.IO.Compression.GzipStream($sourceStream, [System.IO.Compression.CompressionMode]::Decompress)
+        try {
+            $output = New-Object System.IO.MemoryStream
+            $gzip.CopyTo($output)
+            return [System.Text.Encoding]::UTF8.GetString($output.ToArray())
+        }
+        finally {
+            $gzip.Dispose()
+            $sourceStream.Dispose()
+        }
+    }
+    return [System.Text.Encoding]::UTF8.GetString($Bytes)
+}
+
 function Get-WinToolPayloadText {
     param(
         [Parameter(Mandatory = $true)][string]$Name
@@ -51,7 +75,7 @@ function Get-WinToolPayloadText {
     if ($null -ne $embedded -and $embedded.ContainsKey($Name)) {
         $clean = ([string]$embedded[$Name]) -replace '\s', ''
         $bytes = [Convert]::FromBase64String($clean)
-        return [System.Text.Encoding]::UTF8.GetString($bytes)
+        return (ConvertFrom-WinToolEmbeddedPayload -Bytes $bytes)
     }
 
     if ([string]::IsNullOrWhiteSpace($script:WinToolRoot)) {

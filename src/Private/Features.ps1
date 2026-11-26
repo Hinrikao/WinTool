@@ -16,6 +16,12 @@ function Get-WinToolFeatureStateScript {
 param($Sync, $Names)
 $ErrorActionPreference = "Stop"
 try {
+    if ($PSVersionTable.PSEdition -eq "Core") {
+        try { Import-Module DISM -UseWindowsPowerShell -WarningAction SilentlyContinue -ErrorAction Stop } catch { Import-Module DISM -ErrorAction SilentlyContinue }
+    }
+    else {
+        Import-Module DISM -ErrorAction SilentlyContinue
+    }
     $states = @{}
     foreach ($name in @($Names)) {
         try {

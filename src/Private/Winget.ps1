@@ -42,6 +42,7 @@ function Get-WinToolWingetCandidate {
         }
     }
     try {
+        Import-WinToolAppxModule
         foreach ($package in @(Get-AppxPackage -Name "Microsoft.DesktopAppInstaller" -ErrorAction Stop | Sort-Object -Property Version -Descending)) {
             $file = Join-Path ([string]$package.InstallLocation) "winget.exe"
             if (Test-Path -LiteralPath $file) {
@@ -242,6 +243,7 @@ try {
         }
     }
     try {
+        Import-WinToolAppxModule
         foreach ($package in @(Get-AppxPackage -ErrorAction Stop)) {
             $names.Add([string]$package.Name)
         }

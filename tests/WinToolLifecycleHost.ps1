@@ -19,7 +19,7 @@ param(
 )
 $ErrorActionPreference = "Stop"
 # -OwnedHost is the hidden relaunch (WINTOOL_HIDDEN=1). Without it, this is
-# powershell -WindowStyle Hidden -File, the launch that flashed a taskbar button.
+# pwsh -WindowStyle Hidden -File, the launch that flashed a taskbar button.
 if ($OwnedHost) {
     $env:WINTOOL_HIDDEN = "1"
 }

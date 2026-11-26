@@ -198,6 +198,29 @@ public static class WinToolConsoleApi
     [DllImport("user32.dll")]
     public static extern bool GetWindowRect(IntPtr handle, out WinToolRect rect);
 
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SetLayeredWindowAttributes(IntPtr handle, uint colorKey, byte alpha, uint flags);
+
+    const int LayeredStyle = 0x80000;
+    const uint AlphaFlag = 0x2;
+
+    public static bool SetWindowAlpha(IntPtr handle, byte alpha)
+    {
+        if (handle == IntPtr.Zero) { return false; }
+        int ex = GetWindowLongW(handle, ExStyleIndex);
+        if (alpha < 255)
+        {
+            if ((ex & LayeredStyle) == 0) { ApplyExStyle(handle, ex | LayeredStyle); }
+            return SetLayeredWindowAttributes(handle, 0, alpha, AlphaFlag);
+        }
+        if ((ex & LayeredStyle) != 0)
+        {
+            SetLayeredWindowAttributes(handle, 0, 255, AlphaFlag);
+            ApplyExStyle(handle, ex & ~LayeredStyle);
+        }
+        return true;
+    }
+
     public static string GetWindowClassName(IntPtr handle)
     {
         if (handle == IntPtr.Zero) { return ""; }
@@ -327,4 +350,50 @@ function Remove-WinToolHiddenConsole {
         $null = $_.Exception.Message
     }
     $script:WinToolConsoleHidden = $false
+}
+
+function Set-WinToolWindowAlpha {
+    param(
+        $Handle,
+        [Parameter(Mandatory = $true)][byte]$Alpha
+    )
+    if (-not (Initialize-WinToolConsoleApi)) {
+        return $false
+    }
+    if ($null -eq $Handle -or $Handle -eq [IntPtr]::Zero) {
+        return $false
+    }
+    try {
+        return [bool][WinToolConsoleApi]::SetWindowAlpha($Handle, $Alpha)
+    }
+    catch {
+        $null = $_.Exception.Message
+        return $false
+    }
+}
+
+function Hide-WinToolWindowUntilRendered {
+    param($Window)
+    if ($null -eq $Window) {
+        return
+    }
+    $Window.Opacity = 0
+    $source = [System.Windows.Interop.HwndSource]::FromVisual($Window)
+    if ($null -eq $source -or $source.Handle -eq [IntPtr]::Zero) {
+        return
+    }
+    $null = Set-WinToolWindowAlpha -Handle $source.Handle -Alpha 0
+}
+
+function Show-WinToolWindowAfterRender {
+    param($Window)
+    if ($null -eq $Window) {
+        return
+    }
+    $source = $null
+    try { $source = [System.Windows.Interop.HwndSource]::FromVisual($Window) } catch { $null = $_.Exception.Message }
+    if ($null -ne $source -and $source.Handle -ne [IntPtr]::Zero) {
+        $null = Set-WinToolWindowAlpha -Handle $source.Handle -Alpha 255
+    }
+    $Window.Opacity = 1
 }

@@ -6,7 +6,7 @@
 .SYNOPSIS
     Build the WinTool window without showing it.
 .DESCRIPTION
-    Runs on Windows PowerShell 5.1 in STA. It loads the XAML and builds every
+    Runs on PowerShell 7 in STA. It loads the XAML and builds every
     tab, then fails if startup prints extra objects or a row has no checkbox.
 #>
 $ErrorActionPreference = "Stop"
@@ -18,7 +18,7 @@ if ($env:OS -ne "Windows_NT") {
 
 $apartment = [System.Threading.Thread]::CurrentThread.GetApartmentState()
 if ($apartment -ne "STA") {
-    throw "Build the window with powershell.exe -STA. The current apartment is $apartment."
+    throw "Build the window with pwsh -STA. The current apartment is $apartment."
 }
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -1820,6 +1820,28 @@ foreach ($size in @(@(1280, 800), @(1920, 1080), @(1024, 640))) {
     $cardsRight = $cards.TranslatePoint([System.Windows.Point]::new($cards.ActualWidth, 0), $rootVisual).X
     if ([Math]::Abs($right - $cardsRight) -gt 1.5 -or $right -lt ($w - 40)) { throw ("Home should fill the width at " + $size[0] + ": hero ends at " + $right + ", cards at " + $cardsRight) }
     Write-Output ("Home at {0}x{1}: analyzing, done and fixing share the same bounds (hero {2:0}x{3:0})." -f $size[0], $size[1], $hero.ActualWidth, $hero.ActualHeight)
+    if ([int]$size[0] -eq 1024) {
+        $savedLang = $script:WinToolLocale
+        try {
+            Initialize-WinToolLocale -Language "pt-BR" -Force | Out-Null
+            $memoryTitle = $script:WinToolState.Home.Minis["memory"].TitleText
+            $memoryTitle.Text = Get-WinToolText "msg.memory"
+            $rootVisual.UpdateLayout()
+            if ([string]$memoryTitle.Text -ne "Memória") { throw ("pt-BR memory title should be Memória, got '" + $memoryTitle.Text + "'.") }
+            if ([string]$memoryTitle.TextWrapping -ne "NoWrap") { throw "The memory card title must not wrap." }
+            $typeface = New-Object System.Windows.Media.Typeface($memoryTitle.FontFamily, $memoryTitle.FontStyle, $memoryTitle.FontWeight, $memoryTitle.FontStretch)
+            $formatted = New-Object System.Windows.Media.FormattedText([string]$memoryTitle.Text, [System.Globalization.CultureInfo]::GetCultureInfo("pt-BR"), [System.Windows.FlowDirection]::LeftToRight, $typeface, $memoryTitle.FontSize, [System.Windows.Media.Brushes]::Black, 1.0)
+            if ($formatted.WidthIncludingTrailingWhitespace -gt $memoryTitle.ActualWidth + 1) { throw ("Memória is cut off or wrapped: " + [Math]::Round($formatted.WidthIncludingTrailingWhitespace) + " > " + [Math]::Round($memoryTitle.ActualWidth)) }
+            if ([double]$memoryTitle.ActualHeight -gt ([double]$memoryTitle.FontSize * 2)) { throw ("Memória wrapped to more than one line: height " + $memoryTitle.ActualHeight) }
+            Write-Output "pt-BR memory title stays on one line as 'Memória'."
+        }
+        finally {
+            Initialize-WinToolLocale -Language en -Force | Out-Null
+            $script:WinToolState.Home.Minis["memory"].TitleText.Text = Get-WinToolText "msg.memory"
+            $rootVisual.UpdateLayout()
+            $null = $savedLang
+        }
+    }
 }
 
 # The real checks on this runner, in background runspaces.

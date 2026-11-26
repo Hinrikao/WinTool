@@ -215,12 +215,8 @@ function Stop-WinToolThread {
     try { $Job.Runspace.Dispose() } catch { $null = $_.Exception.Message }
 }
 
-function Send-WinToolSettingChange {
-    if (-not (Test-WinToolWindows)) {
-        return
-    }
-    if (-not ("WinTool.NativeMethods" -as [type])) {
-        Add-Type -TypeDefinition @"
+function Initialize-WinToolNativeMethod {
+    return (Add-WinToolCSharpType -Name "WinTool.NativeMethods" -ReferenceType @([object]) -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
 namespace WinTool {
@@ -231,7 +227,16 @@ namespace WinTool {
             int fuFlags, int uTimeout, out IntPtr lpdwResult);
     }
 }
-"@
+"@)
+}
+
+function Send-WinToolSettingChange {
+    if (-not (Test-WinToolWindows)) {
+        return
+    }
+    $null = Initialize-WinToolNativeMethod
+    if (-not ("WinTool.NativeMethods" -as [type])) {
+        return
     }
     $result = [IntPtr]::Zero
     [WinTool.NativeMethods]::SendMessageTimeout([IntPtr]0xffff, 0x001A, [IntPtr]::Zero, "ImmersiveColorSet", 2, 200, [ref]$result) | Out-Null
@@ -314,6 +319,7 @@ function Invoke-WinToolTweakStep {
     }
     if ($type -eq "appx-remove") {
         foreach ($name in @($Step.Packages)) {
+            Import-WinToolAppxModule
             $packages = @(Get-AppxPackage -Name $name -ErrorAction SilentlyContinue)
             if ($packages.Count -eq 0) {
                 Write-WinToolLog -Message (Get-WinToolText "msg.n-is-not-installed-for-this-user-skipped" $name) -Level "info"
@@ -421,6 +427,7 @@ function Get-WinToolTweakProbe {
             param($Name)
             if ($null -eq $script:WinToolAppxNames) {
                 $names = @{}
+                Import-WinToolAppxModule
                 foreach ($package in @(Get-AppxPackage -ErrorAction Stop)) {
                     $names[[string]$package.Name] = $true
                 }
@@ -615,6 +622,7 @@ try {
                 "appx-remove" {
                     if ($null -eq $script:WinToolJobAppx) {
                         $script:WinToolJobAppx = @{}
+                        Import-WinToolAppxModule
                         foreach ($package in @(Get-AppxPackage -ErrorAction Stop)) {
                             $script:WinToolJobAppx[[string]$package.Name] = $true
                         }

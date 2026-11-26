@@ -352,17 +352,22 @@ function Invoke-WinToolNavWarmupStep {
     $name = [string]$pending[0]
     if ($pending.Count -le 1) { $script:WinToolState.WarmViews = @() }
     else { $script:WinToolState.WarmViews = @($pending | Select-Object -Skip 1) }
-    Initialize-WinToolDeferredView -Name $name
-    if ([string]$script:WinToolState.ActiveView -ne $name) {
-        $shown = @($script:WinToolState.ViewShown)
-        $element = Get-WinToolUi -Name ("View" + $name)
-        if ($null -ne $element -and $shown -notcontains $name) {
-            $element.Opacity = 0
-            $element.IsHitTestVisible = $false
-            [System.Windows.Controls.Panel]::SetZIndex($element, 0)
-            $element.Visibility = "Visible"
-            $script:WinToolState.ViewShown = @($shown + $name)
+    try {
+        Initialize-WinToolDeferredView -Name $name
+        if ([string]$script:WinToolState.ActiveView -ne $name) {
+            $shown = @($script:WinToolState.ViewShown)
+            $element = Get-WinToolUi -Name ("View" + $name)
+            if ($null -ne $element -and $shown -notcontains $name) {
+                $element.Opacity = 0
+                $element.IsHitTestVisible = $false
+                [System.Windows.Controls.Panel]::SetZIndex($element, 0)
+                $element.Visibility = "Visible"
+                $script:WinToolState.ViewShown = @($shown + $name)
+            }
         }
+    }
+    catch {
+        Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-warm-n-n") -f $name, $_.Exception.Message) -Level "warn"
     }
     if (@($script:WinToolState.WarmViews).Count -gt 0) {
         $callback = [scriptblock]::Create("Invoke-WinToolNavWarmupStep")
@@ -1137,15 +1142,19 @@ function New-WinToolWindow {
     $script:WinToolShuttingDown = $false
     $script:WinToolSessionExit = $false
 
+    Initialize-WinToolCompiledType
+    $xamlStamp = Get-Date
     $xaml = Get-WinToolPayloadText -Name "Xaml"
     [xml]$document = $xaml
     $reader = New-Object System.Xml.XmlNodeReader $document
     $window = [System.Windows.Markup.XamlReader]::Load($reader)
+    Write-WinToolStartupMark -Name "xamlLoad" -Started $xamlStamp
     $script:WinToolWindow = $window
     $script:WinToolLogBox = $null
     $window.Background = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.Color]::FromRgb(0x1B, 0x22, 0x30))
-    if ($DeferViews) {
-        $window.Opacity = 0
+    $window.Opacity = 0
+    Register-WinToolUiEvent -Control $window -EventName "SourceInitialized" -Name "Keep the window hidden until it is painted" -Action {
+        Hide-WinToolWindowUntilRendered -Window $script:WinToolWindow
     }
     Set-WinToolXamlText -Root $window
 
@@ -1443,27 +1452,17 @@ function Show-WinToolWindow {
     try {
         $window = New-WinToolWindow -DeferViews
         $script:WinToolSessionExit = $true
-        Show-WinToolModernHostOffer
         Enable-WinToolLogPump
         Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Show the first frame" -Action {
             $window = $script:WinToolWindow
-            if ($null -ne $window -and $window.Opacity -lt 1) {
-                $window.Opacity = 1
-            }
+            Show-WinToolWindowAfterRender -Window $window
             Hide-WinToolConsole
             Complete-WinToolLaunchSwap
             if ($null -ne $script:WinToolStartupStamp -and $null -ne $script:WinToolState -and [int]$script:WinToolState.FirstFrameMs -lt 0) {
                 $script:WinToolState.FirstFrameMs = [int]$script:WinToolStartupStamp.ElapsedMilliseconds
+                Write-WinToolStartupMark -Name "firstFrameMs"
                 Write-WinToolLog -Message (Get-WinToolText "msg.first-interactive-frame-ms" $script:WinToolState.FirstFrameMs) -Level "info"
-                $path = [string]$env:WINTOOL_STARTUP_LOG
-                if (-not [string]::IsNullOrWhiteSpace($path)) {
-                    try {
-                        Set-Content -LiteralPath $path -Value ("firstFrameMs={0}" -f $script:WinToolState.FirstFrameMs) -Encoding UTF8
-                    }
-                    catch {
-                        $null = $_.Exception.Message
-                    }
-                }
+                Write-WinToolStartupLog
             }
         }
         $null = $window.ShowDialog()

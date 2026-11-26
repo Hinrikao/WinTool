@@ -635,7 +635,7 @@ Invoke-WinToolCase -Name "Elevation relaunches the entry script" -Body {
     $elevationSource = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/Elevation.ps1"))
     Test-WinToolExpectation -Condition ($elevationSource.Contains("Start-WinToolGuiChildProcess") -and $elevationSource.Contains("Get-WinToolPreferredGuiHostPath") -and $elevationSource.Contains("-Verb RunAs") -and $elevationSource.Contains('-WindowStyle $style') -and -not $elevationSource.Contains('-WindowStyle Hidden -Verb RunAs') -and -not $elevationSource.Contains('-Verb RunAs -WindowStyle Hidden')) -Message "The detached launch uses a no-window child and never hides the UAC prompt."
     $helperSource = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/ElevatedHelper.ps1"))
-    Test-WinToolExpectation -Condition ($helperSource.Contains('System32\WindowsPowerShell\v1.0\powershell.exe') -and $helperSource.Contains('-Verb RunAs') -and $helperSource.Contains('-WindowStyle Normal') -and ($helperSource -notmatch 'Start-Process[^`r`n]*-WindowStyle Hidden')) -Message "The elevated helper stays on Windows PowerShell 5.1 and keeps the UAC prompt visible."
+    Test-WinToolExpectation -Condition ($helperSource.Contains('Get-WinToolPreferredGuiHostPath') -and $helperSource.Contains('-Verb RunAs') -and $helperSource.Contains('-WindowStyle Normal') -and ($helperSource -notmatch 'Start-Process[^`r`n]*-WindowStyle Hidden')) -Message "The elevated helper runs on PowerShell 7 and keeps the UAC prompt visible."
     $canceled = $null
     try { throw (New-Object System.ComponentModel.Win32Exception 1223) } catch { $canceled = Get-WinToolElevationFailureText -ErrorRecord $_ }
     Test-WinToolExpectation -Condition ($canceled.Contains("canceled") -and $canceled.Contains("administrator")) -Message "A canceled UAC prompt has a clear message."
@@ -729,16 +729,17 @@ Invoke-WinToolCase -Name "A normal launch detaches without UAC and opens a helpe
     Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "windows-terminal" -TabCount $null) -eq "exit-tab") -Message "An unknown tab count is treated as a multi-tab window."
     Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "windows-terminal" -TabCount 1 -ShowConsole $true) -eq "none") -Message "-ShowConsole does not swap the host window."
     Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "unknown" -TabCount 1) -eq "none") -Message "An unknown host is left alone."
-    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $false -WindowsTerminalInstalled $false) -eq $true) -Message "Windows PowerShell 5.1 without PowerShell 7 or Windows Terminal sees the offer."
-    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $true -WindowsTerminalInstalled $false) -eq $true) -Message "The offer still appears when only Windows Terminal is missing."
-    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $false -WindowsTerminalInstalled $true) -eq $true) -Message "The offer still appears when only PowerShell 7 is missing."
-    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $true -WindowsTerminalInstalled $true) -eq $false) -Message "The offer is hidden when both modern hosts are already installed."
-    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $false -WindowsTerminalInstalled $false -Dismissed $true) -eq $false) -Message "A dismissed offer stays out of the way."
-    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $false -PowerShell7Installed $false -WindowsTerminalInstalled $false) -eq $false) -Message "PowerShell 7 does not show the 5.1 install offer."
+    Test-WinToolExpectation -Condition ($entry.Contains("Invoke-WinToolPowerShell7Handoff") -and $entry.Contains("Test-WinToolIsPowerShell7")) -Message "Windows PowerShell 5.1 hands off to PowerShell 7 before the window opens."
+    Test-WinToolExpectation -Condition ((Get-Command Test-WinToolIsPowerShell7).Name -eq "Test-WinToolIsPowerShell7") -Message "PowerShell 7 detection is available."
     $launchHost = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/LaunchHost.ps1"))
-    Test-WinToolExpectation -Condition ($launchHost.Contains("Get-WinToolPowerShell7Path") -and $launchHost.Contains('WindowsPowerShell\v1.0\powershell.exe')) -Message "The GUI prefers PowerShell 7 and falls back to Windows PowerShell 5.1."
+    Test-WinToolExpectation -Condition ($launchHost.Contains("Install-WinToolPowerShell7IfMissing") -and $launchHost.Contains("Microsoft.PowerShell") -and $launchHost.Contains("Get-WinToolPowerShell7MsiUri")) -Message "A missing PowerShell 7 is installed with winget, then the official MSI."
+    Test-WinToolExpectation -Condition ($launchHost.Contains("Get-WinToolPreferredGuiHostPath") -and $launchHost.Contains("Get-WinToolPowerShell7Path") -and -not $launchHost.Contains('return (Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe")')) -Message "The GUI host is PowerShell 7, with no 5.1 fallback."
     $shellUi = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/Shell.ps1"))
-    Test-WinToolExpectation -Condition ($shellUi.Contains("Complete-WinToolLaunchSwap") -and $shellUi.Contains("Complete-WinToolLaunchHostRestore") -and $shellUi.Contains("Show-WinToolModernHostOffer")) -Message "The window swaps the host after the first frame, restores it on close, and can show the offer."
+    Test-WinToolExpectation -Condition ($shellUi.Contains("Complete-WinToolLaunchSwap") -and $shellUi.Contains("Complete-WinToolLaunchHostRestore") -and $shellUi.Contains("Show-WinToolWindowAfterRender") -and -not $shellUi.Contains("Show-WinToolModernHostOffer")) -Message "The window swaps the host after the first painted frame and does not offer to stay on 5.1."
+    $theme = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/TerminalView.ps1"))
+    Test-WinToolExpectation -Condition ($theme.Contains("Add-WinToolCSharpType") -and $theme.Contains("[System.ComponentModel.INotifyPropertyChanged]")) -Message "Theme types reference INotifyPropertyChanged so they compile on PowerShell 5.1 and 7."
+    $types = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/Types.ps1"))
+    Test-WinToolExpectation -Condition ($types.Contains("Initialize-WinToolCompiledType") -and $types.Contains("Import-WinToolAppxModule") -and $types.Contains("UseWindowsPowerShell")) -Message "Compiled types and Windows PowerShell compatibility modules are initialized safely."
     $signal = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-launch-test-" + [guid]::NewGuid().ToString("N") + ".signal")
     try {
         Write-WinToolLaunchSignal -SignalPath $signal -State "ready" -Swap "morph-wt"
@@ -751,12 +752,12 @@ Invoke-WinToolCase -Name "A normal launch detaches without UAC and opens a helpe
         Remove-Item -LiteralPath ($signal + ".tmp") -Force -ErrorAction SilentlyContinue
     }
     Test-WinToolExpectation -Condition ((Get-WinToolText "shell.closed") -eq "WinTool closed.") -Message "shell.closed has English text."
-    Test-WinToolExpectation -Condition ((Get-WinToolText "shell.hostOffer.stay") -eq "Continue on 5.1") -Message "The stay action is 'Continue on 5.1'."
+    Test-WinToolExpectation -Condition ((Get-WinToolText "shell.installingPowerShell7") -eq "Installing PowerShell 7...") -Message "The PowerShell 7 install progress text is English."
     $savedLang = $script:WinToolLocale
     try {
         Initialize-WinToolLocale -Language "pt-BR" -Force | Out-Null
         Test-WinToolExpectation -Condition ((Get-WinToolText "shell.closed") -eq "WinTool fechado.") -Message "pt-BR close text is 'WinTool fechado.'"
-        Test-WinToolExpectation -Condition ((Get-WinToolText "shell.hostOffer.stay") -eq "Continuar no 5.1") -Message "pt-BR stay action is 'Continuar no 5.1'."
+        Test-WinToolExpectation -Condition ((Get-WinToolText "shell.installingPowerShell7") -eq "Instalando o PowerShell 7...") -Message "pt-BR install progress is 'Instalando o PowerShell 7...'."
         $needs = Get-WinToolText "shell.needsAdmin"
         Test-WinToolExpectation -Condition ($needs.Contains("Aprove o aviso") -and -not $needs.Contains("Aproveite")) -Message "pt-BR asks to approve the Windows prompt, not 'Aproveite'."
     }
@@ -985,7 +986,7 @@ Invoke-WinToolCase -Name "The single-file build embeds the catalogs" -Body {
             Test-WinToolExpectation -Condition $match.Success -Message ("Missing payload " + $pair.Key)
             if ($match.Success) {
                 $clean = $match.Groups[1].Value -replace '\s', ''
-                $decoded = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($clean))
+                $decoded = (ConvertFrom-WinToolEmbeddedPayload -Bytes ([Convert]::FromBase64String($clean))).Replace("`r`n", "`n").Replace("`r", "`n")
                 $source = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot $pair.Value)).Replace("`r`n", "`n").Replace("`r", "`n")
                 Test-WinToolExpectation -Condition ($decoded -eq $source) -Message ("Payload drifted: " + $pair.Key)
             }

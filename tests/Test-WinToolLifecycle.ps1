@@ -8,10 +8,10 @@
 .DESCRIPTION
     Starts WinTool the way the hidden relaunch does, starts a second copy while
     the first is open (it must hand over and leave without a window), closes
-    the first window, then fails if its powershell.exe or anything it started
+    the first window, then fails if its pwsh.exe or anything it started
     is still alive. A second launch matches the owner's command (WindowStyle
     Hidden, -File, no WINTOOL_HIDDEN and no redirected handles) and fails if a
-    taskbar window or a new process appears after Close, or if powershell.exe
+    taskbar window or a new process appears after Close, or if pwsh.exe
     is still running a few seconds later.
 #>
 $ErrorActionPreference = "Stop"
@@ -24,7 +24,16 @@ if ($env:OS -ne "Windows_NT") {
 $hostScript = Join-Path $PSScriptRoot "WinToolLifecycleHost.ps1"
 $work = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-life-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $work -Force | Out-Null
-$powershellExe = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+$powershellExe = $null
+$pwshCommand = Get-Command -Name "pwsh.exe" -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($null -ne $pwshCommand) { $powershellExe = [string]$pwshCommand.Source }
+if ([string]::IsNullOrWhiteSpace($powershellExe)) {
+    foreach ($candidate in @(([string]$env:ProgramFiles + "\PowerShell\7\pwsh.exe"), ([string]$env:LOCALAPPDATA + "\Programs\PowerShell\7\pwsh.exe"))) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $candidate)) { $powershellExe = $candidate; break }
+    }
+}
+if ([string]::IsNullOrWhiteSpace($powershellExe)) { throw "The lifecycle test needs PowerShell 7 (pwsh)." }
+
 
 if ($null -eq ("WinToolCloseWatch" -as [type])) {
     Add-Type -TypeDefinition @'
@@ -256,7 +265,7 @@ function Start-LifecycleHost {
     $stdout = Join-Path $work ($Name + ".out")
     $stderr = Join-Path $work ($Name + ".err")
     if ($KeepConsole) {
-        # No redirected handles: powershell.exe keeps the hidden console the
+        # No redirected handles: pwsh.exe keeps the hidden console the
         # owner gets from Start-Process -WindowStyle Hidden.
         $process = Start-Process -FilePath $powershellExe -ArgumentList $arguments -WindowStyle Hidden -PassThru
     }
@@ -597,6 +606,6 @@ if ($ownerLeft.Count -gt 0) {
 }
 $ownerSeconds = "with the window"
 if ($null -ne $ownerWatch.Elapsed) { $ownerSeconds = ("{0:N1}s after the window closed" -f $ownerWatch.Elapsed) }
-Write-Output ("Owner-style close was clean: no taskbar window, no new process, powershell exited {0}." -f $ownerSeconds)
+Write-Output ("Owner-style close was clean: no taskbar window, no new process, pwsh exited {0}." -f $ownerSeconds)
 Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 exit 0

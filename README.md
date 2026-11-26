@@ -25,7 +25,7 @@ That image is a placeholder. Replace `docs/screenshots/placeholder.svg` with a P
 ## Requirements
 
 - Windows 11
-- PowerShell 5.1, which is already on Windows, or PowerShell 7
+- PowerShell 7. The one-liner can be typed in Windows PowerShell 5.1; WinTool installs PowerShell 7 if it is missing
 - An administrator account. WinTool asks Windows to elevate if the window is not already elevated
 - winget (App Installer). Current Windows 11 installs include it. If it is missing, install **App Installer** from the Microsoft Store
 
@@ -39,7 +39,7 @@ irm https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1 | iex
 
 Approve the administrator prompt. The WinTool window opens in a dark theme. The log stays collapsed until a task is running, or until you press Show log.
 
-Only the WinTool window stays on screen after it opens. A classic console is hidden and comes back with a short summary when you close WinTool. A Windows Terminal window with one tab is hidden the same way and restored on close; if that window has other tabs, only the launching tab closes. The app itself starts with no extra terminal tab. On Windows PowerShell 5.1, WinTool can offer to install PowerShell 7 and Windows Terminal, and it prefers PowerShell 7 for the window when that is already present. Add `-ShowConsole` to `wintool.ps1` or `src\Start-WinTool.ps1`, or set `WINTOOL_SHOW_CONSOLE=1` before the one-liner, to keep the console for debugging.
+The one-liner can be typed in Windows PowerShell 5.1. WinTool then hands off to PowerShell 7 for the window and the administrator helper, and installs PowerShell 7 with winget (or the official MSI) if it is missing. Only the WinTool window stays on screen after it opens. A classic console is hidden and comes back with a short summary when you close WinTool. A Windows Terminal window with one tab is hidden the same way and restored on close; if that window has other tabs, only the launching tab closes. The app itself starts with no extra terminal tab. Add `-ShowConsole` to `wintool.ps1` or `src\Start-WinTool.ps1`, or set `WINTOOL_SHOW_CONSOLE=1` before the one-liner, to keep the console for debugging.
 
 If startup fails, the message stays on screen and the details are appended to `%TEMP%\WinTool\wintool.log`.
 

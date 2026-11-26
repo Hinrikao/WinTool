@@ -25,15 +25,25 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Build the WPF window with Windows PowerShell 5.1
-        shell: powershell
+      - name: Build the WPF window with PowerShell 7
+        shell: pwsh
         env:
           WINTOOL_SHOT_DIR: ${{ runner.temp }}\wintool-shots
-        run: powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolUiBuild.ps1
+        run: pwsh -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolUiBuild.ps1
 
       - name: Open and close WinTool, then check nothing is left running
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolLifecycle.ps1
+
+      - name: Time startup, paint the first frame, and run theme warmup
+        shell: pwsh
+        env:
+          WINTOOL_SHOT_DIR: ${{ runner.temp }}\wintool-shots
+        run: pwsh -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolStartup.ps1
+
+      - name: Hand off from Windows PowerShell 5.1 to PowerShell 7
         shell: powershell
-        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolLifecycle.ps1
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolBootstrap.ps1
 
       - name: Upload window screenshots
         if: always()

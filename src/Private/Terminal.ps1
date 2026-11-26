@@ -952,7 +952,7 @@ function Initialize-WinToolGlyphMap {
     # Glyph 0 is the font's empty box, so a codepoint that maps to it is missing.
     if ($null -ne ("WinToolGlyphMap" -as [type])) { return }
     Add-Type -AssemblyName PresentationCore
-    Add-Type -ReferencedAssemblies ([System.Windows.Media.GlyphTypeface].Assembly.Location) -TypeDefinition @"
+    $null = Add-WinToolCSharpType -Name "WinToolGlyphMap" -ReferenceType @([object], [System.Windows.Media.GlyphTypeface]) -TypeDefinition @"
 using System.Windows.Media;
 public static class WinToolGlyphMap {
     public static bool Has(GlyphTypeface face, int code) {
@@ -980,11 +980,7 @@ function Initialize-WinToolGlyphDraw {
     if ($null -ne ("WinToolGlyphDraw" -as [type])) { return }
     Add-Type -AssemblyName PresentationCore
     Add-Type -AssemblyName WindowsBase
-    $refs = @(
-        [System.Windows.Media.GlyphTypeface].Assembly.Location,
-        [System.Windows.Point].Assembly.Location
-    )
-    Add-Type -ReferencedAssemblies $refs -TypeDefinition @"
+    $null = Add-WinToolCSharpType -Name "WinToolGlyphDraw" -ReferenceType @([object], [System.Windows.Media.GlyphTypeface], [System.Windows.Point]) -TypeDefinition @"
 using System;
 using System.Collections.Generic;
 using System.Windows;

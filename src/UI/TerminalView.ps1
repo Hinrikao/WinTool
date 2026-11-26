@@ -1010,13 +1010,14 @@ function Get-WinToolCachedThemeRow {
 function Initialize-WinToolThemeEntryType {
     # Plain objects, not ListBoxItems. A C# predicate filters them, so the
     # click does not walk the catalog in PowerShell or build a row visual.
-    if ($null -ne ("WinToolThemeEntry" -as [type])) { return }
-    $refs = @(
-        [System.Windows.Threading.DispatcherObject].Assembly.Location,
-        [System.Windows.Media.Visual].Assembly.Location,
-        [System.Windows.Data.ListCollectionView].Assembly.Location
-    )
-    Add-Type -ReferencedAssemblies $refs -TypeDefinition @"
+    if ($null -ne ("WinToolThemeEntry" -as [type])) { return $true }
+    $ok = Add-WinToolCSharpType -Name "WinToolThemeEntry" -ReferenceType @(
+        [object],
+        [System.ComponentModel.INotifyPropertyChanged],
+        [System.Windows.Threading.DispatcherObject],
+        [System.Windows.Media.Visual],
+        [System.Windows.Data.ListCollectionView]
+    ) -TypeDefinition @"
 using System;
 using System.ComponentModel;
 using System.Windows.Data;
@@ -1062,6 +1063,7 @@ public class WinToolThemeFilter {
     }
 }
 "@
+    return $ok
 }
 
 function New-WinToolPreviewImage {
@@ -1193,13 +1195,18 @@ function Get-WinToolCachedThemeEntry {
         $Row,
         [Parameter(Mandatory = $true)][string]$PromptId
     )
-    Initialize-WinToolThemeEntryType
+    $null = Initialize-WinToolThemeEntryType
     if ($null -eq $script:WinToolThemeItemCache) { $script:WinToolThemeItemCache = @{} }
     $id = $PromptId + "|" + [string]$Row.Id
     if ($script:WinToolThemeItemCache.ContainsKey($id)) {
         return $script:WinToolThemeItemCache[$id]
     }
-    $entry = New-Object WinToolThemeEntry
+    if ($null -ne ("WinToolThemeEntry" -as [type])) {
+        $entry = New-Object WinToolThemeEntry
+    }
+    else {
+        $entry = [pscustomobject]@{ Tag = ""; Name = ""; Tip = ""; Nerd = "Collapsed"; SampleVisible = "Collapsed"; Hay = ""; Powerline = 0; NerdFont = 0; PreviewImage = $null }
+    }
     $entry.Tag = [string]$Row.Id
     $entry.Name = [string]$Row.Name
     $tip = [string]$Row.Id
@@ -1426,16 +1433,36 @@ function Update-WinToolPromptStyleList {
             # Entries are cheap: pictures are painted later for the rows on
             # screen. Each engine keeps its list, so a warm switch only swaps
             # the bound view.
-            Initialize-WinToolThemeEntryType
+            $null = Initialize-WinToolThemeEntryType
             $entries = New-Object System.Collections.Generic.List[object]
             foreach ($row in $rows) {
                 [void]$entries.Add((Get-WinToolCachedThemeEntry -Row $row -PromptId $prompt))
             }
-            $filterObject = New-Object WinToolThemeFilter
             $view = [System.Windows.Data.ListCollectionView]::new($entries)
-            $filterObject.Mode = $filter
-            $filterObject.Query = $query
-            $filterObject.Attach($view)
+            if ($null -ne ("WinToolThemeFilter" -as [type])) {
+                $filterObject = New-Object WinToolThemeFilter
+                $filterObject.Mode = $filter
+                $filterObject.Query = $query
+                $filterObject.Attach($view)
+            }
+            else {
+                $filterObject = [pscustomobject]@{ Mode = $filter; Query = $query }
+                $script:WinToolThemeFilter = $filterObject
+                $view.Filter = {
+                    param($item)
+                    if ($null -eq $item) { return $false }
+                    $state = $script:WinToolThemeFilter
+                    if ($null -eq $state) { return $true }
+                    $mode = [string]$state.Mode
+                    if ($mode -eq "powerline" -and [int]$item.Powerline -ne 1) { return $false }
+                    if ($mode -eq "minimal" -and [int]$item.Powerline -ne 2) { return $false }
+                    if ($mode -eq "no-nerd" -and [int]$item.NerdFont -ne 2) { return $false }
+                    $q = [string]$state.Query
+                    if ([string]::IsNullOrWhiteSpace($q)) { return $true }
+                    if ([string]::IsNullOrEmpty([string]$item.Hay)) { return $false }
+                    return [string]$item.Hay.IndexOf($q.Trim(), [StringComparison]::OrdinalIgnoreCase) -ge 0
+                }
+            }
             $pack = [pscustomobject]@{
                 Entries = $entries
                 Filter  = $filterObject

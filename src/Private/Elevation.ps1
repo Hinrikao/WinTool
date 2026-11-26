@@ -267,11 +267,55 @@ function Show-WinToolElevationNotice {
     }
 }
 
+function Write-WinToolCompressedSelfScript {
+    param(
+        [Parameter(Mandatory = $true)][string]$Directory,
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+    $gzPath = Join-Path $Directory ("wintool-self-" + [guid]::NewGuid().ToString("N") + ".ps1.gz")
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    $bytes = $utf8.GetBytes($Text)
+    $output = [System.IO.File]::Create($gzPath)
+    $gzip = New-Object System.IO.Compression.GzipStream($output, [System.IO.Compression.CompressionMode]::Compress)
+    try {
+        $gzip.Write($bytes, 0, $bytes.Length)
+    }
+    finally {
+        $gzip.Dispose()
+        $output.Dispose()
+    }
+    $stubPath = Join-Path $Directory ("wintool-self-" + [guid]::NewGuid().ToString("N") + ".ps1")
+    $literal = ConvertTo-WinToolLiteral -Text $gzPath
+    $stub = @(
+        "#requires -Version 5.1",
+        '$ErrorActionPreference = "Stop"',
+        '$bytes = [System.IO.File]::ReadAllBytes(' + $literal + ')',
+        '$input = New-Object System.IO.MemoryStream(,$bytes)',
+        '$gzip = New-Object System.IO.Compression.GzipStream($input, [System.IO.Compression.CompressionMode]::Decompress)',
+        '$reader = New-Object System.IO.StreamReader($gzip, [System.Text.Encoding]::UTF8)',
+        '$text = $reader.ReadToEnd()',
+        '$reader.Dispose()',
+        '$gzip.Dispose()',
+        '$input.Dispose()',
+        '$scriptPath = [System.IO.Path]::ChangeExtension(' + $literal + ', ".run.ps1")',
+        '[System.IO.File]::WriteAllText($scriptPath, $text, [System.Text.UTF8Encoding]::new($false))',
+        '& $scriptPath @args'
+    ) -join [Environment]::NewLine
+    [System.IO.File]::WriteAllText($stubPath, $stub + [Environment]::NewLine, (New-Object System.Text.UTF8Encoding $true))
+    return $stubPath
+}
+
 function Start-WinToolRelaunch {
     param(
         [switch]$Elevate
     )
-    $executable = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+    $executable = Get-WinToolPreferredGuiHostPath
+    if ([string]::IsNullOrWhiteSpace($executable)) {
+        $executable = Get-WinToolPowerShell7Path
+    }
+    if ([string]::IsNullOrWhiteSpace($executable)) {
+        throw (Get-WinToolText "shell.installPowerShell7Failed")
+    }
     $launcherDirectory = Join-Path $env:TEMP "WinTool"
     if (-not (Test-Path -LiteralPath $launcherDirectory)) {
         New-Item -ItemType Directory -Path $launcherDirectory -Force | Out-Null
@@ -283,9 +327,7 @@ function Start-WinToolRelaunch {
         $entry = $null
     }
     if ([string]::IsNullOrWhiteSpace($entry) -and -not [string]::IsNullOrWhiteSpace($script:WinToolSelfText)) {
-        $selfPath = Join-Path $launcherDirectory ("wintool-self-" + [guid]::NewGuid().ToString("N") + ".ps1")
-        [System.IO.File]::WriteAllText($selfPath, $script:WinToolSelfText, $encoding)
-        $entry = $selfPath
+        $entry = Write-WinToolCompressedSelfScript -Directory $launcherDirectory -Text $script:WinToolSelfText
     }
     $directory = Get-WinToolWorkingDirectory
     $showConsole = Test-WinToolShowConsole
@@ -308,7 +350,10 @@ function Start-WinToolRelaunch {
     }
     $snapshot = Get-WinToolLaunchHostSnapshot
     $signal = Join-Path $launcherDirectory ("launch-" + [guid]::NewGuid().ToString("N") + ".signal")
-    $start = New-WinToolGuiChildStartInfo -FileName (Get-WinToolPreferredGuiHostPath) -Argument @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden $false) -Environment (Get-WinToolGuiChildEnvironment -Snapshot $snapshot -SignalPath $signal)
+    $start = New-WinToolGuiChildStartInfo -FileName $executable -Argument @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden $false) -Environment (Get-WinToolGuiChildEnvironment -Snapshot $snapshot -SignalPath $signal)
+    if ($showConsole) {
+        $start.CreateNoWindow = $false
+    }
     try {
         $process = Start-WinToolGuiChildProcess -StartInfo $start
     }
@@ -335,6 +380,10 @@ function Start-WinToolRelaunch {
     if ($swap -eq "hide-conhost" -or $swap -eq "morph-wt") {
         $null = $process.WaitForExit()
         Write-WinToolLaunchCloseSummary -SignalPath $signal
+        return
+    }
+    if ($script:WinToolUnattended -or $showConsole) {
+        $null = $process.WaitForExit()
         return
     }
     Write-Host (Get-WinToolText "shell.opened")

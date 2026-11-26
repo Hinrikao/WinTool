@@ -346,7 +346,13 @@ function Start-WinToolHelperProcess {
     param(
         [Parameter(Mandatory = $true)][string]$PipeName
     )
-    $executable = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+    $executable = Get-WinToolPreferredGuiHostPath
+    if ([string]::IsNullOrWhiteSpace($executable)) {
+        $executable = Get-WinToolPowerShell7Path
+    }
+    if ([string]::IsNullOrWhiteSpace($executable)) {
+        throw (Get-WinToolText "shell.installPowerShell7Failed")
+    }
     $launcherPath = New-WinToolHelperStub -PipeName $PipeName -ParentId $PID
     # Do not pass -WindowStyle Hidden to Start-Process -Verb RunAs: that hid
     # the UAC prompt. The stub hides the console as its first action.
