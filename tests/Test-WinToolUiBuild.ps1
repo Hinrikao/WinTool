@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Henrique
+﻿# Copyright (c) 2026 Henrique
 # SPDX-License-Identifier: MIT
 #requires -Version 5.1
 
@@ -1769,6 +1769,8 @@ function Compare-WinToolHomeBound {
     param([hashtable]$Before, [hashtable]$After, [string]$Label)
     $moved = @()
     foreach ($key in $Before.Keys) {
+        # Status tags auto-size to the localized label, so their width can change.
+        if ($key -like "tag *") { continue }
         if ($Before[$key] -ne $After[$key]) { $moved += ("{0}: {1} -> {2}" -f $key, $Before[$key], $After[$key]) }
     }
     if ($moved.Count -gt 0) { throw ("Home " + $Label + " moved or resized: " + ($moved -join "; ")) }
