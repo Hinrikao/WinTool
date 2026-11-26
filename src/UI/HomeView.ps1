@@ -841,7 +841,7 @@ function Add-WinToolHomeChromeStep {
     $hs = $script:WinToolState.Home
     if ($null -eq $hs -or $null -eq $hs.ChromeQueue) { return }
     $added = 0
-    while ($hs.ChromeQueue.Count -gt 0 -and $added -lt 2) {
+    while ($hs.ChromeQueue.Count -gt 0 -and $added -lt 1) {
         $item = $hs.ChromeQueue.Dequeue()
         $kind = [string]$item.Kind
         if ($kind -eq "row") {
@@ -860,7 +860,6 @@ function Add-WinToolHomeChromeStep {
     }
     if ($hs.ChromeQueue.Count -eq 0) {
         $hs.ChromeQueue = $null
-        Update-WinToolHomeCard
     }
 }
 

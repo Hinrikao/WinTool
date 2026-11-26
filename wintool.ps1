@@ -35899,7 +35899,7 @@ function Add-WinToolHomeChromeStep {
     $hs = $script:WinToolState.Home
     if ($null -eq $hs -or $null -eq $hs.ChromeQueue) { return }
     $added = 0
-    while ($hs.ChromeQueue.Count -gt 0 -and $added -lt 2) {
+    while ($hs.ChromeQueue.Count -gt 0 -and $added -lt 1) {
         $item = $hs.ChromeQueue.Dequeue()
         $kind = [string]$item.Kind
         if ($kind -eq "row") {
@@ -35918,7 +35918,6 @@ function Add-WinToolHomeChromeStep {
     }
     if ($hs.ChromeQueue.Count -eq 0) {
         $hs.ChromeQueue = $null
-        Update-WinToolHomeCard
     }
 }
 
@@ -36611,6 +36610,7 @@ function Start-WinToolAfterFirstFrame {
     if ($script:WinToolShuttingDown -or $script:WinToolAfterFirstFrame) { return }
     $script:WinToolAfterFirstFrame = $true
     $script:WinToolAfterFirstFrameStep = 0
+    $script:WinToolHomeCardReady = $false
     Invoke-WinToolAfterFirstFrameStep
 }
 
@@ -36632,11 +36632,18 @@ function Invoke-WinToolAfterFirstFrameStep {
             }
         }
         1 {
-            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.homeChrome" -Script {
-                Add-WinToolHomeChromeStep
-            }
             $hs = $script:WinToolState.Home
             if ($null -ne $hs -and $null -ne $hs.ChromeQueue -and $hs.ChromeQueue.Count -gt 0) {
+                $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.homeChrome" -Script {
+                    Add-WinToolHomeChromeStep
+                }
+                $script:WinToolAfterFirstFrameStep = 1
+            }
+            elseif ($null -ne $hs -and -not [bool]$script:WinToolHomeCardReady) {
+                $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.homeCard" -Script {
+                    Update-WinToolHomeCard
+                }
+                $script:WinToolHomeCardReady = $true
                 $script:WinToolAfterFirstFrameStep = 1
             }
         }
