@@ -818,10 +818,10 @@ function Start-WinToolHomeJob {
     if ($WithWinTool) {
         $copyStamp = Get-Date
         $needed = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
-        foreach ($name in @("Get-WinToolTweakProbe", "Get-WinToolTweakState", "Get-WinToolNote", "Get-WinToolText", "Test-WinToolTextKey", "Test-WinToolWindows", "Get-WinToolCountText")) {
+        foreach ($name in @("Get-WinToolTweakProbe", "Get-WinToolTweakState", "Get-WinToolTweakStep", "Test-WinToolTweakStepState", "Add-WinToolActionStep", "Get-WinToolNote", "Get-WinToolText", "Test-WinToolTextKey", "Test-WinToolWindows", "Get-WinToolCountText", "Import-WinToolAppxModule", "Test-WinToolAdministrator")) {
             [void]$needed.Add($name)
         }
-        foreach ($function in @(Get-ChildItem -Path Function:\ | Where-Object { $_.Name -like "*-WinToolTweak*" -or $needed.Contains($_.Name) })) {
+        foreach ($function in @(Get-ChildItem -Path Function:\ | Where-Object { $_.Name -like "*Tweak*" -or $needed.Contains($_.Name) })) {
             $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $function.Name, $function.Definition
             $state.Commands.Add($entry)
         }
