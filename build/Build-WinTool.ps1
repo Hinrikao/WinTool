@@ -161,6 +161,58 @@ function ConvertTo-BuildGzipBase64 {
     return (ConvertTo-BuildWrappedBase64 -Bytes $compressed)
 }
 
+function ConvertFrom-BuildEmbeddedPayload {
+    param([Parameter(Mandatory = $true)][byte[]]$Bytes)
+    if ($null -eq $Bytes -or $Bytes.Length -lt 2) {
+        return [System.Text.Encoding]::UTF8.GetString($Bytes)
+    }
+    if ($Bytes[0] -eq 0x1F -and $Bytes[1] -eq 0x8B) {
+        $sourceStream = New-Object System.IO.MemoryStream(,$Bytes)
+        $gzip = New-Object System.IO.Compression.GzipStream($sourceStream, [System.IO.Compression.CompressionMode]::Decompress)
+        try {
+            $decoded = New-Object System.IO.MemoryStream
+            $gzip.CopyTo($decoded)
+            return [System.Text.Encoding]::UTF8.GetString($decoded.ToArray())
+        }
+        finally {
+            $gzip.Dispose()
+            $sourceStream.Dispose()
+        }
+    }
+    return [System.Text.Encoding]::UTF8.GetString($Bytes)
+}
+
+function Get-BuildLauncherCanonical {
+    param([Parameter(Mandatory = $true)][string]$Text)
+    $normalized = $Text.Replace("`r`n", "`n")
+    $start = $normalized.IndexOf('$script:WinToolEmbedded = @{')
+    $icons = $normalized.IndexOf('$script:WinToolIcons = @{')
+    if ($start -lt 0 -or $icons -le $start) {
+        return $normalized
+    }
+    $head = $normalized.Substring(0, $start)
+    $mid = $normalized.Substring($start, ($icons - $start))
+    $tail = $normalized.Substring($icons)
+    $pattern = [regex]::new("(?m)^(?<indent>\s*)(?<name>'[^']+'|[A-Za-z][A-Za-z0-9]*) = @'\n(?<body>.*?)\n'@$", [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    $evaluator = {
+        param($match)
+        $clean = ([string]$match.Groups["body"].Value) -replace "\s", ""
+        $bytes = [Convert]::FromBase64String($clean)
+        $payload = ConvertFrom-BuildEmbeddedPayload -Bytes $bytes
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        try {
+            $hashBytes = $sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($payload))
+        }
+        finally {
+            $sha.Dispose()
+        }
+        $hash = [System.BitConverter]::ToString($hashBytes).Replace("-", "").ToLowerInvariant()
+        return ($match.Groups["indent"].Value + $match.Groups["name"].Value + " = '" + $hash + "'")
+    }
+    $mid = $pattern.Replace($mid, $evaluator)
+    return ($head + $mid + $tail)
+}
+
 function Get-BuildAppIcon {
     $catalog = ConvertFrom-Json -InputObject (Read-BuildText -Path (Join-Path $root "data/apps.json"))
     $names = New-Object System.Collections.Generic.List[string]
@@ -302,7 +354,13 @@ if ($Check) {
         $current += "`n"
     }
     if ($current -ne $generated) {
-        throw "wintool.ps1 does not match the source tree. Run build/Build-WinTool.ps1 and commit the result."
+        $currentCanon = Get-BuildLauncherCanonical -Text $current
+        $generatedCanon = Get-BuildLauncherCanonical -Text $generated
+        if ($currentCanon -ne $generatedCanon) {
+            throw "wintool.ps1 does not match the source tree. Run build/Build-WinTool.ps1 and commit the result."
+        }
+        Write-Output "wintool.ps1 matches the source tree (embedded payloads are equivalent)."
+        return
     }
     Write-Output "wintool.ps1 matches the source tree."
     return
