@@ -1070,6 +1070,67 @@ function Assert-WinToolStyleSwitchSpeed {
     }
 }
 
+function Write-WinToolThemeListStat {
+    param([string]$Label)
+    $format = [System.Globalization.CultureInfo]::InvariantCulture
+    $list = $window.FindName("TerminalStyleList")
+    if ($null -eq $list) {
+        Write-Output ("Theme list " + $Label + ": missing")
+        return
+    }
+    $realized = 0
+    $generator = $list.ItemContainerGenerator
+    if ($null -ne $generator) {
+        for ($index = 0; $index -lt $list.Items.Count; $index++) {
+            if ($null -ne $generator.ContainerFromIndex($index)) { $realized++ }
+        }
+    }
+    $viewer = Find-WinToolChildScrollViewer -Element $list
+    $view = 0.0
+    $offset = 0.0
+    if ($null -ne $viewer) {
+        $view = [double]$viewer.ViewportHeight
+        $offset = [double]$viewer.VerticalOffset
+    }
+    Write-Output ("Theme list " + $Label + ": items " + $list.Items.Count + ", realized " + $realized + ", height " + $list.ActualHeight.ToString("0.0", $format) + ", viewport " + $view.ToString("0.0", $format) + ", offset " + $offset.ToString("0.0", $format) + ".")
+}
+
+function Measure-WinToolEngineSwitch {
+    param([Parameter(Mandatory = $true)][string]$PromptId)
+    $format = [System.Globalization.CultureInfo]::InvariantCulture
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    Set-WinToolTerminalChoiceValue -Name "prompt" -Value $PromptId
+    $script:WinToolTerminalFilter = "all"
+    $wasSyncing = [bool]$script:WinToolTerminalSyncing
+    $script:WinToolTerminalSyncing = $true
+    try {
+        $allChip = $window.FindName("TerminalFilterAll")
+        if ($null -ne $allChip -and $allChip.IsChecked -ne $true) { $allChip.IsChecked = $true }
+        Update-WinToolPromptStyleList
+    }
+    finally {
+        $script:WinToolTerminalSyncing = $wasSyncing
+    }
+    $listMs = $watch.Elapsed.TotalMilliseconds
+    $watch.Restart()
+    Update-WinToolPromptSelection
+    Update-WinToolTerminalSummary
+    $summaryMs = $watch.Elapsed.TotalMilliseconds
+    $watch.Restart()
+    Update-WinToolTerminalPreview
+    $previewMs = $watch.Elapsed.TotalMilliseconds
+    $watch.Restart()
+    Sync-WinToolVisibleThemePreview
+    $thumbMs = $watch.Elapsed.TotalMilliseconds
+    $watch.Restart()
+    Show-WinToolTerminalSelection
+    $showMs = $watch.Elapsed.TotalMilliseconds
+    $total = $listMs + $summaryMs + $previewMs + $thumbMs + $showMs
+    Write-Output ("Engine switch phases " + $PromptId + ": list " + $listMs.ToString("0.0", $format) + " ms, summary " + $summaryMs.ToString("0.0", $format) + " ms, preview " + $previewMs.ToString("0.0", $format) + " ms, thumbs " + $thumbMs.ToString("0.0", $format) + " ms, show " + $showMs.ToString("0.0", $format) + " ms, total " + $total.ToString("0.0", $format) + " ms.")
+    Write-WinToolThemeListStat -Label $PromptId
+    return $total
+}
+
 function Measure-WinToolUiAction {
     param(
         [Parameter(Mandatory = $true)][scriptblock]$Action,
@@ -1102,7 +1163,7 @@ function Assert-WinToolUiSwitchSpeed {
     $coldPart = New-Object System.Collections.Generic.List[string]
     $coldTime = New-Object System.Collections.Generic.List[object]
     foreach ($id in $ids) {
-        $ms = Measure-WinToolUiAction -Flush -Action { Select-WinToolTerminalPrompt -PromptId $id }.GetNewClosure()
+        $ms = Measure-WinToolEngineSwitch -PromptId $id
         [void]$coldTime.Add([pscustomobject]@{ Name = $id; Ms = $ms })
         [void]$coldPart.Add($id + " " + $ms.ToString("0.0", $format) + "ms")
         Write-Output ("Engine switch cold " + $id + ": " + $ms.ToString("0.0", $format) + " ms")
@@ -1118,7 +1179,7 @@ function Assert-WinToolUiSwitchSpeed {
     $warmPart = New-Object System.Collections.Generic.List[string]
     $warmTime = New-Object System.Collections.Generic.List[object]
     foreach ($id in $ids) {
-        $ms = Measure-WinToolUiAction -Flush -Action { Select-WinToolTerminalPrompt -PromptId $id }.GetNewClosure()
+        $ms = Measure-WinToolEngineSwitch -PromptId $id
         [void]$warmTime.Add([pscustomobject]@{ Name = $id; Ms = $ms })
         [void]$warmPart.Add($id + " " + $ms.ToString("0.0", $format) + " ms")
         Write-Output ("Engine switch warm " + $id + ": " + $ms.ToString("0.0", $format) + " ms")
