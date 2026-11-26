@@ -640,5 +640,6 @@ function Invoke-WinToolPowerShell7Handoff {
     if ([string]::IsNullOrWhiteSpace((Get-WinToolPreferredGuiHostPath))) {
         throw (Get-WinToolText "shell.installPowerShell7Failed")
     }
+    Write-Host (Get-WinToolText "shell.openingWindow")
     Start-WinToolRelaunch
 }

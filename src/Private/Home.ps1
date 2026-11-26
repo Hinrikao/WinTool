@@ -479,10 +479,18 @@ function Get-HomeJunkFile {
     $filter = [string]$Location.Filter
     if ([string]::IsNullOrWhiteSpace($filter)) { $filter = "*" }
     foreach ($root in $roots) {
+        if ($null -ne $script:HomeJunkDeadline -and (Get-Date) -ge $script:HomeJunkDeadline) {
+            $script:HomeJunkTimedOut = $true
+            break
+        }
         if (-not (Test-Path -LiteralPath $root)) { continue }
         $stack = New-Object System.Collections.Generic.Stack[string]
         $stack.Push($root)
         while ($stack.Count -gt 0) {
+            if ($null -ne $script:HomeJunkDeadline -and (Get-Date) -ge $script:HomeJunkDeadline) {
+                $script:HomeJunkTimedOut = $true
+                break
+            }
             $current = $stack.Pop()
             foreach ($file in @(Get-ChildItem -LiteralPath $current -Filter $filter -Force -File -ErrorAction SilentlyContinue)) {
                 if (Test-HomeReparsePoint -Item $file) { continue }
@@ -506,6 +514,8 @@ function Get-HomeJunkFile {
             @'
 param($sync, $locations)
 try {
+    $script:HomeJunkDeadline = (Get-Date).AddSeconds(5)
+    $script:HomeJunkTimedOut = $false
     $list = foreach ($location in @($locations)) {
         $sum = [double]0
         foreach ($file in @(Get-HomeJunkFile -Location $location)) { $sum += [double]$file.Length }
@@ -513,6 +523,7 @@ try {
     }
     $sync.Data = @($list)
     $sync.Ok = $true
+    if ($script:HomeJunkTimedOut) { $sync.Partial = $true }
 }
 catch { $sync.Error = $_.Exception.Message }
 finally { $sync.Done = $true }
@@ -806,7 +817,11 @@ function Start-WinToolHomeJob {
     $state = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
     if ($WithWinTool) {
         $copyStamp = Get-Date
-        foreach ($function in @(Get-ChildItem -Path Function:\ | Where-Object { $_.Name -like "*-WinTool*" })) {
+        $needed = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        foreach ($name in @("Get-WinToolTweakProbe", "Get-WinToolTweakState", "Get-WinToolNote", "Get-WinToolText", "Test-WinToolTextKey", "Test-WinToolWindows", "Get-WinToolCountText")) {
+            [void]$needed.Add($name)
+        }
+        foreach ($function in @(Get-ChildItem -Path Function:\ | Where-Object { $_.Name -like "*-WinToolTweak*" -or $needed.Contains($_.Name) })) {
             $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $function.Name, $function.Definition
             $state.Commands.Add($entry)
         }

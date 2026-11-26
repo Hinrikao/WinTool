@@ -244,6 +244,8 @@ function New-WinToolAdminBadge {
     $badge = New-WinToolBadge -Text (Get-WinToolText "ui.adminBadge") -Kind "admin"
     $badge.Margin = $Margin
     $badge.Tag = "WinToolAdminBadge"
+    $badge.HorizontalAlignment = "Center"
+    $badge.VerticalAlignment = "Center"
     return $badge
 }
 

@@ -70,8 +70,36 @@ function Add-WinToolCSharpType {
     $stamp = Get-Date
     try {
         $refs = @(Get-WinToolCSharpReference -Type $ReferenceType)
+        $cacheDir = $null
+        $cachePath = $null
+        if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+            $cacheDir = Join-Path $env:LOCALAPPDATA "WinTool\cache\types"
+            $hash = [System.Security.Cryptography.SHA256]::Create()
+            try {
+                $payload = $Name + "`n" + [string]$PSVersionTable.PSVersion + "`n" + ($refs -join "`n") + "`n" + $TypeDefinition
+                $bytes = $hash.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($payload))
+                $id = ([System.BitConverter]::ToString($bytes) -replace "-", "").ToLowerInvariant()
+                $cachePath = Join-Path $cacheDir ($id + ".dll")
+            }
+            finally {
+                $hash.Dispose()
+            }
+        }
+        if (-not [string]::IsNullOrWhiteSpace($cachePath) -and (Test-Path -LiteralPath $cachePath)) {
+            Add-Type -Path $cachePath -ErrorAction Stop
+            Write-WinToolStartupMark -Name ("addType." + $Name) -Started $stamp
+            return $true
+        }
         if ($refs.Count -gt 0) {
-            Add-Type -TypeDefinition $TypeDefinition -ReferencedAssemblies $refs -Language CSharp -ErrorAction Stop
+            if (-not [string]::IsNullOrWhiteSpace($cachePath)) {
+                if (-not (Test-Path -LiteralPath $cacheDir)) {
+                    New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+                }
+                Add-Type -TypeDefinition $TypeDefinition -ReferencedAssemblies $refs -Language CSharp -OutputAssembly $cachePath -ErrorAction Stop
+            }
+            else {
+                Add-Type -TypeDefinition $TypeDefinition -ReferencedAssemblies $refs -Language CSharp -ErrorAction Stop
+            }
         }
         else {
             Add-Type -TypeDefinition $TypeDefinition -Language CSharp -ErrorAction Stop

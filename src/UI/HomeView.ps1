@@ -570,7 +570,7 @@ function Initialize-WinToolHomeView {
         $row = New-WinToolHomeRow -Check $checks[$i] -Last ($i -eq $checks.Count - 1)
         $hs.Rows[$row.Id] = $row
         $null = $checkHost.Children.Add($row.Border)
-        Set-WinToolHomeRow -Row $row -Status "busy" -Text ((Get-WinToolText "msg.waiting") + (Get-WinToolHomeEllipsis)) -Action "off"
+        Set-WinToolHomeRow -Row $row -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
     }
     $minis = Get-WinToolUi -Name "HomeMinis"
     $hs.Minis["memory"] = New-WinToolHomeMini -Key "memory" -Title (Get-WinToolText "msg.memory") -Column 0 -From "#4C8DFF" -To "#8B5CF6" -Line "#8B7CF6"
@@ -595,11 +595,8 @@ Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeFixAll") -EventName "
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeHistoryLink") -EventName "Click" -Name "View history" -Action {
         Show-WinToolHomeHistory
     }
-    Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Start the Home analysis" -Action {
-        Start-WinToolHomeTimer
-        Start-WinToolHomeSampler
-        Start-WinToolHomeAnalysis
-    }
+    # Timer, sampler, and analysis start after the first frame so they do not
+    # block the dispatcher during Loaded.
 }
 
 function Sync-WinToolHomeHeader {
@@ -725,7 +722,7 @@ function Start-WinToolHomeCheck {
     $hs = $script:WinToolState.Home
     $hs.Pending[$Id] = $true
     $hs.Results.Remove($Id)
-    Set-WinToolHomeRow -Row $hs.Rows[$Id] -Status "busy" -Text ((Get-WinToolText "msg.checking") + (Get-WinToolHomeEllipsis)) -Action "off"
+    Set-WinToolHomeRow -Row $hs.Rows[$Id] -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
     if ($script:WinToolHomeNoJobs) { return }
     $key = "HomeJob_" + $Id
     Stop-WinToolThread -Job $script:WinToolState[$key]
@@ -792,10 +789,15 @@ function Complete-WinToolHomeCheck {
     param(
         [Parameter(Mandatory = $true)][string]$Id,
         $Data,
-        [string]$ErrorMessage
+        [string]$ErrorMessage,
+        [switch]$Partial
     )
     $hs = $script:WinToolState.Home
     $result = ConvertTo-WinToolHomeResult -Id $Id -Data $Data -ErrorMessage $ErrorMessage
+    if ($Partial -and -not [string]::IsNullOrWhiteSpace([string]$result.Text)) {
+        $result.Text = (Get-WinToolText "msg.junk-scan-partial" $result.Text)
+        if ($result.Status -eq "ok") { $result.Status = "warn" }
+    }
     $hs.Results[$Id] = $result
     $hs.Pending.Remove($Id)
     $action = [string]$result.Action
@@ -881,9 +883,12 @@ function Update-WinToolHomePoll {
         if ($null -eq $job -or -not $job.Sync.Done) { continue }
         $data = $job.Sync.Data
         $errorText = [string]$job.Sync.Error
+        $partial = $false
+        try { $partial = [bool]$job.Sync.Partial } catch { $partial = $false }
         Stop-WinToolThread -Job $job
         $script:WinToolState[$key] = $null
-        Complete-WinToolHomeCheck -Id $check.Id -Data $data -ErrorMessage $errorText
+        Complete-WinToolHomeCheck -Id $check.Id -Data $data -ErrorMessage $errorText -Partial:$partial
+        break
     }
     $clean = $script:WinToolState.HomeCleanJob
     if ($null -ne $clean -and $clean.Sync.Done) {
@@ -1042,4 +1047,31 @@ function Show-WinToolHomeHistory {
     [array]::Reverse($items)
     $lines = @($items | ForEach-Object { "{0}    Score {1}    {2}s" -f (Format-WinToolHomeWhen -Time ([datetime]$_.Time)), [int]$_.Score, [int]$_.Seconds })
     $null = [System.Windows.MessageBox]::Show(($lines -join "`n"), "History")
+}
+
+
+function Sync-WinToolHomeLocale {
+    $hs = $script:WinToolState.Home
+    if ($null -eq $hs) { return }
+    foreach ($check in @(Get-WinToolHomeCheckList)) {
+        $row = $hs.Rows[$check.Id]
+        if ($null -eq $row) { continue }
+        $row.Name = [string]$check.Name
+        if ($null -ne $row.Label) { $row.Label.Text = [string]$check.Name }
+    }
+    $titles = @{
+        memory = (Get-WinToolText "msg.memory")
+        disk = (Get-WinToolText "msg.windows-disk")
+        pc = (Get-WinToolText "drivers.pcLabel")
+    }
+    foreach ($key in @("memory", "disk", "pc")) {
+        $mini = $hs.Minis[$key]
+        if ($null -eq $mini -or $null -eq $mini.TitleText) { continue }
+        $mini.TitleText.Text = $titles[$key]
+        $mini.TitleText.ToolTip = $titles[$key]
+    }
+    if ($null -ne $hs.Previous) {
+        (Get-WinToolUi -Name "HomeMetaText").Text = Format-WinToolHomeMeta -Last $hs.Previous
+    }
+    Sync-WinToolHomeHeader
 }

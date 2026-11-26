@@ -1496,5 +1496,6 @@
   "ui.t.windows-update.Text": "Windows Update",
   "ui.t.winget-package-list.Text": "winget package list",
   "ui.t.wintool-profile.Text": "WinTool profile",
-  "ui.t.wintool-uses-windows-update-and-links-to-the-gra.Text": "WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools. For a full driver scan, backup, and repair tools, open the Drivers tab."
+  "ui.t.wintool-uses-windows-update-and-links-to-the-gra.Text": "WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools. For a full driver scan, backup, and repair tools, open the Drivers tab.",
+  "msg.junk-scan-partial": "Partial result: {0}"
 }

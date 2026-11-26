@@ -88,6 +88,20 @@ function Get-WinToolWingetPath {
     if ($null -ne $script:WinToolWingetWorking -and (Test-Path -LiteralPath $script:WinToolWingetWorking)) {
         return $script:WinToolWingetWorking
     }
+    $cmdStamp = Get-Date
+    $command = Get-Command -Name "winget.exe" -ErrorAction SilentlyContinue
+    if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+        Write-WinToolStartupMark -Name "winget.getCommand" -Started $cmdStamp
+    }
+    if ($null -ne $command -and -not [string]::IsNullOrWhiteSpace([string]$command.Source) -and (Test-Path -LiteralPath $command.Source)) {
+        return [string]$command.Source
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        $alias = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps\winget.exe"
+        if (Test-Path -LiteralPath $alias) {
+            return $alias
+        }
+    }
     $candidates = @(Get-WinToolWingetCandidate)
     if ($candidates.Count -eq 0) {
         return $null

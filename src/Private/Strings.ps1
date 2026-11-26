@@ -455,6 +455,13 @@ function Set-WinToolXamlText {
         Initialize-WinToolLocale | Out-Null
     }
 
+    $script:WinToolXamlTextSkipViews = $null
+    if ($null -ne $script:WinToolWindow -and [object]::ReferenceEquals($Root, $script:WinToolWindow)) {
+        $script:WinToolXamlTextSkipViews = New-Object "System.Collections.Generic.HashSet[string]"
+        foreach ($name in @("ViewInstall", "ViewTweaks", "ViewTerminal", "ViewDrivers", "ViewUpdates", "ViewFixes", "ViewFeatures", "ViewConfig")) {
+            [void]$script:WinToolXamlTextSkipViews.Add($name)
+        }
+    }
     $visit = New-Object System.Collections.Generic.Queue[object]
     $visit.Enqueue($Root)
     $seen = New-Object System.Collections.Generic.HashSet[int]
@@ -530,10 +537,16 @@ function Set-WinToolXamlText {
             }
         }
 
+        $skipChildren = $false
+        if ($script:WinToolXamlTextSkipViews -and -not [string]::IsNullOrWhiteSpace($elementName) -and $script:WinToolXamlTextSkipViews.Contains($elementName)) {
+            $skipChildren = $true
+        }
         try {
-            foreach ($child in [System.Windows.LogicalTreeHelper]::GetChildren($node)) {
-                if ($child -is [System.Windows.DependencyObject]) {
-                    $visit.Enqueue($child)
+            if (-not $skipChildren) {
+                foreach ($child in [System.Windows.LogicalTreeHelper]::GetChildren($node)) {
+                    if ($child -is [System.Windows.DependencyObject]) {
+                        $visit.Enqueue($child)
+                    }
                 }
             }
         }

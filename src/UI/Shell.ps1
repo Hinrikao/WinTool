@@ -325,6 +325,10 @@ function Initialize-WinToolDeferredView {
     }
     if ([bool]$script:WinToolState.ViewReady[$Name]) { return }
     $script:WinToolState.ViewReady[$Name] = $true
+    $viewRoot = Get-WinToolUi -Name ("View" + $Name)
+    if ($null -ne $viewRoot) {
+        Set-WinToolXamlText -Root $viewRoot
+    }
     $mark = "init." + $Name
     $started = Get-Date
     Enter-WinToolUiWork -Name $mark
@@ -345,12 +349,35 @@ function Initialize-WinToolDeferredView {
     }
 }
 
+function Start-WinToolAfterFirstFrame {
+    if ($script:WinToolShuttingDown -or $script:WinToolAfterFirstFrame) { return }
+    $script:WinToolAfterFirstFrame = $true
+    $wingetStamp = Get-Date
+    $winget = $null
+    try { $winget = Get-WinToolWingetPath } catch { $null = $_.Exception.Message }
+    Write-WinToolStartupMark -Name "wingetPath" -Started $wingetStamp
+    if ([string]::IsNullOrWhiteSpace($winget)) {
+        Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
+        Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
+    }
+    else {
+        Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
+        Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
+    }
+    try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
+    try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
+    try { Start-WinToolHomeAnalysis } catch { $null = $_.Exception.Message }
+    Start-WinToolNavWarmup
+}
+
 function Start-WinToolNavWarmup {
     # Measures each page once while Home is on screen, so the first click
     # does not pay for building that page.
-    $script:WinToolState.WarmViews = @("Install", "Tweaks", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")
+    # Install and Terminal each block the dispatcher for seconds; Tweaks is
+    # hundreds of milliseconds. Warm only the cheap pages, one idle slice at a time.
+    $script:WinToolState.WarmViews = @("Drivers", "Updates", "Fixes", "Features", "Config")
     $callback = [scriptblock]::Create("Invoke-WinToolNavWarmupStep")
-    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$callback)
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
 }
 
 function Invoke-WinToolNavWarmupStep {
@@ -379,7 +406,7 @@ function Invoke-WinToolNavWarmupStep {
     }
     if (@($script:WinToolState.WarmViews).Count -gt 0) {
         $callback = [scriptblock]::Create("Invoke-WinToolNavWarmupStep")
-        $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$callback)
+        $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
     }
 }
 
@@ -1038,19 +1065,8 @@ function Initialize-WinToolShellEvent {
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Window loaded" -Action {
         Write-WinToolLog -Message (Get-WinToolText "msg.welcome-to-wintool-choose-what-you-want-then-run-it-when") -Level "info"
-        $wingetStamp = Get-Date
-        $winget = Get-WinToolWingetPath
-        Write-WinToolStartupMark -Name "wingetPath" -Started $wingetStamp
-        if ([string]::IsNullOrWhiteSpace($winget)) {
-            Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
-            Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
-        }
-        else {
-            Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
-            Sync-WinToolStatus -Text (Get-WinToolText "status.ready") -Summary ""
-        }
-        Start-WinToolTweakStateRead
-        Start-WinToolNavWarmup
+        $callback = [scriptblock]::Create("Start-WinToolAfterFirstFrame")
+        $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Check installed apps" -Action {
         if ($null -ne $script:WinToolState.ViewReady -and [bool]$script:WinToolState.ViewReady["Install"]) {
@@ -1171,9 +1187,8 @@ function New-WinToolWindow {
     $null = Invoke-WinToolMeasuredWork -Name "init.Appearance" -Script { Initialize-WinToolAppearance }
     $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
     $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView }
-    $null = Invoke-WinToolMeasuredWork -Name "init.Tweaks" -Script { Initialize-WinToolTweakView }
-    $script:WinToolState.ViewReady["Tweaks"] = $true
     if (-not $DeferViews) {
+        $null = Invoke-WinToolMeasuredWork -Name "init.Tweaks" -Script { Initialize-WinToolTweakView }
         $null = Invoke-WinToolMeasuredWork -Name "init.Install" -Script { Initialize-WinToolInstallView }
         $null = Invoke-WinToolMeasuredWork -Name "init.Terminal" -Script { Initialize-WinToolTerminalView }
         $null = Invoke-WinToolMeasuredWork -Name "init.Drivers" -Script { Initialize-WinToolDriverView }
@@ -1181,7 +1196,7 @@ function New-WinToolWindow {
         $null = Invoke-WinToolMeasuredWork -Name "init.Fixes" -Script { Initialize-WinToolFixView }
         $null = Invoke-WinToolMeasuredWork -Name "init.Features" -Script { Initialize-WinToolFeatureView }
         $null = Invoke-WinToolMeasuredWork -Name "init.Config" -Script { Initialize-WinToolConfigView }
-        foreach ($name in @("Install", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")) {
+        foreach ($name in @("Tweaks", "Install", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")) {
             $script:WinToolState.ViewReady[$name] = $true
         }
     }

@@ -878,6 +878,7 @@
       <Grid.RowDefinitions>
         <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
       <Grid Grid.Row="0">
@@ -1791,7 +1792,7 @@
         </ScrollViewer>
       </Grid>
 
-      <Border x:Name="ActivityPanel" Grid.Row="0" Height="360" Margin="20,0,20,8" VerticalAlignment="Bottom" Panel.ZIndex="15" Background="{StaticResource BrushLog}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Visibility="Collapsed">
+      <Border x:Name="ActivityPanel" Grid.Row="1" Height="280" Margin="20,0,20,8" Background="{StaticResource BrushLog}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Visibility="Collapsed">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -1835,7 +1836,7 @@
           <Button x:Name="ToastDismiss" Grid.Column="3" Style="{StaticResource QuietButton}" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" MinWidth="28" Padding="0" Margin="8,0,0,0" VerticalAlignment="Top" ToolTip="Dismiss"/>
         </Grid>
       </Border>
-      <Border x:Name="StatusBar" Grid.Row="1" Background="{StaticResource BrushLog}" CornerRadius="12" Margin="20,0,20,16" Padding="14,8">
+      <Border x:Name="StatusBar" Grid.Row="2" Background="{StaticResource BrushLog}" CornerRadius="12" Margin="20,0,20,16" Padding="14,8">
         <DockPanel>
           <DockPanel DockPanel.Dock="Top" LastChildFill="True">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">

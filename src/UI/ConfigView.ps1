@@ -99,6 +99,9 @@ function Invoke-WinToolLanguageChoice {
     Save-WinToolPreference -Preferences $prefs
     Initialize-WinToolLocale -Language $tag -Force | Out-Null
     Set-WinToolXamlText -Root $script:WinToolWindow
+    if (Get-Command -Name Sync-WinToolHomeLocale -ErrorAction SilentlyContinue) {
+        Sync-WinToolHomeLocale
+    }
     Initialize-WinToolLanguageChoice
     Update-WinToolProfileSummary
     if ($null -ne $script:WinToolState) {

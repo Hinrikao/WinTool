@@ -9,7 +9,8 @@
     Runs ShowDialog for 20 seconds with a dispatcher heartbeat, prints a phase
     table and any dispatcher gaps, captures the first painted frame, and fails
     if that frame is a white window or if an exception escapes the dispatcher.
-    This audit run records timings and does not yet fail the first-frame budget.
+    Fails if the first frame is over 2000 ms, if a dispatcher gap exceeds
+    200 ms in the first 20 seconds, or if Home analysis does not finish.
 #>
 $ErrorActionPreference = "Stop"
 
@@ -125,9 +126,9 @@ try {
         try {
             Show-WinToolWindowAfterRender -Window $window
             $window.UpdateLayout()
+            Write-WinToolStartupMark -Name "firstFrameMs"
             Save-WinToolStartupFrame -Window $window
             $script:StartupShown = $true
-            Write-WinToolStartupMark -Name "firstFrameMs"
         }
         catch {
             [void]$script:StartupErrors.Add($_.Exception.Message)
@@ -189,6 +190,29 @@ Write-Output ("First painted frame is not white ({0}% near-white). Shot: {1}" -f
 
 if ($script:StartupErrors.Count -gt 0) {
     throw ("Startup failed: " + ($script:StartupErrors -join "; "))
+}
+
+$firstMs = 0
+if ($null -ne $script:WinToolStartupMarks -and $null -ne $script:WinToolStartupMarks["firstFrameMs"]) {
+    $firstMs = [int]$script:WinToolStartupMarks["firstFrameMs"]
+}
+if ($firstMs -gt 2000) {
+    throw ("First frame was {0} ms; the budget is 2000 ms." -f $firstMs)
+}
+$over = @()
+if ($null -ne $script:WinToolDispatcherGaps) {
+    $over = @($script:WinToolDispatcherGaps | Where-Object { $null -ne $_ -and [int]$_.GapMs -gt 200 })
+}
+if ($over.Count -gt 0) {
+    $worst = $over | Sort-Object { [int]$_.GapMs } -Descending | Select-Object -First 1
+    throw ("Dispatcher gap of {0} ms during {1} at {2} ms; the budget is 200 ms." -f [int]$worst.GapMs, [string]$worst.Work, [int]$worst.AtMs)
+}
+if ($null -eq $script:WinToolState -or $null -eq $script:WinToolState.Home) {
+    throw "Home analysis did not start."
+}
+$hs = $script:WinToolState.Home
+if ([string]$hs.Phase -ne "done" -or [int]$hs.Pending.Count -gt 0) {
+    throw ("Home analysis did not finish (phase={0}, pending={1})." -f [string]$hs.Phase, @($hs.Pending).Count)
 }
 Write-Output "ShowDialog ran with theme warmup and did not crash."
 exit 0
