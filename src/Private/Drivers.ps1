@@ -341,18 +341,25 @@ function Get-WinToolDriverRuntimeRow {
     $group = "runtime-current"
     $selected = $false
     $available = ""
+    $attention = $false
+    if ($null -ne $Runtime.PSObject.Properties["attention"]) {
+        $attention = [bool]$Runtime.attention
+    }
+    elseif ($null -ne $Runtime.PSObject.Properties["Attention"]) {
+        $attention = [bool]$Runtime.Attention
+    }
     if (-not $ready) {
         $group = "runtime-pending"
     }
     elseif ($upgrade) {
         $group = "runtime"
         $selected = $true
-        $available = "Update available"
+        $available = Get-WinToolText "drivers.runtime.updateAvailable"
     }
     elseif (-not $installed) {
         $group = "runtime"
         $selected = $true
-        $available = "Not installed"
+        $available = Get-WinToolText "drivers.runtime.notInstalled"
     }
     return [pscustomobject]@{
         Id               = [string](Get-WinToolNote -Object $Runtime -Name "id" -Default $id)
@@ -371,6 +378,7 @@ function Get-WinToolDriverRuntimeRow {
         Selected         = $selected
         WingetId         = $id
         Scope            = [string](Get-WinToolNote -Object $Runtime -Name "scope" -Default "machine")
+        Attention        = $attention
         Checkbox         = $null
         Device           = $null
         Offer            = $null
@@ -393,9 +401,9 @@ function Get-WinToolDriverGpuRow {
         $installed = Test-WinToolCachedWingetId -Id $id -Cache $cache
         $upgrade = Test-WinToolCachedWingetUpgrade -Id $id -Cache $cache
     }
-    $available = "Official installer"
-    if ($upgrade) { $available = "Update available" }
-    elseif ($installed) { $available = "Installed" }
+    $available = Get-WinToolText "drivers.runtime.official"
+    if ($upgrade) { $available = Get-WinToolText "drivers.runtime.updateAvailable" }
+    elseif ($installed) { $available = Get-WinToolText "drivers.runtime.installed" }
     return [pscustomobject]@{
         Id               = [string]$vendor.id
         Name             = ([string]$vendor.name + " for " + $GpuName)
@@ -465,28 +473,28 @@ function Format-WinToolDriverDetail {
         $available = [string]$Row.AvailableVersion
         $dateText = Format-WinToolDriverDate -Value $Row.AvailableDate
         if (-not [string]::IsNullOrWhiteSpace($dateText) -and -not [string]::IsNullOrWhiteSpace($available) -and $available -notmatch 'available|installed|Official|Not ') {
-            return ("Available: " + $available + " (" + $dateText + ")")
+            return (Get-WinToolText "drivers.available.versionDate" $available $dateText)
         }
         if (-not [string]::IsNullOrWhiteSpace($dateText)) {
-            return ("Available: " + $dateText)
+            return (Get-WinToolText "drivers.available.date" $dateText)
         }
         if (-not [string]::IsNullOrWhiteSpace($available)) {
-            return ("Available: " + $available)
+            return (Get-WinToolText "drivers.available.version" $available)
         }
-        return "Available from Windows Update"
+        return (Get-WinToolText "drivers.available.wu")
     }
     $current = [string]$Row.Version
     $dateText = Format-WinToolDriverDate -Value $Row.Date
     if (-not [string]::IsNullOrWhiteSpace($current) -and -not [string]::IsNullOrWhiteSpace($dateText)) {
-        return ("Current: " + $current + " (" + $dateText + ")")
+        return (Get-WinToolText "drivers.current.versionDate" $current $dateText)
     }
     if (-not [string]::IsNullOrWhiteSpace($dateText)) {
-        return ("Current: " + $dateText)
+        return (Get-WinToolText "drivers.current.date" $dateText)
     }
     if (-not [string]::IsNullOrWhiteSpace($current)) {
-        return ("Current: " + $current)
+        return (Get-WinToolText "drivers.current.version" $current)
     }
-    return "Up to date"
+    return (Get-WinToolText "drivers.current.upToDate")
 }
 
 function Format-WinToolDriverHeader {
@@ -497,31 +505,106 @@ function Format-WinToolDriverHeader {
     )
     $head = ""
     if ($Outdated -gt 0 -and $Missing -gt 0) {
-        $left = "1 device driver is outdated"
-        if ($Outdated -gt 1) { $left = "$Outdated device drivers are outdated" }
-        $right = "1 is missing"
-        if ($Missing -gt 1) { $right = "$Missing are missing" }
-        $head = $left + " and " + $right + "."
+        $left = Get-WinToolCountText "drivers.header.both.left" $Outdated
+        $right = Get-WinToolCountText "drivers.header.both.right" $Missing
+        $head = Get-WinToolText "drivers.header.both" $left $right
     }
-    elseif ($Outdated -eq 1) { $head = "1 device driver is outdated." }
-    elseif ($Outdated -gt 1) { $head = "$Outdated device drivers are outdated." }
-    elseif ($Missing -eq 1) { $head = "1 device driver is missing." }
-    elseif ($Missing -gt 1) { $head = "$Missing device drivers are missing." }
-    if ($Runtime -eq 1) {
-        $extra = "1 game runtime needs attention."
-    }
-    elseif ($Runtime -gt 1) {
-        $extra = "$Runtime game runtimes need attention."
-    }
-    else {
-        $extra = ""
+    elseif ($Outdated -gt 0) { $head = Get-WinToolCountText "drivers.header.outdated" $Outdated }
+    elseif ($Missing -gt 0) { $head = Get-WinToolCountText "drivers.header.missing" $Missing }
+    $extra = ""
+    if ($Runtime -gt 0) {
+        $extra = Get-WinToolCountText "drivers.header.runtime" $Runtime
     }
     if ([string]::IsNullOrWhiteSpace($head) -and [string]::IsNullOrWhiteSpace($extra)) {
-        return "No outdated or missing drivers were found."
+        return (Get-WinToolText "drivers.header.none")
     }
     if ([string]::IsNullOrWhiteSpace($head)) { return $extra }
     if ([string]::IsNullOrWhiteSpace($extra)) { return $head }
     return ($head + " " + $extra)
+}
+
+function Format-WinToolDriverStatusSummary {
+    param(
+        [int]$Outdated = 0,
+        [int]$Missing = 0,
+        [int]$Runtime = 0
+    )
+    if ($Outdated -le 0 -and $Missing -le 0 -and $Runtime -le 0) {
+        return (Get-WinToolText "status.summary.scanNone")
+    }
+    return (Get-WinToolText "status.summary.scan" $Outdated $Missing $Runtime)
+}
+
+function Test-WinToolDriverRuntimeAttention {
+    param($Row)
+    if ([string](Get-WinToolNote -Object $Row -Name "Kind" -Default "") -ne "runtime") {
+        return $false
+    }
+    if ([string](Get-WinToolNote -Object $Row -Name "Group" -Default "") -ne "runtime") {
+        return $false
+    }
+    if ([bool](Get-WinToolNote -Object $Row -Name "Attention" -Default $false)) {
+        return $true
+    }
+    $available = [string](Get-WinToolNote -Object $Row -Name "AvailableVersion" -Default "")
+    return ($available -eq (Get-WinToolText "drivers.runtime.updateAvailable"))
+}
+
+function Get-WinToolDriverAttentionRuntime {
+    param($Row = @())
+    $list = New-Object System.Collections.Generic.List[object]
+    foreach ($item in @($Row)) {
+        if (Test-WinToolDriverRuntimeAttention -Row $item) {
+            $list.Add($item) | Out-Null
+        }
+    }
+    return $list.ToArray()
+}
+
+function Get-WinToolDriverPcChip {
+    param(
+        $Info,
+        $Display = @(),
+        $Device = @()
+    )
+    $chips = New-Object System.Collections.Generic.List[object]
+    function Add-Chip([string]$Key, [string]$Value) {
+        if ([string]::IsNullOrWhiteSpace($Value)) { return }
+        $chips.Add([pscustomobject]@{ Label = (Get-WinToolText $Key); Value = $Value }) | Out-Null
+    }
+    if ($null -ne $Info) {
+        Add-Chip "drivers.chip.processor" ([string](Get-WinToolNote -Object $Info -Name "Cpu" -Default ""))
+    }
+    $network = ""
+    foreach ($item in @($Device)) {
+        $class = [string](Get-WinToolNote -Object $item -Name "Class" -Default "")
+        $present = [bool](Get-WinToolNote -Object $item -Name "Present" -Default $true)
+        $name = [string](Get-WinToolNote -Object $item -Name "Name" -Default "")
+        if ($present -and $class -eq "Net" -and -not [string]::IsNullOrWhiteSpace($name) -and $name -notmatch 'Virtual|WAN Miniport|Bluetooth|Kernel Debug') {
+            $network = $name
+            break
+        }
+    }
+    Add-Chip "drivers.chip.network" $network
+    $displayName = ""
+    foreach ($item in @($Display)) {
+        $name = [string](Get-WinToolNote -Object $item -Name "Name" -Default "")
+        if (-not [string]::IsNullOrWhiteSpace($name)) { $displayName = $name; break }
+    }
+    if ([string]::IsNullOrWhiteSpace($displayName) -and $null -ne $Info) {
+        $displayName = [string](Get-WinToolNote -Object $Info -Name "Gpu" -Default "")
+        if (-not [string]::IsNullOrWhiteSpace($displayName)) {
+            Add-Chip "drivers.chip.graphics" $displayName
+            $displayName = ""
+        }
+    }
+    else {
+        Add-Chip "drivers.chip.display" $displayName
+    }
+    if ($null -ne $Info) {
+        Add-Chip "drivers.chip.system" ([string](Get-WinToolNote -Object $Info -Name "Os" -Default ""))
+    }
+    return $chips.ToArray()
 }
 
 function Get-WinToolDriverProblemDevice {
@@ -574,59 +657,59 @@ function Get-WinToolDriverIncompatibleDevice {
 
 function Format-WinToolMachineSummary {
     param($Info)
-    if ($null -eq $Info) { return "System information is not available yet." }
+    if ($null -eq $Info) { return (Get-WinToolText "drivers.info.unavailable") }
     $lines = New-Object System.Collections.Generic.List[string]
     $map = [ordered]@{
-        Os      = "System"
-        Version = "Version"
-        Cpu     = "Processor"
-        Gpu     = "Graphics"
-        Board   = "Board"
-        Memory  = "Memory"
-        Bios    = "BIOS"
+        Os      = "drivers.info.os"
+        Version = "drivers.info.version"
+        Cpu     = "drivers.info.cpu"
+        Gpu     = "drivers.info.gpu"
+        Board   = "drivers.info.board"
+        Memory  = "drivers.info.memory"
+        Bios    = "drivers.info.bios"
     }
     foreach ($key in $map.Keys) {
         $value = [string](Get-WinToolNote -Object $Info -Name $key -Default "")
         if (-not [string]::IsNullOrWhiteSpace($value)) {
-            $lines.Add(([string]$map[$key] + ": " + $value)) | Out-Null
+            $label = Get-WinToolText -Key ([string]$map[$key])
+            $lines.Add(($label + ": " + $value)) | Out-Null
         }
     }
-    if ($lines.Count -eq 0) { return "System information is not available yet." }
+    if ($lines.Count -eq 0) { return (Get-WinToolText "drivers.info.unavailable") }
     return ($lines.ToArray() -join [Environment]::NewLine)
 }
 
 function Format-WinToolDisplayAdvice {
     param($Display)
     if ($null -eq $Display) {
-        return "No display was reported. After a graphics driver update, open Settings > System > Display and choose the recommended resolution."
+        return (Get-WinToolText "drivers.display.none")
     }
-    $name = [string](Get-WinToolNote -Object $Display -Name "Name" -Default "This display")
+    $name = [string](Get-WinToolNote -Object $Display -Name "Name" -Default (Get-WinToolText "drivers.display.this"))
     $currentWidth = [int](Get-WinToolNote -Object $Display -Name "Width" -Default 0)
     $currentHeight = [int](Get-WinToolNote -Object $Display -Name "Height" -Default 0)
     $nativeWidth = [int](Get-WinToolNote -Object $Display -Name "NativeWidth" -Default 0)
     $nativeHeight = [int](Get-WinToolNote -Object $Display -Name "NativeHeight" -Default 0)
     $gpu = [string](Get-WinToolNote -Object $Display -Name "Gpu" -Default "")
     $parts = New-Object System.Collections.Generic.List[string]
-    $parts.Add($name) | Out-Null
     if ($currentWidth -gt 0 -and $currentHeight -gt 0) {
-        $parts.Add("is running at " + $currentWidth + " x " + $currentHeight + ".") | Out-Null
+        $parts.Add((Get-WinToolText "drivers.display.running" $name $currentWidth $currentHeight)) | Out-Null
     }
     else {
-        $parts.Add("was found.") | Out-Null
+        $parts.Add((Get-WinToolText "drivers.display.found" $name)) | Out-Null
     }
     if ($nativeWidth -gt 0 -and $nativeHeight -gt 0) {
         if ($currentWidth -ne $nativeWidth -or $currentHeight -ne $nativeHeight) {
-            $parts.Add("The preferred resolution is " + $nativeWidth + " x " + $nativeHeight + ". Open Settings > System > Display and choose that recommended size.") | Out-Null
+            $parts.Add((Get-WinToolText "drivers.display.preferred" $nativeWidth $nativeHeight)) | Out-Null
         }
         else {
-            $parts.Add("That already matches the preferred resolution.") | Out-Null
+            $parts.Add((Get-WinToolText "drivers.display.matches")) | Out-Null
         }
     }
     if (-not [string]::IsNullOrWhiteSpace($gpu)) {
-        $parts.Add("If the picture looks wrong, install or update the official graphics app for " + $gpu + " from the list above, then check Display settings again.") | Out-Null
+        $parts.Add((Get-WinToolText "drivers.display.gpu" $gpu)) | Out-Null
     }
     else {
-        $parts.Add("If the picture looks wrong, update the official graphics app from the list above, then check Display settings.") | Out-Null
+        $parts.Add((Get-WinToolText "drivers.display.gpuGeneric")) | Out-Null
     }
     return ($parts.ToArray() -join " ")
 }
@@ -641,7 +724,8 @@ function New-WinToolDriverDeviceRecord {
         [string]$Version = "",
         [string]$Provider = "",
         $Date = $null,
-        $HardwareId = @()
+        $HardwareId = @(),
+        [string]$Inf = ""
     )
     return [pscustomobject]@{
         Name       = $Name
@@ -653,6 +737,7 @@ function New-WinToolDriverDeviceRecord {
         Provider   = $Provider
         Date       = $Date
         HardwareId = @(ConvertTo-WinToolHardwareIdList -Value $HardwareId)
+        Inf        = $Inf
     }
 }
 
@@ -677,6 +762,8 @@ function Get-WinToolDriverScanScript {
     $scriptText = @'
 param($Sync)
 $ErrorActionPreference = "Stop"
+$Sync.Cancel = [bool]$Sync.Cancel
+$Sync.Phase = "devices"
 function Convert-WinToolJobDate($Value) {
     if ($null -eq $Value) { return "" }
     try {
@@ -729,6 +816,7 @@ try {
         $version = ""
         $provider = ""
         $date = ""
+        $inf = ""
         if ($null -ne $driver) {
             $version = [string]$driver.DriverVersion
             $provider = [string]$driver.Manufacturer
@@ -737,6 +825,7 @@ try {
             if ($null -ne $driver.HardWareID -and -not [string]::IsNullOrWhiteSpace([string]$driver.HardWareID)) {
                 $hardware += [string]$driver.HardWareID
             }
+            if ($null -ne $driver.InfName) { $inf = [string]$driver.InfName }
         }
         $devices.Add([pscustomobject]@{
             Name = $name
@@ -748,9 +837,17 @@ try {
             Provider = $provider
             Date = $date
             HardwareId = @($hardware | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | ForEach-Object { ([string]$_).Trim().ToUpperInvariant() } | Select-Object -Unique)
+            Inf = $inf
         }) | Out-Null
     }
 
+    if ($Sync.Cancel) {
+        $Sync.Ok = $false
+        $Sync.Error = "Cancelled"
+        $Sync.Done = $true
+        return
+    }
+    $Sync.Phase = "updates"
     $updates = New-Object System.Collections.Generic.List[object]
     try {
         $session = New-Object -ComObject Microsoft.Update.Session
@@ -784,6 +881,13 @@ try {
         $Sync.Warning = $_.Exception.Message
     }
 
+    if ($Sync.Cancel) {
+        $Sync.Ok = $false
+        $Sync.Error = "Cancelled"
+        $Sync.Done = $true
+        return
+    }
+    $Sync.Phase = "runtimes"
     $displays = New-Object System.Collections.Generic.List[object]
     try {
         foreach ($gpu in @(Get-CimInstance -ClassName Win32_VideoController -ErrorAction Stop)) {
@@ -1229,6 +1333,10 @@ function Test-WinToolDriverCatalog {
         if (-not [string]::IsNullOrWhiteSpace($scope) -and @("user", "machine") -notcontains $scope) {
             Add-WinToolDataError -Errors $Errors -Message "Runtime '$id' has an unknown scope."
         }
+    }
+    $attentionCount = @($runtimes | Where-Object { [bool](Get-WinToolNote -Object $_ -Name "attention" -Default $false) }).Count
+    if ($attentionCount -lt 1) {
+        Add-WinToolDataError -Errors $Errors -Message "drivers.json should mark at least one recommended game runtime with attention."
     }
     $apps = @(Get-WinToolNote -Object $Catalog -Name "gpuApps" -Default @())
     if ($apps.Count -lt 3) {

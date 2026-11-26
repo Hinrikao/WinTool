@@ -111,7 +111,9 @@ function Add-WinToolLogLine {
     }
 
     if ($null -eq $script:WinToolLogBox) {
-        Write-Host $Line
+        if ($null -eq $script:WinToolWindow) {
+            Write-Host $Line
+        }
         return
     }
 
@@ -149,6 +151,11 @@ function Write-WinToolLog {
     Add-WinToolLogLine -Line $line
     if ($Diagnostic) {
         Write-WinToolDiagnosticLine -Line $line
+    }
+    if ($script:WinToolHasActivity) {
+        $stepStatus = $Level
+        if ($Level -eq "info") { $stepStatus = "ok" }
+        Add-WinToolActivityStep -Status $stepStatus -Message $Message | Out-Null
     }
 }
 

@@ -237,9 +237,12 @@ if ([string]::IsNullOrWhiteSpace([string]$window.FindName("PowerPlanStatus").Tex
 }
 Write-Output ("DNS: " + $window.FindName("DnsCurrent").Text)
 Write-Output ("Power plan: " + $window.FindName("PowerPlanStatus").Text)
-$logPanel = $window.FindName("LogPanel")
+$logPanel = $window.FindName("ActivityPanel")
 if ($null -eq $logPanel -or $logPanel.Visibility -ne "Collapsed") {
-    throw "The log should be collapsed until a task starts."
+    throw "The activity panel should be collapsed until it is opened."
+}
+if ($null -eq $window.FindName("StatusSummary") -or $null -eq $window.FindName("ActivityHost") -or $null -eq $window.FindName("ToastPanel")) {
+    throw "The status bar is missing the activity panel, summary, or toast."
 }
 
 # Raise the safe UI events the same way WPF does, so a broken handler fails CI.
@@ -1853,7 +1856,7 @@ if ($uiErrors.Count -gt 0) {
 Write-Output "Raised $raised UI events without errors."
 
 # Verify Appearance controls are absent, Config ComboBoxes use the dark 34 px style,
-# ProfileSummary names every prompt engine accurately, and LogPanel clearance keeps top cards still.
+# ProfileSummary names every prompt engine accurately, and the activity panel clearance keeps top cards still.
 if ($null -ne $window.FindName("ThemePicker") -or $null -ne $window.FindName("AccentSwatches")) {
     throw "Appearance controls should be removed from MainWindow.xaml."
 }
@@ -1877,21 +1880,24 @@ $configFirstCard = $window.FindName("ConfigProfileCard")
 $cardBefore = $configFirstCard.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
 $script:WinToolState.LogExpanded = $true
 Sync-WinToolLogPanel
-Save-WinToolViewShot -Name "config-log-open" -Width 1280 -Height 800
+Save-WinToolViewShot -Name "config-activity-open" -Width 1280 -Height 800
 $cardAfter = $configFirstCard.TranslatePoint([System.Windows.Point]::new(0, 0), $rootVisual)
 $cardDelta = [Math]::Abs($cardAfter.Y - $cardBefore.Y)
 $configBottom = $window.FindName("ConfigBody").Margin.Bottom
 # UseLayoutRounding can move a wrapped line by 1 px when the log reserves its
 # scroll margin. A real jump (an extra line, a collapsed row) is far larger.
 if ($cardDelta -gt 1.5 -or $configBottom -lt 180) {
-    throw ("Opening LogPanel on Config should keep cards in place while adding bottom scroll clearance. Moved " + $cardDelta + " px, bottom margin " + $configBottom + ".")
+    throw ("Opening the activity panel on Config should keep cards in place while adding bottom scroll clearance. Moved " + $cardDelta + " px, bottom margin " + $configBottom + ".")
 }
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
 $window.FindName("NavDrivers").IsChecked = $true
 Save-WinToolViewShot -Name "drivers-1280" -Width 1280 -Height 800
-if ($null -eq $window.FindName("DriversScan") -or $null -eq $window.FindName("DriversToolList") -or $window.FindName("DriversToolList").Children.Count -lt 8) {
-    throw "The Drivers tab is missing the scan button or its tool cards."
+if ($null -eq $window.FindName("DriversScan") -or $null -eq $window.FindName("DriversModeSimple") -or $null -eq $window.FindName("DriversModeAdvanced") -or $null -eq $window.FindName("DriversModeTools")) {
+    throw "The Drivers tab is missing the scan button or the Simple, Advanced, and Tools switch."
+}
+if ($null -eq $window.FindName("DriversToolList") -or $window.FindName("DriversToolList").Children.Count -lt 8) {
+    throw "The Drivers tab is missing its tool cards."
 }
 if ($window.FindName("DriversStart").Visibility -ne [System.Windows.Visibility]::Visible) {
     throw "The Drivers tab should show the start screen before a scan."
@@ -2135,11 +2141,13 @@ $window.FindName("ToggleLogButton").RaiseEvent($surfaceClick)
 Invoke-WinToolNavPump
 $window.FindName("ToggleLogButton").RaiseEvent($surfaceClick)
 Invoke-WinToolNavPump
-Measure-WinToolSurface -Label "Show log" -Action { $window.FindName("ToggleLogButton").RaiseEvent($surfaceClick) }
-Measure-WinToolSurface -Label "Hide log" -Action { $window.FindName("ToggleLogButton").RaiseEvent($surfaceClick) }
+Measure-WinToolSurface -Label "Activity" -Action { $window.FindName("ToggleLogButton").RaiseEvent($surfaceClick) }
+Measure-WinToolSurface -Label "Hide activity" -Action { $window.FindName("ToggleLogButton").RaiseEvent($surfaceClick) }
 if ($script:WinToolState.LogExpanded) {
     $script:WinToolState.LogExpanded = $false
     $script:WinToolState.LogPinned = $false
+    $script:WinToolState.ActivityExpanded = $false
+    $script:WinToolState.ActivityPinned = $false
     Sync-WinToolLogPanel
 }
 
@@ -2207,8 +2215,8 @@ function Assert-WinToolPageFill {
 }
 $window.FindName("NavDrivers").IsChecked = $true
 Invoke-WinToolNavPump
-Invoke-WinToolFillShot -Name "drivers-1920" -Width 1920 -Height 1080 -ScrollName "ViewDrivers" -BodyName "DriversBody"
-Assert-WinToolPageFill -Element $window.FindName("DriversBody") -Label "Drivers 1920" -ScrollName "ViewDrivers" -BodyName "DriversBody"
+Invoke-WinToolFillShot -Name "drivers-1920" -Width 1920 -Height 1080 -ScrollName "DriversSimpleScroll" -BodyName "DriversBody"
+Assert-WinToolPageFill -Element $window.FindName("DriversBody") -Label "Drivers 1920" -ScrollName "DriversSimpleScroll" -BodyName "DriversBody"
 $window.FindName("NavUpdates").IsChecked = $true
 Invoke-WinToolNavPump
 Invoke-WinToolFillShot -Name "updates-1920" -Width 1920 -Height 1080 -ScrollName "ViewUpdates" -BodyName "UpdatesBody"

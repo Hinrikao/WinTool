@@ -2256,6 +2256,39 @@ Invoke-WinToolCase -Name "Driver result rows keep a Checkbox property for the re
     Test-WinToolExpectation -Condition ($null -ne $runtime.PSObject.Properties["Checkbox"]) -Message "A game runtime row is also created with a Checkbox property."
 }
 
+
+Invoke-WinToolCase -Name "Simple mode game runtimes only count recommended packages" -Body {
+    $cache = New-WinToolPackageCache
+    $cache.WingetReady = $true
+    $recommended = Get-WinToolDriverRuntimeRow -Runtime ([pscustomobject]@{ id = "openal"; name = "OpenAL"; wingetId = "OpenAL.OpenAL"; scope = "machine"; attention = $true }) -Cache $cache
+    $legacy = Get-WinToolDriverRuntimeRow -Runtime ([pscustomobject]@{ id = "vcredist-2008-x64"; name = "Microsoft Visual C++ 2008 Redistributable (x64)"; wingetId = "Microsoft.VCRedist.2008.x64"; scope = "machine"; attention = $false }) -Cache $cache
+    $update = Get-WinToolDriverRuntimeRow -Runtime ([pscustomobject]@{ id = "vcredist-2013-x64"; name = "Microsoft Visual C++ 2013 Redistributable (x64)"; wingetId = "Microsoft.VCRedist.2013.x64"; scope = "machine"; attention = $false }) -Cache $cache
+    $update.Group = "runtime"
+    $update.AvailableVersion = Get-WinToolText "drivers.runtime.updateAvailable"
+    Test-WinToolExpectation -Condition ($recommended.Group -eq "runtime" -and [bool]$recommended.Attention -and (Test-WinToolDriverRuntimeAttention -Row $recommended)) -Message "A recommended runtime that is not installed needs attention in Simple mode."
+    Test-WinToolExpectation -Condition ($legacy.Group -eq "runtime" -and -not [bool]$legacy.Attention -and -not (Test-WinToolDriverRuntimeAttention -Row $legacy)) -Message "An optional legacy runtime that is not installed does not need attention in Simple mode."
+    Test-WinToolExpectation -Condition (Test-WinToolDriverRuntimeAttention -Row $update) -Message "An already installed optional runtime with an update still needs attention."
+    $counted = @(Get-WinToolDriverAttentionRuntime -Row @($recommended, $legacy, $update))
+    Test-WinToolExpectation -Condition ($counted.Count -eq 2) -Message "Simple mode counts the recommended missing runtime and the optional update, not every legacy package."
+    $header = Format-WinToolDriverHeader -Outdated 1 -Missing 1 -Runtime 2
+    Test-WinToolExpectation -Condition ($header -eq (Format-WinToolDriverHeader -Outdated 1 -Missing 1 -Runtime 2) -and $header.Contains("2 game runtimes")) -Message "The header uses the tightened runtime count."
+}
+
+Invoke-WinToolCase -Name "Activity runs format a report and filter warnings" -Body {
+    $script:WinToolState = @{}
+    Initialize-WinToolActivityState
+    Start-WinToolActivity -Title (Get-WinToolText "button.scanDrivers") | Out-Null
+    Add-WinToolActivityStep -Status "ok" -Message (Get-WinToolText "drivers.scan.listed" 64) | Out-Null
+    Add-WinToolActivityStep -Status "warn" -Message "OpenAL is not installed." | Out-Null
+    $run = Complete-WinToolActivity -Summary (Format-WinToolDriverStatusSummary -Outdated 1 -Missing 0 -Runtime 1) -Status "ok"
+    Test-WinToolExpectation -Condition ($null -ne $run -and $run.Warnings -eq 1 -and $run.Completed -eq 1) -Message "A finished activity run keeps completed and warning counts."
+    $all = Format-WinToolActivityReport -Filter "all"
+    $warnings = Format-WinToolActivityReport -Filter "warnings"
+    Test-WinToolExpectation -Condition ($all.Contains((Get-WinToolText "button.scanDrivers")) -and $all.Contains("Listed 64 devices")) -Message "The full activity report includes the run title and a completed step."
+    Test-WinToolExpectation -Condition ($warnings.Contains("OpenAL is not installed.") -and -not $warnings.Contains("Listed 64 devices")) -Message "The warnings filter keeps warning steps and hides completed ones."
+    Test-WinToolExpectation -Condition ((Get-WinToolText "activity.count.warning.many" 3) -eq "3 warnings") -Message "Get-WinToolText formats English strings from the central table."
+}
+
 Invoke-WinToolCase -Name "Driver header, display advice, and runtime rows only count real results" -Body {
     Test-WinToolExpectation -Condition ((Format-WinToolDriverHeader -Outdated 0 -Missing 0 -Runtime 0) -eq "No outdated or missing drivers were found.") -Message "A completed scan with nothing to do has a clear header."
     Test-WinToolExpectation -Condition ((Format-WinToolDriverHeader -Outdated 1 -Missing 0 -Runtime 0) -eq "1 device driver is outdated.") -Message "A single outdated driver is singular."
@@ -2266,7 +2299,7 @@ Invoke-WinToolCase -Name "Driver header, display advice, and runtime rows only c
 
     $display = [pscustomobject]@{ Name = "Alienware AW2725QF"; Gpu = "AMD Radeon RX 6800 XT"; Width = 1920; Height = 1080; NativeWidth = 3840; NativeHeight = 2160 }
     $advice = Format-WinToolDisplayAdvice -Display $display
-    Test-WinToolExpectation -Condition ($advice.Contains("1920 x 1080") -and $advice.Contains("3840 x 2160") -and $advice.Contains("AMD Radeon RX 6800 XT")) -Message "Display advice names the current and preferred resolution and the GPU."
+    Test-WinToolExpectation -Condition ($advice.Contains("1920") -and $advice.Contains("1080") -and $advice.Contains("3840") -and $advice.Contains("2160") -and $advice.Contains("AMD Radeon RX 6800 XT")) -Message "Display advice names the current and preferred resolution and the GPU."
 
     $info = [pscustomobject]@{ Os = "Windows 11 Pro"; Version = "25H2"; Cpu = "AMD Ryzen 5 5600X"; Gpu = "AMD Radeon RX 6800 XT"; Board = "TUF GAMING B550"; Memory = "16 GB"; Bios = "American Megatrends 1234" }
     $summary = Format-WinToolMachineSummary -Info $info

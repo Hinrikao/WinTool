@@ -1,4 +1,6 @@
 src/Private/Common.ps1
+src/Private/Strings.ps1
+src/Private/Activity.ps1
 src/Private/Console.ps1
 src/Private/Json.ps1
 src/Private/Catalog.ps1
@@ -21,6 +23,7 @@ src/Private/Fixes.ps1
 src/Private/Features.ps1
 src/Private/Home.ps1
 src/UI/Factory.ps1
+src/UI/ActivityView.ps1
 src/UI/InstallView.ps1
 src/UI/TweaksView.ps1
 src/UI/TerminalView.ps1

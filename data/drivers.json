@@ -1,39 +1,209 @@
 {
   "schemaVersion": 1,
   "runtimes": [
-    { "id": "vcredist-2005-x86", "name": "Microsoft Visual C++ 2005 Redistributable (x86)", "wingetId": "Microsoft.VCRedist.2005.x86", "scope": "machine" },
-    { "id": "vcredist-2005-x64", "name": "Microsoft Visual C++ 2005 Redistributable (x64)", "wingetId": "Microsoft.VCRedist.2005.x64", "scope": "machine" },
-    { "id": "vcredist-2008-x86", "name": "Microsoft Visual C++ 2008 Redistributable (x86)", "wingetId": "Microsoft.VCRedist.2008.x86", "scope": "machine" },
-    { "id": "vcredist-2008-x64", "name": "Microsoft Visual C++ 2008 Redistributable (x64)", "wingetId": "Microsoft.VCRedist.2008.x64", "scope": "machine" },
-    { "id": "vcredist-2010-x86", "name": "Microsoft Visual C++ 2010 Redistributable (x86)", "wingetId": "Microsoft.VCRedist.2010.x86", "scope": "machine" },
-    { "id": "vcredist-2010-x64", "name": "Microsoft Visual C++ 2010 Redistributable (x64)", "wingetId": "Microsoft.VCRedist.2010.x64", "scope": "machine" },
-    { "id": "vcredist-2012-x86", "name": "Microsoft Visual C++ 2012 Redistributable (x86)", "wingetId": "Microsoft.VCRedist.2012.x86", "scope": "machine" },
-    { "id": "vcredist-2012-x64", "name": "Microsoft Visual C++ 2012 Redistributable (x64)", "wingetId": "Microsoft.VCRedist.2012.x64", "scope": "machine" },
-    { "id": "vcredist-2013-x86", "name": "Microsoft Visual C++ 2013 Redistributable (x86)", "wingetId": "Microsoft.VCRedist.2013.x86", "scope": "machine" },
-    { "id": "vcredist-2013-x64", "name": "Microsoft Visual C++ 2013 Redistributable (x64)", "wingetId": "Microsoft.VCRedist.2013.x64", "scope": "machine" },
-    { "id": "vcredist-2015plus-x86", "name": "Microsoft Visual C++ 2015-2022 Redistributable (x86)", "wingetId": "Microsoft.VCRedist.2015+.x86", "scope": "machine" },
-    { "id": "vcredist-2015plus-x64", "name": "Microsoft Visual C++ 2015-2022 Redistributable (x64)", "wingetId": "Microsoft.VCRedist.2015+.x64", "scope": "machine" },
-    { "id": "directx", "name": "DirectX End-User Runtime", "wingetId": "Microsoft.DirectX", "scope": "machine" },
-    { "id": "xna-40", "name": "Microsoft XNA Framework Redistributable 4.0", "wingetId": "Microsoft.XNARedist", "scope": "machine" },
-    { "id": "openal", "name": "OpenAL", "wingetId": "OpenAL.OpenAL", "scope": "machine" },
-    { "id": "dotnet-desktop-8", "name": ".NET 8 Desktop Runtime", "wingetId": "Microsoft.DotNet.DesktopRuntime.8", "scope": "machine" },
-    { "id": "dotnet-desktop-9", "name": ".NET 9 Desktop Runtime", "wingetId": "Microsoft.DotNet.DesktopRuntime.9", "scope": "machine" },
-    { "id": "dotnet-desktop-10", "name": ".NET 10 Desktop Runtime", "wingetId": "Microsoft.DotNet.DesktopRuntime.10", "scope": "machine" }
+    {
+      "id": "vcredist-2005-x86",
+      "name": "Microsoft Visual C++ 2005 Redistributable (x86)",
+      "wingetId": "Microsoft.VCRedist.2005.x86",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2005-x64",
+      "name": "Microsoft Visual C++ 2005 Redistributable (x64)",
+      "wingetId": "Microsoft.VCRedist.2005.x64",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2008-x86",
+      "name": "Microsoft Visual C++ 2008 Redistributable (x86)",
+      "wingetId": "Microsoft.VCRedist.2008.x86",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2008-x64",
+      "name": "Microsoft Visual C++ 2008 Redistributable (x64)",
+      "wingetId": "Microsoft.VCRedist.2008.x64",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2010-x86",
+      "name": "Microsoft Visual C++ 2010 Redistributable (x86)",
+      "wingetId": "Microsoft.VCRedist.2010.x86",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2010-x64",
+      "name": "Microsoft Visual C++ 2010 Redistributable (x64)",
+      "wingetId": "Microsoft.VCRedist.2010.x64",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2012-x86",
+      "name": "Microsoft Visual C++ 2012 Redistributable (x86)",
+      "wingetId": "Microsoft.VCRedist.2012.x86",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2012-x64",
+      "name": "Microsoft Visual C++ 2012 Redistributable (x64)",
+      "wingetId": "Microsoft.VCRedist.2012.x64",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2013-x86",
+      "name": "Microsoft Visual C++ 2013 Redistributable (x86)",
+      "wingetId": "Microsoft.VCRedist.2013.x86",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2013-x64",
+      "name": "Microsoft Visual C++ 2013 Redistributable (x64)",
+      "wingetId": "Microsoft.VCRedist.2013.x64",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "vcredist-2015plus-x86",
+      "name": "Microsoft Visual C++ 2015-2022 Redistributable (x86)",
+      "wingetId": "Microsoft.VCRedist.2015+.x86",
+      "scope": "machine",
+      "attention": true
+    },
+    {
+      "id": "vcredist-2015plus-x64",
+      "name": "Microsoft Visual C++ 2015-2022 Redistributable (x64)",
+      "wingetId": "Microsoft.VCRedist.2015+.x64",
+      "scope": "machine",
+      "attention": true
+    },
+    {
+      "id": "directx",
+      "name": "DirectX End-User Runtime",
+      "wingetId": "Microsoft.DirectX",
+      "scope": "machine",
+      "attention": true
+    },
+    {
+      "id": "xna-40",
+      "name": "Microsoft XNA Framework Redistributable 4.0",
+      "wingetId": "Microsoft.XNARedist",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "openal",
+      "name": "OpenAL",
+      "wingetId": "OpenAL.OpenAL",
+      "scope": "machine",
+      "attention": true
+    },
+    {
+      "id": "dotnet-desktop-8",
+      "name": ".NET 8 Desktop Runtime",
+      "wingetId": "Microsoft.DotNet.DesktopRuntime.8",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "dotnet-desktop-9",
+      "name": ".NET 9 Desktop Runtime",
+      "wingetId": "Microsoft.DotNet.DesktopRuntime.9",
+      "scope": "machine",
+      "attention": false
+    },
+    {
+      "id": "dotnet-desktop-10",
+      "name": ".NET 10 Desktop Runtime",
+      "wingetId": "Microsoft.DotNet.DesktopRuntime.10",
+      "scope": "machine",
+      "attention": false
+    }
   ],
   "gpuApps": [
-    { "id": "amd", "name": "AMD Software", "wingetId": "AMD.AMDSoftware", "match": ["amd", "radeon", "advanced micro devices"], "note": "Official AMD Software (Adrenalin) installer from winget." },
-    { "id": "nvidia", "name": "NVIDIA App", "wingetId": "NVIDIA.NVIDIAApp", "match": ["nvidia"], "note": "Official NVIDIA App installer from winget." },
-    { "id": "intel", "name": "Intel Driver & Support Assistant", "wingetId": "Intel.IntelDriverAndSupportAssistant", "match": ["intel"], "note": "Official Intel driver assistant from winget." }
+    {
+      "id": "amd",
+      "name": "AMD Software",
+      "wingetId": "AMD.AMDSoftware",
+      "match": [
+        "amd",
+        "radeon",
+        "advanced micro devices"
+      ],
+      "note": "Official AMD Software (Adrenalin) installer from winget."
+    },
+    {
+      "id": "nvidia",
+      "name": "NVIDIA App",
+      "wingetId": "NVIDIA.NVIDIAApp",
+      "match": [
+        "nvidia"
+      ],
+      "note": "Official NVIDIA App installer from winget."
+    },
+    {
+      "id": "intel",
+      "name": "Intel Driver & Support Assistant",
+      "wingetId": "Intel.IntelDriverAndSupportAssistant",
+      "match": [
+        "intel"
+      ],
+      "note": "Official Intel driver assistant from winget."
+    }
   ],
   "problem": [
-    { "code": 1, "name": "Not configured", "kind": "missing" },
-    { "code": 22, "name": "Disabled", "kind": "disabled" },
-    { "code": 28, "name": "No driver installed", "kind": "missing" },
-    { "code": 31, "name": "Driver failed to load", "kind": "incompatible" },
-    { "code": 39, "name": "Driver failed", "kind": "incompatible" },
-    { "code": 43, "name": "Device stopped", "kind": "incompatible" },
-    { "code": 45, "name": "Not present", "kind": "ghost" },
-    { "code": 48, "name": "Driver blocked", "kind": "incompatible" },
-    { "code": 52, "name": "Unsigned or blocked driver", "kind": "incompatible" }
+    {
+      "code": 1,
+      "name": "Not configured",
+      "kind": "missing"
+    },
+    {
+      "code": 22,
+      "name": "Disabled",
+      "kind": "disabled"
+    },
+    {
+      "code": 28,
+      "name": "No driver installed",
+      "kind": "missing"
+    },
+    {
+      "code": 31,
+      "name": "Driver failed to load",
+      "kind": "incompatible"
+    },
+    {
+      "code": 39,
+      "name": "Driver failed",
+      "kind": "incompatible"
+    },
+    {
+      "code": 43,
+      "name": "Device stopped",
+      "kind": "incompatible"
+    },
+    {
+      "code": 45,
+      "name": "Not present",
+      "kind": "ghost"
+    },
+    {
+      "code": 48,
+      "name": "Driver blocked",
+      "kind": "incompatible"
+    },
+    {
+      "code": 52,
+      "name": "Unsigned or blocked driver",
+      "kind": "incompatible"
+    }
   ]
 }

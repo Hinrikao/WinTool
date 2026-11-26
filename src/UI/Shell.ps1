@@ -404,103 +404,6 @@ function Switch-WinToolView {
     $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Loaded, [System.Action]$callback)
 }
 
-function Sync-WinToolStatus {
-    param(
-        [Parameter(Mandatory = $true)][string]$Text
-    )
-    (Get-WinToolUi -Name "StatusText").Text = $Text
-}
-
-function Sync-WinToolProgress {
-    param(
-        [int]$Value,
-        [string]$Text,
-        [bool]$Indeterminate = $false
-    )
-    $bar = Get-WinToolUi -Name "MainProgress"
-    $bar.IsIndeterminate = $Indeterminate
-    if (-not $Indeterminate) {
-        $bar.Value = $Value
-    }
-    if (-not [string]::IsNullOrWhiteSpace($Text)) {
-        Sync-WinToolStatus -Text $Text
-    }
-}
-
-function Sync-WinToolLogPanel {
-    $expanded = $false
-    if ($script:WinToolState.LogExpanded) {
-        $expanded = $true
-    }
-    $busy = $false
-    if ($script:WinToolState.Busy) {
-        $busy = $true
-    }
-    $log = Get-WinToolUi -Name "LogPanel"
-    $bar = Get-WinToolUi -Name "MainProgress"
-    $toggle = Get-WinToolUi -Name "ToggleLogButton"
-    $clear = Get-WinToolUi -Name "ClearLogButton"
-    if ($expanded) {
-        $log.Visibility = "Visible"
-        $toggle.Content = "Hide log"
-        $clear.Visibility = "Visible"
-    }
-    else {
-        $log.Visibility = "Collapsed"
-        $toggle.Content = "Show log"
-        $clear.Visibility = "Collapsed"
-    }
-    $homeBottom = 16
-    $listBottom = 0
-    $pageBottom = 12
-    if ($expanded) {
-        $homeBottom = 196
-        $listBottom = 188
-        $pageBottom = 196
-    }
-    (Get-WinToolUi -Name "HomeBody").Margin = [System.Windows.Thickness]::new(20, 0, 10, $homeBottom)
-    foreach ($listName in @("AppCategories", "TweakCategories")) {
-        (Get-WinToolUi -Name $listName).Margin = [System.Windows.Thickness]::new(0, 0, 0, $listBottom)
-    }
-    foreach ($pageName in @("DriversBody", "UpdatesBody", "FixesBody", "FeaturesBody", "ConfigBody")) {
-        (Get-WinToolUi -Name $pageName).Margin = [System.Windows.Thickness]::new(20, 15, 20, $pageBottom)
-    }
-    foreach ($fillPair in @(
-            , @("ViewDrivers", "DriversBody")
-            , @("ViewUpdates", "UpdatesBody")
-            , @("ViewFixes", "FixesBody")
-            , @("ViewFeatures", "FeaturesBody")
-            , @("ViewConfig", "ConfigBody")
-            , @("TerminalSimpleScroll", "TerminalSimpleHost")
-        )) {
-        Sync-WinToolScrollFill -ScrollName $fillPair[0] -BodyName $fillPair[1]
-    }
-    if ($busy) {
-        $bar.Visibility = "Visible"
-    }
-    else {
-        # Hidden, not Collapsed: the bar keeps its room, so nothing moves when a task starts.
-        $bar.Visibility = "Hidden"
-        $bar.IsIndeterminate = $false
-    }
-    Sync-WinToolProgressShimmer -Busy $busy
-}
-
-function Switch-WinToolLogPanel {
-    $surface = "Show log"
-    if ($script:WinToolState.LogExpanded) { $surface = "Hide log" }
-    Start-WinToolSurfaceTiming -Name $surface
-    if ($script:WinToolState.LogExpanded) {
-        $script:WinToolState.LogExpanded = $false
-        $script:WinToolState.LogPinned = $false
-    }
-    else {
-        $script:WinToolState.LogExpanded = $true
-        $script:WinToolState.LogPinned = $true
-    }
-    Sync-WinToolLogPanel
-}
-
 function Sync-WinToolBusyState {
     param(
         [bool]$Busy
@@ -510,10 +413,8 @@ function Sync-WinToolBusyState {
         $wasBusy = $true
     }
     $script:WinToolState.Busy = $Busy
-    if ($Busy -and -not $wasBusy) {
-        $script:WinToolState.LogExpanded = $true
-    }
-    elseif (-not $Busy -and $wasBusy -and -not $script:WinToolState.LogPinned) {
+    if (-not $Busy -and $wasBusy -and -not $script:WinToolState.ActivityPinned -and -not $script:WinToolState.LogPinned) {
+        $script:WinToolState.ActivityExpanded = $false
         $script:WinToolState.LogExpanded = $false
     }
     Sync-WinToolLogPanel
@@ -580,7 +481,7 @@ function Invoke-WinToolPlanAsync {
         [switch]$Update
     )
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "status.wait") -Level "warn"
         return
     }
     $queue = New-Object System.Collections.Concurrent.ConcurrentQueue[string]
@@ -599,6 +500,7 @@ function Invoke-WinToolPlanAsync {
         Tally = New-WinToolPlanTally
         Cache = Get-WinToolPackageCache
     }
+    Start-WinToolActivity -Title $DoneMessage | Out-Null
     Sync-WinToolBusyState -Busy $true
     Enable-WinToolLogPump
     Move-WinToolPlanForward
@@ -610,7 +512,7 @@ function Move-WinToolPlanForward {
         return
     }
     if ($run.Cancel) {
-        Complete-WinToolPlan -Message "Cancelled."
+        Complete-WinToolPlan -Message (Get-WinToolText "activity.cancelled")
         return
     }
     $run.Index = [int]$run.Index + 1
@@ -632,7 +534,7 @@ function Move-WinToolPlanForward {
     if ($total -gt 0) {
         $percent = [int]((100.0 * $run.Index) / $total)
     }
-    Sync-WinToolProgress -Value $percent -Text ("{0} ({1} of {2})" -f [string]$step.Label, ($run.Index + 1), $total) -Indeterminate $false
+    Sync-WinToolProgress -Value $percent -Text (Get-WinToolText "status.summary.step" ([string]$step.Label) ($run.Index + 1) $total) -Indeterminate $false
 
     if ([string]$step.Type -eq "wsl-shell" -and $run.SkipZsh) {
         Write-WinToolLog -Message "Zsh setup is waiting on a reboot. Run terminal setup again after Windows restarts." -Level "warn"
@@ -724,7 +626,7 @@ function Complete-WinToolPlanStep {
     $step = $steps[$run.Index]
     $run.Process = $null
     if ($run.Cancel) {
-        Complete-WinToolPlan -Message "Cancelled."
+        Complete-WinToolPlan -Message (Get-WinToolText "activity.cancelled")
         return
     }
     $decision = $run.Decision
@@ -787,13 +689,18 @@ function Complete-WinToolPlan {
     }
     $script:WinToolState.Run = $null
     Sync-WinToolBusyState -Busy $false
-    if ($Message -eq "Cancelled.") {
-        Sync-WinToolProgress -Value 0 -Text "Cancelled" -Indeterminate $false
+    if ($Message -eq "Cancelled." -or $Message -eq (Get-WinToolText "activity.cancelled")) {
+        Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.cancelled") -Summary $Message -Indeterminate $false
         Write-WinToolLog -Message $Message -Level "warn"
+        $finished = Complete-WinToolActivity -Summary $Message -Status "warn"
     }
     else {
-        Sync-WinToolProgress -Value 100 -Text "Ready" -Indeterminate $false
+        Sync-WinToolProgress -Value 100 -Text (Get-WinToolText "status.ready") -Summary $Message -Indeterminate $false
         Write-WinToolLog -Message $Message -Level "ok"
+        $finished = Complete-WinToolActivity -Summary $Message -Status "ok"
+    }
+    if ($null -ne $finished) {
+        Show-WinToolActivityToast -Run $finished
     }
     if (-not [string]::IsNullOrWhiteSpace($afterDone)) {
         try {
@@ -817,11 +724,11 @@ function Stop-WinToolRun {
                 }
             }
             catch {
-                Complete-WinToolPlan -Message "Cancelled."
+                Complete-WinToolPlan -Message (Get-WinToolText "activity.cancelled")
             }
         }
         else {
-            Complete-WinToolPlan -Message "Cancelled."
+            Complete-WinToolPlan -Message (Get-WinToolText "activity.cancelled")
         }
         return
     }
@@ -849,9 +756,14 @@ function Stop-WinToolRun {
         Update-WinToolTweakCount
         Sync-WinToolHomeTweakRow
     }
+    if (Get-Command Complete-WinToolDriverScanCancel -ErrorAction SilentlyContinue) {
+        Complete-WinToolDriverScanCancel
+    }
     Sync-WinToolBusyState -Busy $false
-    Sync-WinToolProgress -Value 0 -Text "Cancelled" -Indeterminate $false
-    Write-WinToolLog -Message "Cancelled." -Level "warn"
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.cancelled") -Indeterminate $false
+    Write-WinToolLog -Message (Get-WinToolText "activity.cancelled") -Level "warn"
+    $run = Complete-WinToolActivity -Summary (Get-WinToolText "activity.cancelled") -Status "warn"
+    if ($null -ne $run) { Show-WinToolActivityToast -Run $run }
 }
 
 function Update-WinToolLogPump {
@@ -910,6 +822,9 @@ function Update-WinToolLogPump {
     $driverScan = $script:WinToolState.DriverScanJob
     if ($null -ne $driverScan -and $driverScan.Sync.Done) {
         Complete-WinToolDriverScan
+    }
+    elseif ($null -ne $driverScan) {
+        Update-WinToolDriverScanProgress
     }
 
     $driverTool = $script:WinToolState.DriverToolJob
@@ -977,6 +892,10 @@ function Update-WinToolLogPump {
             Complete-WinToolTerminalCatalogOnline
         }
     }
+
+    if ([bool]$script:WinToolState.ActivityDirty -and ([bool]$script:WinToolState.ActivityExpanded -or [bool]$script:WinToolState.LogExpanded)) {
+        Update-WinToolActivityList
+    }
 }
 
 function Initialize-WinToolShellEvent {
@@ -992,14 +911,9 @@ function Initialize-WinToolShellEvent {
         Update-WinToolNavPill -Animate $false
     }
     Update-WinToolNavPill -Animate $false
-    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ClearLogButton") -EventName "Click" -Name "Clear log" -Action {
-        (Get-WinToolUi -Name "LogBox").Clear()
-    }
-    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ToggleLogButton") -EventName "Click" -Name "Show log" -Action {
-        Switch-WinToolLogPanel
-    }
     foreach ($fillPair in @(
-            , @("ViewDrivers", "DriversBody")
+            , @("DriversSimpleScroll", "DriversBody")
+            , @("DriversToolsScroll", "DriversToolsBody")
             , @("ViewUpdates", "UpdatesBody")
             , @("ViewFixes", "FixesBody")
             , @("ViewFeatures", "FeaturesBody")
@@ -1044,7 +958,7 @@ function Initialize-WinToolShellEvent {
         $uiEvent = $args[1]
         try {
             if ($script:WinToolState.Busy) {
-                $ok = Request-WinToolConfirmation -Message "A task is still running. Stop it and close WinTool?" -Title "WinTool is busy"
+                $ok = Request-WinToolConfirmation -Message (Get-WinToolText "shell.close.busy") -Title (Get-WinToolText "shell.close.title")
                 if (-not $ok) {
                     $uiEvent.Cancel = $true
                     return
@@ -1165,6 +1079,14 @@ function New-WinToolWindow {
         AppsDetected = $false
         LogExpanded = $false
         LogPinned = $false
+        ActivityExpanded = $false
+        ActivityPinned = $false
+        ActivityRuns = New-Object System.Collections.Generic.List[object]
+        ActivityCurrent = $null
+        ActivityFilter = "all"
+        ActivityBadge = 0
+        ActivityDirty = $true
+        ToastTimer = $null
         Home = $null
         HomeTimer = $null
         HomeAnimTimer = $null
@@ -1181,9 +1103,10 @@ function New-WinToolWindow {
     $reader = New-Object System.Xml.XmlNodeReader $document
     $window = [System.Windows.Markup.XamlReader]::Load($reader)
     $script:WinToolWindow = $window
-    $script:WinToolLogBox = $window.FindName("LogBox")
+    $script:WinToolLogBox = $null
 
     Initialize-WinToolAppearance
+    Initialize-WinToolActivityView
     Initialize-WinToolHomeView
     Initialize-WinToolInstallView
     Initialize-WinToolTweakView
