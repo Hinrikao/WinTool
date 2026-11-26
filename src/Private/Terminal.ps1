@@ -645,6 +645,7 @@ function Reset-WinToolPreviewDrawCache {
     if ($null -ne ("WinToolGlyphDraw" -as [type])) { [WinToolGlyphDraw]::Clear() }
     $script:WinToolPreviewImageCache = @{}
     $script:WinToolCoveredTextCache = @{}
+    $script:WinToolLivePreviewCache = @{}
     $script:WinToolLastPreviewDrawn = @()
 }
 

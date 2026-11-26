@@ -11354,6 +11354,7 @@ function Reset-WinToolPreviewDrawCache {
     if ($null -ne ("WinToolGlyphDraw" -as [type])) { [WinToolGlyphDraw]::Clear() }
     $script:WinToolPreviewImageCache = @{}
     $script:WinToolCoveredTextCache = @{}
+    $script:WinToolLivePreviewCache = @{}
     $script:WinToolLastPreviewDrawn = @()
 }
 
@@ -19880,6 +19881,61 @@ function Complete-WinToolStyleSelectionWork {
     Update-WinToolTerminalPreview
 }
 
+function Restore-WinToolLivePreview {
+    param($State)
+    if ($null -eq $State) { return $false }
+    $sample = Get-WinToolUi -Name "TerminalFontSample"
+    $border = Get-WinToolUi -Name "TerminalFontPreview"
+    if ($null -eq $sample -or $null -eq $border) { return $false }
+    if ($null -ne $State.BorderBackground) { $border.Background = $State.BorderBackground }
+    $tab = Get-WinToolUi -Name "TerminalPreviewTab"
+    if ($null -ne $tab -and $null -ne $State.TabBackground) { $tab.Background = $State.TabBackground }
+    $tabText = Get-WinToolUi -Name "TerminalPreviewTabText"
+    if ($null -ne $tabText -and $null -ne $State.TabText) { $tabText.Text = [string]$State.TabText }
+    if ($null -ne $State.Foreground) { $sample.Foreground = $State.Foreground }
+    if ($null -ne $State.FontFamily) { $sample.FontFamily = $State.FontFamily }
+    if ($State.FontSize -gt 0) { $sample.FontSize = [double]$State.FontSize }
+    if ($State.LineHeight -gt 0) { $sample.LineHeight = [double]$State.LineHeight }
+    $infoBlock = Get-WinToolUi -Name "TerminalPreviewInfo"
+    if ($null -ne $infoBlock) {
+        $infoBlock.Text = [string]$State.Info
+        $infoBlock.ToolTip = [string]$State.Info
+    }
+    $border.ToolTip = [string]$State.Tip
+    $sample.Inlines.Clear()
+    foreach ($inline in @($State.Inline)) {
+        [void]$sample.Inlines.Add($inline)
+    }
+    $script:WinToolPreviewKey = [string]$State.Key
+    return $true
+}
+
+function Save-WinToolLivePreview {
+    param([string]$Key)
+    $sample = Get-WinToolUi -Name "TerminalFontSample"
+    $border = Get-WinToolUi -Name "TerminalFontPreview"
+    if ($null -eq $sample -or $null -eq $border -or [string]::IsNullOrWhiteSpace($Key)) { return }
+    if ($null -eq $script:WinToolLivePreviewCache) { $script:WinToolLivePreviewCache = @{} }
+    $tab = Get-WinToolUi -Name "TerminalPreviewTab"
+    $tabText = Get-WinToolUi -Name "TerminalPreviewTabText"
+    $infoBlock = Get-WinToolUi -Name "TerminalPreviewInfo"
+    $inlines = New-Object System.Collections.Generic.List[object]
+    foreach ($inline in @($sample.Inlines)) { [void]$inlines.Add($inline) }
+    $script:WinToolLivePreviewCache[$Key] = [pscustomobject]@{
+        Key = $Key
+        Inline = $inlines.ToArray()
+        BorderBackground = $border.Background
+        TabBackground = $(if ($null -ne $tab) { $tab.Background } else { $null })
+        TabText = $(if ($null -ne $tabText) { [string]$tabText.Text } else { "" })
+        Foreground = $sample.Foreground
+        FontFamily = $sample.FontFamily
+        FontSize = [double]$sample.FontSize
+        LineHeight = [double]$sample.LineHeight
+        Info = $(if ($null -ne $infoBlock) { [string]$infoBlock.Text } else { "" })
+        Tip = [string]$border.ToolTip
+    }
+}
+
 function Update-WinToolTerminalPreview {
     # Draws a short terminal session with the chosen prompt and theme, in the
     # chosen font and size, on the chosen color scheme. Never throws: a
@@ -19890,6 +19946,11 @@ function Update-WinToolTerminalPreview {
         return
     }
     Update-WinToolThemePreviewImage
+    $wanted = Get-WinToolPreviewKey
+    if ($null -eq $script:WinToolLivePreviewCache) { $script:WinToolLivePreviewCache = @{} }
+    if ($script:WinToolLivePreviewCache.ContainsKey($wanted)) {
+        if (Restore-WinToolLivePreview -State $script:WinToolLivePreviewCache[$wanted]) { return }
+    }
     try {
         $choice = $script:WinToolTerminalChoice
         $promptId = [string]$choice.prompt
@@ -20001,6 +20062,7 @@ function Update-WinToolTerminalPreview {
         elseif ($promptId -eq "oh-my-posh" -and $null -eq $theme) { $tip += "`nTheme colors come from the WinTool catalog sample." }
         $border.ToolTip = $tip
         $script:WinToolPreviewKey = Get-WinToolPreviewKey
+        Save-WinToolLivePreview -Key $script:WinToolPreviewKey
     }
     catch {
         $null = $_.Exception.Message
@@ -20053,21 +20115,42 @@ function Update-WinToolTerminalSummary {
     $summaryHost = Get-WinToolUi -Name "TerminalSummaryHost"
     if ($null -eq $summaryHost) { return }
     if (-not $planChanged -and $summaryHost.Children.Count -gt 0) { return }
-    # One wrapping row of chips: what gets installed (+), then what gets changed (~).
-    $summaryHost.Children.Clear()
-    $summaryHost.ToolTip = ($lines -join "`n")
     $chips = @(Get-WinToolSummaryChip -Step $steps)
+    $labels = New-Object System.Collections.Generic.List[object]
     foreach ($kind in @("add", "change")) {
         foreach ($chip in @($chips | Where-Object { $_.Kind -eq $kind })) {
-            if ($kind -eq "add") {
-                $element = New-WinToolTerminalChip -Text ("+ " + [string]$chip.Text) -Background "BrushOkSoft" -Foreground "BrushOk"
-            }
-            else {
-                $element = New-WinToolTerminalChip -Text ([string][char]0x007E + " " + [string]$chip.Text) -Background "BrushWarnSoft" -Foreground "BrushWarn"
-            }
-            $element.Tag = [string]$kind
-            [void]$summaryHost.Children.Add($element)
+            if ($kind -eq "add") { $caption = "+ " + [string]$chip.Text }
+            else { $caption = ([string][char]0x007E + " " + [string]$chip.Text) }
+            [void]$labels.Add([pscustomobject]@{ Kind = $kind; Text = $caption })
         }
+    }
+    $summaryHost.ToolTip = $planText
+    # Reuse the existing chips when only a label changed (for example the
+    # Starship preset name), so a click does not rebuild the action bar.
+    if ($summaryHost.Children.Count -eq $labels.Count -and $labels.Count -gt 0) {
+        $sameKind = $true
+        for ($index = 0; $index -lt $labels.Count; $index++) {
+            if ([string]$summaryHost.Children[$index].Tag -ne [string]$labels[$index].Kind) { $sameKind = $false; break }
+        }
+        if ($sameKind) {
+            for ($index = 0; $index -lt $labels.Count; $index++) {
+                $child = $summaryHost.Children[$index].Child
+                if ($child -is [System.Windows.Controls.TextBlock]) { $child.Text = [string]$labels[$index].Text }
+            }
+            return
+        }
+    }
+    # One wrapping row of chips: what gets installed (+), then what gets changed (~).
+    $summaryHost.Children.Clear()
+    foreach ($item in $labels) {
+        if ([string]$item.Kind -eq "add") {
+            $element = New-WinToolTerminalChip -Text ([string]$item.Text) -Background "BrushOkSoft" -Foreground "BrushOk"
+        }
+        else {
+            $element = New-WinToolTerminalChip -Text ([string]$item.Text) -Background "BrushWarnSoft" -Foreground "BrushWarn"
+        }
+        $element.Tag = [string]$item.Kind
+        [void]$summaryHost.Children.Add($element)
     }
 }
 
