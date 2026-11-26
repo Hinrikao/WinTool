@@ -35,6 +35,7 @@ $script:WinToolShowConsole = $false
 $script:WinToolEntryPath = $null
 $script:WinToolVersion = ([System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "build/version.txt"))).Trim()
 $script:WinToolPreferencesPath = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-feature-prefs-" + [guid]::NewGuid().ToString("N") + ".json")
+$script:WinToolHomeHistoryPath = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-feature-history-" + [guid]::NewGuid().ToString("N") + ".json")
 $env:WINTOOL_HIDDEN = "1"
 
 foreach ($relative in [System.IO.File]::ReadAllLines((Join-Path $script:WinToolRoot "build/files.txt"))) {
@@ -289,6 +290,12 @@ if ($null -eq $script:WinToolUiLastNotice -or [string]$script:WinToolUiLastNotic
 }
 if ([string]$script:WinToolUiLastNotice.Message -ne (Get-WinToolText "msg.no-analysis-was-saved-yet")) {
     throw "An empty history must use the localized empty message."
+}
+Add-WinToolHomeHistory -Time ([datetime]::UtcNow) -Score 80 -Seconds 3
+$script:WinToolUiLastNotice = $null
+Show-WinToolHomeHistory
+if ($null -eq $script:WinToolUiLastNotice -or [string]$script:WinToolUiLastNotice.Message -notmatch "80") {
+    throw "A saved analysis must appear in the history notice."
 }
 Add-WinToolFeatureResult -Name "UI test seams (confirm, folder, file, history)" -Status "pass"
 $script:WinToolUiQuiet = $true

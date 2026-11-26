@@ -26895,6 +26895,9 @@ function Get-WinToolHomeDiskTone {
 }
 
 function Get-WinToolHomeHistoryPath {
+    if (-not [string]::IsNullOrWhiteSpace($script:WinToolHomeHistoryPath)) {
+        return $script:WinToolHomeHistoryPath
+    }
     $base = $env:LOCALAPPDATA
     if ([string]::IsNullOrWhiteSpace($base)) { $base = [System.IO.Path]::GetTempPath() }
     return (Join-Path $base "WinTool\home-history.json")
