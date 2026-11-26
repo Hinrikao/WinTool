@@ -19379,24 +19379,66 @@ function Add-WinToolThemeEntryPreview {
     if ($null -ne $image) { $Entry.SampleVisible = "Visible" }
 }
 
+function Get-WinToolVisibleThemeRange {
+    # Returns the first and last theme-row indexes that should get a picture.
+    # A ScrollViewer viewport can be in items or in pixels; a value larger
+    # than the catalog is always treated as pixels. The cap keeps a broken
+    # viewport from painting every Oh My Zsh theme on a click.
+    param($List)
+    $count = $List.Items.Count
+    $start = 0
+    $end = [Math]::Min($count - 1, 11)
+    $viewer = Find-WinToolChildScrollViewer -Element $List
+    if ($null -ne $viewer -and $viewer.ViewportHeight -gt 0) {
+        $offset = [double]$viewer.VerticalOffset
+        $view = [double]$viewer.ViewportHeight
+        if ($view -le ($count + 2) -and $offset -le ($count + 2)) {
+            $start = [Math]::Max(0, [int][Math]::Floor($offset) - 2)
+            $end = [Math]::Min($count - 1, [int][Math]::Ceiling($offset + $view) + 2)
+        }
+        else {
+            $row = 56.0
+            $start = [Math]::Max(0, [int][Math]::Floor($offset / $row) - 2)
+            $end = [Math]::Min($count - 1, [int][Math]::Ceiling(($offset + $view) / $row) + 2)
+        }
+    }
+    $generator = $List.ItemContainerGenerator
+    if ($null -ne $generator) {
+        $firstReal = -1
+        $lastReal = -1
+        for ($index = 0; $index -lt $count; $index++) {
+            if ($null -ne $generator.ContainerFromIndex($index)) {
+                if ($firstReal -lt 0) { $firstReal = $index }
+                $lastReal = $index
+            }
+        }
+        if ($firstReal -ge 0) {
+            $start = [Math]::Max(0, $firstReal - 2)
+            $end = [Math]::Min($count - 1, $lastReal + 2)
+        }
+    }
+    if ($List.SelectedIndex -ge 0) {
+        $start = [Math]::Min($start, [Math]::Max(0, $List.SelectedIndex - 2))
+        $end = [Math]::Max($end, [Math]::Min($count - 1, $List.SelectedIndex + 2))
+    }
+    if (($end - $start) -gt 16) {
+        $anchor = $start
+        if ($List.SelectedIndex -ge 0) { $anchor = [Math]::Max($start, $List.SelectedIndex - 4) }
+        $start = [Math]::Max(0, $anchor)
+        $end = [Math]::Min($count - 1, $start + 16)
+    }
+    return [pscustomobject]@{ Start = $start; End = $end }
+}
+
 function Sync-WinToolVisibleThemePreview {
     # Paint only the theme rows that are on screen (plus a short buffer).
     $list = Get-WinToolUi -Name "TerminalStyleList"
     if ($null -eq $list -or $list.Items.Count -eq 0) { return }
     Register-WinToolThemePreviewHook
-    $start = 0
-    $end = $list.Items.Count - 1
-    $viewer = Find-WinToolChildScrollViewer -Element $list
-    if ($null -ne $viewer -and $viewer.ViewportHeight -gt 0) {
-        $start = [Math]::Max(0, [int][Math]::Floor($viewer.VerticalOffset) - 2)
-        $end = [Math]::Min($list.Items.Count - 1, [int][Math]::Ceiling($viewer.VerticalOffset + $viewer.ViewportHeight) + 2)
-    }
-    else {
-        $end = [Math]::Min($list.Items.Count - 1, 11)
-    }
+    $range = Get-WinToolVisibleThemeRange -List $list
     $prompt = ""
     if ($null -ne $script:WinToolTerminalChoice) { $prompt = [string]$script:WinToolTerminalChoice.prompt }
-    for ($index = $start; $index -le $end; $index++) {
+    for ($index = $range.Start; $index -le $range.End; $index++) {
         Add-WinToolThemeEntryPreview -Entry $list.Items[$index] -PromptId $prompt
     }
 }

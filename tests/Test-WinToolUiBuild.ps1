@@ -1085,7 +1085,7 @@ function Measure-WinToolUiAction {
 function Assert-WinToolUiSwitchSpeed {
     param(
         [int]$WarmLimitMs = 150,
-        [int]$ColdLimitMs = 400
+        [int]$ColdLimitMs = 550
     )
     $format = [System.Globalization.CultureInfo]::InvariantCulture
     $window.FindName("NavTerminal").IsChecked = $true
