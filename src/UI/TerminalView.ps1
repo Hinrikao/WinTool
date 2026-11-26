@@ -976,7 +976,8 @@ public class WinToolThemeFilter {
 function New-WinToolPreviewImage {
     param(
         [object[]]$Segment,
-        [double]$EmSize = 14.0
+        [double]$EmSize = 14.0,
+        [switch]$SkipCache
     )
     # One frozen drawing per theme line, painted from each face's GlyphTypeface
     # (GlyphRun). FontFamily by name is not used, so a per-user Nerd Font is
@@ -987,12 +988,15 @@ function New-WinToolPreviewImage {
         return $null
     }
     if ($EmSize -le 0) { $EmSize = 14.0 }
-    $cacheKey = Get-WinToolPreviewImageCacheKey -Segment $segments -EmSize $EmSize
-    if ($null -eq $script:WinToolPreviewImageCache) { $script:WinToolPreviewImageCache = @{} }
-    if ($script:WinToolPreviewImageCache.ContainsKey($cacheKey)) {
-        $hit = $script:WinToolPreviewImageCache[$cacheKey]
-        $script:WinToolLastPreviewDrawn = @($hit.Drawn)
-        return $hit.Image
+    $cacheKey = $null
+    if (-not $SkipCache) {
+        $cacheKey = Get-WinToolPreviewImageCacheKey -Segment $segments -EmSize $EmSize
+        if ($null -eq $script:WinToolPreviewImageCache) { $script:WinToolPreviewImageCache = @{} }
+        if ($script:WinToolPreviewImageCache.ContainsKey($cacheKey)) {
+            $hit = $script:WinToolPreviewImageCache[$cacheKey]
+            $script:WinToolLastPreviewDrawn = @($hit.Drawn)
+            return $hit.Image
+        }
     }
     Initialize-WinToolGlyphDraw
     $rows = New-Object System.Collections.Generic.List[object]
@@ -1067,8 +1071,9 @@ function New-WinToolPreviewImage {
     $image = New-Object System.Windows.Media.DrawingImage $group
     if ($image.CanFreeze) { $image.Freeze() }
     $script:WinToolLastPreviewDrawn = $drawn.ToArray()
-    if ($script:WinToolPreviewImageCache.Count -ge 256) { $script:WinToolPreviewImageCache = @{} }
-    $script:WinToolPreviewImageCache[$cacheKey] = [pscustomobject]@{ Image = $image; Drawn = $script:WinToolLastPreviewDrawn }
+    if ($null -ne $cacheKey -and $script:WinToolPreviewImageCache.Count -lt 512) {
+        $script:WinToolPreviewImageCache[$cacheKey] = [pscustomobject]@{ Image = $image; Drawn = $script:WinToolLastPreviewDrawn }
+    }
     return $image
 }
 
@@ -1118,7 +1123,7 @@ function Get-WinToolCachedThemeEntry {
     $entry.NerdFont = 0
     if ($Row.NerdFont -eq $true) { $entry.NerdFont = 1 }
     elseif ($Row.NerdFont -eq $false) { $entry.NerdFont = 2 }
-    $entry.PreviewImage = New-WinToolPreviewImage -Segment @($Row.Preview)
+    $entry.PreviewImage = New-WinToolPreviewImage -Segment @($Row.Preview) -SkipCache
     $entry.SampleVisible = "Collapsed"
     if ($null -ne $entry.PreviewImage) { $entry.SampleVisible = "Visible" }
     $script:WinToolThemeItemCache[$id] = $entry
@@ -1145,7 +1150,7 @@ function Update-WinToolThemePreviewImage {
         $entry = $entries[$index]
         $row = $byId[[string]$entry.Tag]
         if ($null -eq $row) { continue }
-        $image = New-WinToolPreviewImage -Segment @($row.Preview)
+        $image = New-WinToolPreviewImage -Segment @($row.Preview) -SkipCache
         $entry.PreviewImage = $image
         if ($null -ne $image) { $entry.SampleVisible = "Visible" }
         $script:WinToolThemeItemCache[$prompt + "|" + [string]$entry.Tag] = $entry

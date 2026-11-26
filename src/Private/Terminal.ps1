@@ -644,6 +644,7 @@ function Reset-WinToolPreviewDrawCache {
     # font is installed or a test wants a cold measurement.
     if ($null -ne ("WinToolGlyphDraw" -as [type])) { [WinToolGlyphDraw]::Clear() }
     $script:WinToolPreviewImageCache = @{}
+    $script:WinToolCoveredTextCache = @{}
     $script:WinToolLastPreviewDrawn = @()
 }
 
@@ -1335,6 +1336,11 @@ function Split-WinToolCoveredText {
     # face can draw is replaced with ASCII before it becomes an empty box.
     $result = New-Object System.Collections.Generic.List[object]
     if ([string]::IsNullOrEmpty($Text)) { return @() }
+    if ($null -eq $script:WinToolCoveredTextCache) { $script:WinToolCoveredTextCache = @{} }
+    $coverKey = (Get-WinToolPreviewFontKey) + "`n" + $Text
+    if ($script:WinToolCoveredTextCache.ContainsKey($coverKey)) {
+        return @($script:WinToolCoveredTextCache[$coverKey])
+    }
     $chain = @(Get-WinToolPreviewFontChain)
     $builder = New-Object System.Text.StringBuilder
     $current = $null
@@ -1386,7 +1392,11 @@ function Split-WinToolCoveredText {
             Glyph = $current.Glyph
         })
     }
-    return $result.ToArray()
+    $pieces = $result.ToArray()
+    if ($script:WinToolCoveredTextCache.Count -lt 1024) {
+        $script:WinToolCoveredTextCache[$coverKey] = $pieces
+    }
+    return $pieces
 }
 
 function Test-WinToolPreviewTextCovered {
