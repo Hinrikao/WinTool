@@ -235,8 +235,7 @@ function Update-WinToolActivityList {
     if ($runs.Count -eq 0) {
         $emptyKey = "activity.empty"
         if ($filter -ne "all") { $emptyKey = "activity.emptyFilter" }
-        $empty = New-WinToolText -Text (Get-WinToolText $emptyKey) -Brush "BrushMuted"
-        $empty.Margin = [System.Windows.Thickness]::new(8, 12, 8, 8)
+        $empty = New-WinToolText -Text (Get-WinToolText $emptyKey) -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(8, 12, 8, 8))
         [void]$hostPanel.Children.Add($empty)
         $script:WinToolState.ActivityDirty = $false
         return
@@ -263,8 +262,7 @@ function New-WinToolActivityRunCard {
     $root = New-Object System.Windows.Controls.StackPanel
     $top = New-Object System.Windows.Controls.DockPanel
     if ($Latest) {
-        $latest = New-WinToolText -Text (Get-WinToolText "activity.latest") -Brush "BrushMuted"
-        $latest.VerticalAlignment = "Top"
+        $latest = New-WinToolText -Text (Get-WinToolText "activity.latest") -Brush "BrushMuted" -VerticalAlignment "Top"
         [System.Windows.Controls.DockPanel]::SetDock($latest, "Right")
         [void]$top.Children.Add($latest)
     }
@@ -277,8 +275,7 @@ function New-WinToolActivityRunCard {
     if (-not [string]::IsNullOrWhiteSpace($duration)) {
         $metaText = Get-WinToolText "activity.meta" $when $duration
     }
-    $meta = New-WinToolText -Text $metaText -Brush "BrushHint"
-    $meta.Margin = [System.Windows.Thickness]::new(0, 2, 0, 0)
+    $meta = New-WinToolText -Text $metaText -Brush "BrushHint" -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))
     [void]$titleBlock.Children.Add($meta)
     $counts = New-Object System.Windows.Controls.WrapPanel
     $counts.Margin = [System.Windows.Thickness]::new(0, 6, 0, 0)
@@ -343,8 +340,7 @@ function New-WinToolActivityStepRow {
     if (-not [string]::IsNullOrWhiteSpace([string]$Step.Detail)) {
         $message = $message + "  " + [string]$Step.Detail
     }
-    $text = New-WinToolText -Text $message -Wrap
-    $text.VerticalAlignment = "Top"
+    $text = New-WinToolText -Text $message -Wrap -VerticalAlignment "Top"
     [void]$row.Children.Add($text)
     return $row
 }

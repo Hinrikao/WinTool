@@ -27,12 +27,13 @@ function New-WinToolText {
         [string]$Weight = "Normal",
         [string]$Brush = "BrushInk",
         [switch]$Wrap,
-        [System.Windows.Thickness]$Margin = ([System.Windows.Thickness]::new(0))
+        [System.Windows.Thickness]$Margin = ([System.Windows.Thickness]::new(0)),
+        [string]$VerticalAlignment = ""
     )
     $block = New-Object System.Windows.Controls.TextBlock
     $block.Text = $Text
     if ($Size -gt 0) { $block.FontSize = $Size }
-    else { $block.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody") }
+    else { $null = $block.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody") }
     $weights = [type]"System.Windows.FontWeights"
     $flags = [System.Reflection.BindingFlags]::Public -bor [System.Reflection.BindingFlags]::Static
     $weightProperty = $weights.GetProperty($Weight, $flags)
@@ -40,12 +41,15 @@ function New-WinToolText {
         throw "Unknown font weight '$Weight'."
     }
     $block.FontWeight = $weightProperty.GetValue($null, $null)
-    $block.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $Brush)
+    $null = $block.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $Brush)
     $block.Margin = $Margin
     if ($Wrap) {
         $block.TextWrapping = "Wrap"
     }
-    return $block
+    if (-not [string]::IsNullOrWhiteSpace($VerticalAlignment)) {
+        $block.VerticalAlignment = $VerticalAlignment
+    }
+    Write-Output -NoEnumerate $block
 }
 
 function New-WinToolCard {
