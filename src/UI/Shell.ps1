@@ -19,7 +19,7 @@ function Request-WinToolConfirmation {
 }
 
 function Get-WinToolViewName {
-    return @("Home", "Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config")
+    return @("Home", "Install", "Tweaks", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")
 }
 
 function Add-WinToolBusyControl {
@@ -314,12 +314,15 @@ function Complete-WinToolNavFollowUp {
         $script:WinToolState.FeaturesChecked = $true
         Start-WinToolFeatureDetection
     }
+    if ($Name -eq "Drivers") {
+        Start-WinToolDriverInfoJob
+    }
 }
 
 function Start-WinToolNavWarmup {
     # Measures each page once while Home is on screen, so the first click
     # does not pay for building that page.
-    $script:WinToolState.WarmViews = @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config")
+    $script:WinToolState.WarmViews = @("Install", "Tweaks", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")
     $callback = [scriptblock]::Create("Invoke-WinToolNavWarmupStep")
     $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$callback)
 }
@@ -459,10 +462,11 @@ function Sync-WinToolLogPanel {
     foreach ($listName in @("AppCategories", "TweakCategories")) {
         (Get-WinToolUi -Name $listName).Margin = [System.Windows.Thickness]::new(0, 0, 0, $listBottom)
     }
-    foreach ($pageName in @("UpdatesBody", "FixesBody", "FeaturesBody", "ConfigBody")) {
+    foreach ($pageName in @("DriversBody", "UpdatesBody", "FixesBody", "FeaturesBody", "ConfigBody")) {
         (Get-WinToolUi -Name $pageName).Margin = [System.Windows.Thickness]::new(20, 15, 20, $pageBottom)
     }
     foreach ($fillPair in @(
+            , @("ViewDrivers", "DriversBody")
             , @("ViewUpdates", "UpdatesBody")
             , @("ViewFixes", "FixesBody")
             , @("ViewFeatures", "FeaturesBody")
@@ -517,7 +521,7 @@ function Sync-WinToolBusyState {
         "AppInstall", "AppClear",
         "AppRefreshInstalled", "AppUpdate", "AppUninstall", "AppUpgradeAll",
         "FeatureApply",
-        "TerminalSetup", "TerminalUpdate", "ScanDrivers",
+        "TerminalSetup", "TerminalUpdate", "ScanDrivers", "DriversScan", "DriversScanAgain", "DriversUpdate", "DriversBackup",
         "ApplyUpdateMode", "RevertUpdateMode",
         "ApplyDns", "RefreshDns", "AddUltimatePlan",
         "SaveProfile", "LoadProfile", "ExportWinget", "ImportWinget"
@@ -821,7 +825,7 @@ function Stop-WinToolRun {
         }
         return
     }
-    foreach ($name in @("RestoreJob", "UpdateJob", "InstallJob")) {
+    foreach ($name in @("RestoreJob", "UpdateJob", "InstallJob", "DriverScanJob", "DriverToolJob")) {
         $job = $script:WinToolState[$name]
         if ($null -ne $job) {
             Stop-WinToolThread -Job $job
@@ -903,6 +907,21 @@ function Update-WinToolLogPump {
         Complete-WinToolUpdateScan
     }
 
+    $driverScan = $script:WinToolState.DriverScanJob
+    if ($null -ne $driverScan -and $driverScan.Sync.Done) {
+        Complete-WinToolDriverScan
+    }
+
+    $driverTool = $script:WinToolState.DriverToolJob
+    if ($null -ne $driverTool -and $driverTool.Sync.Done) {
+        Complete-WinToolDriverTool
+    }
+
+    $driverInfo = $script:WinToolState.DriverInfoJob
+    if ($null -ne $driverInfo -and $driverInfo.Sync.Done) {
+        Complete-WinToolDriverInfo
+    }
+
     $featureJob = $script:WinToolState.FeatureJob
     if ($null -ne $featureJob -and $featureJob.Sync.Done) {
         Complete-WinToolFeatureDetection
@@ -980,6 +999,7 @@ function Initialize-WinToolShellEvent {
         Switch-WinToolLogPanel
     }
     foreach ($fillPair in @(
+            , @("ViewDrivers", "DriversBody")
             , @("ViewUpdates", "UpdatesBody")
             , @("ViewFixes", "FixesBody")
             , @("ViewFeatures", "FeaturesBody")
@@ -1100,6 +1120,22 @@ function New-WinToolWindow {
         RestoreJob = $null
         UpdateJob = $null
         InstallJob = $null
+        DriverScanJob = $null
+        DriverToolJob = $null
+        DriverInfoJob = $null
+        DriverPending = $null
+        DriverPendingWu = $null
+        DriverRows = @()
+        DriverDevices = @()
+        DriverUpdates = @()
+        DriverDisplays = @()
+        DriverTools = $null
+        DriverScanned = $false
+        DriverCurrentBuilt = $false
+        DriverHvci = $false
+        DriverInfo = $null
+        DriverToolKind = ""
+        DriverSyncing = $false
         DetectJob = $null
         PreviewJob = $null
         CatalogJob = $null
@@ -1152,6 +1188,7 @@ function New-WinToolWindow {
     Initialize-WinToolInstallView
     Initialize-WinToolTweakView
     Initialize-WinToolTerminalView
+    Initialize-WinToolDriverView
     Initialize-WinToolUpdateView
     Initialize-WinToolFixView
     Initialize-WinToolFeatureView

@@ -1245,7 +1245,7 @@ function Assert-WinToolUiSwitchSpeed {
         Write-Output ("Scheme switch warm (" + [string]$firstScheme.Tag + "): " + $schemeWarm.ToString("0.0", $format) + " ms")
     }
 
-    $navNames = @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config", "Home")
+    $navNames = @("Install", "Tweaks", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config", "Home")
     $tabColdPart = New-Object System.Collections.Generic.List[string]
     $tabColdTime = New-Object System.Collections.Generic.List[object]
     foreach ($navName in $navNames) {
@@ -1888,6 +1888,14 @@ if ($cardDelta -gt 1.5 -or $configBottom -lt 180) {
 }
 $script:WinToolState.LogExpanded = $false
 Sync-WinToolLogPanel
+$window.FindName("NavDrivers").IsChecked = $true
+Save-WinToolViewShot -Name "drivers-1280" -Width 1280 -Height 800
+if ($null -eq $window.FindName("DriversScan") -or $null -eq $window.FindName("DriversToolList") -or $window.FindName("DriversToolList").Children.Count -lt 8) {
+    throw "The Drivers tab is missing the scan button or its tool cards."
+}
+if ($window.FindName("DriversStart").Visibility -ne [System.Windows.Visibility]::Visible) {
+    throw "The Drivers tab should show the start screen before a scan."
+}
 $window.FindName("NavUpdates").IsChecked = $true
 Save-WinToolViewShot -Name "updates-1280" -Width 1280 -Height 800
 $modeList = $window.FindName("UpdateModeList")
@@ -1915,7 +1923,7 @@ Write-Output "Console helper compiled."
 function Invoke-WinToolNavPump {
     $window.Dispatcher.Invoke([System.Windows.Threading.DispatcherPriority]::Input, [System.Action]([scriptblock]::Create("return"))) | Out-Null
 }
-$navNames = @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config", "Home")
+$navNames = @("Install", "Tweaks", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config", "Home")
 foreach ($navName in $navNames) {
     $window.FindName("Nav" + $navName).IsChecked = $true
     Invoke-WinToolNavPump
@@ -2197,6 +2205,10 @@ function Assert-WinToolPageFill {
     Write-Output ("{0}: fill gap {1:0} px, height {2:0}" -f $Label, $gap, $Element.ActualHeight)
     if ($gap -gt 96) { throw ($Label + " leaves " + [int]$gap + " px empty above the status bar.") }
 }
+$window.FindName("NavDrivers").IsChecked = $true
+Invoke-WinToolNavPump
+Invoke-WinToolFillShot -Name "drivers-1920" -Width 1920 -Height 1080 -ScrollName "ViewDrivers" -BodyName "DriversBody"
+Assert-WinToolPageFill -Element $window.FindName("DriversBody") -Label "Drivers 1920" -ScrollName "ViewDrivers" -BodyName "DriversBody"
 $window.FindName("NavUpdates").IsChecked = $true
 Invoke-WinToolNavPump
 Invoke-WinToolFillShot -Name "updates-1920" -Width 1920 -Height 1080 -ScrollName "ViewUpdates" -BodyName "UpdatesBody"

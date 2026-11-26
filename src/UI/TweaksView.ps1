@@ -570,6 +570,10 @@ function Complete-WinToolRestorePoint {
         [bool]$Ok,
         [string]$ErrorMessage
     )
+    if ($null -ne $script:WinToolState.DriverPending) {
+        Complete-WinToolDriverRestore -Ok $Ok -ErrorMessage $ErrorMessage
+        return
+    }
     if (-not $Ok) {
         $continue = Request-WinToolConfirmation -Message ("A restore point was not created.`n`n{0}`n`nContinue anyway?" -f $ErrorMessage) -Title "Restore point"
         if (-not $continue) {

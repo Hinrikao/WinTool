@@ -90,6 +90,7 @@ $payloads = [ordered]@{
     Fonts = "data/fonts.json"
     OmpThemes = "data/omp-themes.json"
     Updates = "data/updates.json"
+    Drivers = "data/drivers.json"
     Fixes = "data/fixes.json"
     Features = "data/features.json"
     System = "data/system.json"

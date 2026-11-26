@@ -809,6 +809,12 @@
                 </StackPanel>
               </RadioButton>
               <TextBlock Text="System" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,14,12,6"/>
+              <RadioButton x:Name="NavDrivers" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Drivers">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE964;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock Text="Drivers" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
               <RadioButton x:Name="NavUpdates" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Drivers and updates">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE895;" Style="{StaticResource NavGlyph}"/>
@@ -1422,6 +1428,74 @@
           </Border>
         </Grid>
 
+        <ScrollViewer x:Name="ViewDrivers" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
+          <Grid x:Name="DriversBody" Margin="20,15,20,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Drivers" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock Grid.Row="1" Text="Scan this PC with Windows Update, back up drivers, and repair common hardware problems. WinTool uses official sources only and does not install driver-booster tools." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+              <StackPanel x:Name="DriversStart" HorizontalAlignment="Center" Margin="0,8,0,12">
+                <Button x:Name="DriversScan" Width="168" Height="168" HorizontalAlignment="Center" Cursor="Hand" ToolTip="Scan devices and Windows Update for newer or missing drivers." AutomationProperties.Name="Scan your drivers">
+                  <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                      <Grid>
+                        <Ellipse x:Name="ScanDisk" Width="168" Height="168" Fill="{DynamicResource BrushAccent}"/>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                          <TextBlock Text="Scan" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="#FFFFFFFF" HorizontalAlignment="Center"/>
+                          <TextBlock Text="your drivers" FontSize="{DynamicResource FontSizeBody}" Foreground="#FFFFFFFF" Opacity="0.9" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        </StackPanel>
+                      </Grid>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                          <Setter TargetName="ScanDisk" Property="Opacity" Value="0.9"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                          <Setter TargetName="ScanDisk" Property="Opacity" Value="0.55"/>
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Button.Template>
+                </Button>
+                <TextBlock Text="Scan to check for newer or missing drivers and game runtimes." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="420" Margin="0,16,0,0"/>
+              </StackPanel>
+              <StackPanel x:Name="DriversResult" Visibility="Collapsed">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="DriversHeader" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                  <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
+                    <Button x:Name="DriversBackup" Content="Back up drivers" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Height="32" Padding="14,0" ToolTip="Export the drivers now on this PC to a folder you choose." AutomationProperties.Name="Back up drivers"/>
+                    <Button x:Name="DriversScanAgain" Content="Scan again" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Height="32" Padding="14,0" AutomationProperties.Name="Scan drivers again"/>
+                    <Button x:Name="DriversUpdate" Content="Update now" Style="{StaticResource PrimaryButton}" Margin="0,0,0,8" Height="32" Padding="16,0" ToolTip="Install the ticked driver updates and official packages. A restore point is created first when System Protection is on." AutomationProperties.Name="Update now"/>
+                  </WrapPanel>
+                </Grid>
+                <TextBlock Text="A restore point is created before installs when System Protection is on. To undo a single driver, use System Restore or Device Manager &gt; Roll Back Driver." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,8,0,10"/>
+                <StackPanel x:Name="DriversGroupHost"/>
+              </StackPanel>
+            </Grid>
+            <StackPanel Grid.Row="3" Margin="0,10,0,0">
+              <TextBlock Text="Driver tools" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+              <TextBlock Text="Destructive steps ask first and create a restore point when they can." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            </StackPanel>
+            <UniformGrid x:Name="DriversToolList" Grid.Row="4" Columns="2" Margin="0,14,0,0"/>
+            <Border Grid.Row="5" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="18" Margin="0,14,0,0">
+              <StackPanel>
+                <TextBlock Text="System information" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+                <TextBlock x:Name="DriversInfoText" Text="Hardware details appear here after this page is opened." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </ScrollViewer>
+
         <ScrollViewer x:Name="ViewUpdates" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
           <Grid x:Name="UpdatesBody" Margin="20,15,20,12">
             <Grid.RowDefinitions>
@@ -1431,7 +1505,7 @@
               <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <TextBlock Text="Drivers and updates" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-            <TextBlock Grid.Row="1" Text="WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <TextBlock Grid.Row="1" Text="WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools. For a full driver scan, backup, and repair tools, open the Drivers tab." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
             <Border Grid.Row="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="14,14" Margin="0,12,0,0">
               <Grid>
                 <Grid.ColumnDefinitions>

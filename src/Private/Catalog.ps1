@@ -365,6 +365,7 @@ function Test-WinToolDataFile {
         }
     }
 
+    Test-WinToolDriverCatalog -Catalog (Get-WinToolDriverCatalog) -Errors $errors
     Test-WinToolFixCatalog -Catalog (Get-WinToolFixCatalog) -Errors $errors
     Test-WinToolFeatureCatalog -Catalog (Get-WinToolFeatureCatalog) -Errors $errors
     Test-WinToolUpdateModeCatalog -Catalog $updates -Errors $errors

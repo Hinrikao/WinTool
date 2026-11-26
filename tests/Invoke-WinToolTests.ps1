@@ -1575,7 +1575,7 @@ Invoke-WinToolCase -Name "Terminal setup always turns on font ligatures for ever
 Invoke-WinToolCase -Name "Terminal page follows the 14 px text standard" -Body {
     $xaml = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "assets/MainWindow.xaml"))
     $start = $xaml.IndexOf('x:Name="ViewTerminal"')
-    $end = $xaml.IndexOf('x:Name="ViewUpdates"')
+    $end = $xaml.IndexOf('x:Name="ViewDrivers"')
     Test-WinToolExpectation -Condition ($start -gt 0 -and $end -gt $start) -Message "The Terminal view is in the window markup."
     $terminal = $xaml.Substring($start, $end - $start)
     $literal = @([regex]::Matches($terminal, 'FontSize"?\s*(=|Value=)\s*"[0-9.]+"') | ForEach-Object { $_.Value })
@@ -2166,6 +2166,102 @@ Invoke-WinToolCase -Name "Install view bulk Install skips apps that are already 
     $onlyInstalled = Select-WinToolInstallApp -App @($installedApp) -Detected $true
     Test-WinToolExpectation -Condition (@($onlyInstalled.Pending).Count -eq 0 -and @($onlyInstalled.Already).Count -eq 1) -Message "Install with only already-installed apps has nothing left to install."
 }
+
+
+Invoke-WinToolCase -Name "Driver hardware IDs match exactly and by a more general prefix" -Body {
+    $deviceIds = @("PCI\VEN_10EC&DEV_8168&SUBSYS_1234ABCD&REV_15", "PCI\VEN_10EC&DEV_8168")
+    Test-WinToolExpectation -Condition (Test-WinToolHardwareIdMatch -DeviceId $deviceIds -UpdateId @("PCI\VEN_10EC&DEV_8168")) -Message "A shorter Windows Update hardware ID matches the device."
+    Test-WinToolExpectation -Condition (Test-WinToolHardwareIdMatch -DeviceId $deviceIds -UpdateId @("pci\ven_10ec&dev_8168&subsys_1234abcd&rev_15")) -Message "An exact hardware ID match is case-insensitive."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolHardwareIdMatch -DeviceId $deviceIds -UpdateId @("PCI\VEN_10EC&DEV_8169"))) -Message "A different device ID does not match."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolHardwareIdMatch -DeviceId @("PCI\VEN_10EC&DEV_8168") -UpdateId @("PCI\VEN_10EC&DEV_8168&SUBSYS_1234ABCD"))) -Message "A more specific update ID does not match a shorter device ID."
+}
+
+Invoke-WinToolCase -Name "Driver scan results are classified from mocked device and Windows Update data" -Body {
+    $cache = New-WinToolPackageCache
+    $outdated = New-WinToolDriverDeviceRecord -Name "Realtek Gaming 2.5GbE Family Controller" -Class "Net" -InstanceId "PCI\VEN_10EC&DEV_8168&SUBSYS_1234ABCD&REV_15" -Version "1.0.0.0" -Provider "Realtek" -Date ([datetime]"2023-01-15") -HardwareId @("PCI\VEN_10EC&DEV_8168&SUBSYS_1234ABCD&REV_15", "PCI\VEN_10EC&DEV_8168")
+    $current = New-WinToolDriverDeviceRecord -Name "AMD Ryzen 5 5600X" -Class "Processor" -InstanceId "ACPI\ACPI0007\0" -Version "10.0.1.1" -Provider "Microsoft" -Date ([datetime]"2024-04-08") -HardwareId @("ACPI\ACPI0007")
+    $missingCode = New-WinToolDriverDeviceRecord -Name "USB Audio Device" -Class "Media" -InstanceId "USB\VID_1234&PID_5678\1" -Problem 28 -HardwareId @("USB\VID_1234&PID_5678")
+    $notConfigured = New-WinToolDriverDeviceRecord -Name "New PCI Device" -Class "Net" -InstanceId "PCI\VEN_8086&DEV_0001\1" -Problem 1 -HardwareId @("PCI\VEN_8086&DEV_0001")
+    $noDriver = New-WinToolDriverDeviceRecord -Name "Generic NVMe Disk" -Class "SCSIAdapter" -InstanceId "NVME\VEN_15B7&DEV_500E\1" -HardwareId @("NVME\VEN_15B7&DEV_500E")
+    $software = New-WinToolDriverDeviceRecord -Name "Microsoft Software Device" -Class "SoftwareDevice" -InstanceId "SWD\GENERIC\1"
+    $rootDevice = New-WinToolDriverDeviceRecord -Name "Root enumerator" -Class "System" -InstanceId "ROOT\VOLMGR\0000"
+    $disabled = New-WinToolDriverDeviceRecord -Name "Disabled NIC" -Class "Net" -InstanceId "PCI\VEN_10EC&DEV_0002\1" -Problem 22 -Version "1.0" -Provider "Realtek"
+    $ghost = New-WinToolDriverDeviceRecord -Name "Old USB stick" -Class "USB" -InstanceId "USB\VID_AAAA&PID_BBBB\OLD" -Problem 45 -Present $false
+    $failed = New-WinToolDriverDeviceRecord -Name "Broken display" -Class "Display" -InstanceId "PCI\VEN_1002&DEV_73FF\1" -Problem 43 -Version "1.0" -Provider "AMD" -HardwareId @("PCI\VEN_1002&DEV_73FF")
+    $blocked = New-WinToolDriverDeviceRecord -Name "Unsigned gadget" -Class "USB" -InstanceId "USB\VID_1111&PID_2222\1" -Problem 52 -Version "1.0" -Provider "Contoso"
+    $offer = New-WinToolDriverUpdateRecord -Title "Realtek Gaming 2.5GbE Family Controller - Network" -Model "Realtek Gaming 2.5GbE Family Controller" -Version "1.2.0.0" -Date ([datetime]"2024-04-08") -HardwareId @("PCI\VEN_10EC&DEV_8168")
+    $same = New-WinToolDriverUpdateRecord -Title "Processor" -Version "10.0.1.1" -HardwareId @("ACPI\ACPI0007")
+
+    Test-WinToolExpectation -Condition (Test-WinToolDriverMissing -Device $missingCode) -Message "Error code 28 is a missing driver."
+    Test-WinToolExpectation -Condition (Test-WinToolDriverMissing -Device $notConfigured) -Message "Error code 1 is a missing driver."
+    Test-WinToolExpectation -Condition (Test-WinToolDriverMissing -Device $noDriver) -Message "A likely hardware device with no signed driver is missing."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $software)) -Message "Software devices are not treated as missing."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $rootDevice)) -Message "ROOT devices are not treated as missing."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $disabled)) -Message "A disabled device is not treated as missing."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $ghost)) -Message "A device that is not present is not treated as missing."
+
+    $outdatedGroup = Get-WinToolDriverDeviceGroup -Device $outdated -Update @($offer, $same)
+    $currentGroup = Get-WinToolDriverDeviceGroup -Device $current -Update @($offer, $same)
+    $ghostGroup = Get-WinToolDriverDeviceGroup -Device $ghost -Update @()
+    Test-WinToolExpectation -Condition ([string]$outdatedGroup.Group -eq "outdated" -and [string]$outdatedGroup.Offer.Version -eq "1.2.0.0") -Message "A device with an older version is outdated and keeps the matched update."
+    Test-WinToolExpectation -Condition ([string]$currentGroup.Group -eq "current") -Message "A device that already has the offered version is up to date."
+    Test-WinToolExpectation -Condition ([string]$ghostGroup.Group -eq "ghost") -Message "A non-present device is classified as a leftover entry."
+
+    $rows = @(Group-WinToolDriverRow -Device @($outdated, $current, $missingCode, $notConfigured, $noDriver, $software, $rootDevice, $disabled, $ghost, $failed, $blocked) -Update @($offer, $same) -Runtime @() -GpuName @() -Cache $cache)
+    $byGroup = @{}
+    foreach ($row in $rows) {
+        $key = [string]$row.Group
+        if (-not $byGroup.ContainsKey($key)) { $byGroup[$key] = 0 }
+        $byGroup[$key] = [int]$byGroup[$key] + 1
+    }
+    Test-WinToolExpectation -Condition ($byGroup["outdated"] -eq 1) -Message "One device is grouped as outdated."
+    Test-WinToolExpectation -Condition ($byGroup["missing"] -eq 3) -Message "Code 28, code 1, and a hardware device with no driver are missing."
+    Test-WinToolExpectation -Condition ($byGroup.ContainsKey("ghost") -eq $false) -Message "Leftover entries are kept out of the scan groups."
+    Test-WinToolExpectation -Condition ((@(Get-WinToolDriverGhostDevice -Device @($outdated, $ghost, $disabled))).Count -eq 1) -Message "The leftover-entry counter includes only non-present devices."
+    Test-WinToolExpectation -Condition ((@(Get-WinToolDriverProblemDevice -Device @($missingCode, $disabled, $ghost, $failed))).Count -eq 3) -Message "The problem-code list includes present devices and skips leftover entries."
+    Test-WinToolExpectation -Condition ((@(Get-WinToolDriverIncompatibleDevice -Device @($failed, $blocked, $missingCode) -MemoryIntegrity $true)).Count -eq 2) -Message "Incompatible drivers are the failed and blocked ones."
+}
+
+Invoke-WinToolCase -Name "Driver header, display advice, and runtime rows only count real results" -Body {
+    Test-WinToolExpectation -Condition ((Format-WinToolDriverHeader -Outdated 0 -Missing 0 -Runtime 0) -eq "No outdated or missing drivers were found.") -Message "A completed scan with nothing to do has a clear header."
+    Test-WinToolExpectation -Condition ((Format-WinToolDriverHeader -Outdated 1 -Missing 0 -Runtime 0) -eq "1 device driver is outdated.") -Message "A single outdated driver is singular."
+    $header = Format-WinToolDriverHeader -Outdated 9 -Missing 1 -Runtime 5
+    Test-WinToolExpectation -Condition ($header -eq "9 device drivers are outdated and 1 is missing. 5 game runtimes need attention.") -Message "The header lists outdated, missing, and game-runtime counts."
+
+    $display = [pscustomobject]@{ Name = "Alienware AW2725QF"; Gpu = "AMD Radeon RX 6800 XT"; Width = 1920; Height = 1080; NativeWidth = 3840; NativeHeight = 2160 }
+    $advice = Format-WinToolDisplayAdvice -Display $display
+    Test-WinToolExpectation -Condition ($advice.Contains("1920 x 1080") -and $advice.Contains("3840 x 2160") -and $advice.Contains("AMD Radeon RX 6800 XT")) -Message "Display advice names the current and preferred resolution and the GPU."
+
+    $info = [pscustomobject]@{ Os = "Windows 11 Pro"; Version = "25H2"; Cpu = "AMD Ryzen 5 5600X"; Gpu = "AMD Radeon RX 6800 XT"; Board = "TUF GAMING B550"; Memory = "16 GB"; Bios = "American Megatrends 1234" }
+    $summary = Format-WinToolMachineSummary -Info $info
+    Test-WinToolExpectation -Condition ($summary.Contains("Processor: AMD Ryzen 5 5600X") -and $summary.Contains("BIOS: American Megatrends 1234")) -Message "System information lists CPU and BIOS when they are present."
+    Test-WinToolExpectation -Condition ((Format-WinToolMachineSummary -Info $null) -eq "System information is not available yet.") -Message "System information has no placeholder facts before a real read."
+
+    $pendingCache = New-WinToolPackageCache
+    $runtime = [pscustomobject]@{ id = "directx"; name = "DirectX End-User Runtime"; wingetId = "Microsoft.DirectX"; scope = "machine" }
+    $pending = Get-WinToolDriverRuntimeRow -Runtime $runtime -Cache $pendingCache
+    Test-WinToolExpectation -Condition ([string]$pending.Group -eq "runtime-pending" -and -not [bool]$pending.Selected -and [string]$pending.AvailableVersion -eq "") -Message "Game runtimes stay pending until the package cache is ready."
+
+    $ready = Set-WinToolWingetPackageCache -InstalledId @("Microsoft.DirectX") -UpdateId @()
+    $installed = Get-WinToolDriverRuntimeRow -Runtime $runtime -Cache $ready
+    Test-WinToolExpectation -Condition ([string]$installed.Group -eq "runtime-current" -and [string]$installed.AvailableVersion -eq "") -Message "An installed game runtime is not marked as needing attention."
+
+    $missingCache = Set-WinToolWingetPackageCache -InstalledId @() -UpdateId @()
+    $needed = Get-WinToolDriverRuntimeRow -Runtime $runtime -Cache $missingCache
+    Test-WinToolExpectation -Condition ([string]$needed.Group -eq "runtime" -and [bool]$needed.Selected -and [string]$needed.AvailableVersion -eq "Not installed") -Message "A missing game runtime is offered once the cache is ready."
+
+    $updateCache = Set-WinToolWingetPackageCache -InstalledId @("Microsoft.DirectX") -UpdateId @("Microsoft.DirectX")
+    $upgrade = Get-WinToolDriverRuntimeRow -Runtime $runtime -Cache $updateCache
+    Test-WinToolExpectation -Condition ([string]$upgrade.Group -eq "runtime" -and [bool]$upgrade.Selected -and [string]$upgrade.AvailableVersion -eq "Update available") -Message "An installed game runtime with an update is offered once the cache is ready."
+
+    $gpu = Get-WinToolDriverGpuRow -GpuName "NVIDIA GeForce RTX 4070" -Catalog (Get-WinToolDriverCatalog)
+    Test-WinToolExpectation -Condition ($null -ne $gpu -and [string]$gpu.WingetId -eq "NVIDIA.NVIDIAApp") -Message "An NVIDIA GPU suggests the official NVIDIA App."
+
+    $parsed = ConvertFrom-WinToolDriverScan -DeviceJson '[{"Name":"Demo NIC","Class":"Net","InstanceId":"PCI\\VEN_10EC&DEV_8168\\1","Problem":0,"Present":true,"Version":"1.0.0.0","Provider":"Realtek","Date":"2023-01-15T00:00:00","HardwareId":["PCI\\VEN_10EC&DEV_8168"]}]' -UpdateJson '[{"Title":"Demo NIC","Model":"Demo NIC","Version":"2.0.0.0","Date":"2024-04-08T00:00:00","HardwareId":["PCI\\VEN_10EC&DEV_8168"]}]'
+    $group = Get-WinToolDriverDeviceGroup -Device $parsed.Device[0] -Update $parsed.Update
+    Test-WinToolExpectation -Condition ([string]$group.Group -eq "outdated") -Message "JSON scan records can be classified after they are parsed."
+}
+
 
 
 if ($script:WinToolFailures.Count -gt 0) {

@@ -768,6 +768,7 @@ function Complete-WinToolAppDetection {
     Set-WinToolWingetPackageCache -InstalledId $allInstalled.ToArray() -UpdateId $allUpdates.ToArray() | Out-Null
     Update-WinToolLocalPackageCache | Out-Null
     try { Update-WinToolTerminalSummary } catch { $null = $_.Exception.Message }
+    try { Update-WinToolDriverRuntimeRow } catch { $null = $_.Exception.Message }
     if (@($counts.ByName).Count -gt 0) {
         Write-WinToolLog -Message ("Installed apps: found by name, outside winget: " + (@($counts.ByName) -join ", ")) -Level "info" -Diagnostic
     }
