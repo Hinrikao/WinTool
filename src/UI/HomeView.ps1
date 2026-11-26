@@ -588,7 +588,8 @@ function Initialize-WinToolHomeView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeAgain") -EventName "Click" -Name "Analyze again" -Action {
         Start-WinToolHomeAnalysis
     }
-    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeFixAll") -EventName "Click" -Name "Fix all" -Action {
+        Add-WinToolAdminBadgeNear -Name "HomeFixAll" -Place "Before" | Out-Null
+Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeFixAll") -EventName "Click" -Name "Fix all" -Action {
         Invoke-WinToolHomeFixAll
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeHistoryLink") -EventName "Click" -Name "View history" -Action {

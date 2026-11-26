@@ -695,6 +695,113 @@ Invoke-WinToolCase -Name "The console hides unless asked to stay" -Body {
     Test-WinToolExpectation -Condition ($launcher.Contains('[switch]$ShowConsole')) -Message "wintool.ps1 accepts -ShowConsole."
 }
 
+Invoke-WinToolCase -Name "A normal launch detaches without UAC and opens a helper on demand" -Body {
+    Test-WinToolExpectation -Condition (Test-WinToolShouldDetachHost -ShowConsole $false -Unattended $false -HiddenChild "") -Message "A normal terminal detaches so the prompt returns immediately."
+    Test-WinToolExpectation -Condition (Test-WinToolShouldDetachHost -ShowConsole $false -Unattended $false -HiddenChild "" -and -not (Test-WinToolShouldDetachHost -ShowConsole $false -Unattended $false -HiddenChild "1")) -Message "A hidden child does not detach again."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolShouldDetachHost -ShowConsole $true -Unattended $false -HiddenChild "")) -Message "-ShowConsole stays in this terminal."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolShouldDetachHost -ShowConsole $false -Unattended $true -HiddenChild "")) -Message "Unattended mode stays in this terminal."
+    $saved = $env:WINTOOL_ELEVATE_AT_START
+    try {
+        $env:WINTOOL_ELEVATE_AT_START = $null
+        Test-WinToolExpectation -Condition (-not (Test-WinToolElevateAtStart)) -Message "Elevation at start is off by default."
+        $env:WINTOOL_ELEVATE_AT_START = "1"
+        Test-WinToolExpectation -Condition (Test-WinToolElevateAtStart) -Message "WINTOOL_ELEVATE_AT_START=1 keeps the previous launch flow."
+    }
+    finally {
+        $env:WINTOOL_ELEVATE_AT_START = $saved
+    }
+    $entry = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Entry.ps1"))
+    Test-WinToolExpectation -Condition ($entry.Contains("Test-WinToolElevateAtStart") -and $entry.Contains("Test-WinToolCurrentShouldDetachHost") -and $entry.Contains('WINTOOL_HELPER')) -Message "Start-WinTool detaches by default, elevates only when asked, and can host the helper."
+    Test-WinToolExpectation -Condition ($entry.Contains("Test-WinToolElevateAtStart") -and $entry.Contains("Request-WinToolAdministrator")) -Message "The previous elevate-at-start path is still available."
+    Test-WinToolExpectation -Condition ($entry.IndexOf("Test-WinToolElevateAtStart") -lt $entry.IndexOf("Request-WinToolAdministrator")) -Message "Administrator approval at start is gated on WINTOOL_ELEVATE_AT_START."
+    $elevation = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/Elevation.ps1"))
+    Test-WinToolExpectation -Condition ($elevation.Contains('Get-WinToolText "shell.opened"')) -Message "The detached launch prints that WinTool is open."
+    Test-WinToolExpectation -Condition ((Get-WinToolText "shell.opened") -eq "WinTool is open.") -Message "shell.opened has English text."
+    $savedLang = $script:WinToolLocale
+    try {
+        Initialize-WinToolLocale -Language "pt-BR" -Force | Out-Null
+        Test-WinToolExpectation -Condition ((Get-WinToolText "shell.opened") -eq "WinTool aberto.") -Message "pt-BR launch text is 'WinTool aberto.'"
+        $needs = Get-WinToolText "shell.needsAdmin"
+        Test-WinToolExpectation -Condition ($needs.Contains("Aprove o aviso") -and -not $needs.Contains("Aproveite")) -Message "pt-BR asks to approve the Windows prompt, not 'Aproveite'."
+    }
+    finally {
+        if (-not [string]::IsNullOrWhiteSpace([string]$savedLang)) {
+            Initialize-WinToolLocale -Language $savedLang -Force | Out-Null
+        }
+        else {
+            Initialize-WinToolLocale -Language en -Force | Out-Null
+        }
+    }
+}
+
+Invoke-WinToolCase -Name "Admin actions are marked and the helper pipe round-trips" -Body {
+    $fixes = @(Get-WinToolNote -Object (Get-WinToolFixCatalog) -Name "fixes" -Default @())
+    Test-WinToolExpectation -Condition ($fixes.Count -ge 4) -Message "The fix catalog is loaded for admin coverage."
+    $adminTweaks = @()
+    $userTweaks = @()
+    foreach ($tweak in @((Get-WinToolTweakCatalog).tweaks)) {
+        if (Test-WinToolTweakNeedsAdmin -Tweak $tweak) { $adminTweaks += [string]$tweak.id }
+        else { $userTweaks += [string]$tweak.id }
+    }
+    Test-WinToolExpectation -Condition ($adminTweaks -contains "enable-long-paths") -Message "HKLM tweaks need administrator approval."
+    Test-WinToolExpectation -Condition ($userTweaks -contains "show-file-extensions") -Message "HKCU tweaks can run without administrator approval."
+    $fixPlan = Get-WinToolFixPlan -Fix ($fixes | Where-Object { [string]$_.id -eq "system-file-repair" } | Select-Object -First 1)
+    Test-WinToolExpectation -Condition (Test-WinToolPlanNeedsAdmin -Step $fixPlan) -Message "Repairing system files is an admin plan."
+    $features = @(Get-WinToolNote -Object (Get-WinToolFeatureCatalog) -Name "features" -Default @())
+    $featurePlan = Get-WinToolFeaturePlan -Enable @($features[0]) -Disable @()
+    Test-WinToolExpectation -Condition (Test-WinToolPlanNeedsAdmin -Step $featurePlan) -Message "Changing Windows features is an admin plan."
+    Test-WinToolExpectation -Condition ((Get-WinToolHelperAllowedFactory) -contains "Get-WinToolDriverBackupScript") -Message "Driver backup runs through the helper allow-list."
+    $ping = $null
+    $memory = New-Object System.IO.MemoryStream
+    $writer = New-Object System.IO.StreamWriter($memory, [System.Text.Encoding]::UTF8, 4096, $true)
+    $writer.AutoFlush = $true
+    $null = Invoke-WinToolHelperHostCommand -Message @{ id = "t1"; op = "ping" } -Writer $writer
+    $writer.Flush()
+    $bytes = $memory.ToArray()
+    $text = [System.Text.Encoding]::UTF8.GetString($bytes)
+    Test-WinToolExpectation -Condition ($text -match "pong") -Message ("The helper ping command replies with pong, got: " + $text.Trim())
+    if (Test-WinToolWindows) {
+        $ping = Invoke-WinToolHelperRoundTrip
+        Test-WinToolExpectation -Condition ($null -ne $ping -and [bool]$ping.Ok -and [string]$ping.Result -eq "pong") -Message "The helper named pipe round-trips a ping."
+    }
+}
+
+Invoke-WinToolCase -Name "Home analysis works without administrator rights" -Body {
+    $saved = $script:WinToolPretendNonAdmin
+    $script:WinToolPretendNonAdmin = $true
+    try {
+        Test-WinToolExpectation -Condition (-not (Test-WinToolAdministrator)) -Message "The non-admin hook reports no administrator rights."
+        $homeSource = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/HomeView.ps1")) + [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/Home.ps1"))
+        Test-WinToolExpectation -Condition ($homeSource -notmatch "Request-WinToolAdministrator") -Message "Home analysis does not relaunch the window as administrator."
+        foreach ($id in @("junk", "tweaks", "startup", "drivers", "disk", "info")) {
+            $text = Get-WinToolHomeCheckScript -Id $id
+            $parseErrors = $null
+            $tokens = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$parseErrors)
+            Test-WinToolExpectation -Condition (@($parseErrors).Count -eq 0) -Message ("The {0} check still parses without admin." -f $id)
+        }
+        $failed = ConvertTo-WinToolHomeResult -Id "disk" -ErrorMessage "Access denied"
+        Test-WinToolExpectation -Condition ($failed.Status -eq "unknown" -and $failed.Text -eq "Could not check") -Message "A check that needs more rights degrades to 'Could not check'."
+        $stub = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-junk-na-" + [guid]::NewGuid().ToString("N"))
+        New-Item -ItemType Directory -Path $stub -Force | Out-Null
+        try {
+            $old = Join-Path $stub "old.tmp"
+            [System.IO.File]::WriteAllBytes($old, (New-Object byte[] 4096))
+            [System.IO.File]::SetLastWriteTime($old, (Get-Date).AddDays(-3))
+            $sync = [hashtable]::Synchronized(@{ Done = $false; Ok = $false; Error = $null; Data = $null })
+            $location = [pscustomobject]@{ Id = "temp"; Name = "Stub"; Path = $stub; Filter = "*"; Recurse = $true; MinAgeHours = 24 }
+            & ([scriptblock]::Create((Get-WinToolHomeCheckScript -Id "junk"))) $sync @($location)
+            Test-WinToolExpectation -Condition ($sync.Done -and $sync.Ok) -Message "The junk check still runs without administrator rights."
+        }
+        finally {
+            Remove-Item -LiteralPath $stub -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+    finally {
+        $script:WinToolPretendNonAdmin = $saved
+    }
+}
+
 Invoke-WinToolCase -Name "UI collection adds do not leak indexes" -Body {
     $roots = @(
         (Join-Path $script:WinToolRoot "src"),

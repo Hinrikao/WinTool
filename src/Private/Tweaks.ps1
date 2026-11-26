@@ -179,6 +179,9 @@ function Start-WinToolRestorePointJob {
     param(
         [string]$Description = (Get-WinToolText "msg.wintool-before-tweaks")
     )
+    if (-not (Test-WinToolAdministrator)) {
+        return (Start-WinToolHelperRestorePointJob -Description $Description)
+    }
     $sync = [hashtable]::Synchronized(@{
         Done = $false
         Ok = $false
@@ -681,6 +684,17 @@ function Invoke-WinToolTweakItem {
     if ($null -eq $Runner) {
         $Runner = {
             param($Tweak, $Direction)
+            if (-not (Test-WinToolAdministrator) -and (Test-WinToolTweakNeedsAdmin -Tweak $Tweak)) {
+                $result = Invoke-WinToolHelperTweakChange -TweakId ([string]$Tweak.id) -Direction $Direction
+                if (-not [bool]$result.Ok) {
+                    $message = [string]$result.Message
+                    if ([string]::IsNullOrWhiteSpace($message)) {
+                        $message = Get-WinToolText "error.helperFailed"
+                    }
+                    throw $message
+                }
+                return
+            }
             Invoke-WinToolTweakChange -Tweak $Tweak -Direction $Direction -RestartExplorer $false
         }
     }

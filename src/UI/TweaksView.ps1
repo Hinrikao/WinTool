@@ -197,6 +197,7 @@ function New-WinToolTweakRow {
     $grid.ColumnDefinitions.Add((New-WinToolColumn))
     $grid.ColumnDefinitions.Add((New-WinToolColumn -Auto))
     $grid.ColumnDefinitions.Add((New-WinToolColumn -Auto))
+    $grid.ColumnDefinitions.Add((New-WinToolColumn -Auto))
 
     $risk = [string](Get-WinToolNote -Object $Tweak -Name "risk" -Default "safe")
     $dot = New-Object System.Windows.Shapes.Ellipse
@@ -234,6 +235,12 @@ function New-WinToolTweakRow {
     [System.Windows.Controls.Grid]::SetColumn($info, 2)
     [void]$grid.Children.Add($info)
 
+    if (Test-WinToolTweakNeedsAdmin -Tweak $Tweak) {
+        $adminBadge = New-WinToolAdminBadge -Margin ([System.Windows.Thickness]::new(0, 0, 8, 0))
+        [System.Windows.Controls.Grid]::SetColumn($adminBadge, 3)
+        [void]$grid.Children.Add($adminBadge)
+    }
+
     $toggle = New-Object System.Windows.Controls.CheckBox
     $toggle.Style = $script:WinToolWindow.FindResource("SwitchToggle")
     $toggle.VerticalAlignment = "Center"
@@ -241,7 +248,7 @@ function New-WinToolTweakRow {
     $toggle.IsChecked = $false
     $toggle.ToolTip = "Off"
     [System.Windows.Automation.AutomationProperties]::SetName($toggle, [string]$Tweak.name)
-    [System.Windows.Controls.Grid]::SetColumn($toggle, 3)
+    [System.Windows.Controls.Grid]::SetColumn($toggle, 4)
     [void]$grid.Children.Add($toggle)
     $panel.Child = $grid
 
@@ -547,6 +554,21 @@ function Start-WinToolTweakQueue {
     $items = @($Item)
     if ($items.Count -eq 0) {
         return
+    }
+    $needsHelper = $false
+    foreach ($entry in $items) {
+        if (Test-WinToolTweakNeedsAdmin -Tweak $entry.Row.Tweak) {
+            $needsHelper = $true
+            break
+        }
+    }
+    if ($needsHelper -and -not (Test-WinToolAdministrator)) {
+        if (-not (Request-WinToolElevatedHelper)) {
+            foreach ($entry in $items) {
+                $entry.Row.Checkbox.IsChecked = [bool]$entry.Previous
+            }
+            return
+        }
     }
     foreach ($entry in $items) {
         $entry.Row.Checkbox.IsEnabled = $false

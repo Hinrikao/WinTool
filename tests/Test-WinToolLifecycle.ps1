@@ -484,6 +484,37 @@ while (-not (Test-Path -LiteralPath $first.Marker)) {
     Start-Sleep -Milliseconds 250
 }
 Write-Output "First window is open."
+$launchIds = New-Object System.Collections.Generic.List[int]
+$launchIds.Add([int]$first.Process.Id)
+try {
+    foreach ($child in @(Get-LifecycleDescendant -ParentId $first.Process.Id)) {
+        $launchIds.Add([int]$child.Id)
+    }
+}
+catch {
+    $null = $_.Exception.Message
+}
+$launchWindows = @([WinToolCloseWatch]::VisibleWindows([int[]]$launchIds.ToArray()))
+$wpfCount = 0
+$extra = New-Object System.Collections.Generic.List[string]
+foreach ($record in $launchWindows) {
+    $part = Get-LifecycleWindowPart -Record $record
+    if (Test-LifecycleIgnoredWindow -Class $part.Class) { continue }
+    if (Test-LifecycleWinToolWindow -Record $record) {
+        $wpfCount++
+        continue
+    }
+    $extra.Add($record)
+}
+if ($wpfCount -ne 1) {
+    Show-LifecycleOutput -Item $first
+    throw ("Launch should show exactly one WinTool window, got {0}: {1}" -f $wpfCount, ($launchWindows -join "; "))
+}
+if ($extra.Count -gt 0) {
+    Show-LifecycleOutput -Item $first
+    throw ("Launch left a visible console or extra window: " + ($extra -join "; "))
+}
+Write-Output "Launch showed only the WinTool window (no visible console)."
 
 # A second launch must leave by itself, without a window of its own.
 $second = Start-LifecycleHost -Name "second" -CloseAfter 2 -OwnedHost

@@ -142,6 +142,14 @@ function Write-WinToolLog {
     if ([string]::IsNullOrWhiteSpace($Message)) {
         return
     }
+    if ($null -ne $script:WinToolHelperLogCallback) {
+        try {
+            & $script:WinToolHelperLogCallback $Message $Level
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+    }
     $prefix = "INFO"
     if ($Level -eq "ok") { $prefix = " OK " }
     elseif ($Level -eq "warn") { $prefix = "WARN" }

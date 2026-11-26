@@ -92,7 +92,7 @@ function New-WinToolBadge {
     $label.Text = $Text
     $label.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
     $label.FontWeight = "SemiBold"
-    if ($Kind -eq "caution") {
+    if ($Kind -eq "caution" -or $Kind -eq "admin") {
         $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushWarnSoft")
         $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushWarn")
     }
@@ -229,4 +229,47 @@ function Get-WinToolUiError {
         return , @()
     }
     return , $script:WinToolUiErrors.ToArray()
+}
+
+function New-WinToolAdminBadge {
+    param(
+        [System.Windows.Thickness]$Margin = ([System.Windows.Thickness]::new(0, 0, 8, 0))
+    )
+    $badge = New-WinToolBadge -Text (Get-WinToolText "ui.adminBadge") -Kind "admin"
+    $badge.Margin = $Margin
+    $badge.Tag = "WinToolAdminBadge"
+    return $badge
+}
+
+function Add-WinToolAdminBadgeNear {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [ValidateSet("Before", "After")][string]$Place = "Before"
+    )
+    $control = Get-WinToolUi -Name $Name
+    $parent = $control.Parent
+    if ($null -eq $parent -or $null -eq $parent.Children) {
+        return $null
+    }
+    $index = [int]$parent.Children.IndexOf($control)
+    if ($index -lt 0) {
+        $index = 0
+    }
+    $look = $index - 1
+    if ($Place -eq "After") {
+        $look = $index + 1
+    }
+    if ($look -ge 0 -and $look -lt $parent.Children.Count) {
+        $existing = $parent.Children[$look]
+        if ($null -ne $existing -and [string]$existing.Tag -eq "WinToolAdminBadge") {
+            return $existing
+        }
+    }
+    $badge = New-WinToolAdminBadge
+    $insertAt = $index
+    if ($Place -eq "After") {
+        $insertAt = $index + 1
+    }
+    $parent.Children.Insert($insertAt, $badge)
+    return $badge
 }

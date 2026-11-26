@@ -43,6 +43,10 @@ function Invoke-WinToolUnattended {
 
 function Start-WinTool {
     try {
+        if ($env:WINTOOL_HELPER -eq "1") {
+            Invoke-WinToolElevatedHelperHost
+            return
+        }
         if (-not (Test-WinToolWindows)) {
             throw (Get-WinToolText "error.windows11")
         }
@@ -56,7 +60,7 @@ function Start-WinTool {
             Exit-WinToolOwnedHost
             return
         }
-        if (-not (Test-WinToolAdministrator)) {
+        if ((Test-WinToolElevateAtStart) -and -not (Test-WinToolAdministrator)) {
             Request-WinToolAdministrator
             return
         }
@@ -71,9 +75,9 @@ function Start-WinTool {
             return
         }
 
-        if ((Get-WinToolCurrentConsoleMode) -eq "relaunch") {
-            # Windows Terminal owns this console and cannot hide it, so open
-            # WinTool in its own hidden console and give the terminal back.
+        if (Test-WinToolCurrentShouldDetachHost) {
+            # Open the window in a detached hidden console and give this
+            # terminal back immediately. No UAC at start unless requested.
             Start-WinToolRelaunch
             return
         }

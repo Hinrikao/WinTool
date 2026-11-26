@@ -32,9 +32,8 @@ function Test-WinToolDriverAdminReady {
     if (Test-WinToolAdministrator) {
         return $true
     }
-    Write-WinToolLog -Message (Get-WinToolText "drivers.admin") -Level "warn"
-    Request-WinToolAdministrator
-    return $false
+    Write-WinToolLog -Message (Get-WinToolText "drivers.admin") -Level "info"
+    return (Request-WinToolElevatedHelper)
 }
 
 function Initialize-WinToolDriverView {
@@ -56,6 +55,8 @@ function Initialize-WinToolDriverView {
     $script:WinToolState.DriverPhase = ""
 
     Set-WinToolDriverUiText
+    Add-WinToolAdminBadgeNear -Name "DriversBackup" -Place "Before" | Out-Null
+    Add-WinToolAdminBadgeNear -Name "DriversUpdate" -Place "Before" | Out-Null
     Show-WinToolDriverHome
     Initialize-WinToolDriverStepList
     Update-WinToolDriverPcChip
@@ -324,6 +325,8 @@ function Initialize-WinToolDriverToolList {
             Add-WinToolBusyControl -Control $button
             [void]$foot.Children.Add($button)
         }
+        $adminBadge = New-WinToolAdminBadge -Margin ([System.Windows.Thickness]::new(0, 4, 8, 0))
+        $foot.Children.Insert(0, $adminBadge)
         [void]$grid.Children.Add($foot)
         $card.Child = $grid
         [void]$hostPanel.Children.Add($card)
@@ -879,7 +882,7 @@ function Start-WinToolDriverWuInstall {
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "drivers.update.progress") -Indeterminate $true
     Write-WinToolLog -Message (Get-WinToolCountText "drivers.update.downloading" $titles.Count) -Level "info"
     $script:WinToolState.DriverToolKind = "install"
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText (Get-WinToolUpdateInstallScript) -Argument @("IsInstalled=0 and Type='Driver'", ($titles.ToArray() -join "`n"))
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolUpdateInstallScript" -Argument @("IsInstalled=0 and Type='Driver'", ($titles.ToArray() -join "`n"))
 }
 
 function Start-WinToolDriverProtectedAction {
@@ -942,7 +945,7 @@ function Invoke-WinToolDriverBackupClick {
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "drivers.backup.progress") -Indeterminate $true
     Write-WinToolLog -Message (Get-WinToolText "drivers.backup.exporting" $folder) -Level "info"
     $script:WinToolState.DriverToolKind = "backup"
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText (Get-WinToolDriverBackupScript) -Argument @($folder)
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolDriverBackupScript" -Argument @($folder)
 }
 
 function Invoke-WinToolDriverToolClick {
@@ -985,7 +988,7 @@ function Invoke-WinToolDriverOfflineStart {
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "drivers.offline.progress") -Indeterminate $true
     Write-WinToolLog -Message (Get-WinToolText "drivers.offline.installing" $folder) -Level "info"
     $script:WinToolState.DriverToolKind = "offline"
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText (Get-WinToolDriverOfflineScript) -Argument @($folder)
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolDriverOfflineScript" -Argument @($folder)
 }
 
 function Invoke-WinToolDriverAudioClick {
@@ -997,7 +1000,7 @@ function Invoke-WinToolDriverAudioClick {
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "drivers.audio.progress") -Indeterminate $true
     Write-WinToolLog -Message (Get-WinToolText "drivers.audio.log") -Level "info"
     $script:WinToolState.DriverToolKind = "audio"
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText (Get-WinToolDriverAudioScript)
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolDriverAudioScript"
 }
 
 function Invoke-WinToolDriverToggleClick {
@@ -1047,7 +1050,7 @@ function Invoke-WinToolDriverToggleStart {
     Sync-WinToolBusyState -Busy $true
     Sync-WinToolProgress -Value 0 -Text $title -Indeterminate $true
     $script:WinToolState.DriverToolKind = "toggle"
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText (Get-WinToolDriverToggleScript) -Argument @([string]$pending.Ids, [string]$pending.Action)
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolDriverToggleScript" -Argument @([string]$pending.Ids, [string]$pending.Action)
 }
 
 function Invoke-WinToolDriverRescanClick {
@@ -1059,7 +1062,7 @@ function Invoke-WinToolDriverRescanClick {
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "drivers.rescan.progress") -Indeterminate $true
     Write-WinToolLog -Message (Get-WinToolText "drivers.rescan.log") -Level "info"
     $script:WinToolState.DriverToolKind = "rescan"
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText (Get-WinToolDriverRescanScript)
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolDriverRescanScript"
 }
 
 function Invoke-WinToolDriverGhostClick {
@@ -1093,7 +1096,7 @@ function Invoke-WinToolDriverGhostStart {
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "drivers.ghost.progress") -Indeterminate $true
     Write-WinToolLog -Message (Get-WinToolCountText "drivers.ghost.removing" $count) -Level "info"
     $script:WinToolState.DriverToolKind = "remove"
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText (Get-WinToolDriverRemoveScript) -Argument @($ids)
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolDriverRemoveScript" -Argument @($ids)
 }
 
 function Invoke-WinToolDriverNetworkClick {
@@ -1109,7 +1112,7 @@ function Invoke-WinToolDriverNetworkStart {
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "drivers.network.progress") -Indeterminate $true
     Write-WinToolLog -Message (Get-WinToolText "drivers.network.log") -Level "info"
     $script:WinToolState.DriverToolKind = "network"
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText (Get-WinToolDriverNetworkScript)
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolDriverNetworkScript"
 }
 
 function Invoke-WinToolDriverDisplayClick {
@@ -1600,21 +1603,7 @@ function Start-WinToolDriverRollbackJob {
     Sync-WinToolBusyState -Busy $true
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "button.rollback") -Indeterminate $true
     $script:WinToolState.DriverToolKind = "rollback"
-    $scriptText = @'
-param($Sync, $Inf)
-$ErrorActionPreference = "Stop"
-try {
-    $output = & pnputil.exe /rollback-driver $Inf 2>&1 | ForEach-Object { "$_" }
-    $Sync.Log = @($output)
-    $Sync.Ok = $true
-}
-catch {
-    $Sync.Ok = $false
-    $Sync.Error = $_.Exception.Message
-}
-$Sync.Done = $true
-'@
-    $script:WinToolState.DriverToolJob = Start-WinToolScriptJob -ScriptText $scriptText -Argument @($inf)
+    $script:WinToolState.DriverToolJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolDriverRollbackScript" -Argument @($inf)
 }
 
 function Invoke-WinToolDriverDeviceManager {

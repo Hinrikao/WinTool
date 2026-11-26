@@ -506,6 +506,13 @@ function Invoke-WinToolPlanAsync {
         Write-WinToolLog -Message (Get-WinToolText "status.wait") -Level "warn"
         return
     }
+    if ((Test-WinToolPlanNeedsAdmin -Step $Step) -and -not (Test-WinToolAdministrator)) {
+        if (-not (Request-WinToolElevatedHelper)) {
+            return
+        }
+        Start-WinToolHelperPlanAsync -Step $Step -DoneMessage $DoneMessage -AfterDone $AfterDone -Update:$Update
+        return
+    }
     $queue = New-Object System.Collections.Concurrent.ConcurrentQueue[string]
     $script:WinToolState.Run = @{
         Steps = @($Step)
@@ -754,7 +761,7 @@ function Stop-WinToolRun {
         }
         return
     }
-    foreach ($name in @("RestoreJob", "UpdateJob", "InstallJob", "DriverScanJob", "DriverToolJob")) {
+    foreach ($name in @("RestoreJob", "UpdateJob", "InstallJob", "DriverScanJob", "DriverToolJob", "HelperPlanJob")) {
         $job = $script:WinToolState[$name]
         if ($null -ne $job) {
             Stop-WinToolThread -Job $job
@@ -825,6 +832,11 @@ function Update-WinToolLogPump {
             $run.ExitHandled = $true
             Complete-WinToolPlanStep
         }
+    }
+
+    $helperPlan = $script:WinToolState.HelperPlanJob
+    if ($null -ne $helperPlan -and $helperPlan.Sync.Done) {
+        Complete-WinToolHelperPlanJob
     }
 
     $restore = $script:WinToolState.RestoreJob
@@ -1173,6 +1185,7 @@ function New-WinToolWindow {
 function Stop-WinToolBackgroundWork {
     # Stops the log timer, a running plan, and every background runspace, so
     # nothing keeps powershell.exe alive after the window is gone.
+    try { Stop-WinToolElevatedHelper } catch { $null = $_.Exception.Message }
     if ($null -eq $script:WinToolState) { return }
     try { Stop-WinToolMotion } catch { $null = $_.Exception.Message }
     if ($null -ne $script:WinToolState.Pump) {
@@ -1235,10 +1248,16 @@ $script:WinToolActivateEventName = "Local\WinTool.Hinrikao.Activate"
 function New-WinToolSingleInstanceMutex {
     if (Test-WinToolWindows) {
         try {
-            $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
             $security = New-Object System.Security.AccessControl.MutexSecurity
-            $rule = New-Object System.Security.AccessControl.MutexAccessRule($sid, [System.Security.AccessControl.MutexRights]::FullControl, [System.Security.AccessControl.AccessControlType]::Allow)
-            $security.AddAccessRule($rule)
+            $sddl = Get-WinToolSameUserSddl
+            if (-not [string]::IsNullOrWhiteSpace($sddl)) {
+                $security.SetSecurityDescriptorSddlForm($sddl)
+            }
+            else {
+                $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+                $rule = New-Object System.Security.AccessControl.MutexAccessRule($sid, [System.Security.AccessControl.MutexRights]::FullControl, [System.Security.AccessControl.AccessControlType]::Allow)
+                $security.AddAccessRule($rule)
+            }
             $createdNew = $false
             return New-Object System.Threading.Mutex($false, $script:WinToolMutexName, [ref]$createdNew, $security)
         }
@@ -1252,10 +1271,16 @@ function New-WinToolSingleInstanceMutex {
 function New-WinToolActivateEvent {
     if (Test-WinToolWindows) {
         try {
-            $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
             $security = New-Object System.Security.AccessControl.EventWaitHandleSecurity
-            $rule = New-Object System.Security.AccessControl.EventWaitHandleAccessRule($sid, [System.Security.AccessControl.EventWaitHandleRights]::FullControl, [System.Security.AccessControl.AccessControlType]::Allow)
-            $security.AddAccessRule($rule)
+            $sddl = Get-WinToolSameUserSddl
+            if (-not [string]::IsNullOrWhiteSpace($sddl)) {
+                $security.SetSecurityDescriptorSddlForm($sddl)
+            }
+            else {
+                $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+                $rule = New-Object System.Security.AccessControl.EventWaitHandleAccessRule($sid, [System.Security.AccessControl.EventWaitHandleRights]::FullControl, [System.Security.AccessControl.AccessControlType]::Allow)
+                $security.AddAccessRule($rule)
+            }
             $createdNew = $false
             return New-Object System.Threading.EventWaitHandle($false, [System.Threading.EventResetMode]::AutoReset, $script:WinToolActivateEventName, [ref]$createdNew, $security)
         }

@@ -40,6 +40,8 @@ function Initialize-WinToolUpdateView {
     }
 
     Initialize-WinToolUpdateModeView
+    Add-WinToolAdminBadgeNear -Name "InstallScannedUpdates" -Place "Before" | Out-Null
+    Add-WinToolAdminBadgeNear -Name "ApplyUpdateMode" -Place "Before" | Out-Null
 
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ScanDrivers") -EventName "Click" -Name "Updates: scan" -Action { Invoke-WinToolScanClick }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "OpenWindowsUpdate") -EventName "Click" -Name "Updates: open Windows Update" -Action { Open-WinToolUri -Uri "ms-settings:windowsupdate" }
@@ -142,7 +144,7 @@ function Invoke-WinToolInstallUpdatesClick {
     Sync-WinToolBusyState -Busy $true
     Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "msg.installing-windows-updates") -Indeterminate $true
     Write-WinToolLog -Message (Get-WinToolText "msg.downloading-and-installing-the-scanned-updates") -Level "info"
-    $script:WinToolState.InstallJob = Start-WinToolScriptJob -ScriptText (Get-WinToolUpdateInstallScript) -Argument @($criteria, ($titles -join "`n"))
+    $script:WinToolState.InstallJob = Start-WinToolPrivilegedScriptJob -Factory "Get-WinToolUpdateInstallScript" -Argument @($criteria, ($titles -join "`n"))
 }
 
 function Complete-WinToolUpdateInstall {

@@ -40,9 +40,15 @@ function Initialize-WinToolFixView {
             $badgeText = Get-WinToolText "msg.restart-needed"
             $badgeKind = "caution"
         }
+        $badgeRow = New-Object System.Windows.Controls.StackPanel
+        $badgeRow.Orientation = "Horizontal"
+        $badgeRow.VerticalAlignment = "Center"
         $badge = New-WinToolBadge -Text $badgeText -Kind $badgeKind
         $badge.Margin = [System.Windows.Thickness]::new(0)
-        [void]$foot.Children.Add($badge)
+        [void]$badgeRow.Children.Add($badge)
+        $adminBadge = New-WinToolAdminBadge -Margin ([System.Windows.Thickness]::new(8, 0, 0, 0))
+        [void]$badgeRow.Children.Add($adminBadge)
+        [void]$foot.Children.Add($badgeRow)
         $button = New-Object System.Windows.Controls.Button
         $button.Content = (Get-WinToolText "msg.run-fix")
         $button.Style = $script:WinToolWindow.FindResource("SecondaryButton")

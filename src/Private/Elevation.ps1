@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: MIT
 
 function Test-WinToolAdministrator {
+    if ($script:WinToolPretendNonAdmin) {
+        return $false
+    }
     if (-not (Test-WinToolWindows)) {
         return $false
     }
@@ -192,7 +195,7 @@ function Remove-WinToolStaleTempLauncher {
         return
     }
     $cutoff = [DateTime]::UtcNow.AddHours(-2)
-    foreach ($pattern in @("relaunch-*.ps1", "wintool-self-*.ps1")) {
+    foreach ($pattern in @("relaunch-*.ps1", "wintool-self-*.ps1", "helper-*.ps1")) {
         foreach ($item in @(Get-ChildItem -Path (Join-Path $Directory $pattern) -File -ErrorAction SilentlyContinue)) {
             if ($item.LastWriteTimeUtc -lt $cutoff) {
                 Remove-Item -LiteralPath $item.FullName -Force -ErrorAction SilentlyContinue
@@ -303,7 +306,7 @@ function Start-WinToolRelaunch {
         Exit-WinToolOwnedHost
         return
     }
-    Write-Host (Get-WinToolText "shell.openingWindow")
+    Write-Host (Get-WinToolText "shell.opened")
     Start-Process -FilePath $executable -ArgumentList $line -WindowStyle $style | Out-Null
     Exit-WinToolOwnedHost
 }

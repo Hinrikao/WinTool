@@ -58,6 +58,7 @@ function Initialize-WinToolFeatureView {
         })
     }
     $script:WinToolState.FeatureRows = $rows.ToArray()
+    Add-WinToolAdminBadgeNear -Name "FeatureApply" -Place "Before" | Out-Null
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "FeatureRefresh") -EventName "Click" -Name "Features: refresh state" -Action {
         Start-WinToolFeatureDetection
     }

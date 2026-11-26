@@ -1375,3 +1375,20 @@ function Test-WinToolDriverCatalog {
         }
     }
 }
+
+function Get-WinToolDriverRollbackScript {
+    return @'
+param($Sync, $Inf)
+$ErrorActionPreference = "Stop"
+try {
+    $output = & pnputil.exe /rollback-driver $Inf 2>&1 | ForEach-Object { "$_" }
+    $Sync.Log = @($output)
+    $Sync.Ok = $true
+}
+catch {
+    $Sync.Ok = $false
+    $Sync.Error = $_.Exception.Message
+}
+$Sync.Done = $true
+'@
+}

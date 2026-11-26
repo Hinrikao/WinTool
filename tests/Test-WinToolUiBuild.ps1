@@ -2238,6 +2238,48 @@ Invoke-WinToolNavPump
 Invoke-WinToolFillShot -Name "config-1920" -Width 1920 -Height 1080 -ScrollName "ViewConfig" -BodyName "ConfigBody"
 Assert-WinToolPageFill -Element $window.FindName("ConfigProfileCard") -Label "Config 1920" -ScrollName "ViewConfig" -BodyName "ConfigBody"
 
+# Admin badges sit on privileged actions; Home analysis still runs without admin.
+$adminBadges = New-Object System.Collections.Generic.List[object]
+$visit = New-Object System.Collections.Generic.Queue[object]
+$visit.Enqueue($window)
+$seen = New-Object System.Collections.Generic.HashSet[int]
+while ($visit.Count -gt 0) {
+    $node = $visit.Dequeue()
+    if ($null -eq $node) { continue }
+    try {
+        if (-not $seen.Add([int]$node.GetHashCode())) { continue }
+    }
+    catch { continue }
+    if ([string]$node.Tag -eq "WinToolAdminBadge") { $adminBadges.Add($node) }
+    $count = 0
+    try { $count = [System.Windows.Media.VisualTreeHelper]::GetChildrenCount($node) } catch { $count = 0 }
+    for ($i = 0; $i -lt $count; $i++) {
+        $visit.Enqueue([System.Windows.Media.VisualTreeHelper]::GetChild($node, $i))
+    }
+    if ($null -ne $node.PSObject.Properties["Children"] -and $null -ne $node.Children) {
+        foreach ($child in @($node.Children)) { $visit.Enqueue($child) }
+    }
+    if ($null -ne $node.PSObject.Properties["Child"] -and $null -ne $node.Child) {
+        $visit.Enqueue($node.Child)
+    }
+    if ($null -ne $node.PSObject.Properties["Content"] -and $node.Content -is [System.Windows.DependencyObject]) {
+        $visit.Enqueue($node.Content)
+    }
+}
+if ($adminBadges.Count -lt 8) {
+    throw ("Expected Admin badges on privileged actions, found " + $adminBadges.Count + ".")
+}
+Write-Output ("Admin badges on privileged actions: " + $adminBadges.Count + ".")
+$savedAdmin = $script:WinToolPretendNonAdmin
+$script:WinToolPretendNonAdmin = $true
+try {
+    if (Test-WinToolAdministrator) { throw "The non-admin hook did not take effect." }
+    if ($null -eq $script:WinToolState.Home) { throw "Home state is missing for the non-admin analysis check." }
+}
+finally {
+    $script:WinToolPretendNonAdmin = $savedAdmin
+}
+
 # Switch the live window to pt-BR and review every tab for leftover English
 # or known bad machine translations.
 Initialize-WinToolLocale -Language "pt-BR" -Force | Out-Null
