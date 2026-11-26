@@ -19326,15 +19326,21 @@ function Update-WinToolThemePreviewImage {
     if ($key -eq [string]$script:WinToolThemePreviewFontKey) { return }
     $script:WinToolThemePreviewFontKey = $key
     $script:WinToolPreviewImageCache = @{}
-    $packs = @()
-    if ($null -ne $script:WinToolThemeViewByPrompt) { $packs = @($script:WinToolThemeViewByPrompt.Values) }
-    foreach ($pack in $packs) {
-        foreach ($entry in @($pack.Entries)) {
-            if ($null -ne $entry) { $entry.PreviewImage = $null }
+    if ($null -ne $script:WinToolThemeViewByPrompt) {
+        foreach ($promptId in @($script:WinToolThemeViewByPrompt.Keys)) {
+            $pack = $script:WinToolThemeViewByPrompt[$promptId]
+            if ($null -eq $pack -or $null -eq $pack.Entries) { continue }
+            $entries = $pack.Entries
+            for ($index = 0; $index -lt $entries.Count; $index++) {
+                $entry = $entries[$index]
+                if ($null -ne $entry) { $entry.PreviewImage = $null }
+            }
         }
     }
     if ($null -ne $script:WinToolThemeEntries) {
-        foreach ($entry in @($script:WinToolThemeEntries)) {
+        $entries = $script:WinToolThemeEntries
+        for ($index = 0; $index -lt $entries.Count; $index++) {
+            $entry = $entries[$index]
             if ($null -ne $entry) { $entry.PreviewImage = $null }
         }
     }
