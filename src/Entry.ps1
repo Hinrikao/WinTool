@@ -5,21 +5,21 @@ function Invoke-WinToolUnattended {
     param(
         [Parameter(Mandatory = $true)][string]$Path
     )
-    Write-WinToolLog -Message "WinTool unattended profile: $Path" -Level "info"
+    Write-WinToolLog -Message (Get-WinToolText "msg.wintool-unattended-profile-n" $Path) -Level "info"
     $toolProfile = Read-WinToolProfile -Path $Path
     $resolved = Resolve-WinToolProfileSelection -Profile $toolProfile
     foreach ($id in @($resolved.UnknownApps)) {
-        Write-WinToolLog -Message "Unknown app id '$id' in the profile." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.unknown-app-id-n-in-the-profile" $id) -Level "warn"
     }
     foreach ($id in @($resolved.UnknownTweaks)) {
-        Write-WinToolLog -Message "Unknown tweak id '$id' in the profile." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.unknown-tweak-id-n-in-the-profile" $id) -Level "warn"
     }
 
     $tweakRecords = @($resolved.TweakRecords)
     if ($tweakRecords.Count -gt 0) {
-        Write-WinToolLog -Message "Creating a restore point before tweaks." -Level "info"
-        Invoke-WinToolRestorePoint -Description "WinTool unattended tweaks"
-        Write-WinToolLog -Message "Restore point created." -Level "ok"
+        Write-WinToolLog -Message (Get-WinToolText "msg.creating-a-restore-point-before-tweaks") -Level "info"
+        Invoke-WinToolRestorePoint -Description (Get-WinToolText "msg.wintool-unattended-tweaks")
+        Write-WinToolLog -Message (Get-WinToolText "drivers.restore.created") -Level "ok"
         Invoke-WinToolTweakChange -Tweak $tweakRecords -Direction "Apply" -RestartExplorer $true
     }
 
@@ -38,16 +38,16 @@ function Invoke-WinToolUnattended {
         $appPlan = @(Get-WinToolAppPlan -App $appRecords)
         Invoke-WinToolPlan -Step $appPlan
     }
-    Write-WinToolLog -Message "Unattended setup finished." -Level "ok"
+    Write-WinToolLog -Message (Get-WinToolText "msg.unattended-setup-finished") -Level "ok"
 }
 
 function Start-WinTool {
     try {
         if (-not (Test-WinToolWindows)) {
-            throw "WinTool only runs on Windows 11."
+            throw (Get-WinToolText "error.windows11")
         }
         if (-not $script:WinToolUnattended -and (Test-WinToolAlreadyRunning)) {
-            Write-Host "WinTool is already open. Its window was brought to the front."
+            Write-Host (Get-WinToolText "error.alreadyOpen")
             # A hidden second launch must not leave its console to appear as
             # this process exits. A console the user can see stays as it is.
             if ((Get-WinToolCurrentConsoleMode) -eq "hide" -and -not (Test-WinToolConsoleIsVisible)) {
@@ -64,7 +64,7 @@ function Start-WinTool {
         $apartment = [System.Threading.Thread]::CurrentThread.GetApartmentState()
         if ($apartment -ne "STA" -and -not $script:WinToolUnattended) {
             if ($env:WINTOOL_STA_RELAUNCHED -eq "1") {
-                throw "WinTool could not start a window because STA mode was not available."
+                throw (Get-WinToolText "error.staUnavailable")
             }
             $env:WINTOOL_STA_RELAUNCHED = "1"
             Request-WinToolStaHost
@@ -80,7 +80,7 @@ function Start-WinTool {
 
         if ($script:WinToolUnattended) {
             if ([string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
-                throw "Unattended mode needs -ApplyProfile with a path to a WinTool JSON profile."
+                throw (Get-WinToolText "error.unattendedProfile")
             }
             Invoke-WinToolUnattended -Path $script:WinToolApplyProfile
             return

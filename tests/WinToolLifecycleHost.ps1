@@ -47,6 +47,10 @@ foreach ($relative in [System.IO.File]::ReadAllLines((Join-Path $script:WinToolR
 }
 
 Add-Type -AssemblyName PresentationFramework
+
+Initialize-WinToolLocale -Language en -Force | Out-Null
+
+Add-Type -AssemblyName PresentationFramework
 $script:LifecycleStart = [DateTime]::UtcNow
 $script:LifecycleMarker = $Marker
 $script:LifecycleClose = $CloseAfterSeconds

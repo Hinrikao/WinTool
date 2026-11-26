@@ -55,7 +55,7 @@ function Get-WinToolPayloadText {
     }
 
     if ([string]::IsNullOrWhiteSpace($script:WinToolRoot)) {
-        throw "WinTool payload '$Name' is not embedded and no source folder is set."
+        throw (Get-WinToolText "msg.wintool-payload-n-is-not-embedded-and-no-source-folder-i" $Name)
     }
 
     $relative = @{
@@ -73,7 +73,7 @@ function Get-WinToolPayloadText {
         Wsl = "data/wsl-setup.sh"
     }
     if (-not $relative.ContainsKey($Name)) {
-        throw "Unknown WinTool payload '$Name'."
+        throw (Get-WinToolText "msg.unknown-wintool-payload-n" $Name)
     }
 
     $path = Join-Path $script:WinToolRoot $relative[$Name]
@@ -206,7 +206,7 @@ function ConvertTo-WinToolArgumentLine {
 function Format-WinToolErrorText {
     param(
         $ErrorRecord,
-        [string]$Title = "WinTool could not start."
+        [string]$Title = (Get-WinToolText "error.couldNotStart")
     )
     if ($null -eq $ErrorRecord) {
         return $Title
@@ -275,7 +275,7 @@ function Show-WinToolFailure {
     Write-Host $text
     if (-not [string]::IsNullOrWhiteSpace($path)) {
         Write-Host ""
-        Write-Host "Log: $path"
+        Write-Host (Get-WinToolText "error.logPath" $path)
     }
     try {
         Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
@@ -293,7 +293,7 @@ function Show-WinToolFailure {
     }
     if ($env:WINTOOL_PAUSE_ON_ERROR -eq "1") {
         Write-Host ""
-        Write-Host "Press Enter to close this window."
+        Write-Host (Get-WinToolText "error.pressEnter")
         Read-Host | Out-Null
         exit 1
     }

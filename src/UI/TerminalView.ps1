@@ -102,7 +102,7 @@ function Build-WinToolSimpleTerminalCard {
     if ($null -eq $list) { return }
     $list.Children.Clear()
     $choice = Get-WinToolSimpleTerminalChoice
-    $fontName = "Nerd Font"
+    $fontName = (Get-WinToolText "ui.t.nerd-font.Text")
     foreach ($font in @(Get-WinToolActiveFont)) {
         if ([string]$font.id -eq [string]$choice.fontId) { $fontName = [string]$font.name; break }
     }
@@ -110,22 +110,22 @@ function Build-WinToolSimpleTerminalCard {
     foreach ($theme in @(Get-WinToolActiveOhMyPoshTheme)) {
         if ([string]$theme.id -eq [string]$choice.promptStyle) { $themeName = [string]$theme.name; break }
     }
-    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Windows Terminal" -Detail "The window this prompt opens in" -Badge "App" -IconFile "terminal.png" -Glyph 0xE756))
-    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "PowerShell 7" -Detail "The shell WinTool configures" -Badge "Shell" -IconFile "powershell.png" -Glyph 0xE756))
-    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Oh My Posh" -Detail ($themeName + " theme") -Badge "Prompt" -IconFile "posh.png" -Glyph 0xE756))
-    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title $fontName -Detail "Icons in the prompt line" -Badge "Font" -Glyph 0xE8D2))
+    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title (Get-WinToolText "msg.windows-terminal") -Detail (Get-WinToolText "msg.the-window-this-prompt-opens-in") -Badge "App" -IconFile "terminal.png" -Glyph 0xE756))
+    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title (Get-WinToolText "msg.powershell-7") -Detail (Get-WinToolText "msg.the-shell-wintool-configures") -Badge "Shell" -IconFile "powershell.png" -Glyph 0xE756))
+    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Oh My Posh" -Detail (Get-WinToolText "msg.n-theme" $themeName) -Badge (Get-WinToolText "ui.t.prompt.Text") -IconFile "posh.png" -Glyph 0xE756))
+    [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title $fontName -Detail (Get-WinToolText "msg.icons-in-the-prompt-line") -Badge "Font" -Glyph 0xE8D2))
     if ([bool]$choice.terminalIcons) {
-        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Terminal-Icons" -Detail "Folder and file icons in listings" -Badge "Icons" -Glyph 0xE8B9))
+        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Terminal-Icons" -Detail (Get-WinToolText "msg.folder-and-file-icons-in-listings") -Badge "Icons" -Glyph 0xE8B9))
     }
     if ([bool]$choice.psReadLine) {
-        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "PSReadLine" -Detail "History suggestions as you type" -Badge "Suggestions" -Glyph 0xE81C))
+        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "PSReadLine" -Detail (Get-WinToolText "msg.history-suggestions-as-you-type") -Badge "Suggestions" -Glyph 0xE81C))
     }
     if (Test-WinToolHideStartupBanner -Selection $choice) {
-        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Hide startup banner" -Detail "No copyright or profile-loading line when a terminal opens" -Badge "Terminal" -Glyph 0xE7B3))
+        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title (Get-WinToolText "catalog.terminal.extra.hide-startup-banner.name") -Detail (Get-WinToolText "msg.no-copyright-or-profile-loading-line-when-a-terminal-ope") -Badge "Terminal" -Glyph 0xE7B3))
     }
     $lead = Get-WinToolUi -Name "TerminalSimpleLead"
     if ($null -ne $lead) {
-        $lead.Text = "Windows Terminal, PowerShell 7, Oh My Posh, a Nerd Font, file icons, and history suggestions. Switch to Advanced to change any part."
+        $lead.Text = (Get-WinToolText "msg.windows-terminal-powershell-7-oh-my-posh-a-nerd-font-fil")
     }
 }
 
@@ -408,7 +408,7 @@ function Update-WinToolTerminalCatalogOnline {
     if ($null -ne $script:WinToolState.CatalogJob) {
         return
     }
-    Write-WinToolLog -Message "Refreshing Nerd Fonts and Oh My Posh themes from GitHub." -Level "info"
+    Write-WinToolLog -Message (Get-WinToolText "msg.refreshing-nerd-fonts-and-oh-my-posh-themes-from-github") -Level "info"
     $refreshButton = Get-WinToolUi -Name "TerminalRefresh"
     if ($null -ne $refreshButton) {
         $refreshButton.IsEnabled = $false
@@ -439,7 +439,7 @@ finally {
         if ($null -ne $refreshButton -and -not $script:WinToolState.Busy) {
             $refreshButton.IsEnabled = $true
         }
-        Write-WinToolLog -Message ("Could not refresh the catalogs. The built-in lists are still available. " + $_.Exception.Message) -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.could-not-refresh-catalogs-builtin-available-n" $_.Exception.Message) -Level "warn"
     }
 }
 
@@ -459,7 +459,7 @@ function Complete-WinToolTerminalCatalogOnline {
         $refreshButton.IsEnabled = $true
     }
     if (-not $ok) {
-        Write-WinToolLog -Message ("Could not refresh the catalogs. The built-in lists are still available. " + $errText) -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.could-not-refresh-catalogs-builtin-available-n" $errText) -Level "warn"
         return
     }
     try {
@@ -503,10 +503,10 @@ function Complete-WinToolTerminalCatalogOnline {
         Update-WinToolPromptSelection
         Update-WinToolFontList
         Update-WinToolPromptStyleList
-        Write-WinToolLog -Message ("Catalog refresh added " + @($added.ToArray()).Count + " fonts and " + @($extraThemes.ToArray()).Count + " themes.") -Level "ok"
+        Write-WinToolLog -Message (Get-WinToolText "msg.catalog-refresh-added-n-fonts-and-n-themes" @($added.ToArray()).Count @($extraThemes.ToArray()).Count) -Level "ok"
     }
     catch {
-        Write-WinToolLog -Message ("Could not apply the refreshed catalogs. " + $_.Exception.Message) -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.could-not-apply-the-refreshed-catalogs-n" $_.Exception.Message) -Level "warn"
     }
 }
 
@@ -689,10 +689,10 @@ function Set-WinToolTerminalModeView {
     $simple = Get-WinToolUi -Name "TerminalSimpleScroll"
     $subtitle = Get-WinToolUi -Name "TerminalSubtitle"
     if ($advanced) {
-        $subtitle.Text = "Pick a prompt, a theme, a font and a color scheme. The preview updates as you click."
+        $subtitle.Text = (Get-WinToolText "msg.pick-a-prompt-a-theme-a-font-and-a-color-scheme-the-prev")
     }
     else {
-        $subtitle.Text = "A recommended setup in one click. Switch to Advanced to choose each part."
+        $subtitle.Text = (Get-WinToolText "ui.TerminalSubtitle.Text")
     }
     if (-not $script:WinToolTerminalSurfaceWarm) {
         if ($advanced) {
@@ -793,7 +793,7 @@ function Build-WinToolPromptCard {
                 [void]$list.Items.Add((New-WinToolPromptRow -Prompt $prompt -Info $info -Style $rowStyle))
             }
         }
-        (Get-WinToolUi -Name "TerminalPromptCount").Text = ([string]$prompts.Count + " engines")
+        (Get-WinToolUi -Name "TerminalPromptCount").Text = (Get-WinToolText "msg.n-engines" $prompts.Count)
     }
     finally {
         $script:WinToolTerminalSyncing = $false
@@ -893,7 +893,7 @@ function Update-WinToolPromptSelection {
     $nameBlock.Text = [string]$prompt.name
     # What it installs is listed in the action bar, so the note stays short.
     $aboutBlock.Text = ([string]$info.Sub + ". " + [string]$prompt.summary).Trim()
-    $aboutBlock.ToolTip = ($aboutBlock.Text + "`n`nInstalls: " + (@($prompt.installs) -join ", ") + "`n" + [string]$info.Runs).Trim()
+    $aboutBlock.ToolTip = ($aboutBlock.Text + "`n`n" + (Get-WinToolText "msg.installs-colon-n" ((@($prompt.installs) -join ", "))) + "`n" + [string]$info.Runs).Trim()
 }
 
 function New-WinToolTerminalChip {
@@ -1462,11 +1462,11 @@ function Update-WinToolPromptStyleList {
         if ($null -ne $chosen) { $list.SelectedItem = $chosen }
         elseif ($list.Items.Count -gt 0) { $list.SelectedIndex = 0 }
         else { $list.SelectedIndex = -1 }
-        (Get-WinToolUi -Name "TerminalThemeCount").Text = ([string]$list.Items.Count + " of " + [string]$rows.Count)
+        (Get-WinToolUi -Name "TerminalThemeCount").Text = (Get-WinToolText "msg.n-of-n" $list.Items.Count $rows.Count)
         if ($list.Items.Count -eq 0) {
             $note.Visibility = "Visible"
-            if ($rows.Count -eq 0) { $note.Text = "This prompt has its own default look. The font and extras still apply." }
-            else { $note.Text = "No " + [string]$titles.Noun + " match the search or filter." }
+            if ($rows.Count -eq 0) { $note.Text = (Get-WinToolText "msg.this-prompt-has-its-own-default-look-the-font-and-extras") }
+            else { $note.Text = (Get-WinToolText "msg.no-n-match-the-search-or-filter" $titles.Noun) }
         }
         else {
             $note.Visibility = "Collapsed"
@@ -1881,7 +1881,7 @@ function Update-WinToolFontList {
     $dot = " " + [string][char]0x00B7 + " "
     $countBlock = Get-WinToolUi -Name "TerminalFontCount"
     if ($null -ne $countBlock) {
-        $countBlock.Text = ([string]$allFonts.Count + " installed" + $dot + $nerdCount + " Nerd Fonts" + $dot + $schemeCount + " schemes")
+        $countBlock.Text = (Get-WinToolText "msg.n-installed-n-nerd-fonts-n-schemes" $allFonts.Count $nerdCount $schemeCount)
     }
     $script:WinToolFontListKey = $fontKey
     Update-WinToolFontSizeSelection
@@ -2213,8 +2213,8 @@ function Update-WinToolTerminalSummary {
             if ($kind -eq "add") { $caption = "+ " + [string]$chip.Text }
             elseif ($kind -eq "update") { $caption = ([string][char]0x2191 + " " + [string]$chip.Text) }
             elseif ($kind -eq "change") { $caption = ([string][char]0x007E + " " + [string]$chip.Text) }
-            elseif ($kind -eq "have") { $caption = "Already installed: " + [string]$chip.Text }
-            else { $caption = "Already set: " + [string]$chip.Text }
+            elseif ($kind -eq "have") { $caption = (Get-WinToolText "msg.already-installed-colon-n" $chip.Text) }
+            else { $caption = (Get-WinToolText "msg.already-set-colon-n" $chip.Text) }
             [void]$labels.Add([pscustomobject]@{ Kind = $kind; Text = $caption })
         }
     }

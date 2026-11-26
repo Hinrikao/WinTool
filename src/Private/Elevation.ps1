@@ -126,7 +126,7 @@ function New-WinToolRelaunchScript {
     [void]$lines.Add("    catch {")
     [void]$lines.Add('        Write-Host $_.Exception.Message')
     [void]$lines.Add("    }")
-    [void]$lines.Add('    Write-Host "Press Enter to close this window."')
+    [void]$lines.Add('    Write-Host ' + (ConvertTo-WinToolJsonString -Text (Get-WinToolText 'error.pressEnter')))
     [void]$lines.Add("    Read-Host | Out-Null")
     [void]$lines.Add("    exit 1")
     [void]$lines.Add("}")
@@ -213,9 +213,9 @@ function Get-WinToolElevationFailureText {
         }
     }
     if ($code -eq 1223) {
-        return "Administrator approval was canceled. WinTool did not start as administrator. Run the command again and approve the Windows security prompt, or start PowerShell as administrator."
+        return (Get-WinToolText "error.uacCanceled")
     }
-    $text = "WinTool could not request administrator approval."
+    $text = Get-WinToolText "error.uacFailed"
     if ($code -ne 0) {
         $text += " Windows error $code."
     }
@@ -269,7 +269,7 @@ function Start-WinToolRelaunch {
     $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden ([bool]$options.Hidden))
     $style = [string]$options.WindowStyle
     if ($Elevate) {
-        Write-Host "WinTool needs administrator approval. Approve the Windows security prompt if it appears."
+        Write-Host (Get-WinToolText "shell.needsAdmin")
         try {
             Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs -WindowStyle $style | Out-Null
         }
@@ -279,7 +279,7 @@ function Start-WinToolRelaunch {
         Exit-WinToolOwnedHost
         return
     }
-    Write-Host "WinTool is opening in its own window. You can close this terminal."
+    Write-Host (Get-WinToolText "shell.openingWindow")
     Start-Process -FilePath $executable -ArgumentList $line -WindowStyle $style | Out-Null
     Exit-WinToolOwnedHost
 }

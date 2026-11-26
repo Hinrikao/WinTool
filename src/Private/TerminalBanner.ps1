@@ -448,7 +448,7 @@ function Set-WinToolJsoncPath {
     )
     $names = @($Name)
     if ($names.Count -lt 1) {
-        throw "A settings path needs at least one name."
+        throw (Get-WinToolText "msg.a-settings-path-needs-at-least-one-name")
     }
     $literal = Get-WinToolJsoncLiteralText -Value $Value -Kind $Kind
     $guard = 0
@@ -456,14 +456,14 @@ function Set-WinToolJsoncPath {
         $guard++
         $root = Get-WinToolJsoncRootStart -Text $Text
         if ($null -eq $root) {
-            throw "The settings file has no JSON object at the root."
+            throw (Get-WinToolText "msg.the-settings-file-has-no-json-object-at-the-root")
         }
         $start = [int]$root
         $created = $false
         for ($index = 0; $index -lt ($names.Count - 1); $index++) {
             $map = Get-WinToolJsoncObjectMap -Text $Text -Start $start
             if ($null -eq $map) {
-                throw "The settings file is not a valid JSON object."
+                throw (Get-WinToolText "msg.the-settings-file-is-not-a-valid-json-object")
             }
             $property = Get-WinToolJsoncProperty -Object $map -Name $names[$index]
             if ($null -eq $property) {
@@ -472,7 +472,7 @@ function Set-WinToolJsoncPath {
                 break
             }
             if ([string]$property.Kind -ne "object") {
-                throw ("The settings property '{0}' is not an object." -f $names[$index])
+                throw ((Get-WinToolText "msg.the-settings-property-n-is-not-an-object") -f $names[$index])
             }
             $start = [int]$property.ValueStart
         }
@@ -490,7 +490,7 @@ function Set-WinToolJsoncPath {
         $Text = Set-WinToolJsoncObjectLiteral -Text $Text -Object $map -Name $names[$names.Count - 1] -Literal $literal
         return [pscustomobject]@{ Text = $Text; Changed = $true }
     }
-    throw "Could not write the settings path."
+    throw (Get-WinToolText "msg.could-not-write-the-settings-path")
 }
 
 function Get-WinToolJsoncArrayItem {
@@ -531,11 +531,11 @@ function Add-WinToolJsoncArrayItem {
         [Parameter(Mandatory = $true)][string]$Item
     )
     if ($Start -ge $Text.Length -or $Text[$Start] -ne "[") {
-        throw "The settings path is not a JSON array."
+        throw (Get-WinToolText "msg.the-settings-path-is-not-a-json-array")
     }
     $end = Get-WinToolJsoncMatchEnd -Text $Text -Index $Start
     if ($end -lt 0) {
-        throw "The JSON array is not closed."
+        throw (Get-WinToolText "msg.the-json-array-is-not-closed")
     }
     $close = $end - 1
     $items = @(Get-WinToolJsoncArrayItem -Text $Text -Start $Start)
@@ -601,7 +601,7 @@ function Get-WinToolJsoncSchemeEntry {
             $value = [string](Get-WinToolNote -Object $palette -Name $key -Default "")
         }
         if ([string]::IsNullOrWhiteSpace($value)) {
-            throw ("The color scheme " + [string]$Scheme.name + " has no " + $key + " color.")
+            throw (Get-WinToolText "msg.the-color-scheme-n-has-no-n-color" $Scheme.name $key)
         }
         $fields[$key] = $value
     }
@@ -618,7 +618,7 @@ function Set-WinToolJsoncColorScheme {
     $original = $Text
     $root = Get-WinToolJsoncRootStart -Text $Text
     if ($null -eq $root) {
-        throw "The settings file has no JSON object at the root."
+        throw (Get-WinToolText "msg.the-settings-file-has-no-json-object-at-the-root")
     }
     $map = Get-WinToolJsoncObjectMap -Text $Text -Start ([int]$root)
     $schemes = Get-WinToolJsoncProperty -Object $map -Name "schemes"
@@ -629,7 +629,7 @@ function Set-WinToolJsoncColorScheme {
     }
     else {
         if ([string]$schemes.Kind -ne "array") {
-            throw "The settings property 'schemes' is not an array."
+            throw (Get-WinToolText "msg.the-settings-property-schemes-is-not-an-array")
         }
         $items = @(Get-WinToolJsoncArrayItem -Text $Text -Start ([int]$schemes.ValueStart))
         $found = $null
@@ -677,7 +677,7 @@ function Set-WinToolJsoncColorScheme {
                     }
                 }
                 if ($null -eq $found) {
-                    throw "The color scheme disappeared while it was being updated."
+                    throw (Get-WinToolText "msg.the-color-scheme-disappeared-while-it-was-being-updated")
                 }
             }
         }
@@ -1461,7 +1461,7 @@ function Invoke-WinToolTerminalBanner {
     foreach ($path in $paths) {
         if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
             if (-not [string]::IsNullOrWhiteSpace($path)) {
-                Write-WinToolLog -Message "Windows Terminal settings were not found at $path." -Level "info"
+                Write-WinToolLog -Message (Get-WinToolText "msg.windows-terminal-settings-were-not-found-at-n" $path) -Level "info"
             }
             continue
         }
@@ -1507,15 +1507,15 @@ function Invoke-WinToolTerminalBanner {
     }
     $hush = Set-WinToolUserHushlogin -HomePath $profileHome -Undo:$Undo -Created $createdWindows
     if ($hush.Created) {
-        Write-WinToolLog -Message "Created $profileHome\.hushlogin to hide Git Bash login messages." -Level "ok"
+        Write-WinToolLog -Message (Get-WinToolText "msg.created-n-hushlogin-to-hide-git-bash-login-messages" $profileHome) -Level "ok"
         $createdWindows = $true
     }
     elseif ($Undo -and $hush.Changed) {
-        Write-WinToolLog -Message "Removed the .hushlogin file WinTool created in $profileHome." -Level "ok"
+        Write-WinToolLog -Message (Get-WinToolText "msg.removed-the-hushlogin-file-wintool-created-in-n" $profileHome) -Level "ok"
         $createdWindows = $false
     }
     elseif ($hush.Existed -and -not $Undo) {
-        Write-WinToolLog -Message "Left an existing $profileHome\.hushlogin in place." -Level "info"
+        Write-WinToolLog -Message (Get-WinToolText "msg.left-an-existing-n-hushlogin-in-place" $profileHome) -Level "info"
     }
 
     $wslCreated = New-Object System.Collections.Generic.List[string]
@@ -1530,7 +1530,7 @@ function Invoke-WinToolTerminalBanner {
         if ($Undo) {
             foreach ($distro in @($wslCreated)) {
                 if (Set-WinToolWslHushlogin -Distro $distro -Undo) {
-                    Write-WinToolLog -Message "Removed the ~/.hushlogin file WinTool created in $distro." -Level "ok"
+                    Write-WinToolLog -Message (Get-WinToolText "msg.removed-the-hushlogin-file-wintool-created-in-n-2" $distro) -Level "ok"
                 }
             }
             $wslCreated = New-Object System.Collections.Generic.List[string]
@@ -1538,7 +1538,7 @@ function Invoke-WinToolTerminalBanner {
         else {
             foreach ($distro in @(Get-WinToolWslDistroNameList)) {
                 if (Set-WinToolWslHushlogin -Distro $distro) {
-                    Write-WinToolLog -Message "Hid the login message in $distro with ~/.hushlogin." -Level "ok"
+                    Write-WinToolLog -Message (Get-WinToolText "msg.hid-the-login-message-in-n-with-hushlogin" $distro) -Level "ok"
                     if (-not ($wslCreated -contains $distro)) {
                         $wslCreated.Add($distro) | Out-Null
                     }
@@ -1571,11 +1571,11 @@ function Invoke-WinToolTerminalBanner {
                         $link = $shell.CreateShortcut($linkPath)
                         $link.Arguments = [string](Get-WinToolNote -Object $item -Name "previous" -Default "")
                         $link.Save()
-                        Write-WinToolLog -Message ("Restored Start menu shortcut arguments for " + [System.IO.Path]::GetFileName($linkPath) + ".") -Level "ok"
+                        Write-WinToolLog -Message (Get-WinToolText "msg.restored-start-menu-shortcut-arguments-for-n" ([System.IO.Path]::GetFileName($linkPath))) -Level "ok"
                     }
                 }
                 catch {
-                    Write-WinToolLog -Message "Start menu shortcuts could not be restored: $($_.Exception.Message)" -Level "warn"
+                    Write-WinToolLog -Message (Get-WinToolText "msg.start-menu-shortcuts-could-not-be-restored-n" $($_.Exception.Message)) -Level "warn"
                 }
             }
             $shortcutEntries = New-Object System.Collections.Generic.List[object]
@@ -1588,7 +1588,7 @@ function Invoke-WinToolTerminalBanner {
                     $kind = Get-WinToolShortcutBannerKind -TargetPath ([string]$link.TargetPath) -Arguments ([string]$link.Arguments)
                     if ($kind -eq "other" -or $kind -eq "gitbash" -or $kind -eq "wsl" -or $kind -eq "azure") {
                         if ($kind -eq "other") {
-                            Write-WinToolLog -Message ("Left Start menu shortcut unchanged: " + $file.Name + ".") -Level "info"
+                            Write-WinToolLog -Message (Get-WinToolText "msg.left-start-menu-shortcut-unchanged-n" $file.Name) -Level "info"
                         }
                         continue
                     }
@@ -1600,15 +1600,15 @@ function Invoke-WinToolTerminalBanner {
                     $link.Arguments = $next
                     $link.Save()
                     $shortcutEntries.Add([pscustomobject]@{ path = $file.FullName; previous = $previous; current = $next; kind = $kind }) | Out-Null
-                    Write-WinToolLog -Message ("Hid the startup banner in Start menu shortcut " + $file.Name + ".") -Level "ok"
+                    Write-WinToolLog -Message (Get-WinToolText "msg.hid-the-startup-banner-in-start-menu-shortcut-n" $file.Name) -Level "ok"
                 }
             }
             catch {
-                Write-WinToolLog -Message "Start menu shortcuts were left unchanged: $($_.Exception.Message)" -Level "warn"
+                Write-WinToolLog -Message (Get-WinToolText "msg.start-menu-shortcuts-were-left-unchanged-n" $($_.Exception.Message)) -Level "warn"
             }
         }
         elseif ($env:OS -ne "Windows_NT") {
-            Write-WinToolLog -Message "Start menu shortcuts are only updated on Windows." -Level "info"
+            Write-WinToolLog -Message (Get-WinToolText "msg.start-menu-shortcuts-are-only-updated-on-windows") -Level "info"
         }
     }
 
@@ -1622,9 +1622,9 @@ function Get-WinToolTerminalBannerStep {
         [switch]$Undo
     )
     if ($Undo) {
-        return [pscustomobject]@{ Type = "banner"; Label = "Show the startup banner in terminals again"; Undo = $true }
+        return [pscustomobject]@{ Type = "banner"; Label = (Get-WinToolText "msg.show-the-startup-banner-in-terminals-again"); Undo = $true }
     }
-    return [pscustomobject]@{ Type = "banner"; Label = "Hide the startup banner in terminals"; Undo = $false }
+    return [pscustomobject]@{ Type = "banner"; Label = (Get-WinToolText "msg.hide-the-startup-banner-in-terminals"); Undo = $false }
 }
 
 function Invoke-WinToolTerminalBannerStep {

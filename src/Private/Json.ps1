@@ -177,7 +177,7 @@ function ConvertFrom-WinToolJsonText {
     )
     $plain = ConvertTo-WinToolPlainJson -Text $Text
     if ([string]::IsNullOrWhiteSpace($plain)) {
-        throw "The JSON text was empty."
+        throw (Get-WinToolText "msg.the-json-text-was-empty")
     }
     return ($plain | ConvertFrom-Json)
 }

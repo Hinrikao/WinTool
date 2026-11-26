@@ -83,7 +83,7 @@ function Start-WinToolAsyncProcess {
     [WinToolProcessPipe]::Attach($process, $LineQueue)
     $started = $process.Start()
     if (-not $started) {
-        throw "The process did not start: $FilePath"
+        throw (Get-WinToolText "msg.the-process-did-not-start-n" $FilePath)
     }
     $process.BeginOutputReadLine()
     $process.BeginErrorReadLine()

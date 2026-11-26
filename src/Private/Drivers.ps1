@@ -1318,20 +1318,20 @@ function Test-WinToolDriverCatalog {
         $name = [string](Get-WinToolNote -Object $item -Name "name" -Default "")
         $wingetId = [string](Get-WinToolNote -Object $item -Name "wingetId" -Default "")
         if ([string]::IsNullOrWhiteSpace($id) -or [string]::IsNullOrWhiteSpace($name)) {
-            Add-WinToolDataError -Errors $Errors -Message "A game runtime is missing an id or name."
+            Add-WinToolDataError -Errors $Errors -Message (Get-WinToolText "msg.a-game-runtime-is-missing-an-id-or-name")
         }
         if ($ids.ContainsKey($id)) {
-            Add-WinToolDataError -Errors $Errors -Message "Duplicate driver catalog id '$id'."
+            Add-WinToolDataError -Errors $Errors -Message (Get-WinToolText "msg.duplicate-driver-catalog-id-n" $id)
         }
         else {
             $ids[$id] = $true
         }
         if (-not (Test-WinToolWingetId -Id $wingetId)) {
-            Add-WinToolDataError -Errors $Errors -Message "Runtime '$id' has an unexpected winget id '$wingetId'."
+            Add-WinToolDataError -Errors $Errors -Message (Get-WinToolText "msg.runtime-n-has-an-unexpected-winget-id-n" $id $wingetId)
         }
         $scope = [string](Get-WinToolNote -Object $item -Name "scope" -Default "")
         if (-not [string]::IsNullOrWhiteSpace($scope) -and @("user", "machine") -notcontains $scope) {
-            Add-WinToolDataError -Errors $Errors -Message "Runtime '$id' has an unknown scope."
+            Add-WinToolDataError -Errors $Errors -Message (Get-WinToolText "msg.runtime-n-has-an-unknown-scope" $id)
         }
     }
     $attentionCount = @($runtimes | Where-Object { [bool](Get-WinToolNote -Object $_ -Name "attention" -Default $false) }).Count
@@ -1348,10 +1348,10 @@ function Test-WinToolDriverCatalog {
         $wingetId = [string](Get-WinToolNote -Object $item -Name "wingetId" -Default "")
         $match = @(Get-WinToolNote -Object $item -Name "match" -Default @())
         if ([string]::IsNullOrWhiteSpace($id) -or [string]::IsNullOrWhiteSpace($name) -or $match.Count -eq 0) {
-            Add-WinToolDataError -Errors $Errors -Message "A graphics app is missing an id, name, or match list."
+            Add-WinToolDataError -Errors $Errors -Message (Get-WinToolText "msg.a-graphics-app-is-missing-an-id-name-or-match-list")
         }
         if (-not (Test-WinToolWingetId -Id $wingetId)) {
-            Add-WinToolDataError -Errors $Errors -Message "Graphics app '$id' has an unexpected winget id '$wingetId'."
+            Add-WinToolDataError -Errors $Errors -Message (Get-WinToolText "msg.graphics-app-n-has-an-unexpected-winget-id-n" $id $wingetId)
         }
     }
     $codes = @{}
@@ -1360,10 +1360,10 @@ function Test-WinToolDriverCatalog {
         $name = [string](Get-WinToolNote -Object $item -Name "name" -Default "")
         $kind = [string](Get-WinToolNote -Object $item -Name "kind" -Default "")
         if ($code -le 0 -or [string]::IsNullOrWhiteSpace($name) -or @("missing", "disabled", "ghost", "incompatible") -notcontains $kind) {
-            Add-WinToolDataError -Errors $Errors -Message "A problem code entry is missing a code, name, or known kind."
+            Add-WinToolDataError -Errors $Errors -Message (Get-WinToolText "msg.a-problem-code-entry-is-missing-a-code-name-or-known-kin")
         }
         if ($codes.ContainsKey($code)) {
-            Add-WinToolDataError -Errors $Errors -Message "Duplicate problem code $code."
+            Add-WinToolDataError -Errors $Errors -Message (Get-WinToolText "msg.duplicate-problem-code-n" $code)
         }
         else {
             $codes[$code] = $true

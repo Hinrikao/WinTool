@@ -8,7 +8,7 @@
 $script:WinToolDismRestartCode = 3010
 
 function Get-WinToolFeatureCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Features"))
+    return (Get-WinToolCachedPayloadObject -Name "Features")
 }
 
 function Get-WinToolFeatureStateScript {

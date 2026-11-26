@@ -799,7 +799,7 @@
             </Border>
             <TextBlock Text="WinTool" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarText}" VerticalAlignment="Center"/>
           </StackPanel>
-          <TextBlock Text="A calm setup helper for a fresh Windows 11 PC." Foreground="{DynamicResource BrushSidebarMuted}" TextWrapping="Wrap" Margin="6,10,6,18"/>
+          <TextBlock x:Uid="t.a-calm-setup-helper-for-a-fresh-windows-11-pc" Text="A calm setup helper for a fresh Windows 11 PC." Foreground="{DynamicResource BrushSidebarMuted}" TextWrapping="Wrap" Margin="6,10,6,18"/>
 
           <Grid x:Name="NavList">
             <Border x:Name="NavPill" Height="40" VerticalAlignment="Top" CornerRadius="10" Background="{DynamicResource BrushAccentSoft}" IsHitTestVisible="False">
@@ -809,61 +809,61 @@
               <Border Width="3" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="0,8" CornerRadius="0,3,3,0" Background="{DynamicResource BrushAccent}"/>
             </Border>
             <StackPanel>
-              <TextBlock Text="Setup" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,0,12,6"/>
+              <TextBlock x:Uid="t.setup" Text="Setup" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,0,12,6"/>
               <RadioButton x:Name="NavHome" GroupName="WinToolNav" Style="{StaticResource NavButton}" IsChecked="True" AutomationProperties.Name="Home">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE80F;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Home" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.home" Text="Home" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
               <RadioButton x:Name="NavInstall" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Install">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE7B8;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Install" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.install" Text="Install" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
               <RadioButton x:Name="NavTweaks" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Tweaks">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE713;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Tweaks" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.tweaks" Text="Tweaks" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
               <RadioButton x:Name="NavTerminal" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Terminal">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE756;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Terminal" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.terminal" Text="Terminal" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
-              <TextBlock Text="System" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,14,12,6"/>
+              <TextBlock x:Uid="t.system" Text="System" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,14,12,6"/>
               <RadioButton x:Name="NavDrivers" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Drivers">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE964;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Drivers" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.drivers" Text="Drivers" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
               <RadioButton x:Name="NavUpdates" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Drivers and updates">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE895;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Updates" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.updates" Text="Updates" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
               <RadioButton x:Name="NavFixes" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Fixes">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE90F;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Fixes" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.fixes" Text="Fixes" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
               <RadioButton x:Name="NavFeatures" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Windows features">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE71D;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Features" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.features" Text="Features" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
-              <TextBlock Text="Settings" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,14,12,6"/>
+              <TextBlock x:Uid="t.settings" Text="Settings" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,14,12,6"/>
               <RadioButton x:Name="NavConfig" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Config">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="&#xE8F1;" Style="{StaticResource NavGlyph}"/>
-                  <TextBlock Text="Config" VerticalAlignment="Center"/>
+                  <TextBlock x:Uid="t.config" Text="Config" VerticalAlignment="Center"/>
                 </StackPanel>
               </RadioButton>
             </StackPanel>
@@ -887,7 +887,7 @@
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
           <Grid Grid.Row="0" Margin="20,15,20,0">
-            <TextBlock Text="Home" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+            <TextBlock x:Uid="t.home" Text="Home" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
               <TextBlock x:Name="HomeRunText" Width="150" TextAlignment="Right" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text=" "/>
               <Button x:Name="HomeAgain" Content="Analyze again" Style="{StaticResource HomeLinkButton}" Width="104" Height="32" Margin="16,0,0,0"/>
@@ -926,7 +926,7 @@
                       </Canvas>
                       <StackPanel x:Name="HomeRingBusy" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Path Width="22" Height="22" HorizontalAlignment="Center" Stroke="{DynamicResource BrushAccent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 9,2 A 7,7 0 1 1 8.99,2 M 14,14 L 20,20"/>
-                        <TextBlock Text="ANALYZING" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock x:Uid="t.analyzing" Text="ANALYZING" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         <TextBlock x:Name="HomeRingProgress" Text="0 of 5 checks" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                       </StackPanel>
                       <StackPanel x:Name="HomeRingDone" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
@@ -949,7 +949,7 @@
                 <Border Grid.Column="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="0,10,0,6">
                   <DockPanel>
                     <Grid DockPanel.Dock="Top" Height="32" Margin="16,6,16,8">
-                      <TextBlock Text="Needs attention" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+                      <TextBlock x:Uid="t.needs-attention" Text="Needs attention" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
                       <TextBlock x:Name="HomeCheckCount" Text="0 of 5 complete" Width="180" Margin="148,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}"/>
                     </Grid>
                     <StackPanel x:Name="HomeChecks"/>
@@ -977,7 +977,7 @@
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
           <Grid Grid.Row="0" Margin="20,15,20,0">
-            <TextBlock Text="Install" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+            <TextBlock x:Uid="t.install" Text="Install" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
             <!-- Selection actions: on the title row, right side, only while apps are ticked. The title row is taller than the buttons, so nothing below moves. -->
             <StackPanel x:Name="AppBulkBar" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed">
               <TextBlock x:Name="AppCount" Text="0 selected" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,12,0" TextWrapping="NoWrap"/>
@@ -1030,13 +1030,13 @@
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
           <Grid Grid.Row="0" Margin="20,15,20,0" MinHeight="36">
-            <TextBlock Text="Tweaks" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+            <TextBlock x:Uid="t.tweaks" Text="Tweaks" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
               <TextBlock x:Name="TweakRestoreNote" Text="Restore point is created before the first change" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="420"/>
               <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushOk}" VerticalAlignment="Center" Margin="16,0,4,0"/>
-              <TextBlock Text="Safe" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
+              <TextBlock x:Uid="t.safe" Text="Safe" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
               <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushWarn}" VerticalAlignment="Center" Margin="10,0,4,0"/>
-              <TextBlock Text="Caution" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
+              <TextBlock x:Uid="t.caution" Text="Caution" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
             </StackPanel>
           </Grid>
           <Grid Grid.Row="1" Margin="20,7,20,0">
@@ -1049,7 +1049,7 @@
               <TextBlock x:Name="TweakSearchHint" Text="Search tweaks&#x2026;" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
             </Grid>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
-              <TextBlock Text="Presets:" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <TextBlock x:Uid="t.presets" Text="Presets:" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
               <StackPanel x:Name="TweakPresets" Orientation="Horizontal" VerticalAlignment="Center"/>
             </StackPanel>
           </Grid>
@@ -1195,14 +1195,14 @@
 
           <!-- Header: title, Simple / Advanced, and the promise that nothing changes yet. -->
           <DockPanel Grid.Row="0" Margin="20,15,20,0" LastChildFill="False">
-            <TextBlock DockPanel.Dock="Left" Text="Terminal" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.terminal" DockPanel.Dock="Left" Text="Terminal" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
             <Border DockPanel.Dock="Left" Margin="16,0,0,0" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8">
               <StackPanel Orientation="Horizontal">
                 <RadioButton x:Name="TerminalModeSimple" GroupName="TerminalMode" Content="Simple" IsChecked="True" Style="{StaticResource TerminalSegment}" ToolTip="A recommended setup in one click."/>
                 <RadioButton x:Name="TerminalModeAdvanced" GroupName="TerminalMode" Content="Advanced" Style="{StaticResource TerminalSegment}" ToolTip="Choose the prompt, theme, font, color scheme, and extras."/>
               </StackPanel>
             </Border>
-            <TextBlock DockPanel.Dock="Right" Text="Nothing changes until you press Apply" VerticalAlignment="Center" Foreground="{DynamicResource BrushMuted}"/>
+            <TextBlock x:Uid="t.nothing-changes-until-you-press-apply" DockPanel.Dock="Right" Text="Nothing changes until you press Apply" VerticalAlignment="Center" Foreground="{DynamicResource BrushMuted}"/>
           </DockPanel>
           <TextBlock x:Name="TerminalSubtitle" Grid.Row="1" Margin="20,6,20,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="A recommended setup in one click. Switch to Advanced to choose each part."/>
 
@@ -1222,13 +1222,13 @@
                     <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
                   <StackPanel Margin="14,12,14,0">
-                    <TextBlock Text="Recommended setup" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushInk}"/>
+                    <TextBlock x:Uid="t.recommended-setup" Text="Recommended setup" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushInk}"/>
                     <TextBlock x:Name="TerminalSimpleLead" Margin="0,4,0,0" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushMuted}" Text="A recommended setup in one click."/>
                   </StackPanel>
                   <Border x:Name="TerminalSimpleTab" Grid.Row="1" Margin="14,10,14,0" Height="36" CornerRadius="8,8,0,0" Background="#1B2230" Padding="12,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                       <TextBlock Text="&#xE756;" FontFamily="Segoe MDL2 Assets" FontSize="{DynamicResource FontSizeBody}" Margin="0,0,8,0" Foreground="{DynamicResource BrushInk}"/>
-                      <TextBlock Text="PowerShell" FontSize="{DynamicResource FontSizeBody}" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+                      <TextBlock x:Uid="t.powershell" Text="PowerShell" FontSize="{DynamicResource FontSizeBody}" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
                     </StackPanel>
                   </Border>
                   <Border x:Name="TerminalSimpleScreen" Grid.Row="2" Margin="14,0,14,0" Background="#1B2230" Padding="16,14" ClipToBounds="True">
@@ -1239,8 +1239,8 @@
               </Border>
               <Border x:Name="TerminalSimpleIncluded" Grid.Column="2" Style="{StaticResource TerminalCard}">
                 <DockPanel>
-                  <TextBlock DockPanel.Dock="Top" Text="Included" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeBody}" Margin="0,0,0,8" Foreground="{DynamicResource BrushInk}"/>
-                  <TextBlock DockPanel.Dock="Bottom" Text="Switch to Advanced to change any part." FontSize="{DynamicResource FontSizeBody}" TextWrapping="Wrap" Margin="0,12,0,0" Foreground="{DynamicResource BrushMuted}"/>
+                  <TextBlock x:Uid="t.included" DockPanel.Dock="Top" Text="Included" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeBody}" Margin="0,0,0,8" Foreground="{DynamicResource BrushInk}"/>
+                  <TextBlock x:Uid="t.switch-to-advanced-to-change-any-part" DockPanel.Dock="Bottom" Text="Switch to Advanced to change any part." FontSize="{DynamicResource FontSizeBody}" TextWrapping="Wrap" Margin="0,12,0,0" Foreground="{DynamicResource BrushMuted}"/>
                   <StackPanel x:Name="TerminalSimpleIncludedList"/>
                 </DockPanel>
               </Border>
@@ -1275,7 +1275,7 @@
                   <DockPanel Grid.Row="0" Margin="0,0,0,8">
                     <TextBlock DockPanel.Dock="Left" Text="1" Style="{StaticResource TerminalStep}"/>
                     <TextBlock x:Name="TerminalPromptCount" DockPanel.Dock="Right" MinWidth="90" TextAlignment="Right" Text="8 engines" Style="{StaticResource TerminalCount}"/>
-                    <TextBlock Text="Prompt" Style="{StaticResource TerminalCardTitle}"/>
+                    <TextBlock x:Uid="t.prompt" Text="Prompt" Style="{StaticResource TerminalCardTitle}"/>
                   </DockPanel>
                   <ListBox x:Name="TerminalPromptList" Grid.Row="1" Style="{StaticResource TerminalList}" AutomationProperties.Name="Prompt engine"/>
                   <!-- Fixed height (name plus three lines), so picking an engine never resizes the list above. -->
@@ -1336,7 +1336,7 @@
                           <DataTemplate>
                             <StackPanel>
                               <DockPanel>
-                                <TextBlock DockPanel.Dock="Right" Text="Nerd Font" Visibility="{Binding Nerd}" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushWarn}"/>
+                                <TextBlock x:Uid="t.nerd-font" DockPanel.Dock="Right" Text="Nerd Font" Visibility="{Binding Nerd}" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushWarn}"/>
                                 <TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushInk}"/>
                               </DockPanel>
                               <Border Background="{DynamicResource BrushLog}" CornerRadius="4" Padding="6,3,6,3" Margin="0,4,0,0" ClipToBounds="True" Visibility="{Binding SampleVisible}">
@@ -1398,7 +1398,7 @@
                     <DockPanel Margin="0,0,0,8">
                       <TextBlock DockPanel.Dock="Left" Text="3" Style="{StaticResource TerminalStep}"/>
                       <CheckBox x:Name="TerminalFontNerdOnly" DockPanel.Dock="Right" Content="Nerd Fonts only" IsChecked="True" Margin="8,0,0,0" AutomationProperties.Name="Nerd Fonts only" ToolTip="Nerd Fonts carry the icons that most prompt themes use."/>
-                      <TextBlock Text="Font and colors" Style="{StaticResource TerminalCardTitle}"/>
+                      <TextBlock x:Uid="t.font-and-colors" Text="Font and colors" Style="{StaticResource TerminalCardTitle}"/>
                     </DockPanel>
                     <Grid Margin="0,0,0,8">
                       <Grid.ColumnDefinitions>
@@ -1419,7 +1419,7 @@
                     <DockPanel Margin="0,0,0,4">
                       <TextBlock DockPanel.Dock="Left" Text="4" Style="{StaticResource TerminalStep}"/>
                       <TextBlock x:Name="TerminalExtrasCount" DockPanel.Dock="Right" MinWidth="90" TextAlignment="Right" Text="" Style="{StaticResource TerminalCount}"/>
-                      <TextBlock Text="Extras" Style="{StaticResource TerminalCardTitle}"/>
+                      <TextBlock x:Uid="t.extras" Text="Extras" Style="{StaticResource TerminalCardTitle}"/>
                     </DockPanel>
                     <UniformGrid x:Name="TerminalExtrasHost" Columns="2" Margin="0,0,-16,0"/>
                   </StackPanel>
@@ -1441,7 +1441,7 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Row="0" Grid.Column="0" Text="What will happen" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+              <TextBlock x:Uid="t.what-will-happen" Grid.Row="0" Grid.Column="0" Text="What will happen" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
               <CheckBox x:Name="TerminalEnabled" Grid.Row="0" Grid.Column="1" Content="Include in saved profiles" IsChecked="True" Margin="14,0,16,0" ToolTip="Include this terminal setup when a saved WinTool profile is replayed."/>
               <Button x:Name="TerminalUpdate" Grid.Row="0" Grid.Column="2" Content="Update" Style="{StaticResource SecondaryButton}" FontSize="{DynamicResource FontSizeBody}" Width="100" Height="32" Padding="14,0" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Upgrade apps that are already installed and refresh modules and the prompt theme. Apply still installs only what is missing." AutomationProperties.Name="Update terminal setup"/>
               <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="3" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" Width="190" Height="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
@@ -1592,8 +1592,8 @@
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Drivers and updates" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-            <TextBlock Grid.Row="1" Text="WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools. For a full driver scan, backup, and repair tools, open the Drivers tab." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <TextBlock x:Uid="t.drivers-and-updates" Text="Drivers and updates" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.wintool-uses-windows-update-and-links-to-the-gra" Grid.Row="1" Text="WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools. For a full driver scan, backup, and repair tools, open the Drivers tab." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
             <Border Grid.Row="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="14,14" Margin="0,12,0,0">
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -1601,7 +1601,7 @@
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                  <TextBlock Text="Graphics on this PC" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.graphics-on-this-pc" Text="Graphics on this PC" FontWeight="SemiBold"/>
                   <TextBlock x:Name="GpuSummary" Text="Looking up graphics adapters..." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,16,0"/>
                 </StackPanel>
                 <WrapPanel x:Name="VendorLinks" Grid.Column="1" VerticalAlignment="Center"/>
@@ -1615,8 +1615,8 @@
               </Grid.ColumnDefinitions>
               <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
                 <StackPanel>
-                  <TextBlock Text="Update mode" FontWeight="SemiBold"/>
-                  <TextBlock Text="Choose how Windows Update behaves on this PC. WinTool only writes Windows Update policies and service settings, and Default removes them all again." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+                  <TextBlock x:Uid="t.update-mode" Text="Update mode" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.choose-how-windows-update-behaves-on-this-pc-win" Text="Choose how Windows Update behaves on this PC. WinTool only writes Windows Update policies and service settings, and Default removes them all again." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
                   <TextBlock x:Name="UpdateModeCurrent" Text="Current mode: checking..." FontWeight="SemiBold" Margin="0,0,0,8"/>
                   <StackPanel x:Name="UpdateModeList" Margin="0,0,0,12"/>
                   <WrapPanel>
@@ -1627,8 +1627,8 @@
               </Border>
               <Border Grid.Column="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
                 <StackPanel>
-                  <TextBlock Text="Windows Update" FontWeight="SemiBold"/>
-                  <TextBlock Text="The scan lists driver updates Windows Update is offering right now. Optional updates are easier to review in Settings. Installing can take a while and may ask for a restart." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                  <TextBlock x:Uid="t.windows-update" Text="Windows Update" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.the-scan-lists-driver-updates-windows-update-is-" Text="The scan lists driver updates Windows Update is offering right now. Optional updates are easier to review in Settings. Installing can take a while and may ask for a restart." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
                   <CheckBox x:Name="IncludeSoftwareUpdates" Content="Include software updates, not only drivers" Margin="0,0,0,12"/>
                   <WrapPanel Margin="0,0,0,12">
                     <Button x:Name="ScanDrivers" Content="Scan for updates" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"/>
@@ -1651,8 +1651,8 @@
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Fixes" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-            <TextBlock Grid.Row="1" Text="Repairs for common Windows problems. Each one asks first and writes what it does to the log." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <TextBlock x:Uid="t.fixes" Text="Fixes" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.repairs-for-common-windows-problems-each-one-ask" Grid.Row="1" Text="Repairs for common Windows problems. Each one asks first and writes what it does to the log." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
             <UniformGrid x:Name="FixList" Grid.Row="2" Columns="2" Margin="0,14,0,0"/>
           </Grid>
         </ScrollViewer>
@@ -1665,8 +1665,8 @@
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Windows features" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-            <TextBlock Grid.Row="1" Text="Optional parts of Windows. Ticked means on. Change the ticks and press Apply. Windows needs a restart after a change." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <TextBlock x:Uid="t.windows-features" Text="Windows features" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.optional-parts-of-windows-ticked-means-on-change" Grid.Row="1" Text="Optional parts of Windows. Ticked means on. Change the ticks and press Apply. Windows needs a restart after a change." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
               <Button x:Name="FeatureApply" Content="Apply changes" Style="{StaticResource PrimaryButton}" Margin="0"/>
               <Button x:Name="FeatureRefresh" Content="Refresh" Style="{StaticResource SecondaryButton}"/>
@@ -1684,18 +1684,24 @@
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Config" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
-            <TextBlock Grid.Row="1" Text="Save what you picked and use it again after the next format. The sections below stay in a fixed tab row. Only the content of this panel changes." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-            <StackPanel x:Name="ConfigTabs" Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0" Height="32">
+            <TextBlock x:Uid="t.config" Text="Config" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.save-what-you-picked-and-use-it-again-after-the-" Grid.Row="1" Text="Save what you picked and use it again after the next format. The sections below stay in a fixed tab row. Only the content of this panel changes." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <StackPanel x:Name="ConfigLanguageRow" Grid.Row="2" Orientation="Horizontal" Margin="0,14,0,0" VerticalAlignment="Center">
+              <TextBlock x:Name="ConfigLanguageLabel" Text="Language" VerticalAlignment="Center" Margin="0,0,12,0"/>
+              <ComboBox x:Name="ConfigLanguage" Width="300" Height="32" VerticalAlignment="Center" AutomationProperties.Name="Language"/>
+              <TextBlock x:Name="ConfigLanguageHint" Text="WinTool follows the Windows display language unless you pick one here." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="14,0,0,0"/>
+            </StackPanel>
+            <StackPanel x:Name="ConfigTabs" Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0" Height="32">
               <RadioButton x:Name="ConfigTabProfile" GroupName="WinToolConfigTab" Content="WinTool profile" IsChecked="True" Style="{StaticResource ConfigTab}"/>
               <RadioButton x:Name="ConfigTabWinget" GroupName="WinToolConfigTab" Content="winget package list" Style="{StaticResource ConfigTab}"/>
               <RadioButton x:Name="ConfigTabTweaks" GroupName="WinToolConfigTab" Content="Tweaks" Style="{StaticResource ConfigTab}"/>
               <RadioButton x:Name="ConfigTabDns" GroupName="WinToolConfigTab" Content="DNS servers" Style="{StaticResource ConfigTab}"/>
               <RadioButton x:Name="ConfigTabPower" GroupName="WinToolConfigTab" Content="Ultimate Performance power plan" Style="{StaticResource ConfigTab}"/>
             </StackPanel>
-            <Grid Grid.Row="3" Margin="0,14,0,0">
+            <Grid Grid.Row="4" Margin="0,14,0,0">
               <Grid x:Name="ConfigPanelProfile">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="1.15*"/>
@@ -1704,30 +1710,30 @@
                 </Grid.ColumnDefinitions>
                 <Border x:Name="ConfigProfileCard" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
                   <StackPanel>
-                    <TextBlock Text="WinTool profile" FontWeight="SemiBold"/>
-                    <TextBlock Text="A profile remembers the apps, tweaks, and terminal choices. Loading it selects them in this window. It does not install anything until you press Install, Apply, or Set up terminal." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                    <TextBlock x:Uid="t.wintool-profile" Text="WinTool profile" FontWeight="SemiBold"/>
+                    <TextBlock x:Uid="t.a-profile-remembers-the-apps-tweaks-and-terminal" Text="A profile remembers the apps, tweaks, and terminal choices. Loading it selects them in this window. It does not install anything until you press Install, Apply, or Set up terminal." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
                     <TextBlock x:Name="ProfileSummary" Text="Nothing selected yet." FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}" TextWrapping="Wrap" Margin="0,0,0,12"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                       <Button x:Name="SaveProfile" Content="Save profile" Style="{StaticResource PrimaryButton}" Margin="0"/>
                       <Button x:Name="LoadProfile" Content="Load profile" Style="{StaticResource SecondaryButton}"/>
                     </StackPanel>
-                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="To replay a profile from a command after the next format, run PowerShell as admin:"/>
+                    <TextBlock x:Uid="t.to-replay-a-profile-from-a-command-after-the-nex" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="To replay a profile from a command after the next format, run PowerShell as admin:"/>
                     <Border Margin="0,12,0,0" Background="{DynamicResource BrushLog}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8" Padding="10,10">
-                      <TextBlock TextWrapping="Wrap" FontFamily="Consolas" Foreground="{DynamicResource BrushLogText}" Text="powershell -STA -ExecutionPolicy Bypass -File .\wintool.ps1 -ApplyProfile .\wintool-profile.json -Unattended"/>
+                      <TextBlock x:Uid="t.powershell-sta-executionpolicy-bypass-file-winto" TextWrapping="Wrap" FontFamily="Consolas" Foreground="{DynamicResource BrushLogText}" Text="powershell -STA -ExecutionPolicy Bypass -File .\wintool.ps1 -ApplyProfile .\wintool-profile.json -Unattended"/>
                     </Border>
                   </StackPanel>
                 </Border>
                 <Border Grid.Column="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
                   <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="In this profile" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <TextBlock x:Uid="t.in-this-profile" DockPanel.Dock="Top" Text="In this profile" FontWeight="SemiBold" Margin="0,0,0,8"/>
                     <StackPanel x:Name="ProfilePreview"/>
                   </DockPanel>
                 </Border>
               </Grid>
               <Border x:Name="ConfigPanelWinget" Visibility="Collapsed" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
                 <StackPanel>
-                  <TextBlock Text="winget package list" FontWeight="SemiBold"/>
-                  <TextBlock Text="This is winget's own export file, which can include apps that were not installed by WinTool. Import asks winget to install every package in the file." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                  <TextBlock x:Uid="t.winget-package-list" Text="winget package list" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.this-is-winget-s-own-export-file-which-can-inclu" Text="This is winget's own export file, which can include apps that were not installed by WinTool. Import asks winget to install every package in the file." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
                   <StackPanel Orientation="Horizontal">
                     <Button x:Name="ExportWinget" Content="Export winget list" Style="{StaticResource SecondaryButton}" Margin="0"/>
                     <Button x:Name="ImportWinget" Content="Import winget list" Style="{StaticResource SecondaryButton}"/>
@@ -1736,15 +1742,15 @@
               </Border>
               <Border x:Name="ConfigPanelTweaks" Visibility="Collapsed" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
                 <StackPanel>
-                  <TextBlock Text="Tweaks" FontWeight="SemiBold"/>
-                  <TextBlock Text="Some tweaks only show up after File Explorer restarts." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                  <TextBlock x:Uid="t.tweaks" Text="Tweaks" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.some-tweaks-only-show-up-after-file-explorer-res" Text="Some tweaks only show up after File Explorer restarts." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
                   <CheckBox x:Name="TweakRestartExplorer" Content="Restart File Explorer when a tweak needs it" IsChecked="True"/>
                 </StackPanel>
               </Border>
               <Border x:Name="ConfigPanelDns" Visibility="Collapsed" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
                 <StackPanel>
-                  <TextBlock Text="DNS servers" FontWeight="SemiBold"/>
-                  <TextBlock Text="Pick which DNS servers a network adapter uses. Automatic goes back to what your router hands out." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                  <TextBlock x:Uid="t.dns-servers" Text="DNS servers" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.pick-which-dns-servers-a-network-adapter-uses-au" Text="Pick which DNS servers a network adapter uses. Automatic goes back to what your router hands out." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
                   <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto"/>
@@ -1754,9 +1760,9 @@
                       <RowDefinition Height="Auto"/>
                       <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="Adapter" VerticalAlignment="Center" Margin="0,0,12,8"/>
+                    <TextBlock x:Uid="t.adapter" Text="Adapter" VerticalAlignment="Center" Margin="0,0,12,8"/>
                     <ComboBox x:Name="DnsAdapter" Grid.Column="1" Margin="0,0,0,8" Height="34" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" MaxDropDownHeight="320" AutomationProperties.Name="Network adapter"/>
-                    <TextBlock Text="DNS" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock x:Uid="t.dns" Text="DNS" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <ComboBox x:Name="DnsProvider" Grid.Row="1" Grid.Column="1" Height="34" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" MaxDropDownHeight="320" AutomationProperties.Name="DNS provider"/>
                   </Grid>
                   <CheckBox x:Name="DnsIncludeIpv6" Content="Also set IPv6 DNS servers" IsChecked="True" Margin="0,4,0,8"/>
@@ -1769,7 +1775,7 @@
               </Border>
               <Border x:Name="ConfigPanelPower" Visibility="Collapsed" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
                 <StackPanel>
-                  <TextBlock Text="Ultimate Performance power plan" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.ultimate-performance-power-plan" Text="Ultimate Performance power plan" FontWeight="SemiBold"/>
                   <TextBlock x:Name="PowerPlanDescription" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
                   <TextBlock x:Name="PowerPlanStatus" Text="Checking..." FontWeight="SemiBold" Margin="0,0,0,12"/>
                   <StackPanel Orientation="Horizontal">

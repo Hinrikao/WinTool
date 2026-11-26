@@ -233,7 +233,7 @@ function Complete-WinToolNavTiming {
     $ms = [int][Math]::Round($elapsed)
     if ($ms -lt 0) { $ms = 0 }
     $script:WinToolState.NavMilliseconds = $ms
-    Write-WinToolLog -Message ("Nav: {0} shown in {1}ms" -f $Name, $ms) -Level "info" -Diagnostic
+    Write-WinToolLog -Message ((Get-WinToolText "msg.nav-n-shown-in-nms") -f $Name, $ms) -Level "info" -Diagnostic
     $safe = ($Name -replace "[^A-Za-z]", "")
     $follow = [scriptblock]::Create(("Complete-WinToolNavFollowUp -Name '{0}'" -f $safe))
     $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$follow)
@@ -268,7 +268,7 @@ function Complete-WinToolSurfaceTiming {
     $ms = [int][Math]::Round($elapsed)
     if ($ms -lt 0) { $ms = 0 }
     $script:WinToolState.NavMilliseconds = $ms
-    Write-WinToolLog -Message ("Nav: {0} shown in {1}ms" -f [string]$script:WinToolState.SurfaceName, $ms) -Level "info" -Diagnostic
+    Write-WinToolLog -Message ((Get-WinToolText "msg.nav-n-shown-in-nms") -f [string]$script:WinToolState.SurfaceName, $ms) -Level "info" -Diagnostic
 }
 
 function Sync-WinToolScrollFill {
@@ -537,7 +537,7 @@ function Move-WinToolPlanForward {
     Sync-WinToolProgress -Value $percent -Text (Get-WinToolText "status.summary.step" ([string]$step.Label) ($run.Index + 1) $total) -Indeterminate $false
 
     if ([string]$step.Type -eq "wsl-shell" -and $run.SkipZsh) {
-        Write-WinToolLog -Message "Zsh setup is waiting on a reboot. Run terminal setup again after Windows restarts." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.zsh-setup-is-waiting-on-a-reboot-run-terminal-setup-agai") -Level "warn"
         Move-WinToolPlanForward
         return
     }
@@ -547,7 +547,7 @@ function Move-WinToolPlanForward {
     $decision = Set-WinToolPlanStepDecision -Step $step -Cache $cache -Update:([bool]$run.Update)
     $run.Decision = $decision
     if (-not [bool]$decision.Run) {
-        Write-WinToolLog -Message ([string]$step.Label + " (already installed, skipped)") -Level "ok"
+        Write-WinToolLog -Message (Get-WinToolText "msg.n-already-installed-skipped" $step.Label) -Level "ok"
         if ($null -ne $run.Tally) {
             Add-WinToolPlanStepOutcome -Tally $run.Tally -Step $step -Outcome ([string]$decision.Outcome)
         }
@@ -575,7 +575,7 @@ function Move-WinToolPlanForward {
             }
         }
         catch {
-            Write-WinToolLog -Message ("{0} failed. {1}" -f [string]$step.Label, $_.Exception.Message) -Level "error"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.n-failed-n") -f [string]$step.Label, $_.Exception.Message) -Level "error"
             if ($null -ne $run.Tally) {
                 Add-WinToolPlanStepOutcome -Tally $run.Tally -Step $step -Outcome "failed"
             }
@@ -586,9 +586,9 @@ function Move-WinToolPlanForward {
 
     $filePath = [string]$command.FilePath
     if ([string]::IsNullOrWhiteSpace($filePath) -or -not (Test-Path -LiteralPath $filePath)) {
-        Write-WinToolLog -Message ("Skipped {0} because the program was not found." -f [string]$step.Label) -Level "warn"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.skipped-n-because-the-program-was-not-found") -f [string]$step.Label) -Level "warn"
         if ([string]$step.Type -eq "winget") {
-            Write-WinToolLog -Message "Install App Installer from the Microsoft Store, then try again." -Level "warn"
+            Write-WinToolLog -Message (Get-WinToolText "msg.install-app-installer-from-the-microsoft-store-then-try-") -Level "warn"
         }
         Move-WinToolPlanForward
         return
@@ -600,7 +600,7 @@ function Move-WinToolPlanForward {
         $run.Process = Start-WinToolAsyncProcess -FilePath $filePath -ArgumentList @($command.ArgumentList) -LineQueue $run.Queue
     }
     catch {
-        Write-WinToolLog -Message ("Could not start {0}. {1}" -f [string]$step.Label, $_.Exception.Message) -Level "error"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-start-n-n") -f [string]$step.Label, $_.Exception.Message) -Level "error"
         $run.Process = $null
         Move-WinToolPlanForward
     }
@@ -633,7 +633,7 @@ function Complete-WinToolPlanStep {
     if ([string]$step.Type -eq "winget") {
         $result = ConvertTo-WinToolWingetResult -ExitCode $code -Output $output
         if ($result.Status -eq "Failed") {
-            Write-WinToolLog -Message ("{0} failed (exit {1})." -f [string]$step.Label, $code) -Level "error"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.n-failed-exit-n") -f [string]$step.Label, $code) -Level "error"
             if ($null -ne $run.Tally) { Add-WinToolPlanStepOutcome -Tally $run.Tally -Step $step -Outcome "failed" }
         }
         elseif ($result.Status -eq "AlreadyInstalled") {
@@ -641,7 +641,7 @@ function Complete-WinToolPlanStep {
             if ($null -ne $run.Tally) { Add-WinToolPlanStepOutcome -Tally $run.Tally -Step $step -Outcome "already-had" }
         }
         else {
-            Write-WinToolLog -Message ("{0}: done." -f [string]$step.Label) -Level "ok"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.n-done") -f [string]$step.Label) -Level "ok"
             $bucket = "install"
             if ($null -ne $decision -and -not [string]::IsNullOrWhiteSpace([string]$decision.Outcome)) {
                 $bucket = [string]$decision.Outcome
@@ -650,11 +650,11 @@ function Complete-WinToolPlanStep {
         }
     }
     elseif (-not (Test-WinToolStepSuccess -Step $step -ExitCode $code)) {
-        Write-WinToolLog -Message ("{0} exited with code {1}." -f [string]$step.Label, $code) -Level "error"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.n-exited-with-code-n") -f [string]$step.Label, $code) -Level "error"
         if ($null -ne $run.Tally) { Add-WinToolPlanStepOutcome -Tally $run.Tally -Step $step -Outcome "failed" }
     }
     else {
-        Write-WinToolLog -Message ("{0}: done." -f [string]$step.Label) -Level "ok"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.n-done") -f [string]$step.Label) -Level "ok"
         $bucket = "install"
         if ($null -ne $decision -and -not [string]::IsNullOrWhiteSpace([string]$decision.Outcome)) {
             $bucket = [string]$decision.Outcome
@@ -663,7 +663,7 @@ function Complete-WinToolPlanStep {
     }
     if ([string]$step.Type -eq "wsl-install" -and $output -match "(?i)reboot") {
         $run.SkipZsh = $true
-        Write-WinToolLog -Message "Windows asked for a reboot before WSL can finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.windows-asked-for-a-reboot-before-wsl-can-finish") -Level "warn"
     }
     Move-WinToolPlanForward
 }
@@ -707,7 +707,7 @@ function Complete-WinToolPlan {
             & $afterDone
         }
         catch {
-            Write-WinToolLog -Message ("Follow-up step failed. {0}" -f $_.Exception.Message) -Level "warn"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.follow-up-step-failed-n") -f $_.Exception.Message) -Level "warn"
         }
     }
 }
@@ -899,7 +899,7 @@ function Update-WinToolLogPump {
 }
 
 function Initialize-WinToolShellEvent {
-    (Get-WinToolUi -Name "VersionText").Text = "Version " + $script:WinToolVersion
+    (Get-WinToolUi -Name "VersionText").Text = (Get-WinToolText "msg.version-n" $script:WinToolVersion)
     foreach ($view in @(Get-WinToolViewName)) {
         Register-WinToolUiEvent -Control (Get-WinToolUi -Name ("Nav" + $view)) -EventName "Checked" -Name ("Open the " + $view + " tab") -Data $view -Action {
             param($source, $eventData, $viewName)
@@ -991,14 +991,14 @@ function Initialize-WinToolShellEvent {
         Stop-WinToolBackgroundWork
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Window loaded" -Action {
-        Write-WinToolLog -Message "Welcome to WinTool. Choose what you want, then run it when you are ready." -Level "info"
+        Write-WinToolLog -Message (Get-WinToolText "msg.welcome-to-wintool-choose-what-you-want-then-run-it-when") -Level "info"
         $winget = Get-WinToolWingetPath
         if ([string]::IsNullOrWhiteSpace($winget)) {
-            Write-WinToolLog -Message "winget was not found. Install App Installer from the Microsoft Store before installing apps." -Level "warn"
+            Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
             Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
         }
         else {
-            Write-WinToolLog -Message "winget is available." -Level "ok"
+            Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
             Sync-WinToolStatus -Text (Get-WinToolText "status.ready") -Summary ""
         }
         Start-WinToolTweakStateRead
@@ -1104,6 +1104,7 @@ function New-WinToolWindow {
     $window = [System.Windows.Markup.XamlReader]::Load($reader)
     $script:WinToolWindow = $window
     $script:WinToolLogBox = $null
+    Apply-WinToolXamlText -Root $window
 
     Initialize-WinToolAppearance
     Initialize-WinToolActivityView
@@ -1124,7 +1125,7 @@ function New-WinToolWindow {
             Import-WinToolProfileToUi -Path $script:WinToolApplyProfile
         }
         catch {
-            Write-WinToolLog -Message ("Could not load the profile. {0}" -f $_.Exception.Message) -Level "error"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-load-the-profile-n") -f $_.Exception.Message) -Level "error"
         }
     }
 
@@ -1300,7 +1301,7 @@ function Enter-WinToolSingleInstance {
     }
     catch [System.UnauthorizedAccessException] {
         $null = Send-WinToolActivateSignal
-        Write-Host "WinTool is already open. Its window was brought to the front."
+        Write-Host (Get-WinToolText "error.alreadyOpen")
         return $false
     }
     catch {
@@ -1328,7 +1329,7 @@ function Enter-WinToolSingleInstance {
         if (-not $acquired) {
             $null = Send-WinToolActivateSignal
             try { $mutex.Dispose() } catch { $null = $_.Exception.Message }
-            Write-Host "WinTool is already open. Its window was brought to the front."
+            Write-Host (Get-WinToolText "error.alreadyOpen")
             return $false
         }
     }

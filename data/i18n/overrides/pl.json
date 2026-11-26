@@ -1,0 +1,21 @@
+{
+  "activity.copy": "Kopiuj szczegóły",
+  "button.scanDrivers": "Sprawdź sterowniki",
+  "config.language.label": "Język",
+  "config.language.matchWindows": "Użyj języka systemu Windows",
+  "status.ready": "Gotowe",
+  "ui.ActivityCopy.Content": "Kopiuj szczegóły",
+  "ui.AppInstall.Content": "Zainstaluj zaznaczone",
+  "ui.AppUninstall.Content": "Odinstaluj zaznaczone",
+  "ui.DriversScan.Content": "Sprawdź sterowniki",
+  "ui.DriversScanAgain.AutomationName": "Sprawdź sterowniki ponownie",
+  "ui.t.config.Text": "Konfiguracja",
+  "ui.t.drivers.Text": "Sterowniki",
+  "ui.t.features.Text": "Funkcje",
+  "ui.t.fixes.Text": "Naprawy",
+  "ui.t.home.Text": "Start",
+  "ui.t.install.Text": "Instaluj",
+  "ui.t.terminal.Text": "Terminal",
+  "ui.t.tweaks.Text": "Poprawki",
+  "ui.t.updates.Text": "Aktualizacje"
+}

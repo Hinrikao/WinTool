@@ -12,7 +12,7 @@ function Get-WinToolWslDistroName {
         $name = "Ubuntu"
     }
     if ($name -notmatch '^[A-Za-z0-9._-]+$') {
-        throw "Unexpected WSL distro name '$name'."
+        throw (Get-WinToolText "msg.unexpected-wsl-distro-name-n" $name)
     }
     return $name
 }
@@ -197,23 +197,23 @@ function Invoke-WinToolWslTerminalProfile {
     }
     $path = Get-WinToolTerminalSettingsPath
     if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
-        Write-WinToolLog -Message "Windows Terminal settings were not found, so the $Distro profile font was not set." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.windows-terminal-settings-were-not-found-so-the-n-profil" $Distro) -Level "warn"
         return
     }
     Backup-WinToolTerminalSetting -Path $path
     $raw = [System.IO.File]::ReadAllText($path)
     if ([string]::IsNullOrWhiteSpace($raw)) {
-        Write-WinToolLog -Message "Windows Terminal settings are empty, so the $Distro profile font was not set." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.windows-terminal-settings-are-empty-so-the-n-profile-fon" $Distro) -Level "warn"
         return
     }
     $settings = ConvertFrom-WinToolJsonText -Text $raw
     $count = Set-WinToolWslProfileFont -Settings $settings -Distro $Distro -Face $chosen
     if ($count -eq 0) {
-        Write-WinToolLog -Message "Windows Terminal has no $Distro profile yet. It will use the default font, $chosen, when it appears." -Level "info"
+        Write-WinToolLog -Message (Get-WinToolText "msg.windows-terminal-has-no-n-profile-yet-it-will-use-the-de" $Distro $chosen) -Level "info"
         return
     }
     Write-WinToolUtf8File -Path $path -Text ((ConvertTo-WinToolJsonText -Value $settings) + "`n")
-    Write-WinToolLog -Message "Set the $Distro profile font in Windows Terminal to $chosen." -Level "ok"
+    Write-WinToolLog -Message (Get-WinToolText "msg.set-the-n-profile-font-in-windows-terminal-to-n" $Distro $chosen) -Level "ok"
 }
 
 function Get-WinToolWslStep {
@@ -227,7 +227,7 @@ function Get-WinToolWslStep {
     )
     $steps = New-Object System.Collections.Generic.List[object]
     if ($Install) {
-        [void]$steps.Add([pscustomobject]@{ Type = "wsl-install"; Label = "Install WSL with $Distro (kept if it already exists)"; Distro = $Distro })
+        [void]$steps.Add([pscustomobject]@{ Type = "wsl-install"; Label = (Get-WinToolText "msg.install-wsl-with-n-kept-if-it-already-exists" $Distro); Distro = $Distro })
     }
     if ($Shell) {
         $label = "Install zsh and Oh My Zsh in $Distro"
@@ -270,7 +270,7 @@ function Get-WinToolWslShellPlan {
             }
         }
         if ($null -eq $font) {
-            throw "Unknown terminal font '$FontId'."
+            throw (Get-WinToolText "msg.unknown-terminal-font-n" $FontId)
         }
     }
     return @(Get-WinToolWslStep -Distro $Distro -PromptId $PromptId -PromptStyle $PromptStyle -Font $font -Install ([bool]$Install) -Shell $true)

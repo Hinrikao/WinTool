@@ -118,7 +118,7 @@ function Get-WinToolWingetArgument {
         return $arguments.ToArray()
     }
     if ([string]::IsNullOrWhiteSpace($Id)) {
-        throw "A winget id is needed for $Action."
+        throw (Get-WinToolText "msg.a-winget-id-is-needed-for-n" $Action)
     }
     $arguments.Add($Action)
     $arguments.Add("--id")
@@ -144,10 +144,10 @@ function Get-WinToolWingetActionLabel {
         [string]$Name
     )
     switch ($Action) {
-        "upgrade" { return "Update $Name" }
-        "uninstall" { return "Uninstall $Name" }
-        "upgrade-all" { return "Update every app winget can update" }
-        default { return "Install $Name" }
+        "upgrade" { return (Get-WinToolText "msg.update-n" $Name) }
+        "uninstall" { return (Get-WinToolText "msg.uninstall-n" $Name) }
+        "upgrade-all" { return (Get-WinToolText "msg.update-every-app-winget-can-update") }
+        default { return (Get-WinToolText "msg.install-n" $Name) }
     }
 }
 
@@ -158,9 +158,9 @@ function Get-WinToolWingetOutcomeText {
     )
     if ($Status -eq "AlreadyInstalled") {
         if ($Action -eq "upgrade" -or $Action -eq "upgrade-all") {
-            return "already up to date"
+            return (Get-WinToolText "msg.already-up-to-date")
         }
-        return "already installed"
+        return (Get-WinToolText "msg.already-installed")
     }
     return "done"
 }

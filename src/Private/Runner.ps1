@@ -6,7 +6,7 @@ function Get-WinToolModuleScript {
         [string]$Name = "Terminal-Icons"
     )
     if ($Name -notmatch '^[A-Za-z0-9.-]+$') {
-        throw "Unexpected module name '$Name'."
+        throw (Get-WinToolText "msg.unexpected-module-name-n" $Name)
     }
     # PowerShellGet 1.0 (Windows PowerShell 5.1) lacks some switches, so they
     # are only passed when this Install-Module has them.
@@ -164,7 +164,7 @@ function Get-WinToolPlanCommand {
             ArgumentList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scriptPath)
         }
     }
-    throw "Unknown plan step '$type'."
+    throw (Get-WinToolText "msg.unknown-plan-step-n" $type)
 }
 
 # Steps that run inside WinTool instead of as a separate program. Both the
@@ -230,7 +230,7 @@ function Invoke-WinToolLocalStep {
     )
     $type = [string]$Step.Type
     if (-not (Test-WinToolLocalStepType -Type $type)) {
-        throw "Step '$type' is not a local step."
+        throw (Get-WinToolText "msg.step-n-is-not-a-local-step" $type)
     }
     return (& ([string]$script:WinToolLocalStepHandlers[$type]) -Step $Step)
 }
@@ -251,12 +251,12 @@ function Invoke-WinToolPlan {
     foreach ($item in $steps) {
         $index++
         if ([string]$item.Type -eq "wsl-shell" -and $skipZsh) {
-            Write-WinToolLog -Message "Zsh setup is waiting on a reboot. Run terminal setup again after Windows restarts." -Level "warn"
+            Write-WinToolLog -Message (Get-WinToolText "msg.zsh-setup-is-waiting-on-a-reboot-run-terminal-setup-agai") -Level "warn"
             continue
         }
         $decision = Set-WinToolPlanStepDecision -Step $item -Cache $Cache -Update:$Update
         if (-not [bool]$decision.Run) {
-            Write-WinToolLog -Message ("[{0}/{1}] {2} (already installed, skipped)" -f $index, $steps.Count, [string]$item.Label) -Level "ok"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.n-n-n-already-installed-skipped") -f $index, $steps.Count, [string]$item.Label) -Level "ok"
             Add-WinToolPlanStepOutcome -Tally $tally -Step $item -Outcome ([string]$decision.Outcome)
             continue
         }
@@ -278,13 +278,13 @@ function Invoke-WinToolPlan {
                 }
             }
             catch {
-                Write-WinToolLog -Message ("{0} failed. {1}" -f [string]$item.Label, $_.Exception.Message) -Level "error"
+                Write-WinToolLog -Message ((Get-WinToolText "msg.n-failed-n") -f [string]$item.Label, $_.Exception.Message) -Level "error"
                 Add-WinToolPlanStepOutcome -Tally $tally -Step $item -Outcome "failed"
             }
             continue
         }
         if ([string]::IsNullOrWhiteSpace([string]$command.FilePath) -or -not (Test-Path -LiteralPath ([string]$command.FilePath))) {
-            Write-WinToolLog -Message ("Skipped {0} because the program was not found." -f [string]$item.Label) -Level "warn"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.skipped-n-because-the-program-was-not-found") -f [string]$item.Label) -Level "warn"
             continue
         }
         $result = Invoke-WinToolCapturedProcess -FilePath ([string]$command.FilePath) -ArgumentList @($command.ArgumentList)
@@ -298,7 +298,7 @@ function Invoke-WinToolPlan {
         if ([string]$item.Type -eq "winget") {
             $outcome = ConvertTo-WinToolWingetResult -ExitCode $result.ExitCode -Output $result.Output
             if ($outcome.Status -eq "Failed") {
-                Write-WinToolLog -Message ("{0} failed (exit {1})." -f [string]$item.Label, $result.ExitCode) -Level "error"
+                Write-WinToolLog -Message ((Get-WinToolText "msg.n-failed-exit-n") -f [string]$item.Label, $result.ExitCode) -Level "error"
                 Add-WinToolPlanStepOutcome -Tally $tally -Step $item -Outcome "failed"
             }
             elseif ($outcome.Status -eq "AlreadyInstalled") {
@@ -306,25 +306,25 @@ function Invoke-WinToolPlan {
                 Add-WinToolPlanStepOutcome -Tally $tally -Step $item -Outcome "already-had"
             }
             else {
-                Write-WinToolLog -Message ("{0}: done." -f [string]$item.Label) -Level "ok"
+                Write-WinToolLog -Message ((Get-WinToolText "msg.n-done") -f [string]$item.Label) -Level "ok"
                 $bucket = [string]$decision.Outcome
                 if ([string]::IsNullOrWhiteSpace($bucket)) { $bucket = "install" }
                 Add-WinToolPlanStepOutcome -Tally $tally -Step $item -Outcome $bucket
             }
         }
         elseif (-not (Test-WinToolStepSuccess -Step $item -ExitCode $result.ExitCode)) {
-            Write-WinToolLog -Message ("{0} exited with code {1}." -f [string]$item.Label, $result.ExitCode) -Level "error"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.n-exited-with-code-n") -f [string]$item.Label, $result.ExitCode) -Level "error"
             Add-WinToolPlanStepOutcome -Tally $tally -Step $item -Outcome "failed"
         }
         else {
-            Write-WinToolLog -Message ("{0}: done." -f [string]$item.Label) -Level "ok"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.n-done") -f [string]$item.Label) -Level "ok"
             $bucket = [string]$decision.Outcome
             if ([string]::IsNullOrWhiteSpace($bucket)) { $bucket = "install" }
             Add-WinToolPlanStepOutcome -Tally $tally -Step $item -Outcome $bucket
         }
         if ([string]$item.Type -eq "wsl-install" -and $result.Output -match "(?i)reboot") {
             $skipZsh = $true
-            Write-WinToolLog -Message "Windows asked for a reboot before WSL can finish." -Level "warn"
+            Write-WinToolLog -Message (Get-WinToolText "msg.windows-asked-for-a-reboot-before-wsl-can-finish") -Level "warn"
         }
     }
     $summary = Format-WinToolPlanSummary -Tally $tally

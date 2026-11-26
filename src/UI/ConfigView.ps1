@@ -34,6 +34,87 @@ function Show-WinToolConfigPanel {
     }
 }
 
+
+function Initialize-WinToolLanguageChoice {
+    $box = Get-WinToolUi -Name "ConfigLanguage"
+    $hint = Get-WinToolUi -Name "ConfigLanguageHint"
+    $label = Get-WinToolUi -Name "ConfigLanguageLabel"
+    if ($null -ne $label) {
+        $label.Text = Get-WinToolText "config.language.label"
+    }
+    if ($null -ne $hint) {
+        $hint.Text = Get-WinToolText "config.language.tip"
+    }
+    if ($null -eq $box) {
+        return
+    }
+    $script:WinToolLanguageBoxSync = $true
+    try {
+        $box.Items.Clear()
+        $auto = New-Object System.Windows.Controls.ComboBoxItem
+        $auto.Content = Get-WinToolText "config.language.matchWindows"
+        $auto.Tag = "auto"
+        [void]$box.Items.Add($auto)
+        foreach ($code in @(Get-WinToolAvailableLanguage)) {
+            $item = New-Object System.Windows.Controls.ComboBoxItem
+            $item.Content = Get-WinToolText ("language.name." + $code)
+            $item.Tag = $code
+            [void]$box.Items.Add($item)
+        }
+        $pref = [string]$script:WinToolLanguagePreference
+        if ([string]::IsNullOrWhiteSpace($pref)) {
+            $pref = "auto"
+        }
+        $selected = $null
+        foreach ($item in $box.Items) {
+            if ([string]$item.Tag -eq $pref) {
+                $selected = $item
+                break
+            }
+        }
+        if ($null -eq $selected) {
+            $selected = $auto
+        }
+        $box.SelectedItem = $selected
+    }
+    finally {
+        $script:WinToolLanguageBoxSync = $false
+    }
+}
+
+function Invoke-WinToolLanguageChoice {
+    if ($script:WinToolLanguageBoxSync) {
+        return
+    }
+    $box = Get-WinToolUi -Name "ConfigLanguage"
+    if ($null -eq $box -or $null -eq $box.SelectedItem) {
+        return
+    }
+    $tag = [string]$box.SelectedItem.Tag
+    if ([string]::IsNullOrWhiteSpace($tag)) {
+        $tag = "auto"
+    }
+    $prefs = Get-WinToolPreferences
+    $prefs.language = $tag
+    Save-WinToolPreferences -Preferences $prefs
+    Initialize-WinToolLocale -Language $tag -Force | Out-Null
+    Apply-WinToolXamlText -Root $script:WinToolWindow
+    Initialize-WinToolLanguageChoice
+    Update-WinToolProfileSummary
+    if ($null -ne $script:WinToolState) {
+        $current = [string]$script:WinToolState.ActiveView
+        $script:WinToolState.ViewShown = @($current)
+        $script:WinToolConfigShown = @{}
+    }
+    if ($script:WinToolState.ActiveView -eq "Config") {
+        Show-WinToolConfigPanel -Name "Profile" -Quiet
+    }
+    $status = Get-WinToolUi -Name "StatusText"
+    if ($null -ne $status -and -not $script:WinToolState.Busy) {
+        $status.Text = Get-WinToolText "status.ready"
+    }
+}
+
 function Initialize-WinToolConfigView {
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "SaveProfile") -EventName "Click" -Name "Config: save profile" -Action { Invoke-WinToolSaveProfile }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "LoadProfile") -EventName "Click" -Name "Config: load profile" -Action { Invoke-WinToolLoadProfile }
@@ -52,6 +133,8 @@ function Initialize-WinToolConfigView {
             Show-WinToolConfigPanel -Name $panelName
         }
     }
+    Initialize-WinToolLanguageChoice
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "ConfigLanguage") -EventName "SelectionChanged" -Name "Config: language" -Action { Invoke-WinToolLanguageChoice }
     Show-WinToolConfigPanel -Name "Profile" -Quiet
     Initialize-WinToolSystemView
     Update-WinToolProfileSummary
@@ -178,10 +261,10 @@ function Import-WinToolProfileToUi {
     $toolProfile = Read-WinToolProfile -Path $Path
     $resolved = Resolve-WinToolProfileSelection -Profile $toolProfile
     foreach ($id in @($resolved.UnknownApps)) {
-        Write-WinToolLog -Message "Unknown app id '$id' in the profile." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.unknown-app-id-n-in-the-profile" $id) -Level "warn"
     }
     foreach ($id in @($resolved.UnknownTweaks)) {
-        Write-WinToolLog -Message "Unknown tweak id '$id' in the profile." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.unknown-tweak-id-n-in-the-profile" $id) -Level "warn"
     }
     $appIds = New-Object System.Collections.Generic.List[string]
     foreach ($app in @($resolved.AppRecords)) {
@@ -195,18 +278,18 @@ function Import-WinToolProfileToUi {
     Sync-WinToolTweakCheck -Id $tweakIds.ToArray() -OnlyThese
     Sync-WinToolTerminalChoice -Selection (Get-WinToolNote -Object $toolProfile -Name "terminal")
     Update-WinToolProfileSummary
-    Write-WinToolLog -Message ("Loaded {0}. Nothing was installed yet." -f $Path) -Level "ok"
+    Write-WinToolLog -Message ((Get-WinToolText "msg.loaded-n-nothing-was-installed-yet") -f $Path) -Level "ok"
 }
 
 function Invoke-WinToolSaveProfile {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $dialog = New-Object Microsoft.Win32.SaveFileDialog
     $dialog.Filter = "WinTool profile (*.json)|*.json"
     $dialog.FileName = "wintool-profile.json"
-    $dialog.Title = "Save WinTool profile"
+    $dialog.Title = (Get-WinToolText "msg.save-wintool-profile")
     $accepted = $dialog.ShowDialog($script:WinToolWindow)
     if ($accepted -ne $true) {
         return
@@ -214,21 +297,21 @@ function Invoke-WinToolSaveProfile {
     try {
         $toolProfile = Get-WinToolProfileFromUi
         Write-WinToolProfile -Path $dialog.FileName -Profile $toolProfile
-        Write-WinToolLog -Message ("Saved profile to {0}" -f $dialog.FileName) -Level "ok"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.saved-profile-to-n") -f $dialog.FileName) -Level "ok"
     }
     catch {
-        Write-WinToolLog -Message ("Could not save that profile. {0}" -f $_.Exception.Message) -Level "error"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-save-that-profile-n") -f $_.Exception.Message) -Level "error"
     }
 }
 
 function Invoke-WinToolLoadProfile {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $dialog = New-Object Microsoft.Win32.OpenFileDialog
     $dialog.Filter = "WinTool profile (*.json)|*.json"
-    $dialog.Title = "Load WinTool profile"
+    $dialog.Title = (Get-WinToolText "msg.load-wintool-profile")
     $accepted = $dialog.ShowDialog($script:WinToolWindow)
     if ($accepted -ne $true) {
         return
@@ -237,31 +320,31 @@ function Invoke-WinToolLoadProfile {
         Import-WinToolProfileToUi -Path $dialog.FileName
     }
     catch {
-        Write-WinToolLog -Message ("Could not load that profile. {0}" -f $_.Exception.Message) -Level "error"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-load-that-profile-n") -f $_.Exception.Message) -Level "error"
     }
 }
 
 function Invoke-WinToolExportWinget {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $winget = Get-WinToolWingetPath
     if ([string]::IsNullOrWhiteSpace($winget)) {
-        Write-WinToolLog -Message "winget was not found. Install App Installer from the Microsoft Store, then try again." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr") -Level "warn"
         return
     }
     $dialog = New-Object Microsoft.Win32.SaveFileDialog
     $dialog.Filter = "winget package list (*.json)|*.json"
     $dialog.FileName = "winget-packages.json"
-    $dialog.Title = "Export winget package list"
+    $dialog.Title = (Get-WinToolText "msg.export-winget-package-list")
     $accepted = $dialog.ShowDialog($script:WinToolWindow)
     if ($accepted -ne $true) {
         return
     }
     $step = [pscustomobject]@{
         Type = "process"
-        Label = "Export winget packages"
+        Label = (Get-WinToolText "msg.export-winget-packages")
         FilePath = $winget
         Arguments = @("export", "-o", $dialog.FileName, "--accept-source-agreements")
     }
@@ -270,28 +353,28 @@ function Invoke-WinToolExportWinget {
 
 function Invoke-WinToolImportWinget {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $winget = Get-WinToolWingetPath
     if ([string]::IsNullOrWhiteSpace($winget)) {
-        Write-WinToolLog -Message "winget was not found. Install App Installer from the Microsoft Store, then try again." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr") -Level "warn"
         return
     }
     $dialog = New-Object Microsoft.Win32.OpenFileDialog
     $dialog.Filter = "winget package list (*.json)|*.json"
-    $dialog.Title = "Import winget package list"
+    $dialog.Title = (Get-WinToolText "msg.import-winget-package-list")
     $accepted = $dialog.ShowDialog($script:WinToolWindow)
     if ($accepted -ne $true) {
         return
     }
-    $ok = Request-WinToolConfirmation -Message "Ask winget to install every package in this file?" -Title "Import winget list"
+    $ok = Request-WinToolConfirmation -Message (Get-WinToolText "msg.ask-winget-to-install-every-package-in-this-file") -Title (Get-WinToolText "ui.ImportWinget.Content")
     if (-not $ok) {
         return
     }
     $step = [pscustomobject]@{
         Type = "process"
-        Label = "Import winget packages"
+        Label = (Get-WinToolText "msg.import-winget-packages")
         FilePath = $winget
         Arguments = @("import", "-i", $dialog.FileName, "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity")
     }
@@ -328,7 +411,7 @@ function Set-WinToolDnsAdapterList {
     $box.Items.Clear()
     if ($adapters.Count -gt 1) {
         $all = New-Object System.Windows.Controls.ComboBoxItem
-        $all.Content = "All connected adapters"
+        $all.Content = (Get-WinToolText "msg.all-connected-adapters")
         $all.Tag = -1
         [void]$box.Items.Add($all)
     }
@@ -357,7 +440,7 @@ function Set-WinToolPowerPlanFromList {
             $script:WinToolState.UltimatePlanAdded = [bool]$state.Added
         }
         catch {
-            $status = "Could not read power plans. " + $_.Exception.Message
+            $status = (Get-WinToolText "msg.could-not-read-power-plans-n" $_.Exception.Message)
         }
     }
     (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = (-not $script:WinToolState.Busy -and [bool]$script:WinToolState.UltimatePlanAdded)
@@ -374,7 +457,7 @@ function Update-WinToolSystemView {
         $adapters = @(Get-WinToolDnsAdapter)
     }
     catch {
-        Write-WinToolLog -Message ("Could not read network adapters. " + $_.Exception.Message) -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.could-not-read-network-adapters-n" $_.Exception.Message) -Level "warn"
     }
     Set-WinToolDnsAdapterList -Adapter $adapters
     Sync-WinToolPowerPlanStatus
@@ -409,14 +492,14 @@ function Complete-WinToolSystemProbe {
     $script:WinToolState.SystemJob = $null
     if ($generation -ne [int]$script:WinToolState.SystemGeneration) { return }
     if (-not $ok) {
-        Write-WinToolLog -Message ("Could not read network adapters. " + $errorText) -Level "warn" -Diagnostic
+        Write-WinToolLog -Message (Get-WinToolText "msg.could-not-read-network-adapters-n" $errorText) -Level "warn" -Diagnostic
         return
     }
     Set-WinToolDnsAdapterList -Adapter @(ConvertFrom-WinToolSystemProbe -Text $packed)
     if (-not [string]::IsNullOrWhiteSpace($powerError)) {
         $script:WinToolState.UltimatePlanAdded = $false
         (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = $false
-        (Get-WinToolUi -Name "PowerPlanStatus").Text = "Could not read power plans. " + $powerError
+        (Get-WinToolUi -Name "PowerPlanStatus").Text = (Get-WinToolText "msg.could-not-read-power-plans-n" $powerError)
         return
     }
     Set-WinToolPowerPlanFromList -Text $power
@@ -459,7 +542,7 @@ function Sync-WinToolPowerPlanStatus {
         catch {
             $script:WinToolState.UltimatePlanAdded = $false
             (Get-WinToolUi -Name "RemoveUltimatePlan").IsEnabled = $false
-            (Get-WinToolUi -Name "PowerPlanStatus").Text = "Could not read power plans. " + $_.Exception.Message
+            (Get-WinToolUi -Name "PowerPlanStatus").Text = (Get-WinToolText "msg.could-not-read-power-plans-n" $_.Exception.Message)
             return
         }
     }
@@ -468,17 +551,17 @@ function Sync-WinToolPowerPlanStatus {
 
 function Invoke-WinToolDnsClick {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $adapters = @(Get-WinToolSelectedDnsAdapter)
     if ($adapters.Count -eq 0) {
-        Write-WinToolLog -Message "Pick a network adapter first." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.pick-a-network-adapter-first") -Level "warn"
         return
     }
     $item = (Get-WinToolUi -Name "DnsProvider").SelectedItem
     if ($null -eq $item) {
-        Write-WinToolLog -Message "Pick a DNS provider first." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.pick-a-dns-provider-first") -Level "warn"
         return
     }
     $provider = Find-WinToolDnsProvider -Id ([string]$item.Tag)
@@ -489,7 +572,7 @@ function Invoke-WinToolDnsClick {
         $what = [string]$provider.name + " (" + ($servers -join ", ") + ")"
     }
     $names = (@($adapters | ForEach-Object { [string]$_.Name })) -join ", "
-    $ok = Request-WinToolConfirmation -Message ("Set DNS on {0} to {1}?" -f $names, $what) -Title "DNS servers"
+    $ok = Request-WinToolConfirmation -Message ((Get-WinToolText "msg.set-dns-on-n-to-n") -f $names, $what) -Title (Get-WinToolText "ui.ConfigTabDns.Content")
     if (-not $ok) {
         return
     }
@@ -502,14 +585,14 @@ function Invoke-WinToolPowerPlanClick {
         [Parameter(Mandatory = $true)][ValidateSet("add", "remove")][string]$Action
     )
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $message = "Add the Ultimate Performance power plan and switch to it?"
     if ($Action -eq "remove") {
         $message = "Remove the Ultimate Performance plan WinTool added? If it is active, Windows goes back to Balanced."
     }
-    $ok = Request-WinToolConfirmation -Message $message -Title "Power plan"
+    $ok = Request-WinToolConfirmation -Message $message -Title (Get-WinToolText "msg.power-plan")
     if (-not $ok) {
         return
     }

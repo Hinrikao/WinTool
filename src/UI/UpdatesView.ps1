@@ -49,7 +49,7 @@ function Initialize-WinToolUpdateView {
 
 function Invoke-WinToolScanClick {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $criteria = "IsInstalled=0 and Type='Driver'"
@@ -58,8 +58,8 @@ function Invoke-WinToolScanClick {
     }
     $script:WinToolState.UpdateCriteria = $criteria
     Sync-WinToolBusyState -Busy $true
-    Sync-WinToolProgress -Value 0 -Text "Scanning Windows Update" -Indeterminate $true
-    Write-WinToolLog -Message "Scanning Windows Update. This can take a few minutes." -Level "info"
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "msg.scanning-windows-update") -Indeterminate $true
+    Write-WinToolLog -Message (Get-WinToolText "msg.scanning-windows-update-this-can-take-a-few-minutes") -Level "info"
     $script:WinToolState.UpdateJob = Start-WinToolScriptJob -ScriptText (Get-WinToolUpdateSearchScript) -Argument @($criteria)
 }
 
@@ -77,8 +77,8 @@ function Complete-WinToolUpdateScan {
     $script:WinToolState.UpdateJob = $null
     if (-not $ok) {
         Sync-WinToolBusyState -Busy $false
-        Sync-WinToolProgress -Value 0 -Text "Ready" -Indeterminate $false
-        Write-WinToolLog -Message ("Windows Update scan failed. {0}" -f $errorMessage) -Level "error"
+        Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Indeterminate $false
+        Write-WinToolLog -Message ((Get-WinToolText "msg.windows-update-scan-failed-n") -f $errorMessage) -Level "error"
         return
     }
 
@@ -102,29 +102,29 @@ function Complete-WinToolUpdateScan {
     $script:WinToolState.Updates = $records.ToArray()
     $empty = Get-WinToolUi -Name "UpdateEmpty"
     if ($records.Count -eq 0) {
-        $empty.Text = "Windows Update did not offer anything for this scan."
+        $empty.Text = (Get-WinToolText "msg.windows-update-did-not-offer-anything-for-this-scan")
         $empty.Visibility = "Visible"
-        Write-WinToolLog -Message "Scan finished. No updates were offered." -Level "ok"
+        Write-WinToolLog -Message (Get-WinToolText "msg.scan-finished-no-updates-were-offered") -Level "ok"
     }
     else {
         $empty.Visibility = "Collapsed"
-        Write-WinToolLog -Message ("Scan finished. {0} update(s) listed." -f $records.Count) -Level "ok"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.scan-finished-n-update-s-listed") -f $records.Count) -Level "ok"
     }
     Sync-WinToolBusyState -Busy $false
-    Sync-WinToolProgress -Value 100 -Text "Scan finished" -Indeterminate $false
+    Sync-WinToolProgress -Value 100 -Text (Get-WinToolText "status.scanFinished") -Indeterminate $false
 }
 
 function Invoke-WinToolInstallUpdatesClick {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $updates = @($script:WinToolState.Updates)
     if ($updates.Count -eq 0) {
-        Write-WinToolLog -Message "Scan for updates before installing them." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.scan-for-updates-before-installing-them") -Level "warn"
         return
     }
-    $ok = Request-WinToolConfirmation -Message ("Download and install {0} Windows Update item(s)? The PC may need a restart." -f $updates.Count) -Title "Install updates"
+    $ok = Request-WinToolConfirmation -Message ((Get-WinToolText "msg.download-and-install-n-windows-update-item-s-the-pc-may-") -f $updates.Count) -Title (Get-WinToolText "msg.install-updates")
     if (-not $ok) {
         return
     }
@@ -140,8 +140,8 @@ function Invoke-WinToolInstallUpdatesClick {
         }
     }
     Sync-WinToolBusyState -Busy $true
-    Sync-WinToolProgress -Value 0 -Text "Installing Windows updates" -Indeterminate $true
-    Write-WinToolLog -Message "Downloading and installing the scanned updates." -Level "info"
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "msg.installing-windows-updates") -Indeterminate $true
+    Write-WinToolLog -Message (Get-WinToolText "msg.downloading-and-installing-the-scanned-updates") -Level "info"
     $script:WinToolState.InstallJob = Start-WinToolScriptJob -ScriptText (Get-WinToolUpdateInstallScript) -Argument @($criteria, ($titles -join "`n"))
 }
 
@@ -160,24 +160,24 @@ function Complete-WinToolUpdateInstall {
     }
     $script:WinToolState.InstallJob = $null
     Sync-WinToolBusyState -Busy $false
-    Sync-WinToolProgress -Value 0 -Text "Ready" -Indeterminate $false
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Indeterminate $false
     if (-not $ok) {
-        Write-WinToolLog -Message ("Update install failed. {0}" -f $errorMessage) -Level "error"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.update-install-failed-n") -f $errorMessage) -Level "error"
         return
     }
     if ($count -eq 0) {
-        Write-WinToolLog -Message "Those updates were no longer offered when the install started." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.tool.install.none") -Level "warn"
         return
     }
     $script:WinToolState.Updates = @()
     (Get-WinToolUi -Name "UpdateList").Items.Clear()
     (Get-WinToolUi -Name "InstallScannedUpdates").IsEnabled = $false
     $empty = Get-WinToolUi -Name "UpdateEmpty"
-    $empty.Text = ("Installed {0} update(s). Scan again to check for more." -f $count)
+    $empty.Text = ((Get-WinToolText "msg.installed-n-update-s-scan-again-to-check-for-more") -f $count)
     $empty.Visibility = "Visible"
-    Write-WinToolLog -Message ("Finished installing {0} update(s)." -f $count) -Level "ok"
+    Write-WinToolLog -Message ((Get-WinToolText "msg.finished-installing-n-update-s") -f $count) -Level "ok"
     if ($reboot) {
-        Write-WinToolLog -Message "Windows asked for a restart to finish the updates." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.windows-asked-for-a-restart-to-finish-the-updates") -Level "warn"
     }
 }
 
@@ -224,7 +224,7 @@ function Sync-WinToolUpdateMode {
     if ($null -ne $mode) {
         $label = [string]$mode.name
     }
-    (Get-WinToolUi -Name "UpdateModeCurrent").Text = "Current mode: " + $label
+    (Get-WinToolUi -Name "UpdateModeCurrent").Text = (Get-WinToolText "msg.current-mode-n" $label)
     $script:WinToolState.UpdateModeCurrent = $current
     $script:WinToolState.UpdateMode = $current
     foreach ($radio in @($script:WinToolState.UpdateModeRadios)) {
@@ -237,7 +237,7 @@ function Invoke-WinToolUpdateModeClick {
         [string]$ModeId
     )
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $mode = $null
@@ -245,17 +245,17 @@ function Invoke-WinToolUpdateModeClick {
         $mode = Find-WinToolUpdateMode -Id $ModeId
     }
     if ($null -eq $mode) {
-        Write-WinToolLog -Message "Pick an update mode first." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.pick-an-update-mode-first") -Level "warn"
         return
     }
     $message = "Set Windows Update to: {0}?`n`n{1}" -f [string]$mode.name, [string]$mode.description
     if ($ModeId -eq "disabled") {
         $message += "`n`nThis is not recommended. Use Back to default to undo it."
     }
-    $ok = Request-WinToolConfirmation -Message $message -Title "Update mode"
+    $ok = Request-WinToolConfirmation -Message $message -Title (Get-WinToolText "ui.t.update-mode.Text")
     if (-not $ok) {
         return
     }
     $steps = @(Get-WinToolUpdateModePlan -ModeId $ModeId)
-    Invoke-WinToolPlanAsync -Step $steps -DoneMessage ("Windows Update mode set to " + [string]$mode.name + ".") -AfterDone "Sync-WinToolUpdateMode"
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage (Get-WinToolText "msg.windows-update-mode-set-to-n" $mode.name) -AfterDone "Sync-WinToolUpdateMode"
 }

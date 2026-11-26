@@ -1,0 +1,21 @@
+{
+  "activity.copy": "複製詳細資料",
+  "button.scanDrivers": "檢查驅動程式",
+  "config.language.label": "語言",
+  "config.language.matchWindows": "使用 Windows 顯示語言",
+  "status.ready": "就緒",
+  "ui.ActivityCopy.Content": "複製詳細資料",
+  "ui.AppInstall.Content": "安裝所選項目",
+  "ui.AppUninstall.Content": "解除安裝所選項目",
+  "ui.DriversScan.Content": "檢查驅動程式",
+  "ui.DriversScanAgain.AutomationName": "再次檢查驅動程式",
+  "ui.t.config.Text": "設定",
+  "ui.t.drivers.Text": "驅動程式",
+  "ui.t.features.Text": "功能",
+  "ui.t.fixes.Text": "修復",
+  "ui.t.home.Text": "首頁",
+  "ui.t.install.Text": "安裝",
+  "ui.t.terminal.Text": "終端機",
+  "ui.t.tweaks.Text": "調整",
+  "ui.t.updates.Text": "更新"
+}

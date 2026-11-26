@@ -1,0 +1,22 @@
+# Catalog / payload schema checks (developer-facing, shown if data is broken).
+apps.json schemaVersion must be 1.
+tweaks.json schemaVersion must be 1.
+terminal.json schemaVersion must be 1.
+updates.json schemaVersion must be 1.
+apps.json has no categories.
+terminal.json should list the prompt engines.
+fonts.json should include the Nerd Fonts catalog.
+omp-themes.json should include the official Oh My Posh themes.
+drivers.json schemaVersion must be 1.
+drivers.json has no game runtimes.
+drivers.json should mark at least one recommended game runtime with attention.
+drivers.json should list the official AMD, NVIDIA, and Intel apps.
+drivers.json is missing problem code $needed.
+# Diagnostic activity lines for the installed-apps scan (English logs, not chrome).
+Installed apps: checking with winget. Candidates: 
+Installed apps: 
+Installed apps: found by name, outside winget: 
+Installed apps: marked installed: 
+Installed apps: update available: 
+# Brand names kept in English.
+Oh My Posh

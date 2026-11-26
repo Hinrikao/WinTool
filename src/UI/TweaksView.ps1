@@ -206,7 +206,7 @@ function New-WinToolTweakRow {
     $dot.Margin = [System.Windows.Thickness]::new(3, 0, 10, 0)
     if ($risk -eq "caution") {
         $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushWarn")
-        $dot.ToolTip = "Caution: read the details before turning this on."
+        $dot.ToolTip = (Get-WinToolText "msg.caution-read-the-details-before-turning-this-on")
     }
     else {
         $dot.SetResourceReference([System.Windows.Shapes.Shape]::FillProperty, "BrushOk")
@@ -379,22 +379,22 @@ function Get-WinToolTweakCardColumn {
 function Update-WinToolTweakCount {
     foreach ($group in @($script:WinToolState.TweakGroups)) {
         $on = @($group.Rows | Where-Object { $_.Checkbox.IsChecked -eq $true }).Count
-        $group.Count.Text = ("{0} of {1} on" -f $on, @($group.Rows).Count)
+        $group.Count.Text = ((Get-WinToolText "msg.n-of-n-on") -f $on, @($group.Rows).Count)
     }
 }
 
 function Sync-WinToolTweakToggleTip {
     param($Row)
     if ($Row.State -eq "unknown") {
-        $Row.Checkbox.ToolTip = "WinTool cannot read this setting, so it shows as off. Turning it on applies it."
+        $Row.Checkbox.ToolTip = (Get-WinToolText "msg.wintool-cannot-read-this-setting-so-it-shows-as-off-turn")
         $Row.Checkbox.Opacity = 0.6
     }
     elseif ($Row.Checkbox.IsChecked -eq $true) {
-        $Row.Checkbox.ToolTip = "On. Turn off to undo."
+        $Row.Checkbox.ToolTip = (Get-WinToolText "msg.on-turn-off-to-undo")
         $Row.Checkbox.ClearValue([System.Windows.UIElement]::OpacityProperty)
     }
     else {
-        $Row.Checkbox.ToolTip = "Off. Turn on to apply."
+        $Row.Checkbox.ToolTip = (Get-WinToolText "msg.off-turn-on-to-apply")
         $Row.Checkbox.ClearValue([System.Windows.UIElement]::OpacityProperty)
     }
 }
@@ -416,7 +416,7 @@ function Update-WinToolTweakState {
         Sync-WinToolTweakToggleTip -Row $row
     }
     Update-WinToolTweakCount
-    Write-WinToolLog -Message ("Tweaks: read the current state of {0} tweaks ({1} could not be read)." -f @($script:WinToolState.TweakRows).Count, $unknown) -Level "info" -Diagnostic
+    Write-WinToolLog -Message ((Get-WinToolText "msg.tweaks-read-the-current-state-of-n-tweaks-n-could-not-be") -f @($script:WinToolState.TweakRows).Count, $unknown) -Level "info" -Diagnostic
 }
 
 function Get-WinToolTweakStatePayload {
@@ -488,7 +488,7 @@ function Complete-WinToolTweakStateRead {
     if ($generation -ne [int]$script:WinToolState.TweakStateGeneration) { return }
     if ($script:WinToolState.TweakStateRead) { return }
     if (-not $ok) {
-        Write-WinToolLog -Message ("Tweaks: could not read the current state. {0}" -f $errorText) -Level "warn" -Diagnostic
+        Write-WinToolLog -Message ((Get-WinToolText "msg.tweaks-could-not-read-the-current-state-n") -f $errorText) -Level "warn" -Diagnostic
         return
     }
     $map = @{}
@@ -509,7 +509,7 @@ function Complete-WinToolTweakStateRead {
     }
     $script:WinToolState.TweakStateRead = $true
     Update-WinToolTweakCount
-    Write-WinToolLog -Message ("Tweaks: read the current state of {0} tweaks ({1} could not be read)." -f @($script:WinToolState.TweakRows).Count, $unknown) -Level "info" -Diagnostic
+    Write-WinToolLog -Message ((Get-WinToolText "msg.tweaks-read-the-current-state-of-n-tweaks-n-could-not-be") -f @($script:WinToolState.TweakRows).Count, $unknown) -Level "info" -Diagnostic
     if ([string]$script:WinToolState.ActiveView -eq "Config") {
         Update-WinToolProfileSummary
     }
@@ -522,7 +522,7 @@ function Invoke-WinToolTweakToggle {
     $wantOn = ($Row.Checkbox.IsChecked -eq $true)
     if ($script:WinToolState.Busy -or $null -ne $script:WinToolState.TweakQueue) {
         $Row.Checkbox.IsChecked = (-not $wantOn)
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $direction = "Apply"
@@ -530,7 +530,7 @@ function Invoke-WinToolTweakToggle {
         $direction = "Undo"
         if ($null -eq (Get-WinToolNote -Object $Row.Tweak -Name "undo")) {
             $Row.Checkbox.IsChecked = $true
-            Write-WinToolLog -Message ("{0} has no undo." -f [string]$Row.Tweak.name) -Level "warn"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.n-has-no-undo") -f [string]$Row.Tweak.name) -Level "warn"
             return
         }
     }
@@ -560,9 +560,9 @@ function Start-WinToolTweakQueue {
     foreach ($entry in $items) {
         $entry.Row.Checkbox.IsEnabled = $false
     }
-    Sync-WinToolProgress -Value 0 -Text "Creating a restore point" -Indeterminate $true
-    Write-WinToolLog -Message "Creating a restore point before the first change. This can take a minute." -Level "info"
-    $script:WinToolState.RestoreJob = Start-WinToolRestorePointJob -Description "WinTool before tweaks"
+    Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "drivers.restore.progress") -Indeterminate $true
+    Write-WinToolLog -Message (Get-WinToolText "msg.creating-a-restore-point-before-the-first-change-this-ca") -Level "info"
+    $script:WinToolState.RestoreJob = Start-WinToolRestorePointJob -Description (Get-WinToolText "msg.wintool-before-tweaks")
 }
 
 function Complete-WinToolRestorePoint {
@@ -575,22 +575,22 @@ function Complete-WinToolRestorePoint {
         return
     }
     if (-not $Ok) {
-        $continue = Request-WinToolConfirmation -Message ("A restore point was not created.`n`n{0}`n`nContinue anyway?" -f $ErrorMessage) -Title "Restore point"
+        $continue = Request-WinToolConfirmation -Message ((Get-WinToolText "drivers.restore.missing") -f $ErrorMessage) -Title (Get-WinToolText "drivers.restore.title")
         if (-not $continue) {
             foreach ($entry in @($script:WinToolState.TweakQueue)) {
                 $entry.Row.Checkbox.IsChecked = [bool]$entry.Previous
             }
             $script:WinToolState.TweakQueue = $null
             Sync-WinToolBusyState -Busy $false
-            Sync-WinToolProgress -Value 0 -Text "Ready" -Indeterminate $false
+            Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Indeterminate $false
             Update-WinToolTweakCount
-            Write-WinToolLog -Message "Tweaks were not changed." -Level "warn"
+            Write-WinToolLog -Message (Get-WinToolText "msg.tweaks-were-not-changed") -Level "warn"
             return
         }
-        Write-WinToolLog -Message "Continuing without a restore point." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.restore.continue") -Level "warn"
     }
     else {
-        Write-WinToolLog -Message "Restore point created." -Level "ok"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.restore.created") -Level "ok"
     }
     $script:WinToolState.RestorePointDone = $true
     Sync-WinToolBusyState -Busy $false
@@ -612,11 +612,11 @@ function Complete-WinToolTweakQueue {
         if ($needsExplorer -and ((Get-WinToolUi -Name "TweakRestartExplorer").IsChecked -eq $true)) {
             Restart-WinToolExplorer
         }
-        Sync-WinToolProgress -Value 100 -Text "Ready" -Indeterminate $false
+        Sync-WinToolProgress -Value 100 -Text (Get-WinToolText "status.ready") -Indeterminate $false
     }
     catch {
-        Write-WinToolLog -Message ("Tweaks failed. {0}" -f $_.Exception.Message) -Level "error"
-        Sync-WinToolProgress -Value 0 -Text "Ready" -Indeterminate $false
+        Write-WinToolLog -Message ((Get-WinToolText "msg.tweaks-failed-n") -f $_.Exception.Message) -Level "error"
+        Sync-WinToolProgress -Value 0 -Text (Get-WinToolText "status.ready") -Indeterminate $false
     }
     foreach ($entry in $items) {
         $entry.Row.Checkbox.IsEnabled = $true
@@ -650,18 +650,18 @@ function Request-WinToolTweakOn {
     }
     $rows = @($script:WinToolState.TweakRows | Where-Object { $wanted.ContainsKey([string]$_.Id) -and $_.Checkbox.IsChecked -ne $true })
     if ($rows.Count -eq 0) {
-        Write-WinToolLog -Message ("Every tweak in {0} is already on." -f $Label) -Level "info"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.every-tweak-in-n-is-already-on") -f $Label) -Level "info"
         return
     }
     if ($script:WinToolState.Busy -or $null -ne $script:WinToolState.TweakQueue) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $names = @($rows | Select-Object -First 10 | ForEach-Object { "- " + [string]$_.Tweak.name }) -join "`n"
     if ($rows.Count -gt 10) { $names += "`n- ..." }
     $ok = $true
     if (-not $NoConfirm) {
-        $ok = Request-WinToolConfirmation -Message ("Turn on {0} tweak(s) from {1}?`n`n{2}`n`nWinTool creates a restore point before the first change." -f $rows.Count, $Label, $names) -Title "Tweaks"
+        $ok = Request-WinToolConfirmation -Message ((Get-WinToolText "msg.turn-on-n-tweak-s-from-n-n-wintool-creates-a-restore-poi") -f $rows.Count, $Label, $names) -Title "Tweaks"
     }
     if (-not $ok) {
         return
@@ -671,7 +671,7 @@ function Request-WinToolTweakOn {
         $row.Checkbox.IsChecked = $true
         $items.Add([pscustomobject]@{ Row = $row; Direction = "Apply"; Previous = $false })
     }
-    Write-WinToolLog -Message ("Turning on {0} tweak(s) from {1}." -f $rows.Count, $Label) -Level "info"
+    Write-WinToolLog -Message ((Get-WinToolText "msg.turning-on-n-tweak-s-from-n") -f $rows.Count, $Label) -Level "info"
     # Home watches this flag to know the queue started.
     $script:WinToolState.TweakRequestStarted = $true
     Start-WinToolTweakQueue -Item $items.ToArray()
@@ -697,7 +697,7 @@ function Select-WinToolPreset {
     foreach ($tweak in @(Get-WinToolPresetTweak -Catalog $catalog -PresetId ([string]$Preset.id))) {
         $ids.Add([string]$tweak.id)
     }
-    Request-WinToolTweakOn -Id $ids.ToArray() -Label ("the " + [string]$Preset.name + " preset")
+    Request-WinToolTweakOn -Id $ids.ToArray() -Label (Get-WinToolText "msg.the-n-preset" $Preset.name)
 }
 
 function Update-WinToolTweakFilter {

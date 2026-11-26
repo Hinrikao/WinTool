@@ -6,7 +6,7 @@
 # the plan runner so they are logged and never block the window.
 
 function Get-WinToolSystemCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "System"))
+    return (Get-WinToolCachedPayloadObject -Name "System")
 }
 
 function Get-WinToolDnsProvider {
@@ -130,7 +130,7 @@ function Get-WinToolDnsScript {
     foreach ($address in $servers) {
         $parsed = $null
         if (-not [System.Net.IPAddress]::TryParse([string]$address, [ref]$parsed)) {
-            throw "DNS provider '$([string]$Provider.id)' has an invalid address '$address'."
+            throw (Get-WinToolText "msg.dns-provider-n-has-an-invalid-address-n" $([string]$Provider.id) $address)
         }
     }
     $indexText = (@($InterfaceIndex | ForEach-Object { [string][int]$_ })) -join ", "
@@ -169,7 +169,7 @@ function Get-WinToolDnsPlan {
     )
     $adapters = @($Adapter)
     if ($adapters.Count -eq 0) {
-        throw "Pick a network adapter first."
+        throw (Get-WinToolText "msg.pick-a-network-adapter-first")
     }
     $names = (@($adapters | ForEach-Object { [string]$_.Name })) -join ", "
     return @([pscustomobject]@{
@@ -299,7 +299,7 @@ function Get-WinToolPowerPlanState {
 function Format-WinToolPowerPlanStatus {
     param(
         [Parameter(Mandatory = $true)]$State,
-        [string]$Name = "Ultimate Performance"
+        [string]$Name = (Get-WinToolText "catalog.system.powerPlan.name")
     )
     if ($State.Added) {
         if ($State.Active) { return "$Name is added and active." }

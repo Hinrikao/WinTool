@@ -78,13 +78,13 @@ function Start-WinToolFeatureDetection {
     (Get-WinToolUi -Name "FeatureRefresh").IsEnabled = $false
     $names = New-Object System.Collections.Generic.List[string]
     foreach ($row in @($script:WinToolState.FeatureRows)) {
-        $row.StateText.Text = "Checking..."
+        $row.StateText.Text = (Get-WinToolText "msg.checking-ellipsis")
         $row.Checkbox.IsEnabled = $false
         foreach ($name in @($row.Feature.names)) {
             $names.Add([string]$name)
         }
     }
-    (Get-WinToolUi -Name "FeatureStatus").Text = "Reading the current state..."
+    (Get-WinToolUi -Name "FeatureStatus").Text = (Get-WinToolText "msg.reading-the-current-state")
     $job = Start-WinToolScriptJob -ScriptText (Get-WinToolFeatureStateScript) -Argument @(, $names.ToArray())
     $job | Add-Member -NotePropertyName Started -NotePropertyValue ([DateTime]::UtcNow)
     $script:WinToolState.FeatureJob = $job
@@ -101,8 +101,8 @@ function Test-WinToolFeatureDetectionTimeout {
     Stop-WinToolThread -Job $job
     $script:WinToolState.FeatureJob = $null
     (Get-WinToolUi -Name "FeatureRefresh").IsEnabled = (-not $script:WinToolState.Busy)
-    (Get-WinToolUi -Name "FeatureStatus").Text = "Reading Windows features took too long. Press Refresh to try again."
-    Write-WinToolLog -Message "Windows features check timed out. Press Refresh to try again." -Level "warn"
+    (Get-WinToolUi -Name "FeatureStatus").Text = (Get-WinToolText "msg.reading-windows-features-took-too-long-press-refresh-to-")
+    Write-WinToolLog -Message (Get-WinToolText "msg.windows-features-check-timed-out-press-refresh-to-try-ag") -Level "warn"
 }
 
 function Complete-WinToolFeatureDetection {
@@ -117,8 +117,8 @@ function Complete-WinToolFeatureDetection {
     $script:WinToolState.FeatureJob = $null
     (Get-WinToolUi -Name "FeatureRefresh").IsEnabled = (-not $script:WinToolState.Busy)
     if (-not $ok) {
-        (Get-WinToolUi -Name "FeatureStatus").Text = "Could not read the Windows features."
-        Write-WinToolLog -Message ("Could not read the Windows features. {0}" -f $errorMessage) -Level "warn"
+        (Get-WinToolUi -Name "FeatureStatus").Text = (Get-WinToolText "msg.could-not-read-the-windows-features")
+        Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-read-the-windows-features-n") -f $errorMessage) -Level "warn"
         return
     }
     Set-WinToolFeatureState -State $states
@@ -133,8 +133,8 @@ function Set-WinToolFeatureState {
         switch ($status) {
             "On" { $row.StateText.Text = "On"; $on++ }
             "Off" { $row.StateText.Text = "Off" }
-            "Partial" { $row.StateText.Text = "Partly on" }
-            default { $row.StateText.Text = "Not available on this PC" }
+            "Partial" { $row.StateText.Text = (Get-WinToolText "msg.partly-on") }
+            default { $row.StateText.Text = (Get-WinToolText "msg.not-available-on-this-pc") }
         }
         $row.Checkbox.IsEnabled = ($status -ne "Unavailable")
         $row.Checkbox.IsChecked = ($status -eq "On")
@@ -148,7 +148,7 @@ function Set-WinToolFeatureState {
             $row.StateText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $tone[1])
         }
     }
-    (Get-WinToolUi -Name "FeatureStatus").Text = ("{0} of these features are on. Tick or untick, then apply." -f $on)
+    (Get-WinToolUi -Name "FeatureStatus").Text = ((Get-WinToolText "msg.n-of-these-features-are-on-tick-or-untick-then-apply") -f $on)
 }
 
 function Get-WinToolFeatureChange {
@@ -175,19 +175,19 @@ function Get-WinToolFeatureChange {
 function Invoke-WinToolFeatureApplyClick {
     Start-WinToolSurfaceTiming -Name "Features apply"
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $change = Get-WinToolFeatureChange
     $total = @($change.Enable).Count + @($change.Disable).Count
     if ($total -eq 0) {
-        Write-WinToolLog -Message "No Windows feature changes to apply." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.no-windows-feature-changes-to-apply") -Level "warn"
         return
     }
     $lines = New-Object System.Collections.Generic.List[string]
     foreach ($feature in @($change.Enable)) { $lines.Add("Turn on: " + [string]$feature.name) }
     foreach ($feature in @($change.Disable)) { $lines.Add("Turn off: " + [string]$feature.name) }
-    $ok = Request-WinToolConfirmation -Message ("Change these Windows features?`n`n" + ($lines -join "`n") + "`n`nWindows needs a restart to finish.") -Title "Windows features"
+    $ok = Request-WinToolConfirmation -Message (Get-WinToolText "msg.change-these-windows-features-n" ($lines -join "`n")) -Title (Get-WinToolText "msg.windows-features")
     if (-not $ok) {
         return
     }

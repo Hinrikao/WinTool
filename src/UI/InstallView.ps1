@@ -98,7 +98,7 @@ function Initialize-WinToolInstallView {
         if ($script:WinToolState.AppsDetected -and $checked.Count -gt 0) {
             $checked = @($checked | Where-Object { $_.Installed })
             if ($checked.Count -eq 0) {
-                Write-WinToolLog -Message "None of the selected apps are marked as installed." -Level "warn"
+                Write-WinToolLog -Message (Get-WinToolText "msg.none-of-the-selected-apps-are-marked-as-installed") -Level "warn"
                 return
             }
         }
@@ -109,7 +109,7 @@ function Initialize-WinToolInstallView {
         if ($script:WinToolState.AppsDetected -and $checked.Count -gt 0) {
             $checked = @($checked | Where-Object { $_.Installed })
             if ($checked.Count -eq 0) {
-                Write-WinToolLog -Message "None of the selected apps are marked as installed." -Level "warn"
+                Write-WinToolLog -Message (Get-WinToolText "msg.none-of-the-selected-apps-are-marked-as-installed") -Level "warn"
                 return
             }
         }
@@ -373,7 +373,7 @@ function New-WinToolAppRow {
     $checkbox = New-Object System.Windows.Controls.CheckBox
     $checkbox.VerticalAlignment = "Top"
     $checkbox.Margin = [System.Windows.Thickness]::new(0, 1, -4, 0)
-    $checkbox.ToolTip = "Pick several apps and install, update, or uninstall them together."
+    $checkbox.ToolTip = (Get-WinToolText "msg.pick-several-apps-and-install-update-or-uninstall-them-t")
     [System.Windows.Controls.Grid]::SetColumn($checkbox, 2)
     [void]$head.Children.Add($checkbox)
     [void]$layout.Children.Add($head)
@@ -438,10 +438,10 @@ function New-WinToolAppRow {
         Pending = $false
     }
     foreach ($choice in @(
-            [pscustomobject]@{ Button = $installButton; Action = "install"; Name = "Install: install one app" },
-            [pscustomobject]@{ Button = $updateButton; Action = "upgrade"; Name = "Install: update one app" },
-            [pscustomobject]@{ Button = $uninstallButton; Action = "uninstall"; Name = "Install: uninstall one app" },
-            [pscustomobject]@{ Button = $openButton; Action = "open"; Name = "Install: open app" }
+            [pscustomobject]@{ Button = $installButton; Action = "install"; Name = (Get-WinToolText "msg.install-install-one-app") },
+            [pscustomobject]@{ Button = $updateButton; Action = "upgrade"; Name = (Get-WinToolText "msg.install-update-one-app") },
+            [pscustomobject]@{ Button = $uninstallButton; Action = "uninstall"; Name = (Get-WinToolText "msg.install-uninstall-one-app") },
+            [pscustomobject]@{ Button = $openButton; Action = "open"; Name = (Get-WinToolText "msg.install-open-app") }
         )) {
         Register-WinToolUiEvent -Control $choice.Button -EventName "Click" -Name $choice.Name -Data ([pscustomobject]@{ Row = $row; Action = $choice.Action }) -Action {
             param($source, $eventData, $target)
@@ -454,8 +454,8 @@ function New-WinToolAppRow {
     $menu = New-Object System.Windows.Controls.ContextMenu
     $menuItems = New-Object System.Collections.Generic.List[object]
     foreach ($choice in @(
-            [pscustomobject]@{ Header = "Update this app"; Action = "upgrade"; Name = "Install: update one app" },
-            [pscustomobject]@{ Header = "Uninstall this app"; Action = "uninstall"; Name = "Install: uninstall one app" }
+            [pscustomobject]@{ Header = (Get-WinToolText "msg.update-this-app"); Action = "upgrade"; Name = (Get-WinToolText "msg.install-update-one-app") },
+            [pscustomobject]@{ Header = (Get-WinToolText "msg.uninstall-this-app"); Action = "uninstall"; Name = (Get-WinToolText "msg.install-uninstall-one-app") }
         )) {
         $item = New-Object System.Windows.Controls.MenuItem
         $item.Header = $choice.Header
@@ -563,7 +563,7 @@ function Set-WinToolAppStatus {
     else {
         $status.Visibility = "Hidden"
     }
-    (Get-WinToolUi -Name "AppRefreshInstalled").ToolTip = $Text + " Press to check again."
+    (Get-WinToolUi -Name "AppRefreshInstalled").ToolTip = ($Text + (Get-WinToolText "msg.press-to-check-again"))
 }
 
 function Update-WinToolAppChip {
@@ -574,15 +574,15 @@ function Update-WinToolAppChip {
         if ($row.UpdateAvailable) { $updates++ }
     }
     foreach ($chip in @((Get-WinToolUi -Name "AppFilters").Children)) {
-        if ([string]$chip.Tag -eq "installed") { $chip.Content = "Installed ($installed)" }
-        if ([string]$chip.Tag -eq "updates") { $chip.Content = "Updates ($updates)" }
+        if ([string]$chip.Tag -eq "installed") { $chip.Content = (Get-WinToolText "msg.installed-n" $installed) }
+        if ([string]$chip.Tag -eq "updates") { $chip.Content = (Get-WinToolText "msg.updates-n" $updates) }
     }
     $upgradeAll = Get-WinToolUi -Name "AppUpgradeAll"
     if ($updates -gt 0) {
-        $upgradeAll.Content = "Update all ($updates)"
+        $upgradeAll.Content = (Get-WinToolText "msg.update-all-n" $updates)
     }
     else {
-        $upgradeAll.Content = "Update all"
+        $upgradeAll.Content = (Get-WinToolText "button.updateAll")
     }
 }
 
@@ -596,11 +596,11 @@ function Invoke-WinToolAppCardAction {
         return
     }
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     if ($Action -eq "uninstall") {
-        $ok = Request-WinToolConfirmation -Message ("Uninstall {0} with winget?" -f [string]$Row.Name) -Title "Uninstall app"
+        $ok = Request-WinToolConfirmation -Message ((Get-WinToolText "msg.uninstall-n-with-winget") -f [string]$Row.Name) -Title (Get-WinToolText "msg.uninstall-app")
         if (-not $ok) {
             return
         }
@@ -652,15 +652,15 @@ function Open-WinToolApp {
     )
     $launchId = [string]$Row.LaunchId
     if ([string]::IsNullOrWhiteSpace($launchId)) {
-        Write-WinToolLog -Message ("WinTool could not find {0} in the Start menu." -f [string]$Row.Name) -Level "warn"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.wintool-could-not-find-n-in-the-start-menu") -f [string]$Row.Name) -Level "warn"
         return
     }
     try {
         Start-Process -FilePath "explorer.exe" -ArgumentList ("shell:AppsFolder\" + $launchId)
-        Write-WinToolLog -Message ("Opened {0}." -f [string]$Row.Name) -Level "info"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.opened-n") -f [string]$Row.Name) -Level "info"
     }
     catch {
-        Write-WinToolLog -Message ("Could not open {0}. {1}" -f [string]$Row.Name, $_.Exception.Message) -Level "warn"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-open-n-n") -f [string]$Row.Name, $_.Exception.Message) -Level "warn"
     }
 }
 
@@ -674,7 +674,7 @@ function Start-WinToolAppDetection {
     if ($candidates.Count -eq 0) {
         Set-WinToolAppStatus -Text "winget not found, so installed apps cannot be checked."
         Clear-WinToolAppCardAction
-        Write-WinToolLog -Message "Installed apps: winget.exe was not found on this PC." -Level "warn" -Diagnostic
+        Write-WinToolLog -Message (Get-WinToolText "msg.installed-apps-winget-exe-was-not-found-on-this-pc") -Level "warn" -Diagnostic
         return
     }
     Set-WinToolAppStatus -Text "Checking installed apps..."
@@ -698,7 +698,7 @@ function Test-WinToolAppDetectionTimeout {
     $script:WinToolState.DetectJob = $null
     Set-WinToolAppStatus -Text "Checking installed apps took too long. Press Refresh to try again."
     Clear-WinToolAppCardAction
-    Write-WinToolLog -Message ("Installed apps: winget did not finish in {0} seconds, so the check was stopped." -f $script:WinToolDetectTimeoutSeconds) -Level "warn" -Diagnostic
+    Write-WinToolLog -Message ((Get-WinToolText "msg.installed-apps-winget-did-not-finish-in-n-seconds-so-the") -f $script:WinToolDetectTimeoutSeconds) -Level "warn" -Diagnostic
 }
 
 function Write-WinToolDetectionLog {
@@ -735,7 +735,7 @@ function Complete-WinToolAppDetection {
     if (-not $ok) {
         Set-WinToolAppStatus -Text "Could not check installed apps. See the log."
         Clear-WinToolAppCardAction
-        Write-WinToolLog -Message ("Could not check installed apps. {0}" -f $errorMessage) -Level "warn" -Diagnostic
+        Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-check-installed-apps-n") -f $errorMessage) -Level "warn" -Diagnostic
         return
     }
     if (-not [string]::IsNullOrWhiteSpace($winget)) {
@@ -746,9 +746,9 @@ function Complete-WinToolAppDetection {
         $installedIds = @(ConvertFrom-WinToolWingetExport -Text $exportText)
     }
     catch {
-        Write-WinToolLog -Message ("Installed apps: could not read the winget export file. {0}" -f $_.Exception.Message) -Level "warn" -Diagnostic
+        Write-WinToolLog -Message ((Get-WinToolText "msg.installed-apps-could-not-read-the-winget-export-file-n") -f $_.Exception.Message) -Level "warn" -Diagnostic
     }
-    Write-WinToolLog -Message ("Installed apps: winget export listed {0} packages." -f $installedIds.Count) -Level "info" -Diagnostic
+    Write-WinToolLog -Message ((Get-WinToolText "msg.installed-apps-winget-export-listed-n-packages") -f $installedIds.Count) -Level "info" -Diagnostic
     $counts = Set-WinToolAppState -InstalledId $installedIds -UpgradeText $upgradeText -ListText $listText -DisplayName $displayNames
     $known = @(Get-WinToolTerminalWingetId)
     $fromList = @()
@@ -772,7 +772,7 @@ function Complete-WinToolAppDetection {
     if (@($counts.ByName).Count -gt 0) {
         Write-WinToolLog -Message ("Installed apps: found by name, outside winget: " + (@($counts.ByName) -join ", ")) -Level "info" -Diagnostic
     }
-    Write-WinToolLog -Message ("Installed apps: {0} catalog apps installed, {1} with an update." -f $counts.Installed, $counts.Updates) -Level "ok" -Diagnostic
+    Write-WinToolLog -Message ((Get-WinToolText "msg.installed-apps-n-catalog-apps-installed-n-with-an-update") -f $counts.Installed, $counts.Updates) -Level "ok" -Diagnostic
     Write-WinToolLog -Message ("Installed apps: marked installed: " + (@($counts.InstalledIds) -join ", ")) -Level "info" -Diagnostic
     if (@($counts.UpdateIds).Count -gt 0) {
         Write-WinToolLog -Message ("Installed apps: update available: " + (@($counts.UpdateIds) -join ", ")) -Level "info" -Diagnostic
@@ -833,7 +833,7 @@ function Select-WinToolInstalledApp {
         }
     }
     if ($ids.Count -eq 0) {
-        Write-WinToolLog -Message "No installed catalog apps were found yet. Press Refresh first." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.no-installed-catalog-apps-were-found-yet-press-refresh-f") -Level "warn"
     }
     Sync-WinToolAppCheck -Id $ids.ToArray() -OnlyThese
 }
@@ -844,12 +844,12 @@ function Invoke-WinToolAppAction {
         [Parameter(Mandatory = $true)][ValidateSet("upgrade", "uninstall")][string]$Action
     )
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $apps = @($App)
     if ($apps.Count -eq 0) {
-        Write-WinToolLog -Message "Select at least one app first." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.select-at-least-one-app-first") -Level "warn"
         return
     }
     $verb = "Update"
@@ -860,7 +860,7 @@ function Invoke-WinToolAppAction {
     if ($apps.Count -gt 8) {
         $names += ", ..."
     }
-    $ok = Request-WinToolConfirmation -Message ("{0} {1} app(s) with winget?`n`n{2}" -f $verb, $apps.Count, $names) -Title ($verb + " apps")
+    $ok = Request-WinToolConfirmation -Message (Get-WinToolText "msg.n-apps-with-winget-n" $verb $apps.Count $names) -Title (Get-WinToolText "msg.n-apps" $verb)
     if (-not $ok) {
         return
     }
@@ -870,10 +870,10 @@ function Invoke-WinToolAppAction {
 
 function Invoke-WinToolUpgradeAllClick {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
-    $ok = Request-WinToolConfirmation -Message "Update every app that winget can update, including apps that are not in this list?" -Title "Update all apps"
+    $ok = Request-WinToolConfirmation -Message (Get-WinToolText "msg.update-every-app-that-winget-can-update-including-apps-t") -Title (Get-WinToolText "msg.update-all-apps")
     if (-not $ok) {
         return
     }
@@ -882,7 +882,7 @@ function Invoke-WinToolUpgradeAllClick {
 
 function Sync-WinToolAppCount {
     $selected = @(Get-WinToolCheckedApp)
-    (Get-WinToolUi -Name "AppCount").Text = "{0} selected" -f $selected.Count
+    (Get-WinToolUi -Name "AppCount").Text = (Get-WinToolText "msg.n-selected") -f $selected.Count
     $bar = Get-WinToolUi -Name "AppBulkBar"
     if ($selected.Count -gt 0) {
         $bar.Visibility = "Visible"
@@ -937,7 +937,7 @@ function Update-WinToolAppFilter {
     }
     else {
         $empty.Visibility = "Visible"
-        $empty.Text = "No apps match this search or filter."
+        $empty.Text = (Get-WinToolText "msg.no-apps-match-this-search-or-filter")
     }
 }
 
@@ -973,12 +973,12 @@ function Sync-WinToolAppCheck {
 
 function Invoke-WinToolInstallClick {
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $apps = @(Get-WinToolCheckedApp)
     if ($apps.Count -eq 0) {
-        Write-WinToolLog -Message "Select at least one app first." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "msg.select-at-least-one-app-first") -Level "warn"
         return
     }
     $detected = $false
@@ -989,13 +989,13 @@ function Invoke-WinToolInstallClick {
     $pending = @($split.Pending)
     $already = @($split.Already)
     if ($pending.Count -eq 0) {
-        Write-WinToolLog -Message "Those apps are already installed. Use Update to look for newer versions." -Level "info"
+        Write-WinToolLog -Message (Get-WinToolText "msg.those-apps-are-already-installed-use-update-to-look-for-") -Level "info"
         return
     }
     if ($already.Count -gt 0) {
-        Write-WinToolLog -Message ("Skipped {0} already installed app(s). Use Update to look for newer versions." -f $already.Count) -Level "info"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.skipped-n-already-installed-app-s-use-update-to-look-for") -f $already.Count) -Level "info"
     }
-    $ok = Request-WinToolConfirmation -Message ("Install {0} app(s) with winget? Each vendor's license is accepted for you by winget." -f $pending.Count) -Title "Install apps"
+    $ok = Request-WinToolConfirmation -Message ((Get-WinToolText "msg.install-n-app-s-with-winget-each-vendor-s-license-is-acc") -f $pending.Count) -Title (Get-WinToolText "msg.install-apps")
     if (-not $ok) {
         return
     }

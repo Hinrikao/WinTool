@@ -21,6 +21,8 @@ foreach ($relative in [System.IO.File]::ReadAllLines($listPath)) {
 
 $script:WinToolFailures = New-Object System.Collections.Generic.List[string]
 
+Initialize-WinToolLocale -Language en -Force | Out-Null
+
 function Test-WinToolExpectation {
     param(
         [bool]$Condition,
@@ -2331,6 +2333,76 @@ Invoke-WinToolCase -Name "Driver header, display advice, and runtime rows only c
     Test-WinToolExpectation -Condition ([string]$group.Group -eq "outdated") -Message "JSON scan records can be classified after they are parsed."
 }
 
+
+
+
+Invoke-WinToolCase -Name "Locale detection follows the Windows display language and preferences" -Body {
+    $originalPath = $script:WinToolPreferencesPath
+    $originalPack = $script:WinToolLocalePackObject
+    $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-i18n-test-" + [Guid]::NewGuid().ToString("N") + ".json")
+    try {
+        $script:WinToolPreferencesPath = $temp
+        $script:WinToolLocalePackObject = $null
+        $pt = Initialize-WinToolLocale -Language auto -UiCulture "pt-BR" -PreferredLanguages @() -Force
+        Test-WinToolExpectation -Condition ($pt -eq "pt-BR") -Message ("pt-BR display language should resolve to pt-BR, got " + $pt)
+
+        $ptPt = Initialize-WinToolLocale -Language auto -UiCulture "pt-PT" -PreferredLanguages @() -Force
+        Test-WinToolExpectation -Condition ($ptPt -eq "pt-BR") -Message ("pt-PT should fall back to pt-BR, got " + $ptPt)
+
+        $zh = Initialize-WinToolLocale -Language auto -UiCulture "zh-CN" -PreferredLanguages @() -Force
+        Test-WinToolExpectation -Condition ($zh -eq "zh-Hans") -Message ("zh-CN should map to zh-Hans, got " + $zh)
+
+        $unknown = Initialize-WinToolLocale -Language auto -UiCulture "xx-YY" -PreferredLanguages @() -Force
+        Test-WinToolExpectation -Condition ($unknown -eq "en") -Message ("Unknown cultures should fall back to English, got " + $unknown)
+
+        $preferred = Initialize-WinToolLocale -Language auto -UiCulture "xx-YY" -PreferredLanguages @("fr-FR") -Force
+        $available = @(Get-WinToolAvailableLanguage)
+        if ($available -contains "fr") {
+            Test-WinToolExpectation -Condition ($preferred -eq "fr") -Message ("A preferred language of fr-FR should resolve to fr, got " + $preferred)
+        }
+
+        Initialize-WinToolLocale -Language "pt-BR" -Force | Out-Null
+        $homeLabel = Get-WinToolText "ui.t.home.Text"
+        $lang = Get-WinToolText "config.language.matchWindows"
+        $scan = Get-WinToolText "button.scanDrivers"
+        Test-WinToolExpectation -Condition ($homeLabel -eq "Início") -Message ("pt-BR Home should be Início, got " + $homeLabel)
+        Test-WinToolExpectation -Condition ($lang -eq "Usar o idioma do Windows") -Message ("pt-BR Match Windows wording was wrong: " + $lang)
+        Test-WinToolExpectation -Condition ($scan -eq "Verificar drivers") -Message ("pt-BR Scan drivers wording was wrong: " + $scan)
+        $prefs = Get-WinToolPreferences
+        $prefs.language = "pt-BR"
+        Save-WinToolPreferences -Preferences $prefs
+        $loaded = Get-WinToolPreferences
+        Test-WinToolExpectation -Condition ($loaded.language -eq "pt-BR") -Message "The language override is saved in preferences.json."
+
+        $forced = Initialize-WinToolLocale -Language "en" -UiCulture "pt-BR" -Force
+        Test-WinToolExpectation -Condition ($forced -eq "en") -Message "An explicit English override should win over a Portuguese display language."
+
+        $one = Get-WinToolCountText "activity.count.warning" 1
+        $many = Get-WinToolCountText "activity.count.warning" 3
+        Test-WinToolExpectation -Condition ($one -eq "1 warning" -and $many -eq "3 warnings") -Message "English plurals use one/many forms."
+    }
+    finally {
+        $script:WinToolPreferencesPath = $originalPath
+        $script:WinToolLocalePackObject = $null
+        Initialize-WinToolLocale -Language en -Force | Out-Null
+        if (Test-Path -LiteralPath $temp) {
+            Remove-Item -LiteralPath $temp -Force
+        }
+    }
+}
+
+Invoke-WinToolCase -Name "The i18n scanner rejects hard-coded strings and checks placeholder parity" -Body {
+    $python = $null
+    foreach ($name in @("python3", "python")) {
+        $cmd = Get-Command -Name $name -ErrorAction SilentlyContinue
+        if ($null -ne $cmd) { $python = [string]$cmd.Source; break }
+    }
+    Test-WinToolExpectation -Condition (-not [string]::IsNullOrWhiteSpace($python)) -Message "python3 is required for the hard-coded string scanner."
+    if ([string]::IsNullOrWhiteSpace($python)) { return }
+    $scanner = Join-Path $script:WinToolRoot "build/i18n/scan_hardcoded.py"
+    $output = & $python $scanner 2>&1 | Out-String
+    Test-WinToolExpectation -Condition ($LASTEXITCODE -eq 0) -Message ("i18n scanner failed:`n" + $output)
+}
 
 
 if ($script:WinToolFailures.Count -gt 0) {

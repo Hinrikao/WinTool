@@ -50,6 +50,57 @@ function ConvertTo-BuildWrappedBase64 {
     return ($lines -join "`n")
 }
 
+
+function Get-BuildLocalePackText {
+    $i18n = Join-Path $root "data/i18n"
+    $enPath = Join-Path $i18n "en.json"
+    if (-not (Test-Path -LiteralPath $enPath)) {
+        throw "data/i18n/en.json is missing."
+    }
+    $pack = [ordered]@{
+        en = (ConvertFrom-Json -InputObject (Read-BuildText -Path $enPath))
+    }
+    $generatedRoot = Join-Path $i18n "generated"
+    $overrideRoot = Join-Path $i18n "overrides"
+    $shipped = @("pt-BR", "es", "fr", "de", "it", "ja", "ko", "zh-Hans", "zh-Hant", "pl", "nl", "ru", "tr")
+    foreach ($code in $shipped) {
+        $table = [ordered]@{}
+        $generated = Join-Path $generatedRoot ($code + ".json")
+        if (Test-Path -LiteralPath $generated) {
+            $loaded = ConvertFrom-Json -InputObject (Read-BuildText -Path $generated)
+            foreach ($property in $loaded.PSObject.Properties) {
+                $table[$property.Name] = $property.Value
+            }
+        }
+        $override = Join-Path $overrideRoot ($code + ".json")
+        if (Test-Path -LiteralPath $override) {
+            $loaded = ConvertFrom-Json -InputObject (Read-BuildText -Path $override)
+            foreach ($property in $loaded.PSObject.Properties) {
+                $table[$property.Name] = $property.Value
+            }
+        }
+        if ($table.Count -gt 0) {
+            $pack[$code] = [pscustomobject]$table
+        }
+    }
+    return (ConvertTo-Json -InputObject ([pscustomobject]$pack) -Depth 8 -Compress)
+}
+
+function ConvertTo-BuildGzipBase64 {
+    param(
+        [Parameter(Mandatory = $true)][byte[]]$Bytes
+    )
+    $output = New-Object System.IO.MemoryStream
+    $gzip = New-Object System.IO.Compression.GzipStream($output, [System.IO.Compression.CompressionMode]::Compress, $true)
+    try {
+        $gzip.Write($Bytes, 0, $Bytes.Length)
+    }
+    finally {
+        $gzip.Dispose()
+    }
+    return (ConvertTo-BuildWrappedBase64 -Bytes $output.ToArray())
+}
+
 function Get-BuildAppIcon {
     $catalog = ConvertFrom-Json -InputObject (Read-BuildText -Path (Join-Path $root "data/apps.json"))
     $names = New-Object System.Collections.Generic.List[string]
@@ -131,6 +182,11 @@ foreach ($name in $payloads.Keys) {
     [void]$builder.AppendLine($encoded)
     [void]$builder.AppendLine("'@")
 }
+$localeJson = Get-BuildLocalePackText
+$localeBytes = [System.Text.Encoding]::UTF8.GetBytes($localeJson)
+[void]$builder.AppendLine("    Locales = @'")
+[void]$builder.AppendLine((ConvertTo-BuildGzipBase64 -Bytes $localeBytes))
+[void]$builder.AppendLine("'@")
 [void]$builder.AppendLine("}")
 [void]$builder.AppendLine('$script:WinToolIcons = @{')
 foreach ($iconName in @(Get-BuildAppIcon)) {

@@ -1,8 +1,8 @@
 src/Private/Common.ps1
+src/Private/Json.ps1
 src/Private/Strings.ps1
 src/Private/Activity.ps1
 src/Private/Console.ps1
-src/Private/Json.ps1
 src/Private/Catalog.ps1
 src/Private/Winget.ps1
 src/Private/Process.ps1

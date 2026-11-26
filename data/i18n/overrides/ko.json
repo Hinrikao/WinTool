@@ -1,0 +1,21 @@
+{
+  "activity.copy": "세부 정보 복사",
+  "button.scanDrivers": "드라이버 확인",
+  "config.language.label": "언어",
+  "config.language.matchWindows": "Windows 언어 사용",
+  "status.ready": "준비됨",
+  "ui.ActivityCopy.Content": "세부 정보 복사",
+  "ui.AppInstall.Content": "선택한 항목 설치",
+  "ui.AppUninstall.Content": "선택한 항목 제거",
+  "ui.DriversScan.Content": "드라이버 확인",
+  "ui.DriversScanAgain.AutomationName": "드라이버 다시 확인",
+  "ui.t.config.Text": "구성",
+  "ui.t.drivers.Text": "드라이버",
+  "ui.t.features.Text": "기능",
+  "ui.t.fixes.Text": "수정",
+  "ui.t.home.Text": "홈",
+  "ui.t.install.Text": "설치",
+  "ui.t.terminal.Text": "터미널",
+  "ui.t.tweaks.Text": "조정",
+  "ui.t.updates.Text": "업데이트"
+}

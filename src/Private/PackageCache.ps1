@@ -341,13 +341,13 @@ function Get-WinToolStepChipName {
         }
         return $text
     }
-    if ($type -eq "ligatures") { return "Font ligatures on" }
+    if ($type -eq "ligatures") { return (Get-WinToolText "msg.font-ligatures-on") }
     if ($type -eq "scheme") { return ($label -replace '^Set the Windows Terminal color scheme to ', 'Scheme ') }
     if ($type -eq "banner") {
-        if ([bool](Get-WinToolNote -Object $Step -Name "Undo" -Default $false)) { return "Startup banner shown" }
-        return "Startup banner hidden"
+        if ([bool](Get-WinToolNote -Object $Step -Name "Undo" -Default $false)) { return (Get-WinToolText "msg.startup-banner-shown") }
+        return (Get-WinToolText "msg.startup-banner-hidden")
     }
-    if ($type -eq "profile") { return "PowerShell `$PROFILE" }
+    if ($type -eq "profile") { return (Get-WinToolText "msg.powershell-profile") }
     if ($type -eq "starship-preset") { return $label }
     return $label
 }
@@ -481,7 +481,7 @@ function Format-WinToolPlanSummary {
         $parts.Add("Failed: " + (Join-WinToolNameList -Name $Tally.Failed.ToArray()) + ".") | Out-Null
     }
     if ($parts.Count -eq 0) {
-        return "Nothing to do."
+        return (Get-WinToolText "msg.nothing-to-do")
     }
     return ($parts.ToArray() -join " ")
 }

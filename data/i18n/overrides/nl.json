@@ -1,0 +1,21 @@
+{
+  "activity.copy": "Details kopiëren",
+  "button.scanDrivers": "Stuurprogramma's controleren",
+  "config.language.label": "Taal",
+  "config.language.matchWindows": "Taal van Windows gebruiken",
+  "status.ready": "Gereed",
+  "ui.ActivityCopy.Content": "Details kopiëren",
+  "ui.AppInstall.Content": "Selectie installeren",
+  "ui.AppUninstall.Content": "Selectie verwijderen",
+  "ui.DriversScan.Content": "Stuurprogramma's controleren",
+  "ui.DriversScanAgain.AutomationName": "Stuurprogramma's opnieuw controleren",
+  "ui.t.config.Text": "Configuratie",
+  "ui.t.drivers.Text": "Stuurprogramma's",
+  "ui.t.features.Text": "Functies",
+  "ui.t.fixes.Text": "Reparaties",
+  "ui.t.home.Text": "Start",
+  "ui.t.install.Text": "Installeren",
+  "ui.t.terminal.Text": "Terminal",
+  "ui.t.tweaks.Text": "Aanpassingen",
+  "ui.t.updates.Text": "Updates"
+}

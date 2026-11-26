@@ -6,7 +6,7 @@
 # catalog cannot carry its own script text.
 
 function Get-WinToolFixCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Fixes"))
+    return (Get-WinToolCachedPayloadObject -Name "Fixes")
 }
 
 function Get-WinToolSystemRoot {
@@ -103,7 +103,7 @@ catch {
 '@
         }
         default {
-            throw "Unknown fix script '$Name'."
+            throw (Get-WinToolText "msg.unknown-fix-script-n" $Name)
         }
     }
 }
@@ -132,7 +132,7 @@ function Get-WinToolFixPlan {
             })
         }
         else {
-            throw "Fix '$([string]$Fix.id)' has an unknown step type '$type'."
+            throw (Get-WinToolText "msg.fix-n-has-an-unknown-step-type-n" $([string]$Fix.id) $type)
         }
     }
     return $steps.ToArray()

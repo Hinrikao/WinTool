@@ -106,7 +106,7 @@ function Add-WinToolActionStep {
         })
         return
     }
-    throw "WinTool does not know how to run the tweak action '$type'."
+    throw (Get-WinToolText "msg.wintool-does-not-know-how-to-run-the-tweak-action-n" $type)
 }
 
 function Get-WinToolRestorePointScript {
@@ -154,10 +154,10 @@ $Sync.Done = $true
 
 function Invoke-WinToolRestorePoint {
     param(
-        [string]$Description = "WinTool before tweaks"
+        [string]$Description = (Get-WinToolText "msg.wintool-before-tweaks")
     )
     if (-not (Test-WinToolWindows)) {
-        throw "Restore points can only be created on Windows."
+        throw (Get-WinToolText "msg.restore-points-can-only-be-created-on-windows")
     }
     $sync = @{
         Done = $false
@@ -171,13 +171,13 @@ function Invoke-WinToolRestorePoint {
         if ([string]::IsNullOrWhiteSpace($reason)) {
             $reason = "No details were returned."
         }
-        throw "Restore point was not created. $reason"
+        throw (Get-WinToolText "msg.restore-point-was-not-created-n" $reason)
     }
 }
 
 function Start-WinToolRestorePointJob {
     param(
-        [string]$Description = "WinTool before tweaks"
+        [string]$Description = (Get-WinToolText "msg.wintool-before-tweaks")
     )
     $sync = [hashtable]::Synchronized(@{
         Done = $false
@@ -239,7 +239,7 @@ function Restart-WinToolExplorer {
     if (-not (Test-WinToolWindows)) {
         return
     }
-    Write-WinToolLog -Message "Restarting File Explorer so the changes show up." -Level "info"
+    Write-WinToolLog -Message (Get-WinToolText "msg.restarting-file-explorer-so-the-changes-show-up") -Level "info"
     Stop-Process -Name "explorer" -Force -ErrorAction SilentlyContinue
 }
 
@@ -248,7 +248,7 @@ function Invoke-WinToolTweakStep {
         [Parameter(Mandatory = $true)]$Step
     )
     if (-not (Test-WinToolWindows)) {
-        throw "Tweaks can only be applied on Windows."
+        throw (Get-WinToolText "msg.tweaks-can-only-be-applied-on-windows")
     }
     $type = [string]$Step.Type
     if ($type -eq "registry-set") {
@@ -286,7 +286,7 @@ function Invoke-WinToolTweakStep {
     if ($type -eq "service") {
         $service = Get-Service -Name $Step.Name -ErrorAction SilentlyContinue
         if ($null -eq $service) {
-            Write-WinToolLog -Message "Service $($Step.Name) is not on this PC. Skipped." -Level "warn"
+            Write-WinToolLog -Message (Get-WinToolText "msg.service-n-is-not-on-this-pc-skipped" $($Step.Name)) -Level "warn"
             return
         }
         Set-Service -Name $Step.Name -StartupType $Step.StartupType
@@ -298,7 +298,7 @@ function Invoke-WinToolTweakStep {
     if ($type -eq "scheduled-task") {
         $task = Get-ScheduledTask -TaskName $Step.TaskName -TaskPath $Step.TaskPath -ErrorAction SilentlyContinue
         if ($null -eq $task) {
-            Write-WinToolLog -Message "Scheduled task $($Step.TaskName) was not found. Skipped." -Level "warn"
+            Write-WinToolLog -Message (Get-WinToolText "msg.scheduled-task-n-was-not-found-skipped" $($Step.TaskName)) -Level "warn"
             return
         }
         if ($Step.State -eq "Disabled") {
@@ -313,12 +313,12 @@ function Invoke-WinToolTweakStep {
         foreach ($name in @($Step.Packages)) {
             $packages = @(Get-AppxPackage -Name $name -ErrorAction SilentlyContinue)
             if ($packages.Count -eq 0) {
-                Write-WinToolLog -Message "$name is not installed for this user. Skipped." -Level "info"
+                Write-WinToolLog -Message (Get-WinToolText "msg.n-is-not-installed-for-this-user-skipped" $name) -Level "info"
                 continue
             }
             foreach ($package in $packages) {
                 Remove-AppxPackage -Package $package.PackageFullName
-                Write-WinToolLog -Message "Removed $($package.Name)." -Level "ok"
+                Write-WinToolLog -Message (Get-WinToolText "msg.removed-n" $($package.Name)) -Level "ok"
             }
         }
         return
@@ -334,20 +334,20 @@ function Invoke-WinToolTweakStep {
                 }
             }
             if ($null -eq $match) {
-                Write-WinToolLog -Message "Cannot restore $name because Windows no longer has a provisioned copy." -Level "warn"
+                Write-WinToolLog -Message (Get-WinToolText "msg.cannot-restore-n-because-windows-no-longer-has-a-provisi" $name) -Level "warn"
                 continue
             }
             $manifest = Join-Path ([string]$match.InstallLocation) "AppxManifest.xml"
             if (-not (Test-Path -LiteralPath $manifest)) {
-                Write-WinToolLog -Message "Cannot restore $name because its manifest is missing." -Level "warn"
+                Write-WinToolLog -Message (Get-WinToolText "msg.cannot-restore-n-because-its-manifest-is-missing" $name) -Level "warn"
                 continue
             }
             Add-AppxPackage -Register -DisableDevelopmentMode $manifest
-            Write-WinToolLog -Message "Restored $name." -Level "ok"
+            Write-WinToolLog -Message (Get-WinToolText "msg.restored-n" $name) -Level "ok"
         }
         return
     }
-    throw "Unknown tweak step '$type'."
+    throw (Get-WinToolText "msg.unknown-tweak-step-n" $type)
 }
 
 function Invoke-WinToolTweakChange {
@@ -707,7 +707,7 @@ function Invoke-WinToolTweakItem {
         }
         catch {
             $row.Checkbox.IsChecked = [bool]$entry.Previous
-            Write-WinToolLog -Message ("Could not change {0}, so the switch went back. {1}" -f $name, $_.Exception.Message) -Level "error"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-change-n-so-the-switch-went-back-n") -f $name, $_.Exception.Message) -Level "error"
         }
         $row.Checkbox.IsEnabled = $true
     }

@@ -63,7 +63,7 @@ function Get-WinToolUpdateModeChange {
     )
     $mode = Find-WinToolUpdateMode -Id $ModeId -Catalog $Catalog
     if ($null -eq $mode) {
-        throw "Unknown update mode '$ModeId'."
+        throw (Get-WinToolText "msg.unknown-update-mode-n" $ModeId)
     }
     $set = New-Object System.Collections.Generic.List[object]
     foreach ($policy in @(Get-WinToolNote -Object $mode -Name "policies" -Default @())) {
@@ -149,7 +149,7 @@ function Get-WinToolUpdateModePlan {
     )
     $mode = Find-WinToolUpdateMode -Id $ModeId -Catalog $Catalog
     if ($null -eq $mode) {
-        throw "Unknown update mode '$ModeId'."
+        throw (Get-WinToolText "msg.unknown-update-mode-n" $ModeId)
     }
     return @([pscustomobject]@{
         Type = "inline-script"

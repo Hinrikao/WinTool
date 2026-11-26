@@ -7,7 +7,7 @@ function Get-WinToolUi {
     )
     $control = $script:WinToolWindow.FindName($Name)
     if ($null -eq $control) {
-        throw "WinTool could not find the window control '$Name'."
+        throw (Get-WinToolText "msg.wintool-could-not-find-the-window-control-n" $Name)
     }
     return $control
 }
@@ -38,7 +38,7 @@ function New-WinToolText {
     $flags = [System.Reflection.BindingFlags]::Public -bor [System.Reflection.BindingFlags]::Static
     $weightProperty = $weights.GetProperty($Weight, $flags)
     if ($null -eq $weightProperty) {
-        throw "Unknown font weight '$Weight'."
+        throw (Get-WinToolText "msg.unknown-font-weight-n" $Weight)
     }
     $block.FontWeight = $weightProperty.GetValue($null, $null)
     $null = $block.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $Brush)
@@ -178,9 +178,9 @@ function Write-WinToolUiError {
     $script:WinToolUiErrors.Add([pscustomobject]@{ Name = $Name; Message = $message; Record = $ErrorRecord })
     $logPath = $null
     try {
-        $detail = Format-WinToolErrorText -ErrorRecord $ErrorRecord -Title ("A WinTool action failed: " + $Name)
+        $detail = Format-WinToolErrorText -ErrorRecord $ErrorRecord -Title (Get-WinToolText "msg.a-wintool-action-failed-n" $Name)
         $logPath = Write-WinToolFailureLog -Text $detail
-        Write-WinToolLog -Message ("{0} failed: {1}" -f $Name, $message) -Level "error"
+        Write-WinToolLog -Message ((Get-WinToolText "msg.n-failed-n-2") -f $Name, $message) -Level "error"
     }
     catch {
         $null = $_.Exception.Message

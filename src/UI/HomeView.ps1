@@ -130,7 +130,7 @@ function New-WinToolHomeRow {
     $label.TextTrimming = "CharacterEllipsis"
     $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushInk")
     $result = New-Object System.Windows.Controls.TextBlock
-    $result.Text = "Waiting" + (Get-WinToolHomeEllipsis)
+    $result.Text = (Get-WinToolText "msg.waiting") + (Get-WinToolHomeEllipsis)
     $result.TextTrimming = "CharacterEllipsis"
     $result.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
     $null = $text.Children.Add($label)
@@ -296,7 +296,7 @@ function New-WinToolHomeMini {
     $value.FontWeight = "Bold"
     $value.VerticalAlignment = "Center"
     $value.TextTrimming = "CharacterEllipsis"
-    $value.Text = "Reading" + (Get-WinToolHomeEllipsis)
+    $value.Text = (Get-WinToolText "msg.reading") + (Get-WinToolHomeEllipsis)
     $value.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushInk")
     [System.Windows.Controls.Grid]::SetRow($value, 1)
     $null = $grid.Children.Add($value)
@@ -464,7 +464,7 @@ function Update-WinToolHomeCard {
         $fraction = [double]$sample.MemoryUsed / [double]$sample.MemoryTotal
         Set-WinToolHomeMiniRing -Mini $memory -Fraction $fraction
         Set-WinToolHomeMiniTag -Mini $memory -Text ("{0:0}% used" -f ($fraction * 100)) -Tone "neutral"
-        $memory.Value.Text = (Format-WinToolByteSize -Bytes ([double]$sample.MemoryUsed)) + " in use"
+        $memory.Value.Text = (Get-WinToolText "msg.n-in-use" (Format-WinToolByteSize -Bytes ([double]$sample.MemoryUsed)))
         $total = [double]$sample.MemoryTotal
         $kind = ""
         if ($null -ne $info) {
@@ -474,7 +474,7 @@ function Update-WinToolHomeCard {
         $text = (Format-WinToolHomeSize -Bytes $total) + " total"
         if (-not [string]::IsNullOrWhiteSpace($kind)) { $text += $dot + $kind }
         $memory.Detail.Text = $text
-        $memory.Card.ToolTip = ("Memory: {0} ({1})" -f $memory.Value.Text, $memory.Detail.Text)
+        $memory.Card.ToolTip = ((Get-WinToolText "msg.memory-n-n") -f $memory.Value.Text, $memory.Detail.Text)
     }
     if ($null -ne $sample -and [double]$sample.DiskTotal -gt 0) {
         $free = [double]$sample.DiskFree / [double]$sample.DiskTotal
@@ -489,8 +489,8 @@ function Update-WinToolHomeCard {
         }
         $letter = ([string]$env:SystemDrive)
         if ([string]::IsNullOrWhiteSpace($letter)) { $letter = "C:" }
-        $disk.Detail.Text = (Format-WinToolHomeSize -Bytes $size -Decimal) + $media + $dot + "Drive " + $letter
-        $disk.Card.ToolTip = ("Windows disk: {0} ({1})" -f $disk.Value.Text, $disk.Detail.Text)
+        $disk.Detail.Text = (Format-WinToolHomeSize -Bytes $size -Decimal) + $media + $dot + (Get-WinToolText "msg.drive-n" $letter)
+        $disk.Card.ToolTip = ((Get-WinToolText "msg.windows-disk-n-n") -f $disk.Value.Text, $disk.Detail.Text)
     }
     if ($null -ne $info) {
         Set-WinToolHomeMiniRing -Mini $pc -Fraction 1
@@ -505,27 +505,27 @@ function Update-WinToolHomeCard {
     $diskHealth = $hs.Results["disk"]
     if ($hs.Phase -eq "analyzing" -or $null -eq $driver -or $null -eq $diskHealth) {
         Set-WinToolHomeMiniTag -Mini $pc -Text "Checking" -Tone "neutral"
-        $pc.Card.ToolTip = "Checking device drivers and drive health."
+        $pc.Card.ToolTip = (Get-WinToolText "msg.checking-device-drivers-and-drive-health")
     }
     elseif ($driver.Status -eq "bad" -and $diskHealth.Status -eq "bad") {
         Set-WinToolHomeMiniTag -Mini $pc -Text "2 issues" -Tone "warn"
-        $pc.Card.ToolTip = ("Drivers: {0}`nDisk health: {1}" -f $driver.Text, $diskHealth.Text)
+        $pc.Card.ToolTip = ((Get-WinToolText "msg.drivers-n-disk-health-n") -f $driver.Text, $diskHealth.Text)
     }
     elseif ($driver.Status -eq "bad") {
         Set-WinToolHomeMiniTag -Mini $pc -Text "Driver issue" -Tone "warn"
-        $tip = "Drivers: " + $driver.Text
+        $tip = (Get-WinToolText "msg.drivers-colon-n" $driver.Text)
         if (@($driver.Detail).Count -gt 0) { $tip += "`n" + ((@($driver.Detail | Select-Object -First 5)) -join "`n") }
         $pc.Card.ToolTip = $tip
     }
     elseif ($diskHealth.Status -eq "bad") {
         Set-WinToolHomeMiniTag -Mini $pc -Text "Disk issue" -Tone "bad"
-        $tip = "Disk health: " + $diskHealth.Text
+        $tip = (Get-WinToolText "msg.disk-health-colon-n" $diskHealth.Text)
         if (@($diskHealth.Detail).Count -gt 0) { $tip += "`n" + ((@($diskHealth.Detail | Select-Object -First 5)) -join "`n") }
         $pc.Card.ToolTip = $tip
     }
     else {
         Set-WinToolHomeMiniTag -Mini $pc -Text "Healthy" -Tone "ok"
-        $pc.Card.ToolTip = "Device drivers and drive health report no problems."
+        $pc.Card.ToolTip = (Get-WinToolText "msg.device-drivers-and-drive-health-report-no-problems")
     }
 }
 
@@ -571,8 +571,8 @@ function Initialize-WinToolHomeView {
     }
     $minis = Get-WinToolUi -Name "HomeMinis"
     $hs.Minis["memory"] = New-WinToolHomeMini -Key "memory" -Title "Memory" -Column 0 -From "#4C8DFF" -To "#8B5CF6" -Line "#8B7CF6"
-    $hs.Minis["disk"] = New-WinToolHomeMini -Key "disk" -Title "Windows disk" -Column 2 -From "#F5B942" -To "#F07178" -Line "#F5A742"
-    $hs.Minis["pc"] = New-WinToolHomeMini -Key "pc" -Title "This PC" -Column 4 -From "#3DD68C" -To "#4C8DFF" -Line "#4C8DFF"
+    $hs.Minis["disk"] = New-WinToolHomeMini -Key "disk" -Title (Get-WinToolText "msg.windows-disk") -Column 2 -From "#F5B942" -To "#F07178" -Line "#F5A742"
+    $hs.Minis["pc"] = New-WinToolHomeMini -Key "pc" -Title (Get-WinToolText "drivers.pcLabel") -Column 4 -From "#3DD68C" -To "#4C8DFF" -Line "#4C8DFF"
     foreach ($key in @("memory", "disk", "pc")) { $null = $minis.Children.Add($hs.Minis[$key].Card) }
     Update-WinToolHomeCard
 
@@ -609,7 +609,7 @@ function Sync-WinToolHomeHeader {
     $headline = Get-WinToolUi -Name "HomeHeadline"
     $lead = Get-WinToolUi -Name "HomeLead"
     $count = Get-WinToolUi -Name "HomeCheckCount"
-    (Get-WinToolUi -Name "HomeRingProgress").Text = "{0} of {1} checks" -f $done, $total
+    (Get-WinToolUi -Name "HomeRingProgress").Text = (Get-WinToolText "msg.n-of-n-checks") -f $done, $total
     switch ($hs.Phase) {
         "done" {
             $results = @($hs.Results.Values)
@@ -624,9 +624,9 @@ function Sync-WinToolHomeHeader {
             $tone = @{ ok = @("BrushOkSoft", "BrushOk"); warn = @("BrushWarnSoft", "BrushWarn"); bad = @("BrushBadSoft", "BrushBad") }[$verdict.Tone]
             (Get-WinToolUi -Name "HomeVerdict").SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, $tone[0])
             (Get-WinToolUi -Name "HomeVerdictText").SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $tone[1])
-            $headline.Text = "Analysis complete"
+            $headline.Text = (Get-WinToolText "msg.analysis-complete")
             $lead.Text = Get-WinToolHomeLead -Result $results
-            $count.Text = "{0} of {1} can be fixed" -f $fixable, $total
+            $count.Text = (Get-WinToolText "msg.n-of-n-can-be-fixed") -f $fixable, $total
             $fixAll.IsEnabled = ($fixable -gt 0)
             $again.IsEnabled = $true
             $hs.ArcTarget = 360.0 * $score / 100
@@ -634,18 +634,18 @@ function Sync-WinToolHomeHeader {
         "fixing" {
             $busyRing.Visibility = "Collapsed"
             $doneRing.Visibility = "Visible"
-            $headline.Text = "Fixing" + (Get-WinToolHomeEllipsis)
-            $lead.Text = "Only safe changes are made. You can keep using your PC."
-            $count.Text = "{0} of {1} complete" -f $done, $total
+            $headline.Text = (Get-WinToolText "msg.fixing") + (Get-WinToolHomeEllipsis)
+            $lead.Text = (Get-WinToolText "msg.only-safe-changes-are-made-you-can-keep-using-your-pc")
+            $count.Text = (Get-WinToolText "msg.n-of-n-complete") -f $done, $total
             $fixAll.IsEnabled = $false
             $again.IsEnabled = $false
         }
         default {
             $busyRing.Visibility = "Visible"
             $doneRing.Visibility = "Collapsed"
-            $headline.Text = "Analyzing your PC" + (Get-WinToolHomeEllipsis)
-            $lead.Text = "Takes less than a minute. Nothing is changed during the analysis."
-            $count.Text = "{0} of {1} complete" -f $done, $total
+            $headline.Text = (Get-WinToolText "msg.analyzing-your-pc") + (Get-WinToolHomeEllipsis)
+            $lead.Text = (Get-WinToolText "ui.HomeLead.Text")
+            $count.Text = (Get-WinToolText "msg.n-of-n-complete") -f $done, $total
             $fixAll.IsEnabled = $false
             $again.IsEnabled = ($hs.Phase -eq "idle")
         }
@@ -661,9 +661,9 @@ function Sync-WinToolHomeRunText {
         return
     }
     switch ($hs.Phase) {
-        "analyzing" { $text.Text = "Running for {0}s" -f [int]([DateTime]::Now - [datetime]$hs.Started).TotalSeconds }
-        "fixing" { $text.Text = "Fixing" + (Get-WinToolHomeEllipsis) }
-        default { $text.Text = "Finished in {0}s" -f [int]$hs.Seconds }
+        "analyzing" { $text.Text = (Get-WinToolText "msg.running-for-ns") -f [int]([DateTime]::Now - [datetime]$hs.Started).TotalSeconds }
+        "fixing" { $text.Text = (Get-WinToolText "msg.fixing") + (Get-WinToolHomeEllipsis) }
+        default { $text.Text = (Get-WinToolText "msg.finished-in-ns") -f [int]$hs.Seconds }
     }
 }
 
@@ -804,7 +804,7 @@ function Complete-WinToolHomeCheck {
     }
     $row.Border.ToolTip = ($tipLines -join "`n")
     if ($result.Status -eq "unknown" -and @($result.Detail).Count -gt 0) {
-        Write-WinToolLog -Message ("Home: {0} could not be checked. {1}" -f $result.Name, (@($result.Detail) -join " ")) -Level "warn" -Diagnostic
+        Write-WinToolLog -Message ((Get-WinToolText "msg.home-n-could-not-be-checked-n") -f $result.Name, (@($result.Detail) -join " ")) -Level "warn" -Diagnostic
     }
     if ($hs.Phase -eq "analyzing") {
         Sync-WinToolHomeHeader
@@ -853,7 +853,7 @@ function Complete-WinToolHomeAnalysis {
     Sync-WinToolHomeHeader
     Update-WinToolHomeCard
     Start-WinToolHomeAnimation
-    Write-WinToolLog -Message ("Home: analysis finished in {0}s, score {1}." -f $hs.Seconds, $score) -Level "info" -Diagnostic
+    Write-WinToolLog -Message ((Get-WinToolText "msg.home-analysis-finished-in-ns-score-n") -f $hs.Seconds, $score) -Level "info" -Diagnostic
 }
 
 function Start-WinToolHomeInfo {
@@ -888,10 +888,10 @@ function Update-WinToolHomePoll {
         Stop-WinToolThread -Job $clean
         $script:WinToolState.HomeCleanJob = $null
         if ([string]::IsNullOrWhiteSpace($errorText)) {
-            Write-WinToolLog -Message ("Junk files: freed {0}. Files in use were skipped." -f (Format-WinToolByteSize -Bytes $freed)) -Level "ok"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.junk-files-freed-n-files-in-use-were-skipped") -f (Format-WinToolByteSize -Bytes $freed)) -Level "ok"
         }
         else {
-            Write-WinToolLog -Message ("Junk files: cleaning stopped. {0}" -f $errorText) -Level "warn"
+            Write-WinToolLog -Message ((Get-WinToolText "msg.junk-files-cleaning-stopped-n") -f $errorText) -Level "warn"
         }
         Start-WinToolHomeCheck -Id "junk"
     }
@@ -931,7 +931,7 @@ function Start-WinToolHomeClean {
     $hs.Results.Remove("junk")
     Set-WinToolHomeRow -Row $hs.Rows["junk"] -Status "busy" -Text ("Cleaning" + (Get-WinToolHomeEllipsis)) -Action "off"
     Sync-WinToolHomeHeader
-    Write-WinToolLog -Message "Junk files: cleaning temporary files, the Recycle Bin and caches." -Level "info"
+    Write-WinToolLog -Message (Get-WinToolText "msg.junk-files-cleaning-temporary-files-the-recycle-bin-and-") -Level "info"
     if ($script:WinToolHomeNoJobs) { return }
     $script:WinToolState.HomeCleanJob = Start-WinToolHomeJob -ScriptText (Get-WinToolHomeCheckScript -Id "clean") -Argument @(, @(Get-WinToolHomeJunkLocation))
 }
@@ -979,7 +979,7 @@ function Invoke-WinToolHomeAction {
     }
     if ($result.Action -ne "fix") { return }
     if ($Id -eq "junk") {
-        if (Request-WinToolConfirmation -Message (Get-WinToolHomeJunkPrompt) -Title "Junk files") {
+        if (Request-WinToolConfirmation -Message (Get-WinToolHomeJunkPrompt) -Title (Get-WinToolText "msg.junk-files")) {
             Start-WinToolHomeClean
         }
         return
@@ -999,7 +999,7 @@ function Invoke-WinToolHomeFixAll {
     $tweaks = $hs.Results["tweaks"]
     if ($null -ne $junk -and $junk.Fixable) { $lines.Add(("- Delete {0} of junk files (recent and in-use files are kept)" -f (Format-WinToolByteSize -Bytes ([double]$junk.Amount)))) }
     if ($null -ne $tweaks -and $tweaks.Fixable) { $lines.Add(("- Turn on {0} Recommended tweak(s); WinTool creates a restore point first" -f [int]$tweaks.Amount)) }
-    $ok = Request-WinToolConfirmation -Message ("Fix {0} item(s)?`n`n{1}`n`nNothing else is changed." -f $lines.Count, ($lines -join "`n")) -Title "Fix all"
+    $ok = Request-WinToolConfirmation -Message ((Get-WinToolText "msg.fix-n-item-s-n-nothing-else-is-changed") -f $lines.Count, ($lines -join "`n")) -Title (Get-WinToolText "ui.HomeFixAll.Content")
     if (-not $ok) { return }
     if ($null -ne $tweaks -and $tweaks.Fixable) { $null = Start-WinToolHomeTweakFix -NoConfirm }
     if ($null -ne $junk -and $junk.Fixable) { Start-WinToolHomeClean }
@@ -1012,18 +1012,18 @@ function Show-WinToolHomeReview {
     $list = $lines -join "`n"
     switch ($Result.Id) {
         "startup" {
-            if (Request-WinToolConfirmation -Message ("{0}:`n`n{1}`n`nOpen Task Manager to turn programs off?" -f $Result.Text, $list) -Title "Startup programs") {
-                try { Start-Process -FilePath "taskmgr.exe" -ArgumentList "/0 /startup" } catch { Write-WinToolLog -Message ("Could not open Task Manager. {0}" -f $_.Exception.Message) -Level "warn" }
+            if (Request-WinToolConfirmation -Message ((Get-WinToolText "msg.n-n-open-task-manager-to-turn-programs-off") -f $Result.Text, $list) -Title (Get-WinToolText "msg.startup-programs")) {
+                try { Start-Process -FilePath "taskmgr.exe" -ArgumentList (Get-WinToolText "msg.0-startup") } catch { Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-open-task-manager-n") -f $_.Exception.Message) -Level "warn" }
             }
         }
         "drivers" {
-            if (Request-WinToolConfirmation -Message ("{0}:`n`n{1}`n`nOpen Device Manager?" -f $Result.Text, $list) -Title "Drivers") {
-                try { Start-Process -FilePath "devmgmt.msc" } catch { Write-WinToolLog -Message ("Could not open Device Manager. {0}" -f $_.Exception.Message) -Level "warn" }
+            if (Request-WinToolConfirmation -Message ((Get-WinToolText "msg.n-n-open-device-manager") -f $Result.Text, $list) -Title "Drivers") {
+                try { Start-Process -FilePath "devmgmt.msc" } catch { Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-open-device-manager-n") -f $_.Exception.Message) -Level "warn" }
             }
         }
         "disk" {
-            if (Request-WinToolConfirmation -Message ("{0}:`n`n{1}`n`nBack up your files soon. Open Disks and volumes in Settings?" -f $Result.Text, $list) -Title "Disk health") {
-                try { Start-Process -FilePath "ms-settings:disksandvolumes" } catch { Write-WinToolLog -Message ("Could not open Settings. {0}" -f $_.Exception.Message) -Level "warn" }
+            if (Request-WinToolConfirmation -Message ((Get-WinToolText "msg.n-n-back-up-your-files-soon-open-disks-and-volumes-in-se") -f $Result.Text, $list) -Title (Get-WinToolText "msg.disk-health")) {
+                try { Start-Process -FilePath "ms-settings:disksandvolumes" } catch { Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-open-settings-n") -f $_.Exception.Message) -Level "warn" }
             }
         }
     }

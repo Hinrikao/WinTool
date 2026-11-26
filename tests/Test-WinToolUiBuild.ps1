@@ -40,6 +40,7 @@ foreach ($relative in [System.IO.File]::ReadAllLines($listPath)) {
     . $path
 }
 
+Initialize-WinToolLocale -Language en -Force | Out-Null
 # Home checks are fed by the test, without motion, until the real run at the end.
 $script:WinToolHomeNoJobs = $true
 $script:WinToolHomeReduceMotion = $true

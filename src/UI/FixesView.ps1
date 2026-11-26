@@ -41,7 +41,7 @@ function Initialize-WinToolFixView {
         $badge.Margin = [System.Windows.Thickness]::new(0)
         [void]$foot.Children.Add($badge)
         $button = New-Object System.Windows.Controls.Button
-        $button.Content = "Run fix"
+        $button.Content = (Get-WinToolText "msg.run-fix")
         $button.Width = 96
         $button.Height = 32
         $button.Style = $script:WinToolWindow.FindResource("SecondaryButton")
@@ -68,7 +68,7 @@ function Invoke-WinToolFixClick {
     )
     Start-WinToolSurfaceTiming -Name ("Fixes " + [string]$Fix.name)
     if ($script:WinToolState.Busy) {
-        Write-WinToolLog -Message "Wait for the current task to finish." -Level "warn"
+        Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
     $message = ([string]$Fix.name) + "?`n`n" + ([string]$Fix.description)

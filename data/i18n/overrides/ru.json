@@ -1,0 +1,21 @@
+{
+  "activity.copy": "Копировать сведения",
+  "button.scanDrivers": "Проверить драйверы",
+  "config.language.label": "Язык",
+  "config.language.matchWindows": "Использовать язык Windows",
+  "status.ready": "Готово",
+  "ui.ActivityCopy.Content": "Копировать сведения",
+  "ui.AppInstall.Content": "Установить выбранные",
+  "ui.AppUninstall.Content": "Удалить выбранные",
+  "ui.DriversScan.Content": "Проверить драйверы",
+  "ui.DriversScanAgain.AutomationName": "Проверить драйверы ещё раз",
+  "ui.t.config.Text": "Конфигурация",
+  "ui.t.drivers.Text": "Драйверы",
+  "ui.t.features.Text": "Компоненты",
+  "ui.t.fixes.Text": "Исправления",
+  "ui.t.home.Text": "Главная",
+  "ui.t.install.Text": "Установка",
+  "ui.t.terminal.Text": "Терминал",
+  "ui.t.tweaks.Text": "Настройки",
+  "ui.t.updates.Text": "Обновления"
+}

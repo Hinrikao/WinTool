@@ -6,7 +6,7 @@ function ConvertTo-WinToolProfile {
         [string[]]$AppId,
         [string[]]$TweakId,
         $Terminal,
-        [string]$Name = "My WinTool profile"
+        [string]$Name = (Get-WinToolText "msg.my-wintool-profile")
     )
     if ($null -eq $AppId) {
         $AppId = @()
@@ -31,7 +31,7 @@ function Read-WinToolProfile {
         [Parameter(Mandatory = $true)][string]$Path
     )
     if (-not (Test-Path -LiteralPath $Path)) {
-        throw "Profile not found: $Path"
+        throw (Get-WinToolText "msg.profile-not-found-n" $Path)
     }
     $toolProfile = Read-WinToolJsonFile -Path $Path
     $version = 0
@@ -40,7 +40,7 @@ function Read-WinToolProfile {
         $version = [int]$versionProperty.Value
     }
     if ($version -ne 1) {
-        throw "This file is not a WinTool profile (schema version 1)."
+        throw (Get-WinToolText "msg.this-file-is-not-a-wintool-profile-schema-version-1")
     }
     return $toolProfile
 }

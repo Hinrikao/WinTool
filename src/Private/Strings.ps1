@@ -2,339 +2,388 @@
 # SPDX-License-Identifier: MIT
 #requires -Version 5.1
 
-# English UI defaults in one table. A later localization pass can swap this
-# table; every user-visible string added or touched in this work goes through
-# Get-WinToolText.
+# English source of truth: data/i18n/en.json. Generated locales are overlaid
+# at startup. Callers use Get-WinToolText / Get-WinToolCountText.
 
-$script:WinToolText = [ordered]@{
-    "status.ready" = "Ready"
-    "status.wingetMissing" = "winget not found"
-    "status.wait" = "Wait for the current task to finish."
-    "status.cancelled" = "Cancelled"
-    "status.scanFinished" = "Scan finished"
-    "status.scanningDrivers" = "Scanning drivers"
-    "status.scanningDevices" = "Listing devices"
-    "status.scanningUpdates" = "Checking Windows Update"
-    "status.scanningRuntimes" = "Checking game runtimes"
-    "status.summary.idleDrivers" = "No driver scan yet"
-    "status.summary.phase" = "{0} - {1} of {2}"
-    "status.summary.scan" = "{0} outdated, {1} missing, {2} runtimes"
-    "status.summary.scanNone" = "No outdated or missing drivers"
-    "activity.title" = "Activity"
-    "activity.show" = "Activity"
-    "activity.hide" = "Hide activity"
-    "activity.filter.all" = "All"
-    "activity.filter.warnings" = "Warnings"
-    "activity.filter.errors" = "Errors"
-    "activity.copy" = "Copy details"
-    "activity.save" = "Save report"
-    "activity.copied" = "Activity details were copied."
-    "activity.copyFailed" = "Could not copy the activity details."
-    "activity.saved" = "The activity report was saved."
-    "activity.saveFailed" = "Could not save the activity report."
-    "activity.saveTitle" = "Save activity report"
-    "activity.saveFilter" = "Text file (*.txt)|*.txt|All files (*.*)|*.*"
-    "activity.empty" = "Nothing has been recorded yet."
-    "activity.emptyFilter" = "No matching activity."
-    "activity.latest" = "Latest"
-    "activity.today" = "Today, {0}"
-    "activity.meta" = "{0} - {1}"
-    "activity.duration.seconds" = "{0} s"
-    "activity.duration.minutes" = "{0} min {1} s"
-    "activity.duration.hours" = "{0} h {1} min"
-    "activity.count.completed.one" = "1 completed"
-    "activity.count.completed.many" = "{0} completed"
-    "activity.count.warning.one" = "1 warning"
-    "activity.count.warning.many" = "{0} warnings"
-    "activity.count.error.one" = "1 error"
-    "activity.count.error.many" = "{0} errors"
-    "activity.count.skipped.one" = "1 skipped"
-    "activity.count.skipped.many" = "{0} skipped"
-    "activity.defaultTitle" = "Task"
-    "activity.cancelled" = "Cancelled."
-    "toast.dismiss" = "Dismiss"
-    "toast.scan.title" = "Driver scan finished"
-    "button.cancel" = "Cancel"
-    "button.update" = "Update"
-    "button.updateAll" = "Update all"
-    "button.scanAgain" = "Scan again"
-    "button.backUp" = "Back up"
-    "button.backUpDrivers" = "Back up drivers"
-    "button.scanDrivers" = "Scan drivers"
-    "button.installFromFolder" = "Install from folder"
-    "button.repairAudio" = "Repair audio"
-    "button.enable" = "Enable"
-    "button.disable" = "Disable"
-    "button.rescan" = "Rescan"
-    "button.removeEntries" = "Remove entries"
-    "button.repairNetwork" = "Repair network"
-    "button.checkDisplay" = "Check display"
-    "button.repairRuntimes" = "Repair runtimes"
-    "button.showDetails" = "Show details"
-    "button.rollback" = "Roll back"
-    "button.uninstall" = "Uninstall"
-    "button.openDeviceManager" = "Open in Device Manager"
-    "drivers.title" = "Drivers"
-    "drivers.subtitle" = "Check this PC for outdated or missing drivers, then update only what you choose. WinTool uses Windows Update and official packages - it does not install driver-booster tools."
-    "drivers.mode.simple" = "Simple"
-    "drivers.mode.advanced" = "Advanced"
-    "drivers.mode.tools" = "Tools"
-    "drivers.mode.simple.tip" = "A short list of outdated or missing drivers and the game runtimes that usually need attention."
-    "drivers.mode.advanced.tip" = "Browse by category, inspect a device, and choose an action."
-    "drivers.mode.tools.tip" = "Backup, repair, and other driver utilities."
-    "drivers.hero.title" = "No scan yet"
-    "drivers.hero.body" = "WinTool will list the devices on this PC, ask Windows Update for newer or missing drivers, and check a few game runtimes. Nothing is installed until you choose it. A restore point is created first when System Protection is on."
-    "drivers.hero.scan.tip" = "Scan devices and Windows Update for newer or missing drivers."
-    "drivers.step1.title" = "Devices on this PC"
-    "drivers.step1.body" = "Name, class, current version, and any problem code."
-    "drivers.step2.title" = "Official driver offers"
-    "drivers.step2.body" = "Only updates Windows Update is offering right now."
-    "drivers.step3.title" = "Game runtimes"
-    "drivers.step3.body" = "Visual C++, DirectX, and OpenAL through winget."
-    "drivers.pcLabel" = "This PC"
-    "drivers.chip.processor" = "Processor"
-    "drivers.chip.network" = "Network"
-    "drivers.chip.display" = "Display"
-    "drivers.chip.graphics" = "Graphics"
-    "drivers.chip.system" = "System"
-    "drivers.chip.memory" = "Memory"
-    "drivers.chip.reading" = "Reading hardware..."
-    "drivers.group.outdated" = "Outdated drivers"
-    "drivers.group.missing" = "Missing drivers"
-    "drivers.group.runtime" = "Game runtimes"
-    "drivers.group.runtimePending" = "Game runtimes (checking installed versions)"
-    "drivers.group.gpu" = "Official graphics app"
-    "drivers.group.current" = "Up to date"
-    "drivers.group.problem" = "Problem devices"
-    "drivers.group.ghost" = "Leftover entries"
-    "drivers.advanced.subtitle" = "Browse by category, inspect a device, and choose an action. Official sources only. A restore point is created before installs when it can."
-    "drivers.advanced.categories" = "Categories"
-    "drivers.advanced.details" = "Details"
-    "drivers.advanced.emptyList" = "Nothing in this category."
-    "drivers.advanced.emptyDetail" = "Select a device to see details and actions."
-    "drivers.advanced.none" = "0"
-    "drivers.field.provider" = "Provider"
-    "drivers.field.hardwareId" = "Hardware ID"
-    "drivers.field.inf" = "INF"
-    "drivers.field.status" = "Status"
-    "drivers.field.current" = "Current"
-    "drivers.field.available" = "Available"
-    "drivers.field.source" = "Source"
-    "drivers.field.instanceId" = "Instance ID"
-    "drivers.status.ok" = "OK - Code 0"
-    "drivers.status.code" = "{0} - Code {1}"
-    "drivers.source.wu" = "Windows Update"
-    "drivers.source.winget" = "winget"
-    "drivers.source.none" = "-"
-    "drivers.kind.working" = "{0} - Working, no problem code"
-    "drivers.kind.problem" = "{0} - {1}"
-    "drivers.available.wu" = "Available from Windows Update"
-    "drivers.available.version" = "Available: {0}"
-    "drivers.available.versionDate" = "Available: {0} ({1})"
-    "drivers.available.date" = "Available: {0}"
-    "drivers.current.versionDate" = "Current: {0} ({1})"
-    "drivers.current.version" = "Current: {0}"
-    "drivers.current.date" = "Current: {0}"
-    "drivers.current.upToDate" = "Up to date"
-    "drivers.runtime.notInstalled" = "Not installed"
-    "drivers.runtime.updateAvailable" = "Update available"
-    "drivers.runtime.official" = "Official installer"
-    "drivers.runtime.installed" = "Installed"
-    "drivers.header.none" = "No outdated or missing drivers were found."
-    "drivers.header.outdated.one" = "1 device driver is outdated."
-    "drivers.header.outdated.many" = "{0} device drivers are outdated."
-    "drivers.header.missing.one" = "1 device driver is missing."
-    "drivers.header.missing.many" = "{0} device drivers are missing."
-    "drivers.header.both.left.one" = "1 device driver is outdated"
-    "drivers.header.both.left.many" = "{0} device drivers are outdated"
-    "drivers.header.both.right.one" = "1 is missing"
-    "drivers.header.both.right.many" = "{0} are missing"
-    "drivers.header.both" = "{0} and {1}."
-    "drivers.header.runtime.one" = "1 game runtime needs attention."
-    "drivers.header.runtime.many" = "{0} game runtimes need attention."
-    "drivers.scan.log" = "Scanning devices and Windows Update for drivers. This can take a few minutes."
-    "drivers.scan.failed" = "Driver scan failed. {0}"
-    "drivers.scan.warning" = "Windows Update scan warning: {0}"
-    "drivers.scan.listed" = "Listed {0} devices on this PC."
-    "drivers.scan.updates.none" = "Checked Windows Update for driver offers. No new driver updates are available."
-    "drivers.scan.updates.some" = "Checked Windows Update for driver offers. {0} updates are available."
-    "drivers.scan.runtimes" = "Compared game runtimes with the official winget packages."
-    "drivers.scan.runtimesNeeded" = "{0} recommended game runtimes need attention: {1}."
-    "drivers.scan.wait" = "Wait for the current task to finish."
-    "drivers.phase.devices" = "Devices on this PC"
-    "drivers.phase.devices.sub" = "Name, class, current version, and any problem code."
-    "drivers.phase.updates" = "Official driver offers"
-    "drivers.phase.updates.sub" = "Only updates Windows Update is offering right now."
-    "drivers.phase.runtimes" = "Game runtimes"
-    "drivers.phase.runtimes.sub" = "Visual C++, DirectX, and OpenAL through winget."
-    "drivers.phase.pending" = "Waiting"
-    "drivers.phase.running" = "In progress"
-    "drivers.phase.done" = "Done"
-    "drivers.tool.backup.name" = "Back up drivers"
-    "drivers.tool.backup.body" = "Export the drivers now on this PC to a folder you choose."
-    "drivers.tool.offline.name" = "Install from a folder"
-    "drivers.tool.offline.body" = "Install drivers from a backup folder with pnputil. A restore point is created first when it can."
-    "drivers.tool.audio.name" = "Repair audio"
-    "drivers.tool.audio.body" = "Restart the Windows audio services, re-enable disabled playback devices, and open the audio troubleshooter."
-    "drivers.tool.problem.name" = "Fix devices with a problem code"
-    "drivers.tool.problem.body" = "List devices Windows has marked with a problem code, rescan, or disable and enable them."
-    "drivers.tool.ghost.name" = "Remove leftover device entries"
-    "drivers.tool.ghost.body" = "Remove device entries that are no longer present. This asks first and creates a restore point when it can."
-    "drivers.tool.network.name" = "Repair the network"
-    "drivers.tool.network.body" = "Reset Winsock and the TCP/IP stack, flush DNS, renew the address, and restart adapters."
-    "drivers.tool.display.name" = "Check display resolution"
-    "drivers.tool.display.body" = "Show the current display and recommend the preferred resolution and an official graphics driver update when one would help."
-    "drivers.tool.runtime.name" = "Repair game runtimes"
-    "drivers.tool.runtime.body" = "Install or repair Visual C++ redistributables, the DirectX runtime, XNA, and OpenAL with winget."
-    "drivers.tool.incompatible.name" = "Review incompatible drivers"
-    "drivers.tool.incompatible.body" = "Flag drivers that failed to load or that Memory Integrity may have blocked."
-    "drivers.tool.info.name" = "System information"
-    "drivers.info.waiting" = "Hardware details appear here after this page is opened."
-    "drivers.info.failed" = "Could not read system information."
-    "drivers.info.unavailable" = "System information is not available yet."
-    "drivers.info.os" = "System"
-    "drivers.info.version" = "Version"
-    "drivers.info.cpu" = "Processor"
-    "drivers.info.gpu" = "Graphics"
-    "drivers.info.board" = "Board"
-    "drivers.info.memory" = "Memory"
-    "drivers.info.bios" = "BIOS"
-    "drivers.badge.devices.zero" = "0 devices"
-    "drivers.badge.devices.one" = "1 device"
-    "drivers.badge.devices.many" = "{0} devices"
-    "drivers.badge.entries.zero" = "0 entries"
-    "drivers.badge.entries.one" = "1 entry"
-    "drivers.badge.entries.many" = "{0} entries"
-    "drivers.badge.drivers.zero" = "0 drivers"
-    "drivers.badge.drivers.one" = "1 driver"
-    "drivers.badge.drivers.many" = "{0} drivers"
-    "drivers.badge.needed.zero" = "0 needed"
-    "drivers.badge.needed.one" = "1 needed"
-    "drivers.badge.needed.many" = "{0} needed"
-    "drivers.badge.restart" = "Restart needed"
-    "drivers.badge.resolution" = "{0} x {1}"
-    "drivers.badge.displays" = "{0} displays"
-    "drivers.folder.backup" = "Choose a folder for the driver backup"
-    "drivers.folder.offline" = "Choose a folder that contains driver packages"
-    "drivers.admin" = "This action needs administrator approval. WinTool will ask Windows to reopen the window elevated."
-    "drivers.display.none" = "No display was reported. After a graphics driver update, open Settings > System > Display and choose the recommended resolution."
-    "drivers.display.this" = "This display"
-    "drivers.display.running" = "{0} is running at {1} x {2}."
-    "drivers.display.found" = "{0} was found."
-    "drivers.display.preferred" = "The preferred resolution is {0} x {1}. Open Settings > System > Display and choose that recommended size."
-    "drivers.display.matches" = "That already matches the preferred resolution."
-    "drivers.display.gpu" = "If the picture looks wrong, install or update the official graphics app for {0} from the list above, then check Display settings again."
-    "drivers.display.gpuGeneric" = "If the picture looks wrong, update the official graphics app from the list above, then check Display settings."
-    "drivers.update.tip" = "Install the ticked driver updates and official packages. A restore point is created first when System Protection is on."
-    "drivers.backup.tip" = "Export the drivers now on this PC to a folder you choose."
-    "drivers.rollback.confirm" = "Roll back the driver for {0}? A restore point is created first when System Protection is on."
-    "drivers.rollback.opened" = "Opened Device Manager so you can roll back that driver."
-    "drivers.tool.finished" = "Finished."
-    "drivers.join" = " and "
-    "drivers.list.more" = "`n`nand {0} more."
-    "drivers.update.noneSelected" = "Tick at least one item to update."
-    "drivers.update.part.wu.one" = "1 Windows Update driver"
-    "drivers.update.part.wu.many" = "{0} Windows Update drivers"
-    "drivers.update.part.package.one" = "1 official package"
-    "drivers.update.part.package.many" = "{0} official packages"
-    "drivers.update.part.noOffer.one" = "1 device has no Windows Update driver yet"
-    "drivers.update.part.noOffer.many" = "{0} devices have no Windows Update driver yet"
-    "drivers.update.confirm" = "Install {0}? A restore point is created first when System Protection is on. The PC may need a restart."
-    "drivers.update.title" = "Update drivers"
-    "drivers.update.noMatch" = "No Windows Update driver was matched for {0}."
-    "drivers.update.packagesDone" = "Finished installing the selected packages."
-    "drivers.update.noTitle" = "Those devices had no Windows Update title to install."
-    "drivers.update.progress" = "Installing driver updates"
-    "drivers.update.downloading.one" = "Downloading and installing 1 Windows Update driver."
-    "drivers.update.downloading.many" = "Downloading and installing {0} Windows Update drivers."
-    "drivers.restore.progress" = "Creating a restore point"
-    "drivers.restore.log" = "Creating a restore point before {0}. This can take a minute."
-    "drivers.restore.description" = "WinTool before driver changes"
-    "drivers.restore.missing" = "A restore point was not created.`n`n{0}`n`nContinue anyway?"
-    "drivers.restore.title" = "Restore point"
-    "drivers.restore.notApplied" = "The driver change was not applied."
-    "drivers.restore.continue" = "Continuing without a restore point."
-    "drivers.restore.created" = "Restore point created."
-    "drivers.backup.progress" = "Backing up drivers"
-    "drivers.backup.exporting" = "Exporting drivers to {0}."
-    "drivers.tool.unknown" = "Unknown driver tool: {0}"
-    "drivers.offline.confirm" = "Install every driver found under {0}? A restore point is created first when System Protection is on. The PC may need a restart."
-    "drivers.offline.title" = "Install drivers from a folder"
-    "drivers.offline.progress" = "Installing drivers from a folder"
-    "drivers.offline.installing" = "Installing drivers from {0}."
-    "drivers.audio.confirm" = "Restart the Windows audio services, re-enable disabled playback devices, and open the audio troubleshooter?"
-    "drivers.audio.progress" = "Repairing audio"
-    "drivers.audio.log" = "Restarting audio services and checking playback devices."
-    "drivers.scanFirst.problem" = "Scan drivers first so WinTool can list devices with a problem code."
-    "drivers.problem.none" = "No devices with a problem code were found in the last scan."
-    "drivers.toggle.enable.confirm.one" = "Enable 1 device with a problem code?`n`n{0}{1}"
-    "drivers.toggle.enable.confirm.many" = "Enable {0} devices with a problem code?`n`n{1}{2}"
-    "drivers.toggle.disable.confirm.one" = "Disable 1 device with a problem code?`n`n{0}{1}"
-    "drivers.toggle.disable.confirm.many" = "Disable {0} devices with a problem code?`n`n{1}{2}"
-    "drivers.toggle.enable.title" = "Enable devices"
-    "drivers.toggle.disable.title" = "Disable devices"
-    "drivers.rescan.confirm" = "Ask Windows to rescan for hardware changes?"
-    "drivers.rescan.title" = "Rescan devices"
-    "drivers.rescan.progress" = "Rescanning devices"
-    "drivers.rescan.log" = "Asking Windows to rescan for hardware changes."
-    "drivers.scanFirst.ghost" = "Scan drivers first so WinTool can count leftover device entries."
-    "drivers.ghost.none" = "No leftover device entries were found in the last scan."
-    "drivers.ghost.confirm.one" = "Remove 1 leftover device entry? This cannot be undone except by a restore point or by replugging the hardware.`n`n{0}{1}"
-    "drivers.ghost.confirm.many" = "Remove {0} leftover device entries? This cannot be undone except by a restore point or by replugging the hardware.`n`n{1}{2}"
-    "drivers.ghost.progress" = "Removing leftover devices"
-    "drivers.ghost.removing.one" = "Removing 1 leftover device entry."
-    "drivers.ghost.removing.many" = "Removing {0} leftover device entries."
-    "drivers.network.confirm" = "Reset Winsock and the TCP/IP stack, flush DNS, renew the address, and restart network adapters? You will need to restart the PC when it finishes."
-    "drivers.network.progress" = "Repairing the network"
-    "drivers.network.log" = "Resetting the network stack. Restart the PC when this finishes."
-    "drivers.scanFirst.display" = "Scan drivers first so WinTool can read the current display."
-    "drivers.runtime.checking" = "WinTool is still checking which runtimes are already installed. Try again in a moment, or scan first."
-    "drivers.runtime.none" = "No missing or outdated game runtimes were found."
-    "drivers.runtime.confirm.one" = "Install or repair 1 game runtime with winget? A restore point is created first when System Protection is on."
-    "drivers.runtime.confirm.many" = "Install or repair {0} game runtimes with winget? A restore point is created first when System Protection is on."
-    "drivers.runtime.done" = "Finished repairing game runtimes."
-    "drivers.scanFirst.incompatible" = "Scan drivers first so WinTool can review incompatible drivers."
-    "drivers.incompatible.none" = "No incompatible drivers were found in the last scan."
-    "drivers.incompatible.noneHvci" = "No incompatible drivers were found in the last scan. Memory Integrity is on, and no blocked drivers were listed."
-    "drivers.incompatible.hvci" = "Memory Integrity is on. Unsigned or blocked drivers can fail to load."
-    "drivers.incompatible.item" = "{0}  ({1})"
-    "drivers.tool.failed" = "Driver tool failed. {0}"
-    "drivers.tool.backup.done.one" = "Driver backup finished. 1 INF file was written."
-    "drivers.tool.backup.done.many" = "Driver backup finished. {0} INF files were written."
-    "drivers.tool.offline.done" = "Drivers from the backup folder were installed."
-    "drivers.tool.install.none" = "Those updates were no longer offered when the install started."
-    "drivers.tool.install.done.one" = "Finished installing 1 Windows Update driver."
-    "drivers.tool.install.done.many" = "Finished installing {0} Windows Update drivers."
-    "drivers.tool.audio.done" = "Audio repair finished."
-    "drivers.tool.network.done" = "Network repair finished. Restart the PC to complete it."
-    "drivers.tool.remove.done.one" = "Removed 1 leftover device entry. Scan again to refresh the list."
-    "drivers.tool.remove.done.many" = "Removed {0} leftover device entries. Scan again to refresh the list."
-    "drivers.tool.rescan.done" = "Hardware rescan finished. Scan drivers again to refresh the list."
-    "drivers.tool.toggle.done.one" = "Changed 1 device. Scan again to refresh the list."
-    "drivers.tool.toggle.done.many" = "Changed {0} devices. Scan again to refresh the list."
-    "drivers.tool.rollback.done" = "The driver was rolled back. Scan again to refresh the list."
-    "drivers.tool.reboot" = "Restart the PC to finish applying the change."
-    "status.summary.step" = "{0} ({1} of {2})"
-    "shell.close.busy" = "A task is still running. Stop it and close WinTool?"
-    "shell.close.title" = "WinTool is busy"
+$script:WinToolShippedLanguages = @(
+    "en", "pt-BR", "es", "fr", "de", "it", "ja", "ko",
+    "zh-Hans", "zh-Hant", "pl", "nl", "ru", "tr"
+)
+
+
+# Display-language tags that should resolve to a shipped locale before the
+# generic parent walk (zh-CN is not a parent of zh-Hans).
+$script:WinToolCultureAliases = @{
+    "zh-CN" = "zh-Hans"
+    "zh-SG" = "zh-Hans"
+    "zh-Hans-CN" = "zh-Hans"
+    "zh-TW" = "zh-Hant"
+    "zh-HK" = "zh-Hant"
+    "zh-MO" = "zh-Hant"
+    "zh-Hant-TW" = "zh-Hant"
+    "pt-PT" = "pt-BR"
+    "pt"    = "pt-BR"
 }
 
+function Get-WinToolPreferencesPath {
+    if (-not [string]::IsNullOrWhiteSpace($script:WinToolPreferencesPath)) {
+        return $script:WinToolPreferencesPath
+    }
+    if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        return $null
+    }
+    return (Join-Path $env:LOCALAPPDATA "WinTool\preferences.json")
+}
+
+function Get-WinToolPreferences {
+    $path = Get-WinToolPreferencesPath
+    $prefs = [pscustomobject]@{
+        schemaVersion = 1
+        language = "auto"
+    }
+    if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
+        return $prefs
+    }
+    try {
+        $loaded = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($path))
+        $language = [string](Get-WinToolNote -Object $loaded -Name "language" -Default "auto")
+        if ([string]::IsNullOrWhiteSpace($language)) {
+            $language = "auto"
+        }
+        $prefs.language = $language
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    return $prefs
+}
+
+function Save-WinToolPreferences {
+    param(
+        [Parameter(Mandatory = $true)]$Preferences
+    )
+    $path = Get-WinToolPreferencesPath
+    if ([string]::IsNullOrWhiteSpace($path)) {
+        return
+    }
+    $directory = Split-Path -Parent $path
+    if (-not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    }
+    $payload = [pscustomobject]@{
+        schemaVersion = 1
+        language = [string](Get-WinToolNote -Object $Preferences -Name "language" -Default "auto")
+    }
+    Write-WinToolJsonFile -Path $path -Value $payload
+}
+
+function Get-WinToolLocalePackObject {
+    # A single JSON object: { "en": { key: value }, "pt-BR": { ... } }
+    if ($null -ne $script:WinToolLocalePackObject) {
+        return $script:WinToolLocalePackObject
+    }
+
+    $embedded = $script:WinToolEmbedded
+    if ($null -ne $embedded -and $embedded.ContainsKey("Locales")) {
+        $clean = ([string]$embedded["Locales"]) -replace '\s', ''
+        $bytes = [Convert]::FromBase64String($clean)
+        $inputStream = New-Object System.IO.MemoryStream(,$bytes)
+        try {
+            $gzip = New-Object System.IO.Compression.GzipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
+            try {
+                $output = New-Object System.IO.MemoryStream
+                $gzip.CopyTo($output)
+                $json = [System.Text.Encoding]::UTF8.GetString($output.ToArray())
+                $script:WinToolLocalePackObject = ConvertFrom-WinToolJsonText -Text $json
+                return $script:WinToolLocalePackObject
+            }
+            finally {
+                $gzip.Dispose()
+            }
+        }
+        finally {
+            $inputStream.Dispose()
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($script:WinToolRoot)) {
+        throw "WinTool locale files are not embedded and no source folder is set."
+    }
+
+    $root = Join-Path $script:WinToolRoot "data/i18n"
+    $pack = [ordered]@{}
+    $enPath = Join-Path $root "en.json"
+    $pack["en"] = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($enPath))
+    $generatedRoot = Join-Path $root "generated"
+    $overrideRoot = Join-Path $root "overrides"
+    foreach ($code in @($script:WinToolShippedLanguages)) {
+        if ($code -eq "en") { continue }
+        $table = [ordered]@{}
+        $generated = Join-Path $generatedRoot ($code + ".json")
+        if (Test-Path -LiteralPath $generated) {
+            $loaded = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($generated))
+            foreach ($property in $loaded.PSObject.Properties) {
+                $table[$property.Name] = [string]$property.Value
+            }
+        }
+        $override = Join-Path $overrideRoot ($code + ".json")
+        if (Test-Path -LiteralPath $override) {
+            $loaded = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($override))
+            foreach ($property in $loaded.PSObject.Properties) {
+                $table[$property.Name] = [string]$property.Value
+            }
+        }
+        if ($table.Count -gt 0) {
+            $pack[$code] = [pscustomobject]$table
+        }
+    }
+    $script:WinToolLocalePackObject = [pscustomobject]$pack
+    return $script:WinToolLocalePackObject
+}
+
+function ConvertTo-WinToolTextMap {
+    param($Source)
+    $map = New-Object System.Collections.Hashtable ([StringComparer]::Ordinal)
+    if ($null -eq $Source) {
+        return $map
+    }
+    if ($Source -is [System.Collections.IDictionary]) {
+        foreach ($key in @($Source.Keys)) {
+            $map[[string]$key] = [string]$Source[$key]
+        }
+        return $map
+    }
+    foreach ($property in $Source.PSObject.Properties) {
+        $map[[string]$property.Name] = [string]$property.Value
+    }
+    return $map
+}
+
+function Get-WinToolLocaleTable {
+    param([Parameter(Mandatory = $true)][string]$Code)
+    $pack = Get-WinToolLocalePackObject
+    $property = $pack.PSObject.Properties[$Code]
+    if ($null -eq $property) {
+        return $null
+    }
+    return $property.Value
+}
+
+function Get-WinToolAvailableLanguage {
+    $codes = New-Object System.Collections.Generic.List[string]
+    $codes.Add("en") | Out-Null
+    $pack = $null
+    try { $pack = Get-WinToolLocalePackObject } catch { $pack = $null }
+    foreach ($code in @($script:WinToolShippedLanguages)) {
+        if ($code -eq "en") { continue }
+        if ($null -eq $pack) { continue }
+        if ($null -ne $pack.PSObject.Properties[$code]) {
+            $codes.Add($code) | Out-Null
+        }
+    }
+    return $codes.ToArray()
+}
+
+function ConvertTo-WinToolShippedLanguage {
+    param([string]$Tag)
+    if ([string]::IsNullOrWhiteSpace($Tag)) {
+        return $null
+    }
+    $available = @{}
+    foreach ($code in @(Get-WinToolAvailableLanguage)) {
+        $available[$code] = $true
+    }
+    $current = $Tag.Trim()
+    $seen = @{}
+    while (-not [string]::IsNullOrWhiteSpace($current) -and -not $seen.ContainsKey($current)) {
+        $seen[$current] = $true
+        if ($script:WinToolCultureAliases.ContainsKey($current) -and $available.ContainsKey($script:WinToolCultureAliases[$current])) {
+            return $script:WinToolCultureAliases[$current]
+        }
+        if ($available.ContainsKey($current)) {
+            return $current
+        }
+        $dash = $current.LastIndexOf("-")
+        if ($dash -le 0) {
+            # Same language, different region: pt-PT already tried pt, then pt-BR via alias.
+            foreach ($code in @($available.Keys)) {
+                if ($code.Equals($current, [StringComparison]::OrdinalIgnoreCase) -or $code.StartsWith($current + "-", [StringComparison]::OrdinalIgnoreCase)) {
+                    return $code
+                }
+            }
+            break
+        }
+        $current = $current.Substring(0, $dash)
+    }
+    return $null
+}
+
+function Resolve-WinToolLanguage {
+    param(
+        [string]$Requested,
+        [string]$UiCulture,
+        [string[]]$PreferredLanguages
+    )
+    $available = @(Get-WinToolAvailableLanguage)
+    if (-not [string]::IsNullOrWhiteSpace($Requested) -and $Requested -ne "auto") {
+        $direct = ConvertTo-WinToolShippedLanguage -Tag $Requested
+        if (-not [string]::IsNullOrWhiteSpace($direct)) {
+            return $direct
+        }
+    }
+
+    $candidates = New-Object System.Collections.Generic.List[string]
+    if (-not [string]::IsNullOrWhiteSpace($UiCulture)) {
+        $candidates.Add($UiCulture) | Out-Null
+    }
+    else {
+        try { $candidates.Add([System.Globalization.CultureInfo]::CurrentUICulture.Name) | Out-Null } catch { $null = $_.Exception.Message }
+    }
+    if ($null -ne $PreferredLanguages) {
+        foreach ($item in @($PreferredLanguages)) {
+            if (-not [string]::IsNullOrWhiteSpace($item)) {
+                $candidates.Add($item) | Out-Null
+            }
+        }
+    }
+    else {
+        try {
+            if (Get-Command -Name Get-WinUserLanguageList -ErrorAction SilentlyContinue) {
+                foreach ($item in @(Get-WinUserLanguageList)) {
+                    $name = [string]$item.LanguageTag
+                    if (-not [string]::IsNullOrWhiteSpace($name)) {
+                        $candidates.Add($name) | Out-Null
+                    }
+                }
+            }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+    }
+
+    foreach ($tag in $candidates) {
+        $matched = ConvertTo-WinToolShippedLanguage -Tag $tag
+        if (-not [string]::IsNullOrWhiteSpace($matched)) {
+            return $matched
+        }
+    }
+    if ($available -contains "en") {
+        return "en"
+    }
+    return $available[0]
+}
+
+function Get-WinToolPluralCategory {
+    param(
+        [Parameter(Mandatory = $true)][int]$Count,
+        [string]$Language
+    )
+    if ([string]::IsNullOrWhiteSpace($Language)) {
+        $Language = [string]$script:WinToolLanguage
+    }
+    $n = [math]::Abs($Count)
+    if ($Language -eq "ru") {
+        $mod10 = $n % 10
+        $mod100 = $n % 100
+        if ($mod10 -eq 1 -and $mod100 -ne 11) { return "one" }
+        if ($mod10 -ge 2 -and $mod10 -le 4 -and ($mod100 -lt 12 -or $mod100 -gt 14)) { return "few" }
+        return "many"
+    }
+    if ($n -eq 1) {
+        return "one"
+    }
+    return "other"
+}
+
+function Merge-WinToolTextTable {
+    param(
+        [Parameter(Mandatory = $true)][string]$Language
+    )
+    $merged = New-Object System.Collections.Hashtable ([StringComparer]::Ordinal)
+    $english = ConvertTo-WinToolTextMap -Source (Get-WinToolLocaleTable -Code "en")
+    foreach ($key in @($english.Keys)) {
+        $merged[$key] = $english[$key]
+    }
+    if ($Language -ne "en") {
+        $overlay = ConvertTo-WinToolTextMap -Source (Get-WinToolLocaleTable -Code $Language)
+        if ($null -ne $overlay) {
+            foreach ($key in @($overlay.Keys)) {
+                $value = [string]$overlay[$key]
+                if (-not [string]::IsNullOrWhiteSpace($value)) {
+                    $merged[$key] = $value
+                }
+            }
+        }
+    }
+    return $merged
+}
+
+function Initialize-WinToolLocale {
+    param(
+        [string]$Language,
+        [string]$UiCulture,
+        [string[]]$PreferredLanguages,
+        [switch]$Force
+    )
+    $requested = $Language
+    if ([string]::IsNullOrWhiteSpace($requested)) {
+        $requested = [string](Get-WinToolNote -Object (Get-WinToolPreferences) -Name "language" -Default "auto")
+    }
+    if ([string]::IsNullOrWhiteSpace($requested)) {
+        $requested = "auto"
+    }
+    $resolved = Resolve-WinToolLanguage -Requested $requested -UiCulture $UiCulture -PreferredLanguages $PreferredLanguages
+    if (-not $Force -and $script:WinToolLocaleReady -eq $true -and $script:WinToolLanguage -eq $resolved -and $script:WinToolLanguagePreference -eq $requested) {
+        return $resolved
+    }
+
+    $script:WinToolLocalePackObject = $null
+    $script:WinToolLanguagePreference = $requested
+    $script:WinToolLanguage = $resolved
+    $script:WinToolText = Merge-WinToolTextTable -Language $resolved
+    $script:WinToolEnglishText = Merge-WinToolTextTable -Language "en"
+    $script:WinToolLocaleReady = $true
+    if ($null -ne $script:WinToolPayloadObject) {
+        $script:WinToolPayloadObject = @{}
+    }
+    return $resolved
+}
+
+function Test-WinToolTextKey {
+    param([Parameter(Mandatory = $true)][string]$Key)
+    if ($null -eq $script:WinToolText) {
+        return $false
+    }
+    return $script:WinToolText.ContainsKey($Key)
+}
 
 function Get-WinToolText {
     param(
         [Parameter(Mandatory = $true)][string]$Key,
         [Parameter(ValueFromRemainingArguments = $true)][object[]]$Format
     )
+    if ($script:WinToolLocaleReady -ne $true) {
+        Initialize-WinToolLocale | Out-Null
+    }
     $text = $null
-    if ($null -ne $script:WinToolText -and @($script:WinToolText.Keys) -contains $Key) {
+    if ($null -ne $script:WinToolText -and $script:WinToolText.ContainsKey($Key)) {
         $text = [string]$script:WinToolText[$Key]
+    }
+    elseif ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($Key)) {
+        $text = [string]$script:WinToolEnglishText[$Key]
     }
     if ([string]::IsNullOrEmpty($text)) {
         return $Key
     }
     $values = @($Format | Where-Object { $null -ne $_ })
     if ($values.Count -gt 0) {
-        return ($text -f $values)
+        try {
+            return ($text -f $values)
+        }
+        catch {
+            return $text
+        }
     }
     return $text
 }
@@ -349,14 +398,277 @@ function Get-WinToolCountText {
     if ($null -ne $Format) {
         $extra = @($Format)
     }
-    if ($Count -eq 1) {
-        if ($extra.Count -gt 0) {
-            return (Get-WinToolText -Key ($Key + ".one") -Format $extra)
+    $category = Get-WinToolPluralCategory -Count $Count
+    $suffixes = @()
+    if ($category -eq "one") {
+        $suffixes = @(".one")
+    }
+    elseif ($category -eq "few") {
+        $suffixes = @(".few", ".many", ".other")
+    }
+    elseif ($category -eq "many") {
+        $suffixes = @(".many", ".other")
+    }
+    else {
+        $suffixes = @(".many", ".other")
+    }
+    $chosen = $null
+    foreach ($suffix in $suffixes) {
+        $candidate = $Key + $suffix
+        if (Test-WinToolTextKey -Key $candidate) {
+            $chosen = $candidate
+            break
         }
-        return (Get-WinToolText -Key ($Key + ".one"))
+        if ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($candidate)) {
+            $chosen = $candidate
+            break
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($chosen)) {
+        $chosen = $Key + ".many"
+    }
+    if ($category -eq "one" -and $extra.Count -gt 0) {
+        return (Get-WinToolText -Key $chosen -Format $extra)
+    }
+    if ($category -eq "one") {
+        return (Get-WinToolText -Key $chosen)
     }
     $values = @($Count) + $extra
-    return (Get-WinToolText -Key ($Key + ".many") -Format $values)
+    return (Get-WinToolText -Key $chosen -Format $values)
+}
+
+function Apply-WinToolXamlText {
+    param($Root)
+    if ($null -eq $Root) {
+        $Root = $script:WinToolWindow
+    }
+    if ($null -eq $Root) {
+        return
+    }
+    if ($script:WinToolLocaleReady -ne $true) {
+        Initialize-WinToolLocale | Out-Null
+    }
+
+    $visit = New-Object System.Collections.Generic.Queue[object]
+    $visit.Enqueue($Root)
+    $seen = New-Object System.Collections.Generic.HashSet[int]
+    while ($visit.Count -gt 0) {
+        $node = $visit.Dequeue()
+        if ($null -eq $node) { continue }
+        try {
+            $hash = [int]$node.GetHashCode()
+            if (-not $seen.Add($hash)) { continue }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+
+        $ids = New-Object System.Collections.Generic.List[string]
+        try {
+            $uid = [string]$node.Uid
+            if (-not [string]::IsNullOrWhiteSpace($uid)) { $ids.Add($uid) | Out-Null }
+        }
+        catch { $null = $_.Exception.Message }
+        try {
+            $elementName = [string]$node.Name
+            if (-not [string]::IsNullOrWhiteSpace($elementName) -and -not $ids.Contains($elementName)) {
+                $ids.Add($elementName) | Out-Null
+            }
+        }
+        catch { $null = $_.Exception.Message }
+
+        foreach ($id in $ids) {
+            foreach ($pair in @(
+                    @{ Key = "ui.$id.Text"; Property = "Text" },
+                    @{ Key = "ui.$id.Content"; Property = "Content" },
+                    @{ Key = "ui.$id.Title"; Property = "Title" },
+                    @{ Key = "ui.$id.ToolTip"; Property = "ToolTip" },
+                    @{ Key = "ui.$id.Header"; Property = "Header" }
+                )) {
+                if (-not (Test-WinToolTextKey -Key $pair.Key) -and -not ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($pair.Key))) {
+                    continue
+                }
+                $value = Get-WinToolText -Key $pair.Key
+                try {
+                    if ($pair.Property -eq "Content") {
+                        $current = $node.Content
+                        if ($current -is [string] -or $null -eq $current) {
+                            $node.Content = $value
+                        }
+                    }
+                    elseif ($pair.Property -eq "ToolTip") {
+                        $tip = $node.ToolTip
+                        if ($tip -is [string] -or $null -eq $tip) {
+                            $node.ToolTip = $value
+                        }
+                        elseif ($null -ne $tip.PSObject.Properties["Content"] -and $tip.Content -is [string]) {
+                            $tip.Content = $value
+                        }
+                    }
+                    else {
+                        $node.($pair.Property) = $value
+                    }
+                }
+                catch {
+                    $null = $_.Exception.Message
+                }
+            }
+            $autoKey = "ui.$id.AutomationName"
+            if ((Test-WinToolTextKey -Key $autoKey) -or ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($autoKey))) {
+                try {
+                    [System.Windows.Automation.AutomationProperties]::SetName($node, (Get-WinToolText -Key $autoKey))
+                }
+                catch {
+                    $null = $_.Exception.Message
+                }
+            }
+        }
+
+        try {
+            foreach ($child in [System.Windows.LogicalTreeHelper]::GetChildren($node)) {
+                if ($child -is [System.Windows.DependencyObject]) {
+                    $visit.Enqueue($child)
+                }
+            }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+    }
+}
+
+function Apply-WinToolCatalogLocale {
+    param($Catalog, [Parameter(Mandatory = $true)][string]$Kind)
+    if ($null -eq $Catalog) {
+        return $Catalog
+    }
+    $set = {
+        param($Object, $Name, $Key)
+        if ($null -eq $Object) { return }
+        if (-not (Test-WinToolTextKey -Key $Key) -and -not ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($Key))) {
+            return
+        }
+        $property = $Object.PSObject.Properties[$Name]
+        if ($null -eq $property) {
+            return
+        }
+        $property.Value = Get-WinToolText -Key $Key
+    }
+    switch ($Kind) {
+        "Apps" {
+            foreach ($category in @(Get-WinToolNote -Object $Catalog -Name "categories" -Default @())) {
+                $cid = [string](Get-WinToolNote -Object $category -Name "id" -Default "")
+                & $set $category "name" "catalog.apps.category.$cid.name"
+                & $set $category "chip" "catalog.apps.category.$cid.chip"
+                & $set $category "description" "catalog.apps.category.$cid.description"
+                foreach ($app in @(Get-WinToolNote -Object $category -Name "apps" -Default @())) {
+                    $aid = [string](Get-WinToolNote -Object $app -Name "id" -Default "")
+                    & $set $app "description" "catalog.apps.$aid.description"
+                }
+            }
+        }
+        "Tweaks" {
+            foreach ($preset in @(Get-WinToolNote -Object $Catalog -Name "presets" -Default @())) {
+                $presetId = [string](Get-WinToolNote -Object $preset -Name "id" -Default "")
+                & $set $preset "name" "catalog.tweaks.preset.$presetId.name"
+                & $set $preset "description" "catalog.tweaks.preset.$presetId.description"
+            }
+            foreach ($tweak in @(Get-WinToolNote -Object $Catalog -Name "tweaks" -Default @())) {
+                $tid = [string](Get-WinToolNote -Object $tweak -Name "id" -Default "")
+                & $set $tweak "name" "catalog.tweaks.$tid.name"
+                & $set $tweak "description" "catalog.tweaks.$tid.description"
+                $category = [string](Get-WinToolNote -Object $tweak -Name "category" -Default "")
+                if (-not [string]::IsNullOrWhiteSpace($category)) {
+                    $slug = ($category.ToLowerInvariant() -replace '[^a-z0-9]+', '-').Trim("-")
+                    $key = "catalog.tweaks.category.$slug"
+                    if ((Test-WinToolTextKey -Key $key) -or ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($key))) {
+                        $tweak.category = Get-WinToolText -Key $key
+                    }
+                }
+            }
+        }
+        "Terminal" {
+            foreach ($prompt in @(Get-WinToolNote -Object $Catalog -Name "prompts" -Default @())) {
+                $promptId = [string](Get-WinToolNote -Object $prompt -Name "id" -Default "")
+                & $set $prompt "summary" "catalog.terminal.prompt.$promptId.summary"
+            }
+            foreach ($extra in @(Get-WinToolNote -Object $Catalog -Name "extras" -Default @())) {
+                $eid = [string](Get-WinToolNote -Object $extra -Name "id" -Default "")
+                & $set $extra "name" "catalog.terminal.extra.$eid.name"
+                & $set $extra "description" "catalog.terminal.extra.$eid.description"
+            }
+            foreach ($scheme in @(Get-WinToolNote -Object $Catalog -Name "schemes" -Default @())) {
+                $sid = [string](Get-WinToolNote -Object $scheme -Name "id" -Default "")
+                & $set $scheme "name" "catalog.terminal.scheme.$sid.name"
+            }
+            foreach ($preset in @(Get-WinToolNote -Object $Catalog -Name "starshipPresets" -Default @())) {
+                $sid = [string](Get-WinToolNote -Object $preset -Name "id" -Default "")
+                & $set $preset "name" "catalog.terminal.starship.$sid.name"
+            }
+            $variants = Get-WinToolNote -Object $Catalog -Name "promptVariants" -Default $null
+            if ($null -ne $variants) {
+                foreach ($engineProp in $variants.PSObject.Properties) {
+                    foreach ($variant in @($engineProp.Value)) {
+                        $vid = [string](Get-WinToolNote -Object $variant -Name "id" -Default "")
+                        & $set $variant "name" ("catalog.terminal.variant.{0}.{1}.name" -f $engineProp.Name, $vid)
+                        & $set $variant "description" ("catalog.terminal.variant.{0}.{1}.description" -f $engineProp.Name, $vid)
+                    }
+                }
+            }
+        }
+        "Updates" {
+            foreach ($mode in @(Get-WinToolNote -Object $Catalog -Name "modes" -Default @())) {
+                $mid = [string](Get-WinToolNote -Object $mode -Name "id" -Default "")
+                & $set $mode "name" "catalog.updates.mode.$mid.name"
+                & $set $mode "description" "catalog.updates.mode.$mid.description"
+            }
+            foreach ($vendor in @(Get-WinToolNote -Object $Catalog -Name "vendors" -Default @())) {
+                $vid = [string](Get-WinToolNote -Object $vendor -Name "id" -Default "")
+                & $set $vendor "note" "catalog.updates.vendor.$vid.note"
+            }
+        }
+        "Features" {
+            foreach ($item in @(Get-WinToolNote -Object $Catalog -Name "features" -Default @())) {
+                $fid = [string](Get-WinToolNote -Object $item -Name "id" -Default "")
+                & $set $item "description" "catalog.features.$fid.description"
+            }
+        }
+        "Fixes" {
+            foreach ($item in @(Get-WinToolNote -Object $Catalog -Name "fixes" -Default @())) {
+                $fid = [string](Get-WinToolNote -Object $item -Name "id" -Default "")
+                & $set $item "name" "catalog.fixes.$fid.name"
+                & $set $item "description" "catalog.fixes.$fid.description"
+                $index = 0
+                foreach ($step in @(Get-WinToolNote -Object $item -Name "steps" -Default @())) {
+                    & $set $step "label" "catalog.fixes.$fid.step.$index"
+                    $index += 1
+                }
+            }
+        }
+        "System" {
+            foreach ($dns in @(Get-WinToolNote -Object $Catalog -Name "dns" -Default @())) {
+                $did = [string](Get-WinToolNote -Object $dns -Name "id" -Default "")
+                & $set $dns "name" "catalog.system.dns.$did.name"
+                & $set $dns "description" "catalog.system.dns.$did.description"
+            }
+            $plan = Get-WinToolNote -Object $Catalog -Name "powerPlan" -Default $null
+            if ($null -ne $plan) {
+                & $set $plan "name" "catalog.system.powerPlan.name"
+                & $set $plan "description" "catalog.system.powerPlan.description"
+            }
+        }
+        "Drivers" {
+            foreach ($gpu in @(Get-WinToolNote -Object $Catalog -Name "gpuApps" -Default @())) {
+                $gid = [string](Get-WinToolNote -Object $gpu -Name "id" -Default "")
+                & $set $gpu "note" "catalog.drivers.gpu.$gid.note"
+            }
+            foreach ($problem in @(Get-WinToolNote -Object $Catalog -Name "problem" -Default @())) {
+                $code = [string](Get-WinToolNote -Object $problem -Name "code" -Default "")
+                & $set $problem "name" "catalog.drivers.problem.$code.name"
+            }
+        }
+    }
+    return $Catalog
 }
 
 function Test-WinToolTextTable {
@@ -364,22 +676,36 @@ function Test-WinToolTextTable {
     if ($null -eq $Errors) {
         $Errors = New-Object System.Collections.Generic.List[string]
     }
-    if ($null -eq $script:WinToolText -or $script:WinToolText.Count -eq 0) {
+    if ($script:WinToolLocaleReady -ne $true) {
+        Initialize-WinToolLocale -Language "en" | Out-Null
+    }
+    if ($null -eq $script:WinToolEnglishText -or $script:WinToolEnglishText.Count -eq 0) {
         Add-WinToolDataError -Errors $Errors -Message "The English UI text table is empty."
         return $Errors
     }
-    foreach ($key in @($script:WinToolText.Keys)) {
-        $value = [string]$script:WinToolText[$key]
+    foreach ($key in @($script:WinToolEnglishText.Keys)) {
+        $value = [string]$script:WinToolEnglishText[$key]
         if ([string]::IsNullOrWhiteSpace($value)) {
             Add-WinToolDataError -Errors $Errors -Message ("UI text '" + $key + "' is empty.")
         }
-        if ($value -match '[\r\n]') {
-            # Multi-line values are allowed only when intentional; none are yet.
+    }
+    $previous = $script:WinToolLanguage
+    $previousPref = $script:WinToolLanguagePreference
+    $previousTable = $script:WinToolText
+    try {
+        $script:WinToolLanguage = "en"
+        $script:WinToolText = $script:WinToolEnglishText
+        $sample = Get-WinToolText "activity.count.warning.many" 3
+        if ($sample -ne "3 warnings") {
+            Add-WinToolDataError -Errors $Errors -Message "Get-WinToolText did not format a known English string."
         }
     }
-    $sample = Get-WinToolText "activity.count.warning.many" 3
-    if ($sample -ne "3 warnings") {
-        Add-WinToolDataError -Errors $Errors -Message "Get-WinToolText did not format a known English string."
+    finally {
+        $script:WinToolLanguage = $previous
+        $script:WinToolLanguagePreference = $previousPref
+        $script:WinToolText = $previousTable
     }
     return $Errors
 }
+
+Initialize-WinToolLocale | Out-Null

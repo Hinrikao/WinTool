@@ -8,11 +8,11 @@
 function Get-WinToolHomeCheckList {
     # The fixed order of the checks on the Home page.
     return @(
-        [pscustomobject]@{ Id = "junk"; Name = "Junk files" },
-        [pscustomobject]@{ Id = "tweaks"; Name = "Recommended tweaks" },
-        [pscustomobject]@{ Id = "startup"; Name = "Startup programs" },
+        [pscustomobject]@{ Id = "junk"; Name = (Get-WinToolText "msg.junk-files") },
+        [pscustomobject]@{ Id = "tweaks"; Name = (Get-WinToolText "msg.recommended-tweaks") },
+        [pscustomobject]@{ Id = "startup"; Name = (Get-WinToolText "msg.startup-programs") },
         [pscustomobject]@{ Id = "drivers"; Name = "Drivers" },
-        [pscustomobject]@{ Id = "disk"; Name = "Disk health" }
+        [pscustomobject]@{ Id = "disk"; Name = (Get-WinToolText "msg.disk-health") }
     )
 }
 
@@ -152,21 +152,21 @@ function ConvertTo-WinToolHomeStartupResult {
 function Get-WinToolDriverProblemText {
     param([int]$Code)
     switch ($Code) {
-        1 { return "not configured" }
-        10 { return "cannot start" }
-        12 { return "not enough resources" }
-        14 { return "restart required" }
-        18 { return "reinstall driver" }
-        19 { return "registry entry damaged" }
-        24 { return "missing or not working" }
-        28 { return "driver not installed" }
-        31 { return "driver could not load" }
-        32 { return "driver service disabled" }
-        37 { return "driver failed to initialize" }
-        39 { return "driver missing or corrupted" }
-        43 { return "reported a problem" }
-        48 { return "driver blocked" }
-        52 { return "driver signature invalid" }
+        1 { return (Get-WinToolText "msg.not-configured") }
+        10 { return (Get-WinToolText "msg.cannot-start") }
+        12 { return (Get-WinToolText "msg.not-enough-resources") }
+        14 { return (Get-WinToolText "msg.restart-required") }
+        18 { return (Get-WinToolText "msg.reinstall-driver") }
+        19 { return (Get-WinToolText "msg.registry-entry-damaged") }
+        24 { return (Get-WinToolText "msg.missing-or-not-working") }
+        28 { return (Get-WinToolText "msg.driver-not-installed") }
+        31 { return (Get-WinToolText "msg.driver-could-not-load") }
+        32 { return (Get-WinToolText "msg.driver-service-disabled") }
+        37 { return (Get-WinToolText "msg.driver-failed-to-initialize") }
+        39 { return (Get-WinToolText "msg.driver-missing-or-corrupted") }
+        43 { return (Get-WinToolText "msg.reported-a-problem") }
+        48 { return (Get-WinToolText "msg.driver-blocked") }
+        52 { return (Get-WinToolText "msg.driver-signature-invalid") }
     }
     if ($Code -gt 0) { return ("code " + $Code) }
     return ""
@@ -248,7 +248,7 @@ function ConvertTo-WinToolHomeResult {
     catch {
         return (ConvertTo-WinToolHomeErrorResult -Id $Id -Message $_.Exception.Message)
     }
-    throw "Unknown Home check: $Id"
+    throw (Get-WinToolText "msg.unknown-home-check-n" $Id)
 }
 
 function Get-WinToolHomeScore {
@@ -272,7 +272,7 @@ function Get-WinToolHomeLead {
     $fixable = @(@($Result) | Where-Object { $null -ne $_ -and $_.Fixable }).Count
     $words = @("No", "One", "Two", "Three", "Four", "Five")
     if ($fixable -eq 0) {
-        return "Nothing needs fixing. Nothing was changed during the analysis."
+        return (Get-WinToolText "msg.nothing-needs-fixing-nothing-was-changed-during-the-anal")
     }
     $word = [string]$fixable
     if ($fixable -lt $words.Count) { $word = $words[$fixable] }
@@ -298,7 +298,7 @@ function Format-WinToolHomeMeta {
         [datetime]$Now = (Get-Date)
     )
     if ($null -eq $Last) {
-        return "No earlier analysis on this PC"
+        return (Get-WinToolText "ui.HomeMetaText.Text")
     }
     $when = Format-WinToolHomeWhen -Time ([datetime]$Last.Time) -Now $Now
     return ("Last analysis: {0} {2} Score {1}" -f $when, [int]$Last.Score, [char]0x00B7)
@@ -414,13 +414,13 @@ function Get-WinToolHomeJunkLocation {
     if ([string]::IsNullOrWhiteSpace($windows)) { $windows = "C:\Windows" }
     $list = New-Object System.Collections.Generic.List[object]
     if (-not [string]::IsNullOrWhiteSpace($env:TEMP)) {
-        $list.Add([pscustomobject]@{ Id = "temp"; Name = "Your temporary files"; Path = $env:TEMP; Filter = "*"; Recurse = $true; MinAgeHours = 24 })
+        $list.Add([pscustomobject]@{ Id = "temp"; Name = (Get-WinToolText "msg.your-temporary-files"); Path = $env:TEMP; Filter = "*"; Recurse = $true; MinAgeHours = 24 })
     }
-    $list.Add([pscustomobject]@{ Id = "wintemp"; Name = "Windows temporary files"; Path = (Join-Path $windows "Temp"); Filter = "*"; Recurse = $true; MinAgeHours = 24 })
-    $list.Add([pscustomobject]@{ Id = "delivery"; Name = "Delivery Optimization cache"; Path = (Join-Path $windows "ServiceProfiles\NetworkService\AppData\Local\Microsoft\Windows\DeliveryOptimization\Cache"); Filter = "*"; Recurse = $true; MinAgeHours = 0 })
-    $list.Add([pscustomobject]@{ Id = "recycle"; Name = "Recycle Bin"; Path = ""; Filter = "*"; Recurse = $true; MinAgeHours = 0 })
+    $list.Add([pscustomobject]@{ Id = "wintemp"; Name = (Get-WinToolText "msg.windows-temporary-files"); Path = (Join-Path $windows "Temp"); Filter = "*"; Recurse = $true; MinAgeHours = 24 })
+    $list.Add([pscustomobject]@{ Id = "delivery"; Name = (Get-WinToolText "msg.delivery-optimization-cache"); Path = (Join-Path $windows "ServiceProfiles\NetworkService\AppData\Local\Microsoft\Windows\DeliveryOptimization\Cache"); Filter = "*"; Recurse = $true; MinAgeHours = 0 })
+    $list.Add([pscustomobject]@{ Id = "recycle"; Name = (Get-WinToolText "msg.recycle-bin"); Path = ""; Filter = "*"; Recurse = $true; MinAgeHours = 0 })
     if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
-        $list.Add([pscustomobject]@{ Id = "thumbs"; Name = "Thumbnail cache"; Path = (Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Explorer"); Filter = "thumbcache_*.db"; Recurse = $false; MinAgeHours = 0 })
+        $list.Add([pscustomobject]@{ Id = "thumbs"; Name = (Get-WinToolText "msg.thumbnail-cache"); Path = (Join-Path $env:LOCALAPPDATA "Microsoft\Windows\Explorer"); Filter = "thumbcache_*.db"; Recurse = $false; MinAgeHours = 0 })
     }
     return $list.ToArray()
 }
@@ -778,7 +778,7 @@ while (-not $sync.Stop) {
 $sync.Done = $true
 '@
         }
-        default { throw "Unknown Home check: $Id" }
+        default { throw (Get-WinToolText "msg.unknown-home-check-n" $Id) }
     }
     # param() has to stay first; the shared helper goes right after it.
     $text = ([string]$body).Trim()
