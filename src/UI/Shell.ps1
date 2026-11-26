@@ -226,9 +226,6 @@ function Complete-WinToolNavTiming {
     if ($script:WinToolShuttingDown) { return }
     if ([int64]$script:WinToolState.NavStamp -ne [int64]$Stamp) { return }
     Update-WinToolNavPill -Animate $true
-    if ($Name -eq "Config") {
-        Update-WinToolProfileSummary
-    }
     $elapsed = ([System.Diagnostics.Stopwatch]::GetTimestamp() - [int64]$Stamp) * 1000.0 / [System.Diagnostics.Stopwatch]::Frequency
     $ms = [int][Math]::Round($elapsed)
     if ($ms -lt 0) { $ms = 0 }
@@ -305,6 +302,7 @@ function Complete-WinToolNavFollowUp {
         Start-WinToolTweakStateRead
     }
     if ($Name -eq "Config") {
+        Update-WinToolProfileSummary
         Start-WinToolSystemProbe
     }
     if ($Name -eq "Terminal") {
