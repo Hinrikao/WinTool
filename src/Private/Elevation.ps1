@@ -306,9 +306,38 @@ function Start-WinToolRelaunch {
         Exit-WinToolOwnedHost
         return
     }
+    $snapshot = Get-WinToolLaunchHostSnapshot
+    $signal = Join-Path $launcherDirectory ("launch-" + [guid]::NewGuid().ToString("N") + ".signal")
+    $start = New-WinToolGuiChildStartInfo -FileName (Get-WinToolPreferredGuiHostPath) -Argument @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden $false) -Environment (Get-WinToolGuiChildEnvironment -Snapshot $snapshot -SignalPath $signal)
+    try {
+        $process = Start-WinToolGuiChildProcess -StartInfo $start
+    }
+    catch {
+        $null = $_.Exception.Message
+        Write-Host (Get-WinToolText "shell.opened")
+        return
+    }
+    if (-not (Wait-WinToolLaunchReady -SignalPath $signal -Process $process)) {
+        try {
+            if (-not $process.HasExited) {
+                Write-Host (Get-WinToolText "shell.opened")
+            }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+        return
+    }
+    $swap = Get-WinToolLaunchSignalSwap -SignalPath $signal
+    if ($swap -eq "exit-tab") {
+        exit 0
+    }
+    if ($swap -eq "hide-conhost" -or $swap -eq "morph-wt") {
+        $null = $process.WaitForExit()
+        Write-WinToolLaunchCloseSummary -SignalPath $signal
+        return
+    }
     Write-Host (Get-WinToolText "shell.opened")
-    Start-Process -FilePath $executable -ArgumentList $line -WindowStyle $style | Out-Null
-    Exit-WinToolOwnedHost
 }
 
 function Test-WinToolOwnedHost {

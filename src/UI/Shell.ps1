@@ -999,6 +999,7 @@ function Initialize-WinToolShellEvent {
             }
             $script:WinToolShuttingDown = $true
             Stop-WinToolBackgroundWork
+            Complete-WinToolLaunchHostRestore
             # The window test closes a window it built itself. Leave that
             # process, and a console the user was using, alone.
             if (-not $script:WinToolSessionExit) { return }
@@ -1442,6 +1443,7 @@ function Show-WinToolWindow {
     try {
         $window = New-WinToolWindow -DeferViews
         $script:WinToolSessionExit = $true
+        Show-WinToolModernHostOffer
         Enable-WinToolLogPump
         Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Show the first frame" -Action {
             $window = $script:WinToolWindow
@@ -1449,6 +1451,7 @@ function Show-WinToolWindow {
                 $window.Opacity = 1
             }
             Hide-WinToolConsole
+            Complete-WinToolLaunchSwap
             if ($null -ne $script:WinToolStartupStamp -and $null -ne $script:WinToolState -and [int]$script:WinToolState.FirstFrameMs -lt 0) {
                 $script:WinToolState.FirstFrameMs = [int]$script:WinToolStartupStamp.ElapsedMilliseconds
                 Write-WinToolLog -Message (Get-WinToolText "msg.first-interactive-frame-ms" $script:WinToolState.FirstFrameMs) -Level "info"
@@ -1469,6 +1472,7 @@ function Show-WinToolWindow {
     finally {
         Stop-WinToolBackgroundWork
         Exit-WinToolSingleInstance
+        Complete-WinToolLaunchHostRestore
         # Closing already detached a hidden console and ended that process.
         # This runs when the console belongs to the user, or when Closing did
         # not exit. Never show a console that was hidden before WinTool opened.

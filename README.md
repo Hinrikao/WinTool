@@ -39,7 +39,7 @@ irm https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1 | iex
 
 Approve the administrator prompt. The WinTool window opens in a dark theme. The log stays collapsed until a task is running, or until you press Show log.
 
-Only the WinTool window stays on screen. The PowerShell console that starts it is hidden once the window appears (from Windows Terminal, WinTool reopens in its own hidden console and you can close the terminal). Add `-ShowConsole` to `wintool.ps1` or `src\Start-WinTool.ps1`, or set `WINTOOL_SHOW_CONSOLE=1` before the one-liner, to keep the console for debugging.
+Only the WinTool window stays on screen after it opens. A classic console is hidden and comes back with a short summary when you close WinTool. A Windows Terminal window with one tab is hidden the same way and restored on close; if that window has other tabs, only the launching tab closes. The app itself starts with no extra terminal tab. On Windows PowerShell 5.1, WinTool can offer to install PowerShell 7 and Windows Terminal, and it prefers PowerShell 7 for the window when that is already present. Add `-ShowConsole` to `wintool.ps1` or `src\Start-WinTool.ps1`, or set `WINTOOL_SHOW_CONSOLE=1` before the one-liner, to keep the console for debugging.
 
 If startup fails, the message stays on screen and the details are appended to `%TEMP%\WinTool\wintool.log`.
 

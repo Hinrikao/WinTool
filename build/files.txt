@@ -19,6 +19,7 @@ src/Private/Config.ps1
 src/Private/Theme.ps1
 src/Private/Runner.ps1
 src/Private/Elevation.ps1
+src/Private/LaunchHost.ps1
 src/Private/ElevatedHelper.ps1
 src/Private/Fixes.ps1
 src/Private/Features.ps1

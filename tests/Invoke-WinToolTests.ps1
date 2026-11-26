@@ -606,7 +606,10 @@ Invoke-WinToolCase -Name "Elevation relaunches the entry script" -Body {
     $hostLine = ConvertTo-WinToolArgumentLine -ArgumentList $hostArguments
     Test-WinToolExpectation -Condition ($hostLine.StartsWith("-STA -NoProfile -ExecutionPolicy Bypass -File ")) -Message "The new PowerShell process is STA and bypasses execution policy."
     $hiddenLine = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath "C:\Temp\relaunch.ps1" -Hidden $true)
-    Test-WinToolExpectation -Condition ($hiddenLine.StartsWith("-STA -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ")) -Message "A hidden relaunch asks PowerShell for a hidden window."
+    Test-WinToolExpectation -Condition ($hiddenLine.StartsWith("-STA -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ")) -Message "Get-WinToolHostArgument still accepts a hidden window style."
+    $guiChild = New-WinToolGuiChildStartInfo -FileName "pwsh.exe" -Argument @(Get-WinToolHostArgument -LauncherPath "C:\Temp\relaunch.ps1" -Hidden $false)
+    Test-WinToolExpectation -Condition ($guiChild.CreateNoWindow -eq $true -and $guiChild.UseShellExecute -eq $false) -Message "The GUI child starts with no window and without ShellExecute."
+    Test-WinToolExpectation -Condition ($guiChild.ArgumentText -notlike "*-WindowStyle Hidden*") -Message "The GUI child command line does not use -WindowStyle Hidden."
     $hiddenScript = New-WinToolRelaunchScript -WorkingDirectory "C:\Temp" -EntryPath "C:\Temp\wintool.ps1" -ApplyProfile "" -Unattended $false -LaunchUrl "" -Hidden $true -ShowConsole $false
     Test-WinToolExpectation -Condition ($hiddenScript.Contains('$env:WINTOOL_HIDDEN = "1"') -and $hiddenScript.Contains("ShowWindow")) -Message "A hidden relaunch marks itself and shows the console again on an error."
     $hiddenTokens = $null
@@ -628,7 +631,11 @@ Invoke-WinToolCase -Name "Elevation relaunches the entry script" -Body {
     $runAt = $elevateScript.IndexOf("& 'C:\Temp\wintool.ps1'")
     Test-WinToolExpectation -Condition ($elevateScript.Contains('$env:WINTOOL_HIDDEN = "1"') -and $hideAt -ge 0 -and $runAt -gt $hideAt) -Message "The elevated stub hides the console before the launcher is parsed."
     $hiddenOption = Get-WinToolRelaunchHostOption -ShowConsole $false -Unattended $false
-    Test-WinToolExpectation -Condition ($hiddenOption.WindowStyle -eq "Hidden" -and $hiddenOption.Hidden -eq $true) -Message "A non-elevated relaunch can still use a hidden host window."
+    Test-WinToolExpectation -Condition ($hiddenOption.Hidden -eq $true -and $hiddenOption.HideConsole -eq $true) -Message "A non-elevated relaunch still marks the child as a hidden owned host."
+    $elevationSource = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/Elevation.ps1"))
+    Test-WinToolExpectation -Condition ($elevationSource.Contains("Start-WinToolGuiChildProcess") -and $elevationSource.Contains("Get-WinToolPreferredGuiHostPath") -and $elevationSource.Contains("-Verb RunAs") -and $elevationSource.Contains('-WindowStyle $style') -and -not $elevationSource.Contains('-WindowStyle Hidden -Verb RunAs') -and -not $elevationSource.Contains('-Verb RunAs -WindowStyle Hidden')) -Message "The detached launch uses a no-window child and never hides the UAC prompt."
+    $helperSource = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/ElevatedHelper.ps1"))
+    Test-WinToolExpectation -Condition ($helperSource.Contains('System32\WindowsPowerShell\v1.0\powershell.exe') -and $helperSource.Contains('-Verb RunAs') -and $helperSource.Contains('-WindowStyle Normal') -and ($helperSource -notmatch 'Start-Process[^`r`n]*-WindowStyle Hidden')) -Message "The elevated helper stays on Windows PowerShell 5.1 and keeps the UAC prompt visible."
     $canceled = $null
     try { throw (New-Object System.ComponentModel.Win32Exception 1223) } catch { $canceled = Get-WinToolElevationFailureText -ErrorRecord $_ }
     Test-WinToolExpectation -Condition ($canceled.Contains("canceled") -and $canceled.Contains("administrator")) -Message "A canceled UAC prompt has a clear message."
@@ -715,12 +722,41 @@ Invoke-WinToolCase -Name "A normal launch detaches without UAC and opens a helpe
     Test-WinToolExpectation -Condition ($entry.Contains("Test-WinToolElevateAtStart") -and $entry.Contains("Request-WinToolAdministrator")) -Message "The previous elevate-at-start path is still available."
     Test-WinToolExpectation -Condition ($entry.IndexOf("Test-WinToolElevateAtStart") -lt $entry.IndexOf("Request-WinToolAdministrator")) -Message "Administrator approval at start is gated on WINTOOL_ELEVATE_AT_START."
     $elevation = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/Elevation.ps1"))
-    Test-WinToolExpectation -Condition ($elevation.Contains('Get-WinToolText "shell.opened"')) -Message "The detached launch prints that WinTool is open."
-    Test-WinToolExpectation -Condition ((Get-WinToolText "shell.opened") -eq "WinTool is open.") -Message "shell.opened has English text."
+    Test-WinToolExpectation -Condition ($elevation.Contains("Get-WinToolLaunchHostSnapshot") -and $elevation.Contains("Wait-WinToolLaunchReady") -and $elevation.Contains("Write-WinToolLaunchCloseSummary")) -Message "The parent waits to morph, hide, or close only the launching tab."
+    Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "conhost" -TabCount 1) -eq "hide-conhost") -Message "A classic console hides and is restored later."
+    Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "windows-terminal" -TabCount 1) -eq "morph-wt") -Message "A single Windows Terminal tab morphs into the WinTool window."
+    Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "windows-terminal" -TabCount 3) -eq "exit-tab") -Message "A Windows Terminal window with other tabs only closes the launching tab."
+    Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "windows-terminal" -TabCount $null) -eq "exit-tab") -Message "An unknown tab count is treated as a multi-tab window."
+    Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "windows-terminal" -TabCount 1 -ShowConsole $true) -eq "none") -Message "-ShowConsole does not swap the host window."
+    Test-WinToolExpectation -Condition ((Get-WinToolLaunchSwapMode -Kind "unknown" -TabCount 1) -eq "none") -Message "An unknown host is left alone."
+    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $false -WindowsTerminalInstalled $false) -eq $true) -Message "Windows PowerShell 5.1 without PowerShell 7 or Windows Terminal sees the offer."
+    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $true -WindowsTerminalInstalled $false) -eq $true) -Message "The offer still appears when only Windows Terminal is missing."
+    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $false -WindowsTerminalInstalled $true) -eq $true) -Message "The offer still appears when only PowerShell 7 is missing."
+    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $true -WindowsTerminalInstalled $true) -eq $false) -Message "The offer is hidden when both modern hosts are already installed."
+    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $true -PowerShell7Installed $false -WindowsTerminalInstalled $false -Dismissed $true) -eq $false) -Message "A dismissed offer stays out of the way."
+    Test-WinToolExpectation -Condition ((Test-WinToolModernHostOffer -IsWindowsPowerShell $false -PowerShell7Installed $false -WindowsTerminalInstalled $false) -eq $false) -Message "PowerShell 7 does not show the 5.1 install offer."
+    $launchHost = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/Private/LaunchHost.ps1"))
+    Test-WinToolExpectation -Condition ($launchHost.Contains("Get-WinToolPowerShell7Path") -and $launchHost.Contains('WindowsPowerShell\v1.0\powershell.exe')) -Message "The GUI prefers PowerShell 7 and falls back to Windows PowerShell 5.1."
+    $shellUi = [System.IO.File]::ReadAllText((Join-Path $script:WinToolRoot "src/UI/Shell.ps1"))
+    Test-WinToolExpectation -Condition ($shellUi.Contains("Complete-WinToolLaunchSwap") -and $shellUi.Contains("Complete-WinToolLaunchHostRestore") -and $shellUi.Contains("Show-WinToolModernHostOffer")) -Message "The window swaps the host after the first frame, restores it on close, and can show the offer."
+    $signal = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-launch-test-" + [guid]::NewGuid().ToString("N") + ".signal")
+    try {
+        Write-WinToolLaunchSignal -SignalPath $signal -State "ready" -Swap "morph-wt"
+        Test-WinToolExpectation -Condition ((Test-WinToolLaunchSignalReady -SignalPath $signal) -and (Get-WinToolLaunchSignalSwap -SignalPath $signal) -eq "morph-wt") -Message "The ready signal records the host swap."
+        Write-WinToolLaunchSignal -SignalPath $signal -State "closed" -Swap "morph-wt" -Summary "WinTool closed."
+        Test-WinToolExpectation -Condition ((Get-WinToolLaunchCloseSummary -SignalPath $signal) -eq "WinTool closed.") -Message "The close signal carries the summary line."
+    }
+    finally {
+        Remove-Item -LiteralPath $signal -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath ($signal + ".tmp") -Force -ErrorAction SilentlyContinue
+    }
+    Test-WinToolExpectation -Condition ((Get-WinToolText "shell.closed") -eq "WinTool closed.") -Message "shell.closed has English text."
+    Test-WinToolExpectation -Condition ((Get-WinToolText "shell.hostOffer.stay") -eq "Continue on 5.1") -Message "The stay action is 'Continue on 5.1'."
     $savedLang = $script:WinToolLocale
     try {
         Initialize-WinToolLocale -Language "pt-BR" -Force | Out-Null
-        Test-WinToolExpectation -Condition ((Get-WinToolText "shell.opened") -eq "WinTool aberto.") -Message "pt-BR launch text is 'WinTool aberto.'"
+        Test-WinToolExpectation -Condition ((Get-WinToolText "shell.closed") -eq "WinTool fechado.") -Message "pt-BR close text is 'WinTool fechado.'"
+        Test-WinToolExpectation -Condition ((Get-WinToolText "shell.hostOffer.stay") -eq "Continuar no 5.1") -Message "pt-BR stay action is 'Continuar no 5.1'."
         $needs = Get-WinToolText "shell.needsAdmin"
         Test-WinToolExpectation -Condition ($needs.Contains("Aprove o aviso") -and -not $needs.Contains("Aproveite")) -Message "pt-BR asks to approve the Windows prompt, not 'Aproveite'."
     }

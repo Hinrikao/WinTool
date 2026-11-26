@@ -40,6 +40,7 @@ function Get-WinToolPreference {
     $prefs = [pscustomobject]@{
         schemaVersion = 1
         language = "auto"
+        modernHostOfferDismissed = $false
     }
     if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
         return $prefs
@@ -51,6 +52,8 @@ function Get-WinToolPreference {
             $language = "auto"
         }
         $prefs.language = $language
+        $dismissed = Get-WinToolNote -Object $loaded -Name "modernHostOfferDismissed" -Default $false
+        $prefs.modernHostOfferDismissed = [bool]($dismissed -eq $true -or [string]$dismissed -eq "True" -or [string]$dismissed -eq "1")
     }
     catch {
         $null = $_.Exception.Message
@@ -70,9 +73,11 @@ function Save-WinToolPreference {
     if (-not (Test-Path -LiteralPath $directory)) {
         New-Item -ItemType Directory -Path $directory -Force | Out-Null
     }
+    $dismissed = Get-WinToolNote -Object $Preferences -Name "modernHostOfferDismissed" -Default $false
     $payload = [pscustomobject]@{
         schemaVersion = 1
         language = [string](Get-WinToolNote -Object $Preferences -Name "language" -Default "auto")
+        modernHostOfferDismissed = [bool]($dismissed -eq $true -or [string]$dismissed -eq "True" -or [string]$dismissed -eq "1")
     }
     Write-WinToolJsonFile -Path $path -Value $payload
 }

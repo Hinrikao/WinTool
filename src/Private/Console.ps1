@@ -183,6 +183,36 @@ public static class WinToolConsoleApi
         return found;
     }
 
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetAncestor(IntPtr handle, uint flags);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WinToolRect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [DllImport("user32.dll")]
+    public static extern bool GetWindowRect(IntPtr handle, out WinToolRect rect);
+
+    public static string GetWindowClassName(IntPtr handle)
+    {
+        if (handle == IntPtr.Zero) { return ""; }
+        StringBuilder name = new StringBuilder(256);
+        if (GetClassName(handle, name, name.Capacity) <= 0) { return ""; }
+        return name.ToString();
+    }
+
+    public static string GetWindowRectText(IntPtr handle)
+    {
+        WinToolRect rect;
+        if (handle == IntPtr.Zero || !GetWindowRect(handle, out rect)) { return ""; }
+        return rect.Left.ToString() + "," + rect.Top.ToString() + "," + rect.Right.ToString() + "," + rect.Bottom.ToString();
+    }
+
     public static bool FocusWinToolWindow()
     {
         IntPtr handle = FindWinToolWindow();
