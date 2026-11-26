@@ -130,18 +130,26 @@ function Test-WinToolDriverNewer {
     return $true
 }
 
+function Test-WinToolDriverSoftwareId {
+    param([string]$InstanceId)
+    $id = [string]$InstanceId
+    return ($id -match '^(ROOT\\|SWD\\|UEFI\\|UMB\\|HTREE\\)')
+}
+
 function Test-WinToolDriverLikelyHardware {
     param(
         [string]$InstanceId,
         [string]$Class
     )
     $id = [string]$InstanceId
+    if (Test-WinToolDriverSoftwareId -InstanceId $id) {
+        return $false
+    }
     if ($id -match '^(PCI\\|USB\\|HDAUDIO\\|DISPLAY\\|HID\\|SCSI\\|NVME\\|IDE\\|SD\\|ACPI\\PNP|SCSIADAPTER)') {
         return $true
     }
     $className = [string]$Class
-    if ($className -match '^(Display|Net|Bluetooth|USB|HIDClass|Media|System|SCSIAdapter|HDC|Keyboard|Mouse|Monitor|SoftwareDevice|Processor|Computer)$') {
-        if ($id -match '^(ROOT\\|SWD\\|UEFI\\|UMB\\)') { return $false }
+    if ($className -match '^(Display|Net|Bluetooth|USB|HIDClass|Media|SCSIAdapter|HDC|Keyboard|Mouse|Monitor)$') {
         return $true
     }
     return $false
@@ -192,17 +200,22 @@ function Get-WinToolDriverProblemName {
 
 function Test-WinToolDriverMissing {
     param($Device)
+    $instanceId = [string](Get-WinToolNote -Object $Device -Name "InstanceId" -Default "")
+    $class = [string](Get-WinToolNote -Object $Device -Name "Class" -Default "")
+    # ROOT/SWD/UEFI software and leftover tree entries are not missing hardware,
+    # even when Windows reports ConfigManagerErrorCode 1 or 28.
+    if (Test-WinToolDriverSoftwareId -InstanceId $instanceId) { return $false }
     $code = [int](Get-WinToolNote -Object $Device -Name "Problem" -Default 0)
     $kind = Get-WinToolDriverProblemKind -Code $code
-    if ($kind -eq "missing") { return $true }
     $present = [bool](Get-WinToolNote -Object $Device -Name "Present" -Default $true)
     if (-not $present) { return $false }
     if ($kind -eq "ghost" -or $kind -eq "disabled") { return $false }
+    if ($kind -eq "missing") { return $true }
     $version = [string](Get-WinToolNote -Object $Device -Name "Version" -Default "")
     $provider = [string](Get-WinToolNote -Object $Device -Name "Provider" -Default "")
     $hasDriver = (-not [string]::IsNullOrWhiteSpace($version) -or -not [string]::IsNullOrWhiteSpace($provider))
     if ($hasDriver) { return $false }
-    return (Test-WinToolDriverLikelyHardware -InstanceId ([string](Get-WinToolNote -Object $Device -Name "InstanceId" -Default "")) -Class ([string](Get-WinToolNote -Object $Device -Name "Class" -Default "")))
+    return (Test-WinToolDriverLikelyHardware -InstanceId $instanceId -Class $class)
 }
 
 function Find-WinToolDriverUpdateMatch {
@@ -267,9 +280,26 @@ function ConvertTo-WinToolDriverRow {
         Selected         = ($Group -eq "outdated" -or $Group -eq "missing" -or $Group -eq "runtime" -or $Group -eq "gpu")
         WingetId         = ""
         Scope            = ""
+        Checkbox         = $null
         Device           = $Device
         Offer            = $Offer
     }
+}
+
+function Set-WinToolDriverRowCheckbox {
+    param(
+        $Row,
+        $Checkbox
+    )
+    if ($null -eq $Row) { return $Row }
+    $property = $Row.PSObject.Properties["Checkbox"]
+    if ($null -eq $property) {
+        Add-Member -InputObject $Row -NotePropertyName "Checkbox" -NotePropertyValue $Checkbox -Force
+    }
+    else {
+        $Row.Checkbox = $Checkbox
+    }
+    return $Row
 }
 
 function Get-WinToolDriverDeviceGroup {
@@ -341,6 +371,7 @@ function Get-WinToolDriverRuntimeRow {
         Selected         = $selected
         WingetId         = $id
         Scope            = [string](Get-WinToolNote -Object $Runtime -Name "scope" -Default "machine")
+        Checkbox         = $null
         Device           = $null
         Offer            = $null
     }
@@ -382,6 +413,7 @@ function Get-WinToolDriverGpuRow {
         Selected         = (-not $installed -or $upgrade)
         WingetId         = $id
         Scope            = "machine"
+        Checkbox         = $null
         Device           = $null
         Offer            = $null
     }

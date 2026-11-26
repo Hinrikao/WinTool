@@ -2200,6 +2200,14 @@ Invoke-WinToolCase -Name "Driver scan results are classified from mocked device 
     Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $disabled)) -Message "A disabled device is not treated as missing."
     Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $ghost)) -Message "A device that is not present is not treated as missing."
 
+    $rootCode28 = New-WinToolDriverDeviceRecord -Name "Volume manager" -Class "System" -InstanceId "ROOT\VOLMGR\0000" -Problem 28
+    $swdCode1 = New-WinToolDriverDeviceRecord -Name "Audio endpoint" -Class "SoftwareDevice" -InstanceId "SWD\MMDEVAPI\{0.0.0.00000000}" -Problem 1
+    $htree = New-WinToolDriverDeviceRecord -Name "Device tree" -Class "System" -InstanceId "HTREE\ROOT\0" -Problem 28
+    Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $rootCode28)) -Message "A ROOT device with error code 28 is not treated as a missing driver."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $swdCode1)) -Message "A SWD software device with error code 1 is not treated as a missing driver."
+    Test-WinToolExpectation -Condition (-not (Test-WinToolDriverMissing -Device $htree)) -Message "An HTREE leftover entry is not treated as a missing driver."
+    Test-WinToolExpectation -Condition ([string](Get-WinToolDriverDeviceGroup -Device $rootCode28 -Update @()).Group -ne "missing") -Message "ROOT devices with a problem code stay out of the missing group."
+
     $outdatedGroup = Get-WinToolDriverDeviceGroup -Device $outdated -Update @($offer, $same)
     $currentGroup = Get-WinToolDriverDeviceGroup -Device $current -Update @($offer, $same)
     $ghostGroup = Get-WinToolDriverDeviceGroup -Device $ghost -Update @()
@@ -2220,6 +2228,32 @@ Invoke-WinToolCase -Name "Driver scan results are classified from mocked device 
     Test-WinToolExpectation -Condition ((@(Get-WinToolDriverGhostDevice -Device @($outdated, $ghost, $disabled))).Count -eq 1) -Message "The leftover-entry counter includes only non-present devices."
     Test-WinToolExpectation -Condition ((@(Get-WinToolDriverProblemDevice -Device @($missingCode, $disabled, $ghost, $failed))).Count -eq 3) -Message "The problem-code list includes present devices and skips leftover entries."
     Test-WinToolExpectation -Condition ((@(Get-WinToolDriverIncompatibleDevice -Device @($failed, $blocked, $missingCode) -MemoryIntegrity $true)).Count -eq 2) -Message "Incompatible drivers are the failed and blocked ones."
+}
+
+
+Invoke-WinToolCase -Name "Driver result rows keep a Checkbox property for the results view" -Body {
+    $device = New-WinToolDriverDeviceRecord -Name "Realtek Gaming 2.5GbE Family Controller" -Class "Net" -InstanceId "PCI\VEN_10EC&DEV_8168\1" -Version "1.0.0.0" -Provider "Realtek"
+    $row = ConvertTo-WinToolDriverRow -Device $device -Group "outdated"
+    Test-WinToolExpectation -Condition ($null -ne $row.PSObject.Properties["Checkbox"]) -Message "A device row is created with a Checkbox property so the results view can attach the control."
+
+    $sentinel = New-Object psobject
+    $assigned = $true
+    try {
+        $null = Set-WinToolDriverRowCheckbox -Row $row -Checkbox $sentinel
+    }
+    catch {
+        $assigned = $false
+    }
+    Test-WinToolExpectation -Condition ($assigned -and [object]::ReferenceEquals($row.Checkbox, $sentinel)) -Message "Assigning Checkbox on a driver row does not throw."
+
+    $bare = [pscustomobject]@{ Name = "Bare row"; Selected = $true }
+    Test-WinToolExpectation -Condition ($null -eq $bare.PSObject.Properties["Checkbox"]) -Message "A bare PSCustomObject has no Checkbox property, which is the Log refresh failure after a Drivers scan on Windows PowerShell 5.1."
+    $null = Set-WinToolDriverRowCheckbox -Row $bare -Checkbox $sentinel
+    Test-WinToolExpectation -Condition ([object]::ReferenceEquals($bare.Checkbox, $sentinel)) -Message "Set-WinToolDriverRowCheckbox adds Checkbox when the property is missing."
+
+    $cache = New-WinToolPackageCache
+    $runtime = Get-WinToolDriverRuntimeRow -Runtime ([pscustomobject]@{ id = "openal"; name = "OpenAL"; wingetId = "OpenAL.OpenAL"; scope = "machine" }) -Cache $cache
+    Test-WinToolExpectation -Condition ($null -ne $runtime.PSObject.Properties["Checkbox"]) -Message "A game runtime row is also created with a Checkbox property."
 }
 
 Invoke-WinToolCase -Name "Driver header, display advice, and runtime rows only count real results" -Body {

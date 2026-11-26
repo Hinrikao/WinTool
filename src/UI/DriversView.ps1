@@ -499,7 +499,7 @@ function New-WinToolDriverRowControl {
             $boundRow.Selected = ($source.IsChecked -eq $true)
         }
     }
-    $Row.Checkbox = $box
+    $null = Set-WinToolDriverRowCheckbox -Row $Row -Checkbox $box
     [void]$grid.Children.Add($box)
     $textHost = New-Object System.Windows.Controls.StackPanel
     [System.Windows.Controls.Grid]::SetColumn($textHost, 1)
