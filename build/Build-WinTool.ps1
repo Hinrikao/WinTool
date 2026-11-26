@@ -149,7 +149,16 @@ function ConvertTo-BuildGzipBase64 {
     finally {
         $gzip.Dispose()
     }
-    return (ConvertTo-BuildWrappedBase64 -Bytes $output.ToArray())
+    # Zero the timestamp and OS bytes so the launcher is the same on every machine.
+    $compressed = $output.ToArray()
+    if ($compressed.Length -ge 10) {
+        $compressed[4] = 0
+        $compressed[5] = 0
+        $compressed[6] = 0
+        $compressed[7] = 0
+        $compressed[9] = 255
+    }
+    return (ConvertTo-BuildWrappedBase64 -Bytes $compressed)
 }
 
 function Get-BuildAppIcon {

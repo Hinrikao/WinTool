@@ -121,6 +121,7 @@ try {
             $window.UpdateLayout()
             Save-WinToolStartupFrame -Window $window
             $script:StartupShown = $true
+            Write-WinToolStartupMark -Name "firstFrameMs"
         }
         catch {
             [void]$script:StartupErrors.Add($_.Exception.Message)
@@ -144,9 +145,12 @@ finally {
 }
 
 $uiErrors = @()
-try { $uiErrors = @(Get-WinToolUiError) } catch { $null = $_.Exception.Message }
+try { $uiErrors = @(@(Get-WinToolUiError) | Where-Object { $null -ne $_ }) } catch { $null = $_.Exception.Message }
 foreach ($uiError in $uiErrors) {
-    [void]$script:StartupErrors.Add(([string]$uiError.Name + ": " + [string]$uiError.Message))
+    $name = [string]$uiError.Name
+    $message = [string]$uiError.Message
+    if ([string]::IsNullOrWhiteSpace($name) -and [string]::IsNullOrWhiteSpace($message)) { continue }
+    [void]$script:StartupErrors.Add(($name + ": " + $message))
 }
 
 if ($null -ne $script:WinToolStartupMarks) {
