@@ -7,11 +7,13 @@ function Get-WinToolCachedPayloadObject {
     # Oh My Posh themes on every click stalls the UI thread.
     if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
     if ($script:WinToolPayloadObject.ContainsKey($Name)) { return $script:WinToolPayloadObject[$Name] }
+    $stamp = Get-Date
     $value = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name $Name)
     if (Get-Command -Name Set-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
         Set-WinToolCatalogLocale -Catalog $value -Kind $Name | Out-Null
     }
     $script:WinToolPayloadObject[$Name] = $value
+    Write-WinToolStartupMark -Name ("catalog." + $Name) -Started $stamp
     return $value
 }
 

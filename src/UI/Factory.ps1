@@ -170,11 +170,17 @@ function Invoke-WinToolUiEvent {
         $EventData
     )
     $entry = $script:WinToolUiHandlers[$Id]
+    $name = [string]$entry.Name
+    $started = Get-Date
+    if ($name -ne "Dispatcher heartbeat") { Enter-WinToolUiWork -Name $name }
     try {
         $null = & $entry.Action $Source $EventData $entry.Data
     }
     catch {
-        Write-WinToolUiError -Name ([string]$entry.Name) -ErrorRecord $_
+        Write-WinToolUiError -Name $name -ErrorRecord $_
+    }
+    finally {
+        if ($name -ne "Dispatcher heartbeat") { Exit-WinToolUiWork -Started $started -Name ("ui." + $name) }
     }
 }
 

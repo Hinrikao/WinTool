@@ -12211,9 +12211,13 @@ function Initialize-WinToolLocale {
 
     $script:WinToolLanguagePreference = $requested
     $script:WinToolLanguage = $resolved
+    $localeStamp = Get-Date
     $script:WinToolText = Merge-WinToolTextTable -Language $resolved
     $script:WinToolEnglishText = Merge-WinToolTextTable -Language "en"
     $script:WinToolLocaleReady = $true
+    if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+        Write-WinToolStartupMark -Name "localeInit" -Started $localeStamp
+    }
     if ($null -ne $script:WinToolPayloadObject) {
         $script:WinToolPayloadObject = @{}
     }
@@ -13382,6 +13386,127 @@ function Write-WinToolStartupLog {
     }
 }
 
+function Enter-WinToolUiWork {
+    param([Parameter(Mandatory = $true)][string]$Name)
+    if ($null -eq $script:WinToolUiWorkStack) {
+        $script:WinToolUiWorkStack = New-Object System.Collections.Generic.List[string]
+    }
+    [void]$script:WinToolUiWorkStack.Add($Name)
+    $script:WinToolUiWork = $Name
+}
+
+function Exit-WinToolUiWork {
+    param([datetime]$Started, [string]$Name)
+    if ($null -ne $Started -and -not [string]::IsNullOrWhiteSpace($Name)) {
+        $elapsed = [int]((Get-Date) - $Started).TotalMilliseconds
+        if ($Name.StartsWith("ui.") -and $elapsed -lt 50) {
+            # Frequent UI ticks would drown the phase table.
+        }
+        else {
+            Write-WinToolStartupMark -Name $Name -Started $Started
+        }
+    }
+    if ($null -ne $script:WinToolUiWorkStack -and $script:WinToolUiWorkStack.Count -gt 0) {
+        $script:WinToolUiWorkStack.RemoveAt($script:WinToolUiWorkStack.Count - 1)
+        if ($script:WinToolUiWorkStack.Count -gt 0) {
+            $script:WinToolUiWork = $script:WinToolUiWorkStack[$script:WinToolUiWorkStack.Count - 1]
+        }
+        else {
+            $script:WinToolUiWork = $null
+        }
+    }
+    else {
+        $script:WinToolUiWork = $null
+    }
+}
+
+function Invoke-WinToolMeasuredWork {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][scriptblock]$Script
+    )
+    $started = Get-Date
+    Enter-WinToolUiWork -Name $Name
+    try {
+        return (& $Script)
+    }
+    finally {
+        Exit-WinToolUiWork -Started $started -Name $Name
+    }
+}
+
+function Start-WinToolDispatcherHeartbeat {
+    if ($null -ne $script:WinToolDispatcherHeartbeat) {
+        return
+    }
+    if ($null -eq $script:WinToolDispatcherGaps) {
+        $script:WinToolDispatcherGaps = New-Object System.Collections.Generic.List[object]
+    }
+    $script:WinToolDispatcherBeat = [System.Diagnostics.Stopwatch]::StartNew()
+    $script:WinToolDispatcherLastMs = 0
+    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    $timer.Interval = [TimeSpan]::FromMilliseconds(50)
+    Register-WinToolUiEvent -Control $timer -EventName "Tick" -Name "Dispatcher heartbeat" -Action {
+        $now = 0
+        if ($null -ne $script:WinToolDispatcherBeat) { $now = [int]$script:WinToolDispatcherBeat.ElapsedMilliseconds }
+        $gap = $now - [int]$script:WinToolDispatcherLastMs
+        $script:WinToolDispatcherLastMs = $now
+        if ($gap -ge 50) {
+            $work = [string]$script:WinToolUiWork
+            if ($work -eq "Dispatcher heartbeat" -or [string]::IsNullOrWhiteSpace($work)) {
+                $work = "(idle or unknown)"
+            }
+            if ($null -eq $script:WinToolDispatcherGaps) {
+                $script:WinToolDispatcherGaps = New-Object System.Collections.Generic.List[object]
+            }
+            [void]$script:WinToolDispatcherGaps.Add([pscustomobject]@{
+                    AtMs  = $now
+                    GapMs = $gap
+                    Work  = $work
+                })
+        }
+    }
+    $timer.Start()
+    $script:WinToolDispatcherHeartbeat = $timer
+}
+
+function Stop-WinToolDispatcherHeartbeat {
+    $timer = $script:WinToolDispatcherHeartbeat
+    $script:WinToolDispatcherHeartbeat = $null
+    if ($null -ne $timer) {
+        try { $timer.Stop() } catch { $null = $_.Exception.Message }
+    }
+}
+
+function Get-WinToolDispatcherGap {
+    if ($null -eq $script:WinToolDispatcherGaps) {
+        return , @()
+    }
+    return , $script:WinToolDispatcherGaps.ToArray()
+}
+
+function Write-WinToolStartupPhaseTable {
+    Write-Output "----- startup phase table -----"
+    Write-Output ("{0,-42} {1,8}" -f "Phase", "ms")
+    if ($null -ne $script:WinToolStartupMarks) {
+        foreach ($key in @($script:WinToolStartupMarks.Keys)) {
+            Write-Output ("{0,-42} {1,8}" -f [string]$key, $script:WinToolStartupMarks[$key])
+        }
+    }
+    Write-Output "----- dispatcher gaps of 50 ms or more -----"
+    $gaps = @(@(Get-WinToolDispatcherGap) | Where-Object { $null -ne $_ })
+    if ($gaps.Count -eq 0) {
+        Write-Output "(none)"
+        return
+    }
+    Write-Output ("{0,8} {1,8}  {2}" -f "AtMs", "GapMs", "Work")
+    foreach ($gap in $gaps) {
+        Write-Output ("{0,8} {1,8}  {2}" -f $gap.AtMs, $gap.GapMs, $gap.Work)
+    }
+    $max = ($gaps | Measure-Object -Property GapMs -Maximum).Maximum
+    Write-Output ("Dispatcher gap count: {0}; max: {1} ms." -f $gaps.Count, $max)
+}
+
 function Import-WinToolAppxModule {
     if ($script:WinToolAppxModuleReady) {
         return
@@ -13450,11 +13575,13 @@ function Get-WinToolCachedPayloadObject {
     # Oh My Posh themes on every click stalls the UI thread.
     if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
     if ($script:WinToolPayloadObject.ContainsKey($Name)) { return $script:WinToolPayloadObject[$Name] }
+    $stamp = Get-Date
     $value = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name $Name)
     if (Get-Command -Name Set-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
         Set-WinToolCatalogLocale -Catalog $value -Kind $Name | Out-Null
     }
     $script:WinToolPayloadObject[$Name] = $value
+    Write-WinToolStartupMark -Name ("catalog." + $Name) -Started $stamp
     return $value
 }
 
@@ -26922,14 +27049,18 @@ function Start-WinToolHomeJob {
         })
     $state = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
     if ($WithWinTool) {
+        $copyStamp = Get-Date
         foreach ($function in @(Get-ChildItem -Path Function:\ | Where-Object { $_.Name -like "*-WinTool*" })) {
             $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $function.Name, $function.Definition
             $state.Commands.Add($entry)
         }
+        Write-WinToolStartupMark -Name "homeJob.copyFunctions" -Started $copyStamp
     }
     $runspace = [runspacefactory]::CreateRunspace($state)
     $runspace.ApartmentState = "STA"
+    $openStamp = Get-Date
     $runspace.Open()
+    Write-WinToolStartupMark -Name "homeJob.openRunspace" -Started $openStamp
     $powershell = [powershell]::Create()
     $powershell.Runspace = $runspace
     [void]$powershell.AddScript($ScriptText)
@@ -27120,11 +27251,17 @@ function Invoke-WinToolUiEvent {
         $EventData
     )
     $entry = $script:WinToolUiHandlers[$Id]
+    $name = [string]$entry.Name
+    $started = Get-Date
+    if ($name -ne "Dispatcher heartbeat") { Enter-WinToolUiWork -Name $name }
     try {
         $null = & $entry.Action $Source $EventData $entry.Data
     }
     catch {
-        Write-WinToolUiError -Name ([string]$entry.Name) -ErrorRecord $_
+        Write-WinToolUiError -Name $name -ErrorRecord $_
+    }
+    finally {
+        if ($name -ne "Dispatcher heartbeat") { Exit-WinToolUiWork -Started $started -Name ("ui." + $name) }
     }
 }
 
@@ -35955,15 +36092,17 @@ function Initialize-WinToolDeferredView {
     }
     if ([bool]$script:WinToolState.ViewReady[$Name]) { return }
     $script:WinToolState.ViewReady[$Name] = $true
-    switch ($Name) {
-        "Install" { Initialize-WinToolInstallView }
-        "Tweaks" { Initialize-WinToolTweakView }
-        "Terminal" { Initialize-WinToolTerminalView }
-        "Drivers" { Initialize-WinToolDriverView }
-        "Updates" { Initialize-WinToolUpdateView }
-        "Fixes" { Initialize-WinToolFixView }
-        "Features" { Initialize-WinToolFeatureView }
-        "Config" { Initialize-WinToolConfigView }
+    $null = Invoke-WinToolMeasuredWork -Name ("init." + $Name) -Script {
+        switch ($Name) {
+            "Install" { Initialize-WinToolInstallView }
+            "Tweaks" { Initialize-WinToolTweakView }
+            "Terminal" { Initialize-WinToolTerminalView }
+            "Drivers" { Initialize-WinToolDriverView }
+            "Updates" { Initialize-WinToolUpdateView }
+            "Fixes" { Initialize-WinToolFixView }
+            "Features" { Initialize-WinToolFeatureView }
+            "Config" { Initialize-WinToolConfigView }
+        }
     }
 }
 
@@ -36660,7 +36799,9 @@ function Initialize-WinToolShellEvent {
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Window loaded" -Action {
         Write-WinToolLog -Message (Get-WinToolText "msg.welcome-to-wintool-choose-what-you-want-then-run-it-when") -Level "info"
+        $wingetStamp = Get-Date
         $winget = Get-WinToolWingetPath
+        Write-WinToolStartupMark -Name "wingetPath" -Started $wingetStamp
         if ([string]::IsNullOrWhiteSpace($winget)) {
             Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
             Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
@@ -36786,27 +36927,27 @@ function New-WinToolWindow {
     Register-WinToolUiEvent -Control $window -EventName "SourceInitialized" -Name "Keep the window hidden until it is painted" -Action {
         Hide-WinToolWindowUntilRendered -Window $script:WinToolWindow
     }
-    Set-WinToolXamlText -Root $window
-
-    Initialize-WinToolAppearance
-    Initialize-WinToolActivityView
-    Initialize-WinToolHomeView
-    Initialize-WinToolTweakView
+    $null = Invoke-WinToolMeasuredWork -Name "xamlText" -Script { Set-WinToolXamlText -Root $window }
+    Start-WinToolDispatcherHeartbeat
+    $null = Invoke-WinToolMeasuredWork -Name "init.Appearance" -Script { Initialize-WinToolAppearance }
+    $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
+    $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView }
+    $null = Invoke-WinToolMeasuredWork -Name "init.Tweaks" -Script { Initialize-WinToolTweakView }
     $script:WinToolState.ViewReady["Tweaks"] = $true
     if (-not $DeferViews) {
-        Initialize-WinToolInstallView
-        Initialize-WinToolTerminalView
-        Initialize-WinToolDriverView
-        Initialize-WinToolUpdateView
-        Initialize-WinToolFixView
-        Initialize-WinToolFeatureView
-        Initialize-WinToolConfigView
+        $null = Invoke-WinToolMeasuredWork -Name "init.Install" -Script { Initialize-WinToolInstallView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Terminal" -Script { Initialize-WinToolTerminalView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Drivers" -Script { Initialize-WinToolDriverView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Updates" -Script { Initialize-WinToolUpdateView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Fixes" -Script { Initialize-WinToolFixView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Features" -Script { Initialize-WinToolFeatureView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Config" -Script { Initialize-WinToolConfigView }
         foreach ($name in @("Install", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")) {
             $script:WinToolState.ViewReady[$name] = $true
         }
     }
-    Initialize-WinToolShellEvent
-    Sync-WinToolLogPanel
+    $null = Invoke-WinToolMeasuredWork -Name "init.ShellEvent" -Script { Initialize-WinToolShellEvent }
+    $null = Invoke-WinToolMeasuredWork -Name "init.LogPanel" -Script { Sync-WinToolLogPanel }
 
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
         try {
@@ -36817,12 +36958,17 @@ function New-WinToolWindow {
         }
     }
 
+    if ($null -ne $script:WinToolDispatcherBeat) {
+        $script:WinToolDispatcherBeat.Restart()
+        $script:WinToolDispatcherLastMs = 0
+    }
     return $window
 }
 
 function Stop-WinToolBackgroundWork {
     # Stops the log timer, a running plan, and every background runspace, so
     # nothing keeps powershell.exe alive after the window is gone.
+    try { Stop-WinToolDispatcherHeartbeat } catch { $null = $_.Exception.Message }
     try { Stop-WinToolElevatedHelper } catch { $null = $_.Exception.Message }
     if ($null -eq $script:WinToolState) { return }
     try { Stop-WinToolMotion } catch { $null = $_.Exception.Message }

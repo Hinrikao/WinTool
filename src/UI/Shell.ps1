@@ -325,15 +325,17 @@ function Initialize-WinToolDeferredView {
     }
     if ([bool]$script:WinToolState.ViewReady[$Name]) { return }
     $script:WinToolState.ViewReady[$Name] = $true
-    switch ($Name) {
-        "Install" { Initialize-WinToolInstallView }
-        "Tweaks" { Initialize-WinToolTweakView }
-        "Terminal" { Initialize-WinToolTerminalView }
-        "Drivers" { Initialize-WinToolDriverView }
-        "Updates" { Initialize-WinToolUpdateView }
-        "Fixes" { Initialize-WinToolFixView }
-        "Features" { Initialize-WinToolFeatureView }
-        "Config" { Initialize-WinToolConfigView }
+    $null = Invoke-WinToolMeasuredWork -Name ("init." + $Name) -Script {
+        switch ($Name) {
+            "Install" { Initialize-WinToolInstallView }
+            "Tweaks" { Initialize-WinToolTweakView }
+            "Terminal" { Initialize-WinToolTerminalView }
+            "Drivers" { Initialize-WinToolDriverView }
+            "Updates" { Initialize-WinToolUpdateView }
+            "Fixes" { Initialize-WinToolFixView }
+            "Features" { Initialize-WinToolFeatureView }
+            "Config" { Initialize-WinToolConfigView }
+        }
     }
 }
 
@@ -1030,7 +1032,9 @@ function Initialize-WinToolShellEvent {
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Window loaded" -Action {
         Write-WinToolLog -Message (Get-WinToolText "msg.welcome-to-wintool-choose-what-you-want-then-run-it-when") -Level "info"
+        $wingetStamp = Get-Date
         $winget = Get-WinToolWingetPath
+        Write-WinToolStartupMark -Name "wingetPath" -Started $wingetStamp
         if ([string]::IsNullOrWhiteSpace($winget)) {
             Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
             Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
@@ -1156,27 +1160,27 @@ function New-WinToolWindow {
     Register-WinToolUiEvent -Control $window -EventName "SourceInitialized" -Name "Keep the window hidden until it is painted" -Action {
         Hide-WinToolWindowUntilRendered -Window $script:WinToolWindow
     }
-    Set-WinToolXamlText -Root $window
-
-    Initialize-WinToolAppearance
-    Initialize-WinToolActivityView
-    Initialize-WinToolHomeView
-    Initialize-WinToolTweakView
+    $null = Invoke-WinToolMeasuredWork -Name "xamlText" -Script { Set-WinToolXamlText -Root $window }
+    Start-WinToolDispatcherHeartbeat
+    $null = Invoke-WinToolMeasuredWork -Name "init.Appearance" -Script { Initialize-WinToolAppearance }
+    $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
+    $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView }
+    $null = Invoke-WinToolMeasuredWork -Name "init.Tweaks" -Script { Initialize-WinToolTweakView }
     $script:WinToolState.ViewReady["Tweaks"] = $true
     if (-not $DeferViews) {
-        Initialize-WinToolInstallView
-        Initialize-WinToolTerminalView
-        Initialize-WinToolDriverView
-        Initialize-WinToolUpdateView
-        Initialize-WinToolFixView
-        Initialize-WinToolFeatureView
-        Initialize-WinToolConfigView
+        $null = Invoke-WinToolMeasuredWork -Name "init.Install" -Script { Initialize-WinToolInstallView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Terminal" -Script { Initialize-WinToolTerminalView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Drivers" -Script { Initialize-WinToolDriverView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Updates" -Script { Initialize-WinToolUpdateView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Fixes" -Script { Initialize-WinToolFixView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Features" -Script { Initialize-WinToolFeatureView }
+        $null = Invoke-WinToolMeasuredWork -Name "init.Config" -Script { Initialize-WinToolConfigView }
         foreach ($name in @("Install", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")) {
             $script:WinToolState.ViewReady[$name] = $true
         }
     }
-    Initialize-WinToolShellEvent
-    Sync-WinToolLogPanel
+    $null = Invoke-WinToolMeasuredWork -Name "init.ShellEvent" -Script { Initialize-WinToolShellEvent }
+    $null = Invoke-WinToolMeasuredWork -Name "init.LogPanel" -Script { Sync-WinToolLogPanel }
 
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolApplyProfile)) {
         try {
@@ -1187,12 +1191,17 @@ function New-WinToolWindow {
         }
     }
 
+    if ($null -ne $script:WinToolDispatcherBeat) {
+        $script:WinToolDispatcherBeat.Restart()
+        $script:WinToolDispatcherLastMs = 0
+    }
     return $window
 }
 
 function Stop-WinToolBackgroundWork {
     # Stops the log timer, a running plan, and every background runspace, so
     # nothing keeps powershell.exe alive after the window is gone.
+    try { Stop-WinToolDispatcherHeartbeat } catch { $null = $_.Exception.Message }
     try { Stop-WinToolElevatedHelper } catch { $null = $_.Exception.Message }
     if ($null -eq $script:WinToolState) { return }
     try { Stop-WinToolMotion } catch { $null = $_.Exception.Message }

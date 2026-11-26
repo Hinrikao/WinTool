@@ -6,9 +6,10 @@
 .SYNOPSIS
     Open the real WinTool window on PowerShell 7, time startup, and fail on a crash.
 .DESCRIPTION
-    Runs ShowDialog for several seconds, warms the Terminal theme list, captures
-    the first painted frame, and fails if that frame is a white window or if an
-    exception escapes the dispatcher.
+    Runs ShowDialog for 20 seconds with a dispatcher heartbeat, prints a phase
+    table and any dispatcher gaps, captures the first painted frame, and fails
+    if that frame is a white window or if an exception escapes the dispatcher.
+    This audit run records timings and does not yet fail the first-frame budget.
 #>
 $ErrorActionPreference = "Stop"
 
@@ -128,7 +129,7 @@ try {
         }
     }
     $timer = New-Object System.Windows.Threading.DispatcherTimer
-    $timer.Interval = [TimeSpan]::FromSeconds(8)
+    $timer.Interval = [TimeSpan]::FromSeconds(20)
     $timer.add_Tick({
             $timer.Stop()
             if ($null -ne $script:WinToolWindow) { $script:WinToolWindow.Close() }
@@ -153,12 +154,24 @@ foreach ($uiError in $uiErrors) {
     [void]$script:StartupErrors.Add(($name + ": " + $message))
 }
 
+if ($null -ne $sourceMs) {
+    Write-Output ("source tree: {0} ms" -f $sourceMs)
+    foreach ($key in @($sourceMarks.Keys)) {
+        if ([int]$sourceMarks[$key] -ge 5) {
+            Write-Output ("source {0}: {1} ms" -f $key, $sourceMarks[$key])
+        }
+    }
+}
 if ($null -ne $script:WinToolStartupMarks) {
     if ($null -ne $parseMs) { $script:WinToolStartupMarks["scriptParseMs"] = $parseMs }
+    if ($null -ne $sourceMs) { $script:WinToolStartupMarks["sourceTreeMs"] = $sourceMs }
     Write-WinToolStartupLog
-    foreach ($key in @($script:WinToolStartupMarks.Keys)) {
-        Write-Output ("startup {0}: {1} ms" -f $key, $script:WinToolStartupMarks[$key])
-    }
+}
+Write-WinToolStartupPhaseTable
+if ($null -ne $script:WinToolState -and $null -ne $script:WinToolState.Home) {
+    $hs = $script:WinToolState.Home
+    $done = @($hs.Results.Keys) -join ","
+    Write-Output ("Home analysis phase={0} results={1} pending={2}" -f [string]$hs.Phase, $done, $hs.Pending.Count)
 }
 
 if (-not $script:StartupShown) {

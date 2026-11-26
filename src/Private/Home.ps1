@@ -805,14 +805,18 @@ function Start-WinToolHomeJob {
         })
     $state = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
     if ($WithWinTool) {
+        $copyStamp = Get-Date
         foreach ($function in @(Get-ChildItem -Path Function:\ | Where-Object { $_.Name -like "*-WinTool*" })) {
             $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $function.Name, $function.Definition
             $state.Commands.Add($entry)
         }
+        Write-WinToolStartupMark -Name "homeJob.copyFunctions" -Started $copyStamp
     }
     $runspace = [runspacefactory]::CreateRunspace($state)
     $runspace.ApartmentState = "STA"
+    $openStamp = Get-Date
     $runspace.Open()
+    Write-WinToolStartupMark -Name "homeJob.openRunspace" -Started $openStamp
     $powershell = [powershell]::Create()
     $powershell.Runspace = $runspace
     [void]$powershell.AddScript($ScriptText)

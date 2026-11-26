@@ -139,6 +139,127 @@ function Write-WinToolStartupLog {
     }
 }
 
+function Enter-WinToolUiWork {
+    param([Parameter(Mandatory = $true)][string]$Name)
+    if ($null -eq $script:WinToolUiWorkStack) {
+        $script:WinToolUiWorkStack = New-Object System.Collections.Generic.List[string]
+    }
+    [void]$script:WinToolUiWorkStack.Add($Name)
+    $script:WinToolUiWork = $Name
+}
+
+function Exit-WinToolUiWork {
+    param([datetime]$Started, [string]$Name)
+    if ($null -ne $Started -and -not [string]::IsNullOrWhiteSpace($Name)) {
+        $elapsed = [int]((Get-Date) - $Started).TotalMilliseconds
+        if ($Name.StartsWith("ui.") -and $elapsed -lt 50) {
+            # Frequent UI ticks would drown the phase table.
+        }
+        else {
+            Write-WinToolStartupMark -Name $Name -Started $Started
+        }
+    }
+    if ($null -ne $script:WinToolUiWorkStack -and $script:WinToolUiWorkStack.Count -gt 0) {
+        $script:WinToolUiWorkStack.RemoveAt($script:WinToolUiWorkStack.Count - 1)
+        if ($script:WinToolUiWorkStack.Count -gt 0) {
+            $script:WinToolUiWork = $script:WinToolUiWorkStack[$script:WinToolUiWorkStack.Count - 1]
+        }
+        else {
+            $script:WinToolUiWork = $null
+        }
+    }
+    else {
+        $script:WinToolUiWork = $null
+    }
+}
+
+function Invoke-WinToolMeasuredWork {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][scriptblock]$Script
+    )
+    $started = Get-Date
+    Enter-WinToolUiWork -Name $Name
+    try {
+        return (& $Script)
+    }
+    finally {
+        Exit-WinToolUiWork -Started $started -Name $Name
+    }
+}
+
+function Start-WinToolDispatcherHeartbeat {
+    if ($null -ne $script:WinToolDispatcherHeartbeat) {
+        return
+    }
+    if ($null -eq $script:WinToolDispatcherGaps) {
+        $script:WinToolDispatcherGaps = New-Object System.Collections.Generic.List[object]
+    }
+    $script:WinToolDispatcherBeat = [System.Diagnostics.Stopwatch]::StartNew()
+    $script:WinToolDispatcherLastMs = 0
+    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    $timer.Interval = [TimeSpan]::FromMilliseconds(50)
+    Register-WinToolUiEvent -Control $timer -EventName "Tick" -Name "Dispatcher heartbeat" -Action {
+        $now = 0
+        if ($null -ne $script:WinToolDispatcherBeat) { $now = [int]$script:WinToolDispatcherBeat.ElapsedMilliseconds }
+        $gap = $now - [int]$script:WinToolDispatcherLastMs
+        $script:WinToolDispatcherLastMs = $now
+        if ($gap -ge 50) {
+            $work = [string]$script:WinToolUiWork
+            if ($work -eq "Dispatcher heartbeat" -or [string]::IsNullOrWhiteSpace($work)) {
+                $work = "(idle or unknown)"
+            }
+            if ($null -eq $script:WinToolDispatcherGaps) {
+                $script:WinToolDispatcherGaps = New-Object System.Collections.Generic.List[object]
+            }
+            [void]$script:WinToolDispatcherGaps.Add([pscustomobject]@{
+                    AtMs  = $now
+                    GapMs = $gap
+                    Work  = $work
+                })
+        }
+    }
+    $timer.Start()
+    $script:WinToolDispatcherHeartbeat = $timer
+}
+
+function Stop-WinToolDispatcherHeartbeat {
+    $timer = $script:WinToolDispatcherHeartbeat
+    $script:WinToolDispatcherHeartbeat = $null
+    if ($null -ne $timer) {
+        try { $timer.Stop() } catch { $null = $_.Exception.Message }
+    }
+}
+
+function Get-WinToolDispatcherGap {
+    if ($null -eq $script:WinToolDispatcherGaps) {
+        return , @()
+    }
+    return , $script:WinToolDispatcherGaps.ToArray()
+}
+
+function Write-WinToolStartupPhaseTable {
+    Write-Output "----- startup phase table -----"
+    Write-Output ("{0,-42} {1,8}" -f "Phase", "ms")
+    if ($null -ne $script:WinToolStartupMarks) {
+        foreach ($key in @($script:WinToolStartupMarks.Keys)) {
+            Write-Output ("{0,-42} {1,8}" -f [string]$key, $script:WinToolStartupMarks[$key])
+        }
+    }
+    Write-Output "----- dispatcher gaps of 50 ms or more -----"
+    $gaps = @(@(Get-WinToolDispatcherGap) | Where-Object { $null -ne $_ })
+    if ($gaps.Count -eq 0) {
+        Write-Output "(none)"
+        return
+    }
+    Write-Output ("{0,8} {1,8}  {2}" -f "AtMs", "GapMs", "Work")
+    foreach ($gap in $gaps) {
+        Write-Output ("{0,8} {1,8}  {2}" -f $gap.AtMs, $gap.GapMs, $gap.Work)
+    }
+    $max = ($gaps | Measure-Object -Property GapMs -Maximum).Maximum
+    Write-Output ("Dispatcher gap count: {0}; max: {1} ms." -f $gaps.Count, $max)
+}
+
 function Import-WinToolAppxModule {
     if ($script:WinToolAppxModuleReady) {
         return

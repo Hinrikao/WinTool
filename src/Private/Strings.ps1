@@ -343,9 +343,13 @@ function Initialize-WinToolLocale {
 
     $script:WinToolLanguagePreference = $requested
     $script:WinToolLanguage = $resolved
+    $localeStamp = Get-Date
     $script:WinToolText = Merge-WinToolTextTable -Language $resolved
     $script:WinToolEnglishText = Merge-WinToolTextTable -Language "en"
     $script:WinToolLocaleReady = $true
+    if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+        Write-WinToolStartupMark -Name "localeInit" -Started $localeStamp
+    }
     if ($null -ne $script:WinToolPayloadObject) {
         $script:WinToolPayloadObject = @{}
     }
