@@ -13404,19 +13404,14 @@ function Add-WinToolCSharpType {
 }
 
 function Initialize-WinToolCompiledType {
-    param([switch]$Deferred)
     $stamp = Get-Date
-    if ($Deferred) {
-        try { $null = Initialize-WinToolGlyphMap } catch { $null = $_.Exception.Message }
-        try { $null = Initialize-WinToolGlyphDraw } catch { $null = $_.Exception.Message }
-        try { $null = Initialize-WinToolProcessPipe } catch { $null = $_.Exception.Message }
-        try { $null = Initialize-WinToolFontLoader } catch { $null = $_.Exception.Message }
-        Write-WinToolStartupMark -Name "compiledTypes.deferred" -Started $stamp
-        return
-    }
     try { $null = Initialize-WinToolConsoleApi } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolThemeEntryType } catch { $null = $_.Exception.Message }
+    try { $null = Initialize-WinToolGlyphMap } catch { $null = $_.Exception.Message }
+    try { $null = Initialize-WinToolGlyphDraw } catch { $null = $_.Exception.Message }
+    try { $null = Initialize-WinToolProcessPipe } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolNativeMethod } catch { $null = $_.Exception.Message }
+    try { $null = Initialize-WinToolFontLoader } catch { $null = $_.Exception.Message }
     Write-WinToolStartupMark -Name "compiledTypes" -Started $stamp
 }
 
@@ -36300,7 +36295,6 @@ function Start-WinToolAfterFirstFrame {
         Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
         Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
     }
-    try { Initialize-WinToolCompiledType -Deferred } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeAnalysis -DeferTweaks } catch { $null = $_.Exception.Message }

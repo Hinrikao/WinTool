@@ -364,7 +364,6 @@ function Start-WinToolAfterFirstFrame {
         Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
         Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
     }
-    try { Initialize-WinToolCompiledType -Deferred } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeAnalysis -DeferTweaks } catch { $null = $_.Exception.Message }
