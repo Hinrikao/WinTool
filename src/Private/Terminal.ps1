@@ -646,6 +646,7 @@ function Reset-WinToolPreviewDrawCache {
     $script:WinToolPreviewImageCache = @{}
     $script:WinToolCoveredTextCache = @{}
     $script:WinToolLivePreviewCache = @{}
+    $script:WinToolThemeImageByKey = @{}
     $script:WinToolLastPreviewDrawn = @()
 }
 
@@ -2285,13 +2286,16 @@ function Get-WinToolThemeRow {
         $themes = @($OhMyPoshTheme | Where-Object { $null -ne $_ })
         if ($themes.Count -eq 0) { $themes = @(Get-WinToolNote -Object (Get-WinToolOhMyPoshDocument) -Name "themes" -Default @()) }
         foreach ($theme in $themes) {
-            $preview = @()
-            $file = [string](Get-WinToolNote -Object $theme -Name "file" -Default "")
-            if (-not [string]::IsNullOrWhiteSpace($file)) {
-                $json = Read-WinToolCachedOmpTheme -File $file
-                if ($null -ne $json) { $preview = @(Get-WinToolOmpPreviewSegment -Theme $json) }
+            # The catalog already has a color sample for every theme, so the
+            # list does not open theme files when the engine is selected.
+            $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @(Get-WinToolNote -Object $theme -Name "preview" -Default @()))
+            if ($preview.Count -eq 0) {
+                $file = [string](Get-WinToolNote -Object $theme -Name "file" -Default "")
+                if (-not [string]::IsNullOrWhiteSpace($file)) {
+                    $json = Read-WinToolCachedOmpTheme -File $file
+                    if ($null -ne $json) { $preview = @(Get-WinToolOmpPreviewSegment -Theme $json) }
+                }
             }
-            if ($preview.Count -eq 0) { $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @(Get-WinToolNote -Object $theme -Name "preview" -Default @())) }
             $rows.Add((New-WinToolThemeRow -Id ([string]$theme.id) -Name ([string]$theme.name) -Preview $preview -NerdFont $null))
         }
     }

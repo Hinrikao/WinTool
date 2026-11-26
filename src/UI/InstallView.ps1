@@ -897,12 +897,12 @@ function Update-WinToolAppFilter {
         $visible = 0
         foreach ($app in @($category.Apps)) {
             if (Test-WinToolAppFilterMatch -Row $app -Filter $filter -Query $query) {
-                $app.Panel.Visibility = "Visible"
+                if ($app.Panel.Visibility -ne "Visible") { $app.Panel.Visibility = "Visible" }
                 $visible++
                 $any = $true
             }
             else {
-                $app.Panel.Visibility = "Collapsed"
+                if ($app.Panel.Visibility -ne "Collapsed") { $app.Panel.Visibility = "Collapsed" }
             }
         }
         if ($visible -eq 0) {

@@ -1070,6 +1070,185 @@ function Assert-WinToolStyleSwitchSpeed {
     }
 }
 
+function Measure-WinToolUiAction {
+    param(
+        [Parameter(Mandatory = $true)][scriptblock]$Action,
+        [switch]$Flush
+    )
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    & $Action
+    if ($Flush) { Complete-WinToolStyleSelectionWork }
+    $watch.Stop()
+    return $watch.Elapsed.TotalMilliseconds
+}
+
+function Assert-WinToolUiSwitchSpeed {
+    param(
+        [int]$WarmLimitMs = 150,
+        [int]$ColdLimitMs = 400
+    )
+    $format = [System.Globalization.CultureInfo]::InvariantCulture
+    $window.FindName("NavTerminal").IsChecked = $true
+    $window.FindName("TerminalModeAdvanced").IsChecked = $true
+    Invoke-WinToolTerminalShotLayout -Width 1280 -Height 800
+
+    $ids = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "prompts" -Default @() | ForEach-Object { [string]$_.id })
+    if ($ids.Count -lt 8) { throw ("Expected 8 prompt engines, found " + $ids.Count + ".") }
+
+    Reset-WinToolThemeListCache -Force
+    Reset-WinToolPreviewDrawCache
+    $script:WinToolThemePreviewFontKey = Get-WinToolPreviewFontKey
+
+    $coldPart = New-Object System.Collections.Generic.List[string]
+    $coldTime = New-Object System.Collections.Generic.List[object]
+    foreach ($id in $ids) {
+        $ms = Measure-WinToolUiAction -Flush -Action { Select-WinToolTerminalPrompt -PromptId $id }.GetNewClosure()
+        [void]$coldTime.Add([pscustomobject]@{ Name = $id; Ms = $ms })
+        [void]$coldPart.Add($id + " " + $ms.ToString("0.0", $format) + "ms")
+        Write-Output ("Engine switch cold " + $id + ": " + $ms.ToString("0.0", $format) + " ms")
+    }
+    $coldMax = ($coldTime | Measure-Object -Property Ms -Maximum).Maximum
+    $coldAvg = ($coldTime | Measure-Object -Property Ms -Average).Average
+    Write-Output ("Engine switch cold: " + ($coldPart -join ", "))
+    Write-Output ("Engine switch cold: max " + $coldMax.ToString("0.0", $format) + " ms, average " + $coldAvg.ToString("0.0", $format) + " ms, limit " + $ColdLimitMs + " ms.")
+    if ($coldMax -ge $ColdLimitMs) {
+        throw ("Switching prompt engine took " + $coldMax.ToString("0.0", $format) + " ms cold; expected under " + $ColdLimitMs + " ms.")
+    }
+
+    $warmPart = New-Object System.Collections.Generic.List[string]
+    $warmTime = New-Object System.Collections.Generic.List[object]
+    foreach ($id in $ids) {
+        $ms = Measure-WinToolUiAction -Flush -Action { Select-WinToolTerminalPrompt -PromptId $id }.GetNewClosure()
+        [void]$warmTime.Add([pscustomobject]@{ Name = $id; Ms = $ms })
+        [void]$warmPart.Add($id + " " + $ms.ToString("0.0", $format) + " ms")
+        Write-Output ("Engine switch warm " + $id + ": " + $ms.ToString("0.0", $format) + " ms")
+    }
+    $warmMax = ($warmTime | Measure-Object -Property Ms -Maximum).Maximum
+    $warmAvg = ($warmTime | Measure-Object -Property Ms -Average).Average
+    Write-Output ("Engine switch after warmup: " + ($warmPart -join ", "))
+    Write-Output ("Engine switch after warmup: max " + $warmMax.ToString("0.0", $format) + " ms, average " + $warmAvg.ToString("0.0", $format) + " ms, limit " + $WarmLimitMs + " ms.")
+    if ($warmMax -ge $WarmLimitMs) {
+        throw ("Switching prompt engine took " + $warmMax.ToString("0.0", $format) + " ms after warmup; expected well under " + $WarmLimitMs + " ms.")
+    }
+
+    Select-WinToolTerminalPrompt -PromptId "starship"
+    Complete-WinToolStyleSelectionWork
+    $themeSearch = $window.FindName("TerminalThemeSearch")
+    $themeSearch.Text = ""
+    Complete-WinToolStyleSelectionWork
+
+    $filterPass = New-Object System.Collections.Generic.List[object]
+    foreach ($filterName in @("TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd", "TerminalFilterAll")) {
+        $ms = Measure-WinToolUiAction -Flush -Action { $window.FindName($filterName).IsChecked = $true }.GetNewClosure()
+        $label = "filter " + [string]$window.FindName($filterName).Tag
+        [void]$filterPass.Add([pscustomobject]@{ Name = $label; Ms = $ms })
+        Write-Output ("Theme " + $label + " warmup: " + $ms.ToString("0.0", $format) + " ms")
+    }
+    $filterPart = New-Object System.Collections.Generic.List[string]
+    $filterTime = New-Object System.Collections.Generic.List[object]
+    foreach ($filterName in @("TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd", "TerminalFilterAll")) {
+        if ($filterName -eq "TerminalFilterAll") { $window.FindName("TerminalFilterPowerline").IsChecked = $true }
+        else { $window.FindName("TerminalFilterAll").IsChecked = $true }
+        Complete-WinToolStyleSelectionWork
+        $ms = Measure-WinToolUiAction -Flush -Action { $window.FindName($filterName).IsChecked = $true }.GetNewClosure()
+        $label = "filter " + [string]$window.FindName($filterName).Tag
+        [void]$filterTime.Add([pscustomobject]@{ Name = $label; Ms = $ms })
+        [void]$filterPart.Add($label + " " + $ms.ToString("0.0", $format) + "ms")
+        Write-Output ("Theme " + $label + " warm: " + $ms.ToString("0.0", $format) + " ms")
+    }
+
+    $searchCold = Measure-WinToolUiAction -Flush -Action { $themeSearch.Text = "tokyo" }.GetNewClosure()
+    Write-Output ("Theme search cold: " + $searchCold.ToString("0.0", $format) + " ms")
+    $searchClear = Measure-WinToolUiAction -Flush -Action { $themeSearch.Text = "" }.GetNewClosure()
+    Write-Output ("Theme search clear: " + $searchClear.ToString("0.0", $format) + " ms")
+    $searchWarm = Measure-WinToolUiAction -Flush -Action { $themeSearch.Text = "tokyo" }.GetNewClosure()
+    Write-Output ("Theme search warm: " + $searchWarm.ToString("0.0", $format) + " ms")
+    $themeSearch.Text = ""
+    Complete-WinToolStyleSelectionWork
+
+    $fontList = $window.FindName("TerminalFontList")
+    $fontItem = @($fontList.Items)
+    $fontCold = -1.0
+    $fontWarm = -1.0
+    if ($fontItem.Count -ge 2) {
+        $firstFont = $fontList.SelectedItem
+        if ($null -eq $firstFont) { $firstFont = $fontItem[0] }
+        $otherFont = $null
+        foreach ($item in $fontItem) {
+            if (-not [object]::Equals($item, $firstFont)) { $otherFont = $item; break }
+        }
+        if ($null -ne $otherFont) {
+            $fontCold = Measure-WinToolUiAction -Flush -Action { $fontList.SelectedItem = $otherFont }.GetNewClosure()
+            Write-Output ("Font switch cold (" + [string]$otherFont.Tag + "): " + $fontCold.ToString("0.0", $format) + " ms")
+            $fontWarm = Measure-WinToolUiAction -Flush -Action { $fontList.SelectedItem = $firstFont }.GetNewClosure()
+            Write-Output ("Font switch warm (" + [string]$firstFont.Tag + "): " + $fontWarm.ToString("0.0", $format) + " ms")
+        }
+    }
+
+    $schemeHost = $window.FindName("TerminalSchemeHost")
+    $schemeTile = @($schemeHost.Children)
+    $schemeCold = -1.0
+    $schemeWarm = -1.0
+    if ($schemeTile.Count -ge 2) {
+        $clickScheme = {
+            param($Tile)
+            $mouseArgs = [System.Windows.Input.MouseButtonEventArgs]::new([System.Windows.Input.Mouse]::PrimaryDevice, 0, [System.Windows.Input.MouseButton]::Left)
+            $mouseArgs.RoutedEvent = [System.Windows.UIElement]::MouseLeftButtonUpEvent
+            $Tile.RaiseEvent($mouseArgs)
+        }
+        $firstScheme = $schemeTile[0]
+        $secondScheme = $schemeTile[1]
+        $schemeCold = Measure-WinToolUiAction -Flush -Action { & $clickScheme $secondScheme }.GetNewClosure()
+        Write-Output ("Scheme switch cold (" + [string]$secondScheme.Tag + "): " + $schemeCold.ToString("0.0", $format) + " ms")
+        $schemeWarm = Measure-WinToolUiAction -Flush -Action { & $clickScheme $firstScheme }.GetNewClosure()
+        Write-Output ("Scheme switch warm (" + [string]$firstScheme.Tag + "): " + $schemeWarm.ToString("0.0", $format) + " ms")
+    }
+
+    $navNames = @("Install", "Tweaks", "Terminal", "Updates", "Fixes", "Features", "Config", "Home")
+    $tabColdPart = New-Object System.Collections.Generic.List[string]
+    $tabColdTime = New-Object System.Collections.Generic.List[object]
+    foreach ($navName in $navNames) {
+        $ms = Measure-WinToolUiAction -Action { $window.FindName("Nav" + $navName).IsChecked = $true }.GetNewClosure()
+        [void]$tabColdTime.Add([pscustomobject]@{ Name = $navName; Ms = $ms })
+        [void]$tabColdPart.Add($navName + " " + $ms.ToString("0.0", $format) + "ms")
+        Write-Output ("Tab switch cold " + $navName + ": " + $ms.ToString("0.0", $format) + " ms")
+    }
+    $tabWarmPart = New-Object System.Collections.Generic.List[string]
+    $tabWarmTime = New-Object System.Collections.Generic.List[object]
+    foreach ($navName in $navNames) {
+        $ms = Measure-WinToolUiAction -Action { $window.FindName("Nav" + $navName).IsChecked = $true }.GetNewClosure()
+        [void]$tabWarmTime.Add([pscustomobject]@{ Name = $navName; Ms = $ms })
+        [void]$tabWarmPart.Add($navName + " " + $ms.ToString("0.0", $format) + "ms")
+        Write-Output ("Tab switch warm " + $navName + ": " + $ms.ToString("0.0", $format) + " ms")
+    }
+    $tabColdMax = ($tabColdTime | Measure-Object -Property Ms -Maximum).Maximum
+    $tabWarmMax = ($tabWarmTime | Measure-Object -Property Ms -Maximum).Maximum
+    Write-Output ("Tab switch cold: " + ($tabColdPart -join ", "))
+    Write-Output ("Tab switch after warmup: " + ($tabWarmPart -join ", "))
+    Write-Output ("Tab switch: cold max " + $tabColdMax.ToString("0.0", $format) + " ms, warm max " + $tabWarmMax.ToString("0.0", $format) + " ms.")
+
+    $window.FindName("NavTerminal").IsChecked = $true
+    $window.FindName("TerminalModeAdvanced").IsChecked = $true
+    Complete-WinToolStyleSelectionWork
+
+    $failures = New-Object System.Collections.Generic.List[string]
+    foreach ($row in @($filterTime)) {
+        if ($row.Ms -ge $WarmLimitMs) { [void]$failures.Add($row.Name + " " + $row.Ms.ToString("0.0", $format) + " ms after warmup") }
+    }
+    if ($searchCold -ge $ColdLimitMs) { [void]$failures.Add("search " + $searchCold.ToString("0.0", $format) + " ms cold") }
+    if ($searchWarm -ge $WarmLimitMs) { [void]$failures.Add("search " + $searchWarm.ToString("0.0", $format) + " ms after warmup") }
+    if ($searchClear -ge $WarmLimitMs) { [void]$failures.Add("search clear " + $searchClear.ToString("0.0", $format) + " ms") }
+    if ($fontCold -ge 0 -and $fontCold -ge $ColdLimitMs) { [void]$failures.Add("font " + $fontCold.ToString("0.0", $format) + " ms cold") }
+    if ($fontWarm -ge 0 -and $fontWarm -ge $WarmLimitMs) { [void]$failures.Add("font " + $fontWarm.ToString("0.0", $format) + " ms after warmup") }
+    if ($schemeCold -ge 0 -and $schemeCold -ge $ColdLimitMs) { [void]$failures.Add("scheme " + $schemeCold.ToString("0.0", $format) + " ms cold") }
+    if ($schemeWarm -ge 0 -and $schemeWarm -ge $WarmLimitMs) { [void]$failures.Add("scheme " + $schemeWarm.ToString("0.0", $format) + " ms after warmup") }
+    if ($tabColdMax -ge $ColdLimitMs) { [void]$failures.Add("tab " + $tabColdMax.ToString("0.0", $format) + " ms cold") }
+    if ($tabWarmMax -ge $WarmLimitMs) { [void]$failures.Add("tab " + $tabWarmMax.ToString("0.0", $format) + " ms after warmup") }
+    if ($failures.Count -gt 0) {
+        throw ("UI switch was too slow: " + ($failures -join "; ") + ".")
+    }
+}
+
 function Install-WinToolPerUserNerdFont {
     $zip = Join-Path ([System.IO.Path]::GetTempPath()) "wintool-cascadia-nf.zip"
     $url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/CascadiaCode.zip"
@@ -1267,6 +1446,7 @@ if (-not (Test-WinToolPrivateUseText -Text $withNerd)) {
 Save-WinToolTerminalShot -Name "terminal-starship-with-nerd" -Width 1280 -Height 800
 Assert-WinToolLivePreviewPixel -Label "Starship with a Nerd Font"
 Assert-WinToolStyleSwitchSpeed
+Assert-WinToolUiSwitchSpeed
 foreach ($engine in $engines) {
     Select-WinToolTerminalPrompt -PromptId ([string]$engine.id)
     Assert-WinToolSampleGlyph -Sample $window.FindName("TerminalFontSample") -Label ([string]$engine.id + " with a Nerd Font")
