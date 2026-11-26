@@ -49,7 +49,7 @@ function New-WinToolText {
     if (-not [string]::IsNullOrWhiteSpace($VerticalAlignment)) {
         $block.VerticalAlignment = $VerticalAlignment
     }
-    Write-Output -NoEnumerate $block
+    return $block
 }
 
 function New-WinToolCard {

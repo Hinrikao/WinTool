@@ -235,8 +235,7 @@ function Update-WinToolActivityList {
     if ($runs.Count -eq 0) {
         $emptyKey = "activity.empty"
         if ($filter -ne "all") { $emptyKey = "activity.emptyFilter" }
-        $empty = New-WinToolText -Text (Get-WinToolText $emptyKey) -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(8, 12, 8, 8))
-        [void]$hostPanel.Children.Add($empty)
+        [void]$hostPanel.Children.Add((New-WinToolText -Text (Get-WinToolText $emptyKey) -Brush "BrushMuted" -Margin ([System.Windows.Thickness]::new(8, 12, 8, 8))))
         $script:WinToolState.ActivityDirty = $false
         return
     }
@@ -262,21 +261,23 @@ function New-WinToolActivityRunCard {
     $root = New-Object System.Windows.Controls.StackPanel
     $top = New-Object System.Windows.Controls.DockPanel
     if ($Latest) {
-        $latest = New-WinToolText -Text (Get-WinToolText "activity.latest") -Brush "BrushMuted" -VerticalAlignment "Top"
+        $latest = New-Object System.Windows.Controls.TextBlock
+        $latest.Text = (Get-WinToolText "activity.latest")
+        $null = $latest.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
+        $null = $latest.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
+        $latest.VerticalAlignment = "Top"
         [System.Windows.Controls.DockPanel]::SetDock($latest, "Right")
         [void]$top.Children.Add($latest)
     }
     $titleBlock = New-Object System.Windows.Controls.StackPanel
-    $title = New-WinToolText -Text ([string]$Run.Title) -Weight "SemiBold"
-    [void]$titleBlock.Children.Add($title)
+    [void]$titleBlock.Children.Add((New-WinToolText -Text ([string]$Run.Title) -Weight "SemiBold"))
     $when = Format-WinToolActivityWhen -Started $Run.Started
     $duration = Format-WinToolActivityDuration -Started $Run.Started -Ended $Run.Ended
     $metaText = $when
     if (-not [string]::IsNullOrWhiteSpace($duration)) {
         $metaText = Get-WinToolText "activity.meta" $when $duration
     }
-    $meta = New-WinToolText -Text $metaText -Brush "BrushHint" -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))
-    [void]$titleBlock.Children.Add($meta)
+    [void]$titleBlock.Children.Add((New-WinToolText -Text $metaText -Brush "BrushHint" -Margin ([System.Windows.Thickness]::new(0, 2, 0, 0))))
     $counts = New-Object System.Windows.Controls.WrapPanel
     $counts.Margin = [System.Windows.Thickness]::new(0, 6, 0, 0)
     $okKind = "ok"
@@ -340,8 +341,7 @@ function New-WinToolActivityStepRow {
     if (-not [string]::IsNullOrWhiteSpace([string]$Step.Detail)) {
         $message = $message + "  " + [string]$Step.Detail
     }
-    $text = New-WinToolText -Text $message -Wrap -VerticalAlignment "Top"
-    [void]$row.Children.Add($text)
+    [void]$row.Children.Add((New-WinToolText -Text $message -Wrap -VerticalAlignment "Top"))
     return $row
 }
 
