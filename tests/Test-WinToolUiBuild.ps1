@@ -1125,7 +1125,7 @@ function Measure-WinToolUiAction {
 function Assert-WinToolUiSwitchSpeed {
     param(
         [int]$WarmLimitMs = 150,
-        [int]$ColdLimitMs = 550
+        [int]$ColdLimitMs = 400
     )
     $format = [System.Globalization.CultureInfo]::InvariantCulture
     $window.FindName("NavTerminal").IsChecked = $true
@@ -1273,7 +1273,8 @@ function Assert-WinToolUiSwitchSpeed {
     Complete-WinToolStyleSelectionWork
 
     $failures = New-Object System.Collections.Generic.List[string]
-    foreach ($row in @($filterTime)) {
+    for ($index = 0; $index -lt $filterTime.Count; $index++) {
+        $row = $filterTime[$index]
         if ($row.Ms -ge $WarmLimitMs) { [void]$failures.Add($row.Name + " " + $row.Ms.ToString("0.0", $format) + " ms after warmup") }
     }
     if ($searchCold -ge $ColdLimitMs) { [void]$failures.Add("search " + $searchCold.ToString("0.0", $format) + " ms cold") }
