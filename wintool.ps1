@@ -12419,6 +12419,9 @@ function Set-WinToolXamlText {
         }
 
         $skipChildren = $false
+        if ($node -is [System.Windows.ResourceDictionary]) {
+            $skipChildren = $true
+        }
         if ($script:WinToolXamlTextSkipViews -and -not [string]::IsNullOrWhiteSpace($elementName) -and $script:WinToolXamlTextSkipViews.Contains($elementName)) {
             $skipChildren = $true
         }
@@ -13267,6 +13270,13 @@ function Show-WinToolWindowAfterRender {
         $null = Set-WinToolWindowAlpha -Handle $source.Handle -Alpha 255
     }
     $Window.Opacity = 1
+    if (Get-Command -Name Start-WinToolDispatcherHeartbeat -ErrorAction SilentlyContinue) {
+        Start-WinToolDispatcherHeartbeat
+        if ($null -ne $script:WinToolDispatcherBeat) {
+            $script:WinToolDispatcherBeat.Restart()
+            $script:WinToolDispatcherLastMs = 0
+        }
+    }
 }
 # endregion
 
@@ -13394,14 +13404,19 @@ function Add-WinToolCSharpType {
 }
 
 function Initialize-WinToolCompiledType {
+    param([switch]$Deferred)
     $stamp = Get-Date
+    if ($Deferred) {
+        try { $null = Initialize-WinToolGlyphMap } catch { $null = $_.Exception.Message }
+        try { $null = Initialize-WinToolGlyphDraw } catch { $null = $_.Exception.Message }
+        try { $null = Initialize-WinToolProcessPipe } catch { $null = $_.Exception.Message }
+        try { $null = Initialize-WinToolFontLoader } catch { $null = $_.Exception.Message }
+        Write-WinToolStartupMark -Name "compiledTypes.deferred" -Started $stamp
+        return
+    }
     try { $null = Initialize-WinToolConsoleApi } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolThemeEntryType } catch { $null = $_.Exception.Message }
-    try { $null = Initialize-WinToolGlyphMap } catch { $null = $_.Exception.Message }
-    try { $null = Initialize-WinToolGlyphDraw } catch { $null = $_.Exception.Message }
-    try { $null = Initialize-WinToolProcessPipe } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolNativeMethod } catch { $null = $_.Exception.Message }
-    try { $null = Initialize-WinToolFontLoader } catch { $null = $_.Exception.Message }
     Write-WinToolStartupMark -Name "compiledTypes" -Started $stamp
 }
 
@@ -35657,6 +35672,7 @@ function Complete-WinToolHomeCheck {
 }
 
 function Start-WinToolHomeAnalysis {
+    param([switch]$DeferTweaks)
     $hs = $script:WinToolState.Home
     if ($null -eq $hs -or $hs.Phase -eq "analyzing" -or $hs.Phase -eq "fixing") { return }
     $hs.Phase = "analyzing"
@@ -35667,11 +35683,20 @@ function Start-WinToolHomeAnalysis {
     $hs.AnimStart = [DateTime]::Now
     Sync-WinToolHomeHeader
     foreach ($check in @(Get-WinToolHomeCheckList)) {
+        if ($DeferTweaks -and $check.Id -eq "tweaks") { continue }
         Start-WinToolHomeCheck -Id $check.Id
     }
     Update-WinToolHomeCard
     Start-WinToolHomeAnimation
     if ($hs.Phase -eq "analyzing" -and $hs.Pending.Count -eq 0) { Complete-WinToolHomeAnalysis }
+}
+
+function Start-WinToolHomeTweakCheck {
+    if ($script:WinToolShuttingDown) { return }
+    $hs = $script:WinToolState.Home
+    if ($null -eq $hs -or $hs.Phase -ne "analyzing") { return }
+    if ($hs.Pending.ContainsKey("tweaks") -or $hs.Results.ContainsKey("tweaks")) { return }
+    Start-WinToolHomeCheck -Id "tweaks"
 }
 
 function Complete-WinToolHomeAnalysis {
@@ -36275,20 +36300,20 @@ function Start-WinToolAfterFirstFrame {
         Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
         Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
     }
+    try { Initialize-WinToolCompiledType -Deferred } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
-    try { Start-WinToolHomeAnalysis } catch { $null = $_.Exception.Message }
-    Start-WinToolNavWarmup
+    try { Start-WinToolHomeAnalysis -DeferTweaks } catch { $null = $_.Exception.Message }
+    $callback = [scriptblock]::Create("Start-WinToolHomeTweakCheck")
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
 }
 
 function Start-WinToolNavWarmup {
     # Measures each page once while Home is on screen, so the first click
     # does not pay for building that page.
-    # Install and Terminal each block the dispatcher for seconds; Tweaks is
-    # hundreds of milliseconds. Warm only the cheap pages, one idle slice at a time.
-    $script:WinToolState.WarmViews = @("Drivers", "Updates", "Fixes", "Features", "Config")
-    $callback = [scriptblock]::Create("Invoke-WinToolNavWarmupStep")
-    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
+    # Heavy pages (Install, Terminal, Tweaks, Drivers) block the dispatcher for
+    # hundreds of milliseconds to several seconds. They are built on first click.
+    $script:WinToolState.WarmViews = @()
 }
 
 function Invoke-WinToolNavWarmupStep {
@@ -37094,7 +37119,6 @@ function New-WinToolWindow {
         Hide-WinToolWindowUntilRendered -Window $script:WinToolWindow
     }
     $null = Invoke-WinToolMeasuredWork -Name "xamlText" -Script { Set-WinToolXamlText -Root $window }
-    Start-WinToolDispatcherHeartbeat
     $null = Invoke-WinToolMeasuredWork -Name "init.Appearance" -Script { Initialize-WinToolAppearance }
     $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
     $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView }
@@ -37123,10 +37147,6 @@ function New-WinToolWindow {
         }
     }
 
-    if ($null -ne $script:WinToolDispatcherBeat) {
-        $script:WinToolDispatcherBeat.Restart()
-        $script:WinToolDispatcherLastMs = 0
-    }
     return $window
 }
 

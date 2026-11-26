@@ -544,6 +544,9 @@ function Set-WinToolXamlText {
         }
 
         $skipChildren = $false
+        if ($node -is [System.Windows.ResourceDictionary]) {
+            $skipChildren = $true
+        }
         if ($script:WinToolXamlTextSkipViews -and -not [string]::IsNullOrWhiteSpace($elementName) -and $script:WinToolXamlTextSkipViews.Contains($elementName)) {
             $skipChildren = $true
         }

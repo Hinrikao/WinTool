@@ -364,20 +364,20 @@ function Start-WinToolAfterFirstFrame {
         Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
         Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
     }
+    try { Initialize-WinToolCompiledType -Deferred } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
     try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
-    try { Start-WinToolHomeAnalysis } catch { $null = $_.Exception.Message }
-    Start-WinToolNavWarmup
+    try { Start-WinToolHomeAnalysis -DeferTweaks } catch { $null = $_.Exception.Message }
+    $callback = [scriptblock]::Create("Start-WinToolHomeTweakCheck")
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
 }
 
 function Start-WinToolNavWarmup {
     # Measures each page once while Home is on screen, so the first click
     # does not pay for building that page.
-    # Install and Terminal each block the dispatcher for seconds; Tweaks is
-    # hundreds of milliseconds. Warm only the cheap pages, one idle slice at a time.
-    $script:WinToolState.WarmViews = @("Drivers", "Updates", "Fixes", "Features", "Config")
-    $callback = [scriptblock]::Create("Invoke-WinToolNavWarmupStep")
-    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
+    # Heavy pages (Install, Terminal, Tweaks, Drivers) block the dispatcher for
+    # hundreds of milliseconds to several seconds. They are built on first click.
+    $script:WinToolState.WarmViews = @()
 }
 
 function Invoke-WinToolNavWarmupStep {
@@ -1183,7 +1183,6 @@ function New-WinToolWindow {
         Hide-WinToolWindowUntilRendered -Window $script:WinToolWindow
     }
     $null = Invoke-WinToolMeasuredWork -Name "xamlText" -Script { Set-WinToolXamlText -Root $window }
-    Start-WinToolDispatcherHeartbeat
     $null = Invoke-WinToolMeasuredWork -Name "init.Appearance" -Script { Initialize-WinToolAppearance }
     $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
     $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView }
@@ -1212,10 +1211,6 @@ function New-WinToolWindow {
         }
     }
 
-    if ($null -ne $script:WinToolDispatcherBeat) {
-        $script:WinToolDispatcherBeat.Restart()
-        $script:WinToolDispatcherLastMs = 0
-    }
     return $window
 }
 

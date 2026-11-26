@@ -826,6 +826,7 @@ function Complete-WinToolHomeCheck {
 }
 
 function Start-WinToolHomeAnalysis {
+    param([switch]$DeferTweaks)
     $hs = $script:WinToolState.Home
     if ($null -eq $hs -or $hs.Phase -eq "analyzing" -or $hs.Phase -eq "fixing") { return }
     $hs.Phase = "analyzing"
@@ -836,11 +837,20 @@ function Start-WinToolHomeAnalysis {
     $hs.AnimStart = [DateTime]::Now
     Sync-WinToolHomeHeader
     foreach ($check in @(Get-WinToolHomeCheckList)) {
+        if ($DeferTweaks -and $check.Id -eq "tweaks") { continue }
         Start-WinToolHomeCheck -Id $check.Id
     }
     Update-WinToolHomeCard
     Start-WinToolHomeAnimation
     if ($hs.Phase -eq "analyzing" -and $hs.Pending.Count -eq 0) { Complete-WinToolHomeAnalysis }
+}
+
+function Start-WinToolHomeTweakCheck {
+    if ($script:WinToolShuttingDown) { return }
+    $hs = $script:WinToolState.Home
+    if ($null -eq $hs -or $hs.Phase -ne "analyzing") { return }
+    if ($hs.Pending.ContainsKey("tweaks") -or $hs.Results.ContainsKey("tweaks")) { return }
+    Start-WinToolHomeCheck -Id "tweaks"
 }
 
 function Complete-WinToolHomeAnalysis {

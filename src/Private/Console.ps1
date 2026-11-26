@@ -396,4 +396,11 @@ function Show-WinToolWindowAfterRender {
         $null = Set-WinToolWindowAlpha -Handle $source.Handle -Alpha 255
     }
     $Window.Opacity = 1
+    if (Get-Command -Name Start-WinToolDispatcherHeartbeat -ErrorAction SilentlyContinue) {
+        Start-WinToolDispatcherHeartbeat
+        if ($null -ne $script:WinToolDispatcherBeat) {
+            $script:WinToolDispatcherBeat.Restart()
+            $script:WinToolDispatcherLastMs = 0
+        }
+    }
 }
