@@ -20085,7 +20085,7 @@ function Show-WinToolTerminalSelection {
             }
             if ($name -eq "TerminalStyleList") {
                 Register-WinToolThemePreviewHook
-                Sync-WinToolVisibleThemePreview
+                Request-WinToolVisibleThemePreview
             }
         }
         catch {
