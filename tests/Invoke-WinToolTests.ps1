@@ -2225,6 +2225,8 @@ Invoke-WinToolCase -Name "Driver scan results are classified from mocked device 
 Invoke-WinToolCase -Name "Driver header, display advice, and runtime rows only count real results" -Body {
     Test-WinToolExpectation -Condition ((Format-WinToolDriverHeader -Outdated 0 -Missing 0 -Runtime 0) -eq "No outdated or missing drivers were found.") -Message "A completed scan with nothing to do has a clear header."
     Test-WinToolExpectation -Condition ((Format-WinToolDriverHeader -Outdated 1 -Missing 0 -Runtime 0) -eq "1 device driver is outdated.") -Message "A single outdated driver is singular."
+    Test-WinToolExpectation -Condition ((Format-WinToolDriverHeader -Outdated 0 -Missing 1 -Runtime 0) -eq "1 device driver is missing.") -Message "A single missing driver is a complete sentence."
+    Test-WinToolExpectation -Condition ((Format-WinToolDriverHeader -Outdated 0 -Missing 3 -Runtime 1) -eq "3 device drivers are missing. 1 game runtime needs attention.") -Message "A missing-only header still counts game runtimes."
     $header = Format-WinToolDriverHeader -Outdated 9 -Missing 1 -Runtime 5
     Test-WinToolExpectation -Condition ($header -eq "9 device drivers are outdated and 1 is missing. 5 game runtimes need attention.") -Message "The header lists outdated, missing, and game-runtime counts."
 

@@ -17080,14 +17080,18 @@ function Format-WinToolDriverHeader {
         [int]$Missing = 0,
         [int]$Runtime = 0
     )
-    $parts = New-Object System.Collections.Generic.List[string]
-    if ($Outdated -eq 1) { $parts.Add("1 device driver is outdated") | Out-Null }
-    elseif ($Outdated -gt 1) { $parts.Add("$Outdated device drivers are outdated") | Out-Null }
-    if ($Missing -eq 1) { $parts.Add("1 is missing") | Out-Null }
-    elseif ($Missing -gt 1) { $parts.Add("$Missing are missing") | Out-Null }
     $head = ""
-    if ($parts.Count -eq 1) { $head = [string]$parts[0] + "." }
-    elseif ($parts.Count -gt 1) { $head = ([string]$parts[0] + " and " + [string]$parts[1] + ".") }
+    if ($Outdated -gt 0 -and $Missing -gt 0) {
+        $left = "1 device driver is outdated"
+        if ($Outdated -gt 1) { $left = "$Outdated device drivers are outdated" }
+        $right = "1 is missing"
+        if ($Missing -gt 1) { $right = "$Missing are missing" }
+        $head = $left + " and " + $right + "."
+    }
+    elseif ($Outdated -eq 1) { $head = "1 device driver is outdated." }
+    elseif ($Outdated -gt 1) { $head = "$Outdated device drivers are outdated." }
+    elseif ($Missing -eq 1) { $head = "1 device driver is missing." }
+    elseif ($Missing -gt 1) { $head = "$Missing device drivers are missing." }
     if ($Runtime -eq 1) {
         $extra = "1 game runtime needs attention."
     }
