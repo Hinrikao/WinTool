@@ -22021,13 +22021,13 @@ function New-WinToolActivityRunCard {
     $root = New-Object System.Windows.Controls.StackPanel
     $top = New-Object System.Windows.Controls.DockPanel
     if ($Latest) {
-        $latest = New-Object System.Windows.Controls.TextBlock
-        $latest.Text = (Get-WinToolText "activity.latest")
-        $null = $latest.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
-        $null = $latest.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
-        $latest.VerticalAlignment = "Top"
-        [System.Windows.Controls.DockPanel]::SetDock($latest, "Right")
-        [void]$top.Children.Add($latest)
+        $latestLabel = New-Object System.Windows.Controls.TextBlock
+        $latestLabel.Text = (Get-WinToolText "activity.latest")
+        $null = $latestLabel.SetResourceReference([System.Windows.Controls.TextBlock]::FontSizeProperty, "FontSizeBody")
+        $null = $latestLabel.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
+        $latestLabel.VerticalAlignment = "Top"
+        [System.Windows.Controls.DockPanel]::SetDock($latestLabel, "Right")
+        [void]$top.Children.Add($latestLabel)
     }
     $titleBlock = New-Object System.Windows.Controls.StackPanel
     [void]$titleBlock.Children.Add((New-WinToolText -Text ([string]$Run.Title) -Weight "SemiBold"))
