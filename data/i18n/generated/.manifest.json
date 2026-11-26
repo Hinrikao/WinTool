@@ -1491,7 +1491,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "es": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -2985,7 +2991,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "fr": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -4479,7 +4491,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "de": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -5973,7 +5991,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "it": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -7467,7 +7491,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "ja": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -8961,7 +8991,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "ko": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -10455,7 +10491,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "zh-Hans": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -11949,7 +11991,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "zh-Hant": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -13443,7 +13491,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "pl": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -14937,7 +14991,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "nl": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -16431,7 +16491,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "ru": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -17925,7 +17991,13 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   },
   "tr": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -19419,6 +19491,12 @@
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
     "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
-    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56"
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "msg.could-not-compile-n-n": "51d20fea6dfa64b5194c6f0dae6d3682f50adc822115b0f5f0d4b790b55a9a8d",
+    "msg.could-not-warm-n-n": "56fe5626fad41a2c4b0e61e3b109e5a99c2ebb27ee619659b6ee98d70bf629ab",
+    "shell.downloadingPowerShell7": "3c259999a19f8fc8fb323af1467a7c0c5931f0b53a9e71b1ce858048e698c208",
+    "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
+    "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
+    "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153"
   }
 }
