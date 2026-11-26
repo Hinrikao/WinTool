@@ -77,68 +77,86 @@ function Save-WinToolPreference {
     Write-WinToolJsonFile -Path $path -Value $payload
 }
 
-function Get-WinToolLocalePackObject {
-    # A single JSON object: { "en": { key: value }, "pt-BR": { ... } }
-    if ($null -ne $script:WinToolLocalePackObject) {
-        return $script:WinToolLocalePackObject
-    }
-
-    $embedded = $script:WinToolEmbedded
-    if ($null -ne $embedded -and $embedded.ContainsKey("Locales")) {
-        $clean = ([string]$embedded["Locales"]) -replace '\s', ''
-        $bytes = [Convert]::FromBase64String($clean)
-        $inputStream = New-Object System.IO.MemoryStream(,$bytes)
+function ConvertFrom-WinToolGzipBase64 {
+    param([Parameter(Mandatory = $true)][string]$Text)
+    $clean = $Text -replace '\s', ''
+    $bytes = [Convert]::FromBase64String($clean)
+    $inputStream = New-Object System.IO.MemoryStream(,$bytes)
+    try {
+        $gzip = New-Object System.IO.Compression.GzipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
         try {
-            $gzip = New-Object System.IO.Compression.GzipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
-            try {
-                $output = New-Object System.IO.MemoryStream
-                $gzip.CopyTo($output)
-                $json = [System.Text.Encoding]::UTF8.GetString($output.ToArray())
-                $script:WinToolLocalePackObject = ConvertFrom-WinToolJsonText -Text $json
-                return $script:WinToolLocalePackObject
-            }
-            finally {
-                $gzip.Dispose()
-            }
+            $output = New-Object System.IO.MemoryStream
+            $gzip.CopyTo($output)
+            return [System.Text.Encoding]::UTF8.GetString($output.ToArray())
         }
         finally {
-            $inputStream.Dispose()
+            $gzip.Dispose()
         }
+    }
+    finally {
+        $inputStream.Dispose()
+    }
+}
+
+function Test-WinToolLocaleAvailable {
+    param([Parameter(Mandatory = $true)][string]$Code)
+    if ($Code -eq "en") {
+        return $true
+    }
+    $embedded = $script:WinToolEmbedded
+    $key = "Locales:" + $Code
+    if ($null -ne $embedded -and $embedded.ContainsKey($key)) {
+        return $true
+    }
+    if ([string]::IsNullOrWhiteSpace($script:WinToolRoot)) {
+        return $false
+    }
+    $generated = Join-Path $script:WinToolRoot ("data/i18n/generated/" + $Code + ".json")
+    $override = Join-Path $script:WinToolRoot ("data/i18n/overrides/" + $Code + ".json")
+    return (Test-Path -LiteralPath $generated) -or (Test-Path -LiteralPath $override)
+}
+
+function Read-WinToolLocaleObject {
+    param([Parameter(Mandatory = $true)][string]$Code)
+    $embedded = $script:WinToolEmbedded
+    $key = "Locales:" + $Code
+    if ($null -ne $embedded -and $embedded.ContainsKey($key)) {
+        $json = ConvertFrom-WinToolGzipBase64 -Text ([string]$embedded[$key])
+        return (ConvertFrom-WinToolJsonText -Text $json)
     }
 
     if ([string]::IsNullOrWhiteSpace($script:WinToolRoot)) {
-        throw "WinTool locale files are not embedded and no source folder is set."
+        if ($Code -eq "en") {
+            throw "WinTool locale files are not embedded and no source folder is set."
+        }
+        return $null
     }
 
     $root = Join-Path $script:WinToolRoot "data/i18n"
-    $pack = [ordered]@{}
-    $enPath = Join-Path $root "en.json"
-    $pack["en"] = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($enPath))
-    $generatedRoot = Join-Path $root "generated"
-    $overrideRoot = Join-Path $root "overrides"
-    foreach ($code in @($script:WinToolShippedLanguages)) {
-        if ($code -eq "en") { continue }
-        $table = [ordered]@{}
-        $generated = Join-Path $generatedRoot ($code + ".json")
-        if (Test-Path -LiteralPath $generated) {
-            $loaded = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($generated))
-            foreach ($property in $loaded.PSObject.Properties) {
-                $table[$property.Name] = [string]$property.Value
-            }
-        }
-        $override = Join-Path $overrideRoot ($code + ".json")
-        if (Test-Path -LiteralPath $override) {
-            $loaded = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($override))
-            foreach ($property in $loaded.PSObject.Properties) {
-                $table[$property.Name] = [string]$property.Value
-            }
-        }
-        if ($table.Count -gt 0) {
-            $pack[$code] = [pscustomobject]$table
+    if ($Code -eq "en") {
+        $enPath = Join-Path $root "en.json"
+        return (ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($enPath)))
+    }
+
+    $table = [ordered]@{}
+    $generated = Join-Path $root ("generated/" + $Code + ".json")
+    if (Test-Path -LiteralPath $generated) {
+        $loaded = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($generated))
+        foreach ($property in $loaded.PSObject.Properties) {
+            $table[$property.Name] = [string]$property.Value
         }
     }
-    $script:WinToolLocalePackObject = [pscustomobject]$pack
-    return $script:WinToolLocalePackObject
+    $override = Join-Path $root ("overrides/" + $Code + ".json")
+    if (Test-Path -LiteralPath $override) {
+        $loaded = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($override))
+        foreach ($property in $loaded.PSObject.Properties) {
+            $table[$property.Name] = [string]$property.Value
+        }
+    }
+    if ($table.Count -eq 0) {
+        return $null
+    }
+    return [pscustomobject]$table
 }
 
 function ConvertTo-WinToolTextMap {
@@ -161,23 +179,25 @@ function ConvertTo-WinToolTextMap {
 
 function Get-WinToolLocaleTable {
     param([Parameter(Mandatory = $true)][string]$Code)
-    $pack = Get-WinToolLocalePackObject
-    $property = $pack.PSObject.Properties[$Code]
-    if ($null -eq $property) {
-        return $null
+    if ($null -eq $script:WinToolLocaleTables) {
+        $script:WinToolLocaleTables = @{}
     }
-    return $property.Value
+    if ($script:WinToolLocaleTables.ContainsKey($Code)) {
+        return $script:WinToolLocaleTables[$Code]
+    }
+    $loaded = Read-WinToolLocaleObject -Code $Code
+    if ($null -ne $loaded) {
+        $script:WinToolLocaleTables[$Code] = $loaded
+    }
+    return $loaded
 }
 
 function Get-WinToolAvailableLanguage {
     $codes = New-Object System.Collections.Generic.List[string]
     $codes.Add("en") | Out-Null
-    $pack = $null
-    try { $pack = Get-WinToolLocalePackObject } catch { $pack = $null }
     foreach ($code in @($script:WinToolShippedLanguages)) {
         if ($code -eq "en") { continue }
-        if ($null -eq $pack) { continue }
-        if ($null -ne $pack.PSObject.Properties[$code]) {
+        if (Test-WinToolLocaleAvailable -Code $code) {
             $codes.Add($code) | Out-Null
         }
     }
@@ -338,7 +358,6 @@ function Initialize-WinToolLocale {
         return $resolved
     }
 
-    $script:WinToolLocalePackObject = $null
     $script:WinToolLanguagePreference = $requested
     $script:WinToolLanguage = $resolved
     $script:WinToolText = Merge-WinToolTextTable -Language $resolved

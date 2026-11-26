@@ -51,39 +51,90 @@ function ConvertTo-BuildWrappedBase64 {
 }
 
 
-function Get-BuildLocalePackText {
+function ConvertTo-BuildJsonString {
+    param([AllowNull()][string]$Text)
+    if ($null -eq $Text) {
+        return "null"
+    }
+    $builder = New-Object System.Text.StringBuilder
+    [void]$builder.Append('"')
+    foreach ($char in $Text.ToCharArray()) {
+        $code = [int]$char
+        if ($code -eq 34) { [void]$builder.Append('\"') }
+        elseif ($code -eq 92) { [void]$builder.Append('\\') }
+        elseif ($code -eq 8) { [void]$builder.Append('\b') }
+        elseif ($code -eq 12) { [void]$builder.Append('\f') }
+        elseif ($code -eq 10) { [void]$builder.Append('\n') }
+        elseif ($code -eq 13) { [void]$builder.Append('\r') }
+        elseif ($code -eq 9) { [void]$builder.Append('\t') }
+        elseif ($code -lt 32) {
+            [void]$builder.Append('\u')
+            [void]$builder.Append($code.ToString("x4"))
+        }
+        else { [void]$builder.Append($char) }
+    }
+    [void]$builder.Append('"')
+    return $builder.ToString()
+}
+
+function ConvertTo-BuildFlatJsonObject {
+    param($Table)
+    $map = @{}
+    if ($Table -is [System.Collections.IDictionary]) {
+        foreach ($key in @($Table.Keys)) {
+            $map[[string]$key] = [string]$Table[$key]
+        }
+    }
+    elseif ($null -ne $Table) {
+        foreach ($property in $Table.PSObject.Properties) {
+            $map[[string]$property.Name] = [string]$property.Value
+        }
+    }
+    $names = @($map.Keys)
+    [Array]::Sort($names, [StringComparer]::Ordinal)
+    $builder = New-Object System.Text.StringBuilder
+    [void]$builder.Append("{")
+    $first = $true
+    foreach ($name in $names) {
+        if (-not $first) { [void]$builder.Append(",") }
+        $first = $false
+        [void]$builder.Append((ConvertTo-BuildJsonString -Text $name))
+        [void]$builder.Append(":")
+        [void]$builder.Append((ConvertTo-BuildJsonString -Text $map[$name]))
+    }
+    [void]$builder.Append("}")
+    return $builder.ToString()
+}
+
+function Get-BuildLocaleJson {
+    param([Parameter(Mandatory = $true)][string]$Code)
     $i18n = Join-Path $root "data/i18n"
-    $enPath = Join-Path $i18n "en.json"
-    if (-not (Test-Path -LiteralPath $enPath)) {
-        throw "data/i18n/en.json is missing."
-    }
-    $pack = [ordered]@{
-        en = (ConvertFrom-Json -InputObject (Read-BuildText -Path $enPath))
-    }
-    $generatedRoot = Join-Path $i18n "generated"
-    $overrideRoot = Join-Path $i18n "overrides"
-    $shipped = @("pt-BR", "es", "fr", "de", "it", "ja", "ko", "zh-Hans", "zh-Hant", "pl", "nl", "ru", "tr")
-    foreach ($code in $shipped) {
-        $table = [ordered]@{}
-        $generated = Join-Path $generatedRoot ($code + ".json")
-        if (Test-Path -LiteralPath $generated) {
-            $loaded = ConvertFrom-Json -InputObject (Read-BuildText -Path $generated)
-            foreach ($property in $loaded.PSObject.Properties) {
-                $table[$property.Name] = $property.Value
-            }
+    if ($Code -eq "en") {
+        $enPath = Join-Path $i18n "en.json"
+        if (-not (Test-Path -LiteralPath $enPath)) {
+            throw "data/i18n/en.json is missing."
         }
-        $override = Join-Path $overrideRoot ($code + ".json")
-        if (Test-Path -LiteralPath $override) {
-            $loaded = ConvertFrom-Json -InputObject (Read-BuildText -Path $override)
-            foreach ($property in $loaded.PSObject.Properties) {
-                $table[$property.Name] = $property.Value
-            }
-        }
-        if ($table.Count -gt 0) {
-            $pack[$code] = [pscustomobject]$table
+        return (ConvertTo-BuildFlatJsonObject -Table (ConvertFrom-Json -InputObject (Read-BuildText -Path $enPath)))
+    }
+    $table = [ordered]@{}
+    $generated = Join-Path $i18n ("generated/" + $Code + ".json")
+    if (Test-Path -LiteralPath $generated) {
+        $loaded = ConvertFrom-Json -InputObject (Read-BuildText -Path $generated)
+        foreach ($property in $loaded.PSObject.Properties) {
+            $table[$property.Name] = $property.Value
         }
     }
-    return (ConvertTo-Json -InputObject ([pscustomobject]$pack) -Depth 8 -Compress)
+    $override = Join-Path $i18n ("overrides/" + $Code + ".json")
+    if (Test-Path -LiteralPath $override) {
+        $loaded = ConvertFrom-Json -InputObject (Read-BuildText -Path $override)
+        foreach ($property in $loaded.PSObject.Properties) {
+            $table[$property.Name] = $property.Value
+        }
+    }
+    if ($table.Count -eq 0) {
+        return $null
+    }
+    return (ConvertTo-BuildFlatJsonObject -Table $table)
 }
 
 function ConvertTo-BuildGzipBase64 {
@@ -182,11 +233,15 @@ foreach ($name in $payloads.Keys) {
     [void]$builder.AppendLine($encoded)
     [void]$builder.AppendLine("'@")
 }
-$localeJson = Get-BuildLocalePackText
-$localeBytes = [System.Text.Encoding]::UTF8.GetBytes($localeJson)
-[void]$builder.AppendLine("    Locales = @'")
-[void]$builder.AppendLine((ConvertTo-BuildGzipBase64 -Bytes $localeBytes))
-[void]$builder.AppendLine("'@")
+$localeCodes = @("en", "pt-BR", "es", "fr", "de", "it", "ja", "ko", "zh-Hans", "zh-Hant", "pl", "nl", "ru", "tr")
+foreach ($localeCode in $localeCodes) {
+    $localeJson = Get-BuildLocaleJson -Code $localeCode
+    if ([string]::IsNullOrWhiteSpace($localeJson)) { continue }
+    $localeBytes = [System.Text.Encoding]::UTF8.GetBytes($localeJson)
+    [void]$builder.AppendLine("    'Locales:$localeCode' = @'")
+    [void]$builder.AppendLine((ConvertTo-BuildGzipBase64 -Bytes $localeBytes))
+    [void]$builder.AppendLine("'@")
+}
 [void]$builder.AppendLine("}")
 [void]$builder.AppendLine('$script:WinToolIcons = @{')
 foreach ($iconName in @(Get-BuildAppIcon)) {

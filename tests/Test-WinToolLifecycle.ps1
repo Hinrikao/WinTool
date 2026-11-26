@@ -470,7 +470,7 @@ function Test-LifecycleLeftover {
     return @($left)
 }
 
-$first = Start-LifecycleHost -Name "first" -CloseAfter 25 -OwnedHost
+$first = Start-LifecycleHost -Name "first" -CloseAfter 25 -OwnedHost -CloseAfterShown
 $deadline = [DateTime]::UtcNow.AddSeconds(90)
 while (-not (Test-Path -LiteralPath $first.Marker)) {
     if ($first.Process.HasExited) {
