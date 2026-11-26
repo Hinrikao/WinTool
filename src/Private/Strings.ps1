@@ -485,7 +485,7 @@ function Set-WinToolXamlText {
             $null = $_.Exception.Message
         }
 
-        $isElement = $node -is [System.Windows.FrameworkElement]
+        $isElement = $node -is [System.Windows.FrameworkElement] -or $node -is [System.Windows.FrameworkContentElement]
         $uid = $null
         $elementName = $null
         if ($isElement) {
@@ -555,7 +555,7 @@ function Set-WinToolXamlText {
         elseif ($script:WinToolXamlTextSkipViews -and -not [string]::IsNullOrWhiteSpace($elementName) -and $script:WinToolXamlTextSkipViews.Contains($elementName)) {
             $skipChildren = $true
         }
-        elseif ($SkipCollapsed -and $isElement -and $node.Visibility -eq [System.Windows.Visibility]::Collapsed) {
+        elseif ($SkipCollapsed -and $node -is [System.Windows.UIElement] -and $node.Visibility -eq [System.Windows.Visibility]::Collapsed) {
             $skipChildren = $true
         }
         if (-not $skipChildren) {
