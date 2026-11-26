@@ -77,27 +77,6 @@ function Save-WinToolPreference {
     Write-WinToolJsonFile -Path $path -Value $payload
 }
 
-function ConvertFrom-WinToolGzipBase64 {
-    param([Parameter(Mandatory = $true)][string]$Text)
-    $clean = $Text -replace '\s', ''
-    $bytes = [Convert]::FromBase64String($clean)
-    $inputStream = New-Object System.IO.MemoryStream(,$bytes)
-    try {
-        $gzip = New-Object System.IO.Compression.GzipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
-        try {
-            $output = New-Object System.IO.MemoryStream
-            $gzip.CopyTo($output)
-            return [System.Text.Encoding]::UTF8.GetString($output.ToArray())
-        }
-        finally {
-            $gzip.Dispose()
-        }
-    }
-    finally {
-        $inputStream.Dispose()
-    }
-}
-
 function Test-WinToolLocaleAvailable {
     param([Parameter(Mandatory = $true)][string]$Code)
     if ($Code -eq "en") {
@@ -121,8 +100,7 @@ function Read-WinToolLocaleObject {
     $embedded = $script:WinToolEmbedded
     $key = "Locales:" + $Code
     if ($null -ne $embedded -and $embedded.ContainsKey($key)) {
-        $json = ConvertFrom-WinToolGzipBase64 -Text ([string]$embedded[$key])
-        return (ConvertFrom-WinToolJsonText -Text $json)
+        return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name $key))
     }
 
     if ([string]::IsNullOrWhiteSpace($script:WinToolRoot)) {

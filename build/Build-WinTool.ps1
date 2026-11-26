@@ -237,9 +237,8 @@ $localeCodes = @("en", "pt-BR", "es", "fr", "de", "it", "ja", "ko", "zh-Hans", "
 foreach ($localeCode in $localeCodes) {
     $localeJson = Get-BuildLocaleJson -Code $localeCode
     if ([string]::IsNullOrWhiteSpace($localeJson)) { continue }
-    $localeBytes = [System.Text.Encoding]::UTF8.GetBytes($localeJson)
     [void]$builder.AppendLine("    'Locales:$localeCode' = @'")
-    [void]$builder.AppendLine((ConvertTo-BuildGzipBase64 -Bytes $localeBytes))
+    [void]$builder.AppendLine((ConvertTo-BuildBase64 -Text $localeJson))
     [void]$builder.AppendLine("'@")
 }
 [void]$builder.AppendLine("}")
