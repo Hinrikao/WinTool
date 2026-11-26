@@ -2241,11 +2241,25 @@ Assert-WinToolPageFill -Element $window.FindName("ConfigProfileCard") -Label "Co
 # Switch the live window to pt-BR and review every tab for leftover English
 # or known bad machine translations.
 Initialize-WinToolLocale -Language "pt-BR" -Force | Out-Null
-Set-WinToolCatalogLocale
+if ($null -ne $script:WinToolPayloadObject) {
+    foreach ($kind in @($script:WinToolPayloadObject.Keys)) {
+        Set-WinToolCatalogLocale -Catalog $script:WinToolPayloadObject[$kind] -Kind $kind | Out-Null
+    }
+}
 Set-WinToolXamlText -Root $window
 Initialize-WinToolFixView
 Initialize-WinToolFeatureView
 Initialize-WinToolDriverView
+if ($null -ne $homeStub) {
+    $script:WinToolHomeNoJobs = $true
+    Start-WinToolHomeAnalysis
+    foreach ($id in @("junk", "tweaks", "startup", "drivers", "disk")) {
+        Complete-WinToolHomeCheck -Id $id -Data $homeStub[$id]
+    }
+    $script:WinToolState.Home.Seconds = 11
+    Sync-WinToolHomeRunText
+    Update-WinToolHomeCard
+}
 Sync-WinToolHomeHeader
 function Get-WinToolVisualText {
     param($Root)
