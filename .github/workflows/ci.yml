@@ -69,7 +69,25 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Check whether generated locales need a refresh
+        id: i18n-check
+        env:
+          WINTOOL_I18N_PYTHON: python
+        shell: pwsh
+        run: |
+          & ./build/Sync-WinToolLocales.ps1 -Check
+          if ($LASTEXITCODE -eq 0) {
+            "needed=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+          if ($LASTEXITCODE -eq 2) {
+            "needed=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+          throw "Locale check failed with exit code $LASTEXITCODE."
+
       - name: Cache the NLLB model and pip packages
+        if: steps.i18n-check.outputs.needed == 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -79,11 +97,13 @@ jobs:
           key: wintool-nllb-200-distilled-600M-int8-${{ runner.os }}
 
       - name: Install translator dependencies
+        if: steps.i18n-check.outputs.needed == 'true'
         run: |
           python -m pip install --upgrade pip
           python -m pip install "ctranslate2>=4.0" "sentencepiece>=0.2" "huggingface_hub>=0.25" "transformers>=4.44" "torch" --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Translate new or changed English strings
+        if: steps.i18n-check.outputs.needed == 'true'
         env:
           WINTOOL_I18N_PROVIDER: ctranslate2
           WINTOOL_I18N_PYTHON: python
@@ -93,6 +113,7 @@ jobs:
           & ./build/Sync-WinToolLocales.ps1
 
       - name: Commit generated locales when they change
+        if: steps.i18n-check.outputs.needed == 'true'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"

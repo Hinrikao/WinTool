@@ -287,6 +287,24 @@ def ensure_model() -> None:
     subprocess.check_call(cmd)
 
 
+
+def locales_need_work(targets: list[str], force: bool) -> bool:
+    english = load_json(EN_PATH, {})
+    manifest = load_json(MANIFEST_PATH, {})
+    if not isinstance(manifest, dict):
+        manifest = {}
+    for locale in targets:
+        current = load_json(GENERATED / f"{locale}.json", {})
+        loc_manifest = dict(manifest.get(locale) or {})
+        for key, value in english.items():
+            if should_skip_key(key):
+                continue
+            digest = sha(value)
+            if force or key not in current or loc_manifest.get(key) != digest or not current[key]:
+                return True
+    return False
+
+
 def sync_locales(targets: list[str], provider_name: str | None, force: bool) -> None:
     english = load_json(EN_PATH, {})
     glossary = load_json(GLOSSARY_PATH, {"protect": [], "phrases": {}})
@@ -433,6 +451,7 @@ def main() -> int:
     parser.add_argument("--provider", default=os.environ.get("WINTOOL_I18N_PROVIDER", "ctranslate2"))
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--ensure-model", action="store_true")
+    parser.add_argument("--check", action="store_true", help="Exit 0 if locales are current, 2 if work is pending.")
     args = parser.parse_args()
     if args.ensure_model:
         ensure_model()
@@ -441,6 +460,8 @@ def main() -> int:
     unknown = [code for code in targets if code not in NLLB]
     if unknown:
         raise SystemExit(f"Unsupported locale(s): {', '.join(unknown)}")
+    if args.check:
+        return 2 if locales_need_work(targets, args.force) else 0
     sync_locales(targets, args.provider, args.force)
     return 0
 

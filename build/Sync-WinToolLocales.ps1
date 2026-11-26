@@ -14,7 +14,8 @@ param(
     [string]$Locales = "pt-BR,es,fr,de,it,ja,ko,zh-Hans,zh-Hant,pl,nl,ru,tr",
     [string]$Provider = $env:WINTOOL_I18N_PROVIDER,
     [switch]$Force,
-    [switch]$EnsureModelOnly
+    [switch]$EnsureModelOnly,
+    [switch]$Check
 )
 
 $ErrorActionPreference = "Stop"
@@ -43,6 +44,9 @@ $args = @($script)
 if ($EnsureModelOnly) {
     $args += "--ensure-model"
 }
+elseif ($Check) {
+    $args += @("--locales", $Locales, "--check")
+}
 else {
     $args += @("--locales", $Locales)
     if (-not [string]::IsNullOrWhiteSpace($Provider)) {
@@ -53,6 +57,10 @@ else {
     }
 }
 & $python @args
-if ($LASTEXITCODE -ne 0) {
-    throw "Locale translation failed with exit code $LASTEXITCODE."
+$code = $LASTEXITCODE
+if ($Check) {
+    exit $code
+}
+if ($code -ne 0) {
+    throw "Locale translation failed with exit code $code."
 }
