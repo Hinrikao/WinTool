@@ -66,6 +66,9 @@ function New-WinToolRelaunchScript {
     if ($ShowConsole) {
         [void]$lines.Add('$env:WINTOOL_SHOW_CONSOLE = "1"')
     }
+    if (-not [string]::IsNullOrWhiteSpace($LaunchUrl)) {
+        [void]$lines.Add('$env:WINTOOL_URL = ' + (ConvertTo-WinToolLiteral -Text $LaunchUrl))
+    }
     if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
         [void]$lines.Add("Set-Location -LiteralPath " + (ConvertTo-WinToolLiteral -Text $WorkingDirectory))
     }
@@ -176,6 +179,67 @@ function Remove-WinToolStaleTempLauncher {
     }
 }
 
+
+function Get-WinToolRelaunchHostOption {
+    param(
+        [switch]$Elevate,
+        [bool]$ShowConsole,
+        [bool]$Unattended
+    )
+    $hidden = -not ($ShowConsole -or $Unattended)
+    if ($Elevate) {
+        return [pscustomobject]@{ Hidden = $false; WindowStyle = "Normal" }
+    }
+    $style = "Normal"
+    if ($hidden) {
+        $style = "Hidden"
+    }
+    return [pscustomobject]@{ Hidden = $hidden; WindowStyle = $style }
+}
+
+function Get-WinToolElevationFailureText {
+    param(
+        $ErrorRecord
+    )
+    $code = 0
+    if ($null -ne $ErrorRecord) {
+        $exception = $ErrorRecord.Exception
+        while ($null -ne $exception) {
+            if ($exception -is [System.ComponentModel.Win32Exception]) {
+                $code = [int]$exception.NativeErrorCode
+                break
+            }
+            $exception = $exception.InnerException
+        }
+    }
+    if ($code -eq 1223) {
+        return "Administrator approval was canceled. WinTool did not start as administrator. Run the command again and approve the Windows security prompt, or start PowerShell as administrator."
+    }
+    $text = "WinTool could not request administrator approval."
+    if ($code -ne 0) {
+        $text += " Windows error $code."
+    }
+    if ($null -ne $ErrorRecord -and -not [string]::IsNullOrWhiteSpace([string]$ErrorRecord.Exception.Message)) {
+        $text += " " + [string]$ErrorRecord.Exception.Message
+    }
+    $text += " Run the command again, or start PowerShell as administrator."
+    return $text
+}
+
+function Show-WinToolElevationNotice {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+    Write-Host $Text
+    try {
+        Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
+        [System.Windows.MessageBox]::Show($Text, "WinTool") | Out-Null
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+}
+
 function Start-WinToolRelaunch {
     param(
         [switch]$Elevate
@@ -198,22 +262,19 @@ function Start-WinToolRelaunch {
     }
     $directory = Get-WinToolWorkingDirectory
     $showConsole = Test-WinToolShowConsole
-    $hidden = -not ($showConsole -or [bool]$script:WinToolUnattended)
-    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl) -Hidden $hidden -ShowConsole $showConsole
+    $options = Get-WinToolRelaunchHostOption -Elevate:$Elevate -ShowConsole $showConsole -Unattended ([bool]$script:WinToolUnattended)
+    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl) -Hidden ([bool]$options.Hidden) -ShowConsole $showConsole
     $launcherPath = Join-Path $launcherDirectory ("relaunch-" + [guid]::NewGuid().ToString("N") + ".ps1")
     [System.IO.File]::WriteAllText($launcherPath, $scriptText, $encoding)
-    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden $hidden)
-    $style = "Normal"
-    if ($hidden) {
-        $style = "Hidden"
-    }
+    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden ([bool]$options.Hidden))
+    $style = [string]$options.WindowStyle
     if ($Elevate) {
-        Write-Host "WinTool needs administrator approval. Accept the Windows prompt to continue."
+        Write-Host "WinTool needs administrator approval. Approve the Windows security prompt if it appears."
         try {
             Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs -WindowStyle $style | Out-Null
         }
         catch {
-            Write-Host "WinTool was not started. Administrator approval was declined."
+            Show-WinToolElevationNotice -Text (Get-WinToolElevationFailureText -ErrorRecord $_)
         }
         Exit-WinToolOwnedHost
         return

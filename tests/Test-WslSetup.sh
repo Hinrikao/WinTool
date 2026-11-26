@@ -15,6 +15,8 @@ run() {
 
 run oh-my-posh jandedobbeleer | tee /tmp/first.log
 [ "$(getent passwd ubuntu | cut -d: -f7)" = "$(command -v zsh)" ] || fail "zsh is not the default shell"
+[ -f /home/ubuntu/.hushlogin ] || fail "the login MOTD should be hidden with ~/.hushlogin"
+[ -f /home/ubuntu/.config/wintool/created-hushlogin ] || fail "WinTool should record that it created ~/.hushlogin"
 [ -x /home/ubuntu/.local/bin/oh-my-posh ] || fail "oh-my-posh is missing"
 [ -s /home/ubuntu/.config/wintool/jandedobbeleer.omp.json ] || fail "the theme is missing"
 [ "$(grep -c '^# >>> WinTool >>>$' /home/ubuntu/.zshrc)" = "1" ] || fail "the WinTool block should appear once"

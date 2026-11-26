@@ -1707,6 +1707,7 @@ function Get-WinToolSimpleTerminalChoice {
         psReadLine = [bool](Get-WinToolNote -Object $simple -Name "psReadLine" -Default $true)
         zoxide = [bool](Get-WinToolNote -Object $simple -Name "zoxide" -Default $false)
         fzf = [bool](Get-WinToolNote -Object $simple -Name "fzf" -Default $false)
+        hideStartupBanner = [bool](Test-WinToolHideStartupBanner -Selection $simple)
         fontSize = [int](Get-WinToolNote -Object $simple -Name "fontSize" -Default 12)
     }
 }
@@ -1746,6 +1747,7 @@ function Get-WinToolTerminalPlan {
     if ($null -eq $zoxide) { $zoxide = $false }
     $fzf = Get-WinToolNote -Object $Selection -Name "fzf"
     if ($null -eq $fzf) { $fzf = $false }
+    $hideBanner = Test-WinToolHideStartupBanner -Selection $Selection
     $wsl = Get-WinToolNote -Object $Selection -Name "wsl"
     if ($null -eq $wsl) { $wsl = $false }
     $zsh = Get-WinToolNote -Object $Selection -Name "zsh"
@@ -1805,6 +1807,7 @@ function Get-WinToolTerminalPlan {
     if ($fontSize -ne 12) { $fontLabel += " " + $fontSize + " pt" }
     [void]$steps.Add([pscustomobject]@{ Type = "font"; Label = $fontLabel; Face = [string]$font.face; Match = [string]$font.match; Size = $fontSize })
     [void]$steps.Add([pscustomobject]@{ Type = "ligatures"; Label = "Turn on font ligatures in Windows Terminal for all profiles" })
+    [void]$steps.Add((Get-WinToolTerminalBannerStep -Undo:(-not $hideBanner)))
     if ($null -ne $scheme) {
         [void]$steps.Add([pscustomobject]@{ Type = "scheme"; Label = ("Set the Windows Terminal color scheme to " + [string]$scheme.name); SchemeId = [string]$scheme.id })
     }
@@ -1838,6 +1841,9 @@ function Get-WinToolTerminalPlan {
         $distro = [string](Get-WinToolNote -Object $Selection -Name "wslDistro" -Default "Ubuntu")
         $withShell = ([bool]$zsh -or $shellKind -like "wsl-*")
         foreach ($wslStep in @(Get-WinToolWslStep -Distro $distro -PromptId $promptId -PromptStyle $promptStyle -Font $font -Install $true -Shell $withShell)) {
+            if ([string]$wslStep.Type -eq "wsl-shell") {
+                $wslStep | Add-Member -NotePropertyName "HideStartupBanner" -NotePropertyValue $hideBanner
+            }
             [void]$steps.Add($wslStep)
         }
     }
@@ -2389,6 +2395,10 @@ function Get-WinToolSummaryChip {
                 & $add "change" $text
             }
             "ligatures" { & $add "change" "Font ligatures on" }
+            "banner" {
+                if ([bool](Get-WinToolNote -Object $item -Name "Undo" -Default $false)) { & $add "change" "Startup banner shown" }
+                else { & $add "change" "Startup banner hidden" }
+            }
             "scheme" { & $add "change" ($label -replace '^Set the Windows Terminal color scheme to ', 'Scheme ') }
             "starship-preset" { & $add "change" ("Starship preset " + [string]$item.Preset) }
             "profile" { & $add "change" "PowerShell `$PROFILE" }

@@ -12,7 +12,8 @@
     "terminalIcons": true,
     "psReadLine": true,
     "zoxide": false,
-    "fzf": false
+    "fzf": false,
+    "hideStartupBanner": true
   },
   "prompts": [
     {
@@ -107,6 +108,7 @@
     "ys", "zhann"
   ],
   "extras": [
+    {"id": "hide-startup-banner", "name": "Hide startup banner", "description": "No copyright, version, or profile-loading line when a terminal opens.", "kind": "setting"},
     {"id": "terminal-icons", "name": "Terminal-Icons", "description": "Folder and file icons in PowerShell listings.", "kind": "module"},
     {"id": "psreadline", "name": "PSReadLine predictions", "description": "Suggest the rest of a command from your history.", "kind": "profile"},
     {"id": "zoxide", "name": "zoxide", "description": "Jump to folders you use often. The command is z.", "kind": "winget", "wingetId": "ajeetdsouza.zoxide"},

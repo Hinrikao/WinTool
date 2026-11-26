@@ -120,6 +120,9 @@ function Build-WinToolSimpleTerminalCard {
     if ([bool]$choice.psReadLine) {
         [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "PSReadLine" -Detail "History suggestions as you type" -Badge "Suggestions" -Glyph 0xE81C))
     }
+    if (Test-WinToolHideStartupBanner -Selection $choice) {
+        [void]$list.Children.Add((New-WinToolSimpleIncludedRow -Title "Hide startup banner" -Detail "No copyright or profile-loading line when a terminal opens" -Badge "Terminal" -Glyph 0xE7B3))
+    }
     $lead = Get-WinToolUi -Name "TerminalSimpleLead"
     if ($null -ne $lead) {
         $lead.Text = "Windows Terminal, PowerShell 7, Oh My Posh, a Nerd Font, file icons, and history suggestions. Switch to Advanced to change any part."
@@ -1581,6 +1584,7 @@ function Get-WinToolExtraChoiceName {
     param([string]$ExtraId)
     if ($ExtraId -eq "terminal-icons") { return "terminalIcons" }
     if ($ExtraId -eq "psreadline") { return "psReadLine" }
+    if ($ExtraId -eq "hide-startup-banner") { return "hideStartupBanner" }
     return $ExtraId
 }
 
@@ -1592,6 +1596,10 @@ function Update-WinToolExtraToggle {
         $toggle = $boxes[$index]
         if ($null -eq $toggle) { continue }
         $choiceName = Get-WinToolExtraChoiceName -ExtraId ([string]$toggle.Tag)
+        if ($choiceName -eq "hideStartupBanner") {
+            $toggle.IsChecked = Test-WinToolHideStartupBanner -Selection $script:WinToolTerminalChoice
+            continue
+        }
         $choiceValue = Get-WinToolNote -Object $script:WinToolTerminalChoice -Name $choiceName
         $toggle.IsChecked = [bool]($null -ne $choiceValue -and [bool]$choiceValue)
     }
@@ -2131,7 +2139,7 @@ function Update-WinToolTerminalPreview {
 }
 
 function Read-WinToolExtraSelection {
-    $flags = @{ "terminal-icons" = $false; psreadline = $false; zoxide = $false; fzf = $false }
+    $flags = @{ "terminal-icons" = $false; psreadline = $false; zoxide = $false; fzf = $false; "hide-startup-banner" = $true }
     $boxes = $script:WinToolTerminalExtraBox
     if ($null -eq $boxes) { return $flags }
     for ($index = 0; $index -lt $boxes.Count; $index++) {
@@ -2158,6 +2166,7 @@ function Update-WinToolTerminalSummary {
             $script:WinToolTerminalChoice.psReadLine = [bool]$flags["psreadline"]
             $script:WinToolTerminalChoice.zoxide = [bool]$flags["zoxide"]
             $script:WinToolTerminalChoice.fzf = [bool]$flags["fzf"]
+            $script:WinToolTerminalChoice.hideStartupBanner = [bool]$flags["hide-startup-banner"]
         }
     }
     $steps = @(Get-WinToolTerminalPlan -Selection $script:WinToolTerminalChoice)
@@ -2239,6 +2248,7 @@ function Get-WinToolTerminalChoice {
         psReadLine = [bool]$choice.psReadLine
         zoxide = [bool]$choice.zoxide
         fzf = [bool]$choice.fzf
+        hideStartupBanner = [bool](Test-WinToolHideStartupBanner -Selection $choice)
     }
 }
 
@@ -2258,6 +2268,7 @@ function Sync-WinToolTerminalChoice {
         $flag = Get-WinToolNote -Object $Selection -Name $name
         if ($null -ne $flag) { $script:WinToolTerminalChoice.$name = [bool]$flag }
     }
+    $script:WinToolTerminalChoice.hideStartupBanner = Test-WinToolHideStartupBanner -Selection $Selection
     $enabledFlag = Get-WinToolNote -Object $Selection -Name "enabled"
     $enabledBox = Get-WinToolUi -Name "TerminalEnabled"
     if ($null -ne $enabledFlag -and $null -ne $enabledBox) {

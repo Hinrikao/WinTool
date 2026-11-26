@@ -55,6 +55,17 @@ as_user() {
   fi
 }
 
+# Hide the distro MOTD ("Welcome to Ubuntu...") on login. A marker records
+# when WinTool created ~/.hushlogin, so a file the user already had is left alone.
+if [ "${WINTOOL_HUSHLOGIN:-1}" != "0" ]; then
+  if [ ! -e "${home}/.hushlogin" ]; then
+    as_user "mkdir -p \"${home}/.config/wintool\" && touch \"${home}/.hushlogin\" && printf 'created\n' > \"${home}/.config/wintool/created-hushlogin\""
+    if [ -f "${home}/.hushlogin" ]; then
+      say "hid the login message (~/.hushlogin)"
+    fi
+  fi
+fi
+
 packages="zsh git curl ca-certificates unzip"
 if [ "${prompt}" = "tide" ]; then
   packages="${packages} fish"

@@ -45,7 +45,12 @@ function Get-WinToolWslSetupText {
         if ($styleFile.Contains("..")) { $styleFile = "" }
         $styleSettings = (@(Get-WinToolPromptVariantSetting -Variant $chosen) -join "`n")
     }
-    $header = "export WINTOOL_SHELL_PROMPT='" + $variant + "'`nexport WINTOOL_PROMPT_STYLE='" + $style + "'`nexport WINTOOL_OMZ_THEME='" + $omzTheme + "'`nexport WINTOOL_STYLE_FILE='" + $styleFile + "'`nexport WINTOOL_STYLE_SETTINGS='" + $styleSettings + "'`n"
+    $hush = "1"
+    $hushFlag = Get-WinToolNote -Object $Step -Name "HideStartupBanner"
+    if ($null -ne $hushFlag -and -not [bool]$hushFlag) {
+        $hush = "0"
+    }
+    $header = "export WINTOOL_SHELL_PROMPT='" + $variant + "'`nexport WINTOOL_PROMPT_STYLE='" + $style + "'`nexport WINTOOL_OMZ_THEME='" + $omzTheme + "'`nexport WINTOOL_STYLE_FILE='" + $styleFile + "'`nexport WINTOOL_STYLE_SETTINGS='" + $styleSettings + "'`nexport WINTOOL_HUSHLOGIN='" + $hush + "'`n"
     if ($bash.StartsWith("#!")) {
         $cut = $bash.IndexOf("`n")
         return $bash.Substring(0, $cut + 1) + $header + $bash.Substring($cut + 1)

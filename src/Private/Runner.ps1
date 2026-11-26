@@ -177,6 +177,7 @@ $script:WinToolLocalStepHandlers = [ordered]@{
     "scheme" = "Invoke-WinToolSchemeStep"
     "starship-preset" = "Invoke-WinToolStarshipPresetStep"
     "wsl-profile" = "Invoke-WinToolWslProfileStep"
+    "banner" = "Invoke-WinToolTerminalBannerStep"
 }
 
 function Test-WinToolLocalStepType {

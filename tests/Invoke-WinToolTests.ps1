@@ -615,6 +615,19 @@ Invoke-WinToolCase -Name "Elevation relaunches the entry script" -Body {
     Test-WinToolExpectation -Condition ($debugScript.Contains("-ShowConsole") -and $debugScript.Contains('$env:WINTOOL_SHOW_CONSOLE = "1"') -and -not $debugScript.Contains('$env:WINTOOL_HIDDEN = "1"')) -Message "-ShowConsole survives the relaunch and keeps the console visible."
     $preferred = Resolve-WinToolEntryPath -EntryPath "C:\repo\src\Start-WinTool.ps1" -CommandPath "C:\repo\src\Private\Elevation.ps1"
     Test-WinToolExpectation -Condition ($preferred -eq "C:\repo\src\Start-WinTool.ps1") -Message "The saved entry path wins over the helper file path."
+    $pinned = "https://raw.githubusercontent.com/Hinrikao/WinTool/4d649686f452163812c3ff098149115f30cad3fa/wintool.ps1"
+    $pinnedScript = New-WinToolRelaunchScript -WorkingDirectory "C:\Temp" -EntryPath "" -ApplyProfile "" -Unattended $false -LaunchUrl $pinned -Hidden $false -ShowConsole $false
+    Test-WinToolExpectation -Condition ($pinnedScript.Contains('$env:WINTOOL_URL =') -and $pinnedScript.Contains($pinned) -and $pinnedScript.Contains("Invoke-RestMethod")) -Message "A piped relaunch keeps the pinned WINTOOL_URL."
+    $elevateOption = Get-WinToolRelaunchHostOption -Elevate -ShowConsole $false -Unattended $false
+    Test-WinToolExpectation -Condition ($elevateOption.WindowStyle -eq "Normal" -and $elevateOption.Hidden -eq $false) -Message "Elevation uses a visible window so the UAC prompt can appear."
+    $hiddenOption = Get-WinToolRelaunchHostOption -ShowConsole $false -Unattended $false
+    Test-WinToolExpectation -Condition ($hiddenOption.WindowStyle -eq "Hidden" -and $hiddenOption.Hidden -eq $true) -Message "A non-elevated relaunch can still use a hidden host window."
+    $canceled = $null
+    try { throw (New-Object System.ComponentModel.Win32Exception 1223) } catch { $canceled = Get-WinToolElevationFailureText -ErrorRecord $_ }
+    Test-WinToolExpectation -Condition ($canceled.Contains("canceled") -and $canceled.Contains("administrator")) -Message "A canceled UAC prompt has a clear message."
+    $failed = $null
+    try { throw (New-Object System.ComponentModel.Win32Exception 5) } catch { $failed = Get-WinToolElevationFailureText -ErrorRecord $_ }
+    Test-WinToolExpectation -Condition ($failed.Contains("could not request administrator approval") -and $failed.Contains("5")) -Message "A failed elevation request names the Windows error."
 }
 
 Invoke-WinToolCase -Name "The console hides unless asked to stay" -Body {
@@ -902,7 +915,7 @@ Invoke-WinToolCase -Name "Every plan step type has a runner" -Body {
                 Test-WinToolExpectation -Condition ($null -ne $command) -Message ("Step '" + $type + "' from " + $plan.Name + " has no command.")
             }
         }
-        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "ligatures", "profile", "scheme", "starship-preset", "wsl-profile")) {
+        foreach ($type in @("winget", "process", "module", "fix-script", "inline-script", "wsl-install", "font-download", "tool-download", "wsl-shell", "font", "ligatures", "banner", "profile", "scheme", "starship-preset", "wsl-profile")) {
             Test-WinToolExpectation -Condition ($seen.ContainsKey($type)) -Message ("No plan produced step type '" + $type + "', so the coverage check is incomplete.")
         }
         Test-WinToolExpectation -Condition (Test-WinToolLocalStepType -Type "scheme") -Message "The color scheme step runs inside WinTool."
@@ -1468,7 +1481,11 @@ Invoke-WinToolCase -Name "Advanced Terminal page: engines, theme rows, filters, 
     $changes = @($chips | Where-Object { $_.Kind -eq "change" } | ForEach-Object { [string]$_.Text })
     Test-WinToolExpectation -Condition ($adds -contains "Windows Terminal" -and $adds -contains "Starship" -and $adds -contains "zoxide" -and $adds -contains "Terminal-Icons") -Message ("Install chips: " + ($adds -join ", "))
     Test-WinToolExpectation -Condition (@($adds | Where-Object { $_ -eq "Terminal-Icons" }).Count -eq 1) -Message "Terminal-Icons shows once."
-    Test-WinToolExpectation -Condition ($changes -contains "Starship preset tokyo-night" -and $changes -contains "Scheme Night" -and $changes -contains "Terminal font 13 pt") -Message ("Change chips: " + ($changes -join ", "))
+    Test-WinToolExpectation -Condition ($changes -contains "Starship preset tokyo-night" -and $changes -contains "Scheme Night" -and $changes -contains "Terminal font 13 pt" -and $changes -contains "Startup banner hidden") -Message ("Change chips: " + ($changes -join ", "))
+    $bannerOff = Get-WinToolSimpleTerminalChoice
+    $bannerOff.hideStartupBanner = $false
+    $offChips = @(Get-WinToolSummaryChip -Step @(Get-WinToolTerminalPlan -Selection $bannerOff) | Where-Object { $_.Text -eq "Startup banner shown" })
+    Test-WinToolExpectation -Condition ($offChips.Count -eq 1) -Message "Turning the banner extra off shows a restore chip."
     $wslChips = @(Get-WinToolSummaryChip -Step @(Get-WinToolTerminalPlan -Selection ([pscustomobject]@{ prompt = "powerlevel10k"; promptStyle = "rainbow"; fontId = $choice.fontId; schemeId = $choice.schemeId })))
     Test-WinToolExpectation -Condition (@($wslChips | Where-Object { $_.Text -eq "Rainbow style" -and $_.Kind -eq "change" }).Count -eq 1) -Message "The chosen WSL style shows as a change."
 
@@ -1845,6 +1862,132 @@ Invoke-WinToolCase -Name "App icons are optional PNG files, never paths" -Body {
         $script:WinToolRoot = $savedRoot
         $script:WinToolIcons = $savedIcons
     }
+}
+
+
+Invoke-WinToolCase -Name "Hide startup banner patches every known terminal and can be undone" -Body {
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "PowerShell" -Source "Windows.Terminal.PowershellCore" -Commandline "") -eq "pwsh") -Message "Dynamic PowerShell 7 profiles are classified as pwsh."
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "Windows PowerShell" -Source "" -Commandline "powershell.exe") -eq "powershell") -Message "Windows PowerShell is classified."
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "Command Prompt" -Source "" -Commandline "cmd.exe") -eq "cmd") -Message "Command Prompt is classified."
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "Git Bash" -Source "" -Commandline "C:\Program Files\Git\bin\bash.exe -l -i") -eq "gitbash") -Message "Git Bash is classified."
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "Developer Command Prompt" -Source "" -Commandline 'cmd.exe /k "C:\BuildTools\Common7\Tools\VsDevCmd.bat"') -eq "vsdev-cmd") -Message "The VS Developer Command Prompt is classified."
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "Developer PowerShell" -Source "" -Commandline "powershell.exe -NoExit -Command Import-Module") -eq "vsdev-ps") -Message "The VS Developer PowerShell is classified."
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "Ubuntu" -Source "Windows.Terminal.Wsl" -Commandline "") -eq "wsl") -Message "WSL profiles are classified."
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "Azure Cloud Shell" -Source "Windows.Terminal.Azure" -Commandline "") -eq "azure") -Message "Azure Cloud Shell is classified."
+    Test-WinToolExpectation -Condition ((Get-WinToolTerminalBannerKind -Name "Python" -Source "" -Commandline "py.exe") -eq "other") -Message "Unknown profiles stay in the other bucket."
+    Test-WinToolExpectation -Condition ((Add-WinToolCommandToken -Commandline "pwsh.exe -NoExit" -Token "-NoLogo") -eq "pwsh.exe -NoLogo -NoExit") -Message "-NoLogo is inserted after the executable."
+    Test-WinToolExpectation -Condition ((Add-WinToolCommandToken -Commandline "pwsh.exe -NoLogo" -Token "-NoLogo") -eq "pwsh.exe -NoLogo") -Message "Adding -NoLogo a second time is a no-op."
+    Test-WinToolExpectation -Condition ((Add-WinToolCmdClearCommand -Commandline "cmd.exe") -eq "cmd.exe /k cls") -Message "cmd.exe gets /k cls."
+    Test-WinToolExpectation -Condition ((Add-WinToolCmdClearCommand -Commandline "cmd.exe /k echo hi") -eq "cmd.exe /k cls & echo hi") -Message "An existing /k command keeps running after cls."
+    Test-WinToolExpectation -Condition ((Add-WinToolCmdClearCommand -Commandline "cmd.exe /k cls") -eq "cmd.exe /k cls") -Message "cmd.exe /k cls is left as is."
+    $vs = Add-WinToolVsDevNoLogo -Commandline 'cmd.exe /k "C:\BuildTools\Common7\Tools\VsDevCmd.bat"'
+    Test-WinToolExpectation -Condition ($vs -eq 'cmd.exe /k "C:\BuildTools\Common7\Tools\VsDevCmd.bat -no_logo"') -Message "VsDevCmd.bat gets -no_logo inside its quoted command."
+
+    $text = @'
+{
+  // user comment
+  "profiles": {
+    "defaults": { "font": { "face": "Fira Code" } },
+    "list": [
+      { "name": "PowerShell", "source": "Windows.Terminal.PowershellCore" },
+      { "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}", "name": "Windows PowerShell", "commandline": "powershell.exe" },
+      { "name": "Ubuntu", "source": "Windows.Terminal.Wsl" },
+      { "name": "Command Prompt", "commandline": "cmd.exe" },
+      { "name": "Git Bash", "commandline": "C:\\Program Files\\Git\\bin\\bash.exe -l -i" },
+      { "name": "Developer Command Prompt", "commandline": "cmd.exe /k \"C:\\BuildTools\\Common7\\Tools\\VsDevCmd.bat\"" },
+      { "name": "Developer PowerShell", "commandline": "powershell.exe -NoExit -Command \"Import-Module Foo\"" },
+      { "name": "Azure Cloud Shell", "source": "Windows.Terminal.Azure" },
+      { "name": "Python", "commandline": "py.exe" },
+      { "name": "Already quiet", "commandline": "pwsh.exe -NoLogo -NoExit" }
+    ]
+  }
+}
+'@
+    $first = Update-WinToolTerminalBannerText -Text $text
+    Test-WinToolExpectation -Condition ($first.Text.Contains("// user comment")) -Message "Comments in settings.json are kept."
+    Test-WinToolExpectation -Condition ($first.Changed -eq $true) -Message "The first apply changes settings.json."
+    $settings = ConvertFrom-WinToolJsonText -Text $first.Text
+    $list = @($settings.profiles.list)
+    $byName = @{}
+    foreach ($item in $list) { $byName[[string]$item.name] = $item }
+    Test-WinToolExpectation -Condition ([string]$byName["PowerShell"].commandline -eq "pwsh.exe -NoLogo") -Message "A dynamic PowerShell 7 profile gets pwsh.exe -NoLogo."
+    Test-WinToolExpectation -Condition ([string]$byName["Windows PowerShell"].commandline -eq "powershell.exe -NoLogo") -Message "Windows PowerShell gets -NoLogo."
+    Test-WinToolExpectation -Condition ($null -eq $byName["Ubuntu"].PSObject.Properties["commandline"]) -Message "WSL profiles do not get a commandline override."
+    Test-WinToolExpectation -Condition ([string]$byName["Command Prompt"].commandline -eq "cmd.exe /k cls") -Message "Command Prompt starts with cls."
+    Test-WinToolExpectation -Condition ([string]$byName["Git Bash"].commandline -eq "C:\Program Files\Git\bin\bash.exe -l -i") -Message "Git Bash keeps its command line."
+    Test-WinToolExpectation -Condition ([string]$byName["Developer Command Prompt"].commandline -like "*VsDevCmd.bat -no_logo*") -Message "The VS Developer Command Prompt gets -no_logo."
+    Test-WinToolExpectation -Condition ([string]$byName["Developer PowerShell"].commandline -like "powershell.exe -NoLogo*") -Message "The VS Developer PowerShell gets -NoLogo."
+    Test-WinToolExpectation -Condition ($null -eq $byName["Azure Cloud Shell"].PSObject.Properties["commandline"]) -Message "Azure Cloud Shell is not given a command line."
+    Test-WinToolExpectation -Condition ([string]$byName["Python"].commandline -eq "py.exe") -Message "Unknown profiles are left unchanged."
+    Test-WinToolExpectation -Condition ([string]$byName["Already quiet"].commandline -eq "pwsh.exe -NoLogo -NoExit") -Message "A profile that already has -NoLogo is left as is."
+    $log = @($first.Log)
+    Test-WinToolExpectation -Condition (@($log | Where-Object { $_ -match "Azure Cloud Shell" }).Count -ge 1) -Message "Azure Cloud Shell is mentioned in the log."
+    Test-WinToolExpectation -Condition (@($log | Where-Object { $_ -match "Python" }).Count -ge 1) -Message "Unknown profiles are mentioned in the log."
+    $second = Update-WinToolTerminalBannerText -Text $first.Text
+    Test-WinToolExpectation -Condition ($second.Changed -eq $false -and $second.Text -eq $first.Text) -Message "A second apply is a no-op and keeps the same text."
+    $undone = Update-WinToolTerminalBannerText -Text $first.Text -Undo -Change $first.Change
+    Test-WinToolExpectation -Condition ($undone.Text.Contains("// user comment")) -Message "Undo keeps comments."
+    $restored = ConvertFrom-WinToolJsonText -Text $undone.Text
+    $restoredList = @{}
+    foreach ($item in @($restored.profiles.list)) { $restoredList[[string]$item.name] = $item }
+    Test-WinToolExpectation -Condition ($null -eq $restoredList["PowerShell"].PSObject.Properties["commandline"]) -Message "Undo removes a commandline WinTool added."
+    Test-WinToolExpectation -Condition ([string]$restoredList["Windows PowerShell"].commandline -eq "powershell.exe") -Message "Undo restores the previous PowerShell command line."
+    Test-WinToolExpectation -Condition ([string]$restoredList["Command Prompt"].commandline -eq "cmd.exe") -Message "Undo restores Command Prompt."
+    Test-WinToolExpectation -Condition ([string]$restoredList["Python"].commandline -eq "py.exe") -Message "Undo leaves unknown profiles alone."
+
+    $empty = @'
+{
+  // only defaults
+  "profiles": { "defaults": {}, "list": [] }
+}
+'@
+    $added = Update-WinToolTerminalBannerText -Text $empty
+    Test-WinToolExpectation -Condition ($added.Text.Contains("// only defaults") -and $added.Text.Contains("Windows.Terminal.PowershellCore") -and $added.Text.Contains("Windows.Terminal.WindowsPowerShell")) -Message "Missing PowerShell profiles get source overrides and comments stay."
+    $addedBack = Update-WinToolTerminalBannerText -Text $added.Text -Undo -Change $added.Change
+    $addedSettings = ConvertFrom-WinToolJsonText -Text $addedBack.Text
+    Test-WinToolExpectation -Condition (@($addedSettings.profiles.list).Count -eq 0) -Message "Undo removes source overrides WinTool added."
+
+    $folder = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-banner-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $folder -Force | Out-Null
+    try {
+        $settingsFile = Join-Path $folder "settings.json"
+        $stateFile = Join-Path $folder "banner-state.json"
+        $profileHome = Join-Path $folder "home"
+        New-Item -ItemType Directory -Path $profileHome -Force | Out-Null
+        Write-WinToolUtf8File -Path $settingsFile -Text $text
+        Invoke-WinToolTerminalBanner -SettingsPath @($settingsFile) -StatePath $stateFile -HomePath $profileHome -SkipShortcuts -SkipWsl
+        $onDisk = [System.IO.File]::ReadAllText($settingsFile)
+        Test-WinToolExpectation -Condition ($onDisk.Contains("powershell.exe -NoLogo") -and $onDisk.Contains("// user comment")) -Message "Invoke-WinToolTerminalBanner writes a JSONC-preserving settings.json."
+        Test-WinToolExpectation -Condition (Test-Path -LiteralPath (Join-Path $profileHome ".hushlogin")) -Message "A .hushlogin file is created in the user profile."
+        Invoke-WinToolTerminalBanner -SettingsPath @($settingsFile) -StatePath $stateFile -HomePath $profileHome -SkipShortcuts -SkipWsl
+        Test-WinToolExpectation -Condition ([System.IO.File]::ReadAllText($settingsFile) -eq $onDisk) -Message "A second file apply does not rewrite settings.json."
+        Invoke-WinToolTerminalBanner -Undo -SettingsPath @($settingsFile) -StatePath $stateFile -HomePath $profileHome -SkipShortcuts -SkipWsl
+        $afterUndo = [System.IO.File]::ReadAllText($settingsFile)
+        $afterSettings = ConvertFrom-WinToolJsonText -Text $afterUndo
+        $cmd = @($afterSettings.profiles.list | Where-Object { $_.name -eq "Command Prompt" })[0]
+        Test-WinToolExpectation -Condition ([string]$cmd.commandline -eq "cmd.exe" -and $afterUndo.Contains("// user comment")) -Message "A file undo restores command lines and keeps comments."
+        Test-WinToolExpectation -Condition (-not (Test-Path -LiteralPath (Join-Path $profileHome ".hushlogin"))) -Message "Undo removes a .hushlogin file WinTool created."
+        New-Item -ItemType File -Path (Join-Path $profileHome ".hushlogin") -Force | Out-Null
+        Invoke-WinToolTerminalBanner -SettingsPath @($settingsFile) -StatePath $stateFile -HomePath $profileHome -SkipShortcuts -SkipWsl
+        Invoke-WinToolTerminalBanner -Undo -SettingsPath @($settingsFile) -StatePath $stateFile -HomePath $profileHome -SkipShortcuts -SkipWsl
+        Test-WinToolExpectation -Condition (Test-Path -LiteralPath (Join-Path $profileHome ".hushlogin")) -Message "Undo leaves a pre-existing .hushlogin file alone."
+    }
+    finally {
+        Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    $simple = Get-WinToolSimpleTerminalChoice
+    Test-WinToolExpectation -Condition ($simple.hideStartupBanner -eq $true) -Message "The recommended setup hides the startup banner."
+    $steps = @(Get-WinToolTerminalPlan -Selection $simple)
+    Test-WinToolExpectation -Condition ((@($steps | Where-Object { $_.Type -eq "banner" -and -not $_.Undo }).Count) -eq 1) -Message "The terminal plan includes a banner step."
+    $legacy = [pscustomobject]@{ prompt = "oh-my-posh"; promptStyle = "jandedobbeleer"; fontId = $simple.fontId; schemeId = $simple.schemeId }
+    Test-WinToolExpectation -Condition ((Test-WinToolHideStartupBanner -Selection $legacy) -eq $true) -Message "An older saved profile that omits the flag still hides the banner."
+    $quietOff = Get-WinToolWslSetupText -Step ([pscustomobject]@{ Variant = "oh-my-posh"; PromptStyle = "jandedobbeleer"; HideStartupBanner = $false })
+    Test-WinToolExpectation -Condition ($quietOff.Contains("export WINTOOL_HUSHLOGIN='0'")) -Message "WSL setup can turn off ~/.hushlogin."
+    $quietOn = Get-WinToolWslSetupText -Step ([pscustomobject]@{ Variant = "oh-my-posh"; PromptStyle = "jandedobbeleer" })
+    Test-WinToolExpectation -Condition ($quietOn.Contains("export WINTOOL_HUSHLOGIN='1'")) -Message "WSL setup hides the MOTD by default."
+    Test-WinToolExpectation -Condition ((Get-WinToolShortcutBannerArgument -Kind "powershell" -Arguments "-NoExit") -eq "-NoLogo -NoExit") -Message "Start menu PowerShell shortcuts get -NoLogo."
+    Test-WinToolExpectation -Condition ((Get-WinToolShortcutBannerArgument -Kind "cmd" -Arguments "") -eq "/k cls") -Message "Start menu Command Prompt shortcuts get /k cls."
 }
 
 if ($script:WinToolFailures.Count -gt 0) {
