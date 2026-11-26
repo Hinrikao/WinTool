@@ -821,8 +821,13 @@ function Start-WinToolHomeJob {
         foreach ($name in @("Get-WinToolTweakProbe", "Get-WinToolTweakState", "Get-WinToolTweakStep", "Test-WinToolTweakStepState", "Add-WinToolActionStep", "Get-WinToolNote", "Get-WinToolText", "Test-WinToolTextKey", "Test-WinToolWindows", "Get-WinToolCountText", "Import-WinToolAppxModule", "Test-WinToolAdministrator")) {
             [void]$needed.Add($name)
         }
-        foreach ($function in @(Get-ChildItem -Path Function:\ | Where-Object { $_.Name -like "*Tweak*" -or $needed.Contains($_.Name) })) {
-            $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $function.Name, $function.Definition
+        foreach ($function in @(Get-Command -Name *Tweak* -CommandType Function -ErrorAction SilentlyContinue)) {
+            [void]$needed.Add($function.Name)
+        }
+        foreach ($name in $needed) {
+            $item = Get-Item -LiteralPath ("Function:" + $name) -ErrorAction SilentlyContinue
+            if ($null -eq $item) { continue }
+            $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $item.Name, $item.Definition
             $state.Commands.Add($entry)
         }
         Write-WinToolStartupMark -Name "homeJob.copyFunctions" -Started $copyStamp

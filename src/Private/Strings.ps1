@@ -444,7 +444,10 @@ function Get-WinToolCountText {
 }
 
 function Set-WinToolXamlText {
-    param($Root)
+    param(
+        $Root,
+        [switch]$SkipCollapsed
+    )
     if ($null -eq $Root) {
         $Root = $script:WinToolWindow
     }
@@ -482,63 +485,65 @@ function Set-WinToolXamlText {
             $null = $_.Exception.Message
         }
 
-        $ids = New-Object System.Collections.Generic.List[string]
-        try {
+        $isElement = $node -is [System.Windows.FrameworkElement]
+        $uid = $null
+        $elementName = $null
+        if ($isElement) {
             $uid = [string]$node.Uid
-            if (-not [string]::IsNullOrWhiteSpace($uid)) { $ids.Add($uid) | Out-Null }
-        }
-        catch { $null = $_.Exception.Message }
-        try {
             $elementName = [string]$node.Name
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($uid) -or -not [string]::IsNullOrWhiteSpace($elementName)) {
+            $ids = New-Object System.Collections.Generic.List[string]
+            if (-not [string]::IsNullOrWhiteSpace($uid)) { $ids.Add($uid) | Out-Null }
             if (-not [string]::IsNullOrWhiteSpace($elementName) -and -not $ids.Contains($elementName)) {
                 $ids.Add($elementName) | Out-Null
             }
-        }
-        catch { $null = $_.Exception.Message }
 
-        foreach ($id in $ids) {
-            foreach ($pair in @(
-                    @{ Key = "ui.$id.Text"; Property = "Text" },
-                    @{ Key = "ui.$id.Content"; Property = "Content" },
-                    @{ Key = "ui.$id.Title"; Property = "Title" },
-                    @{ Key = "ui.$id.ToolTip"; Property = "ToolTip" },
-                    @{ Key = "ui.$id.Header"; Property = "Header" }
-                )) {
-                if (-not (Test-WinToolTextKey -Key $pair.Key) -and -not ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($pair.Key))) {
-                    continue
-                }
-                $value = Get-WinToolText -Key $pair.Key
-                try {
-                    if ($pair.Property -eq "Content") {
-                        $current = $node.Content
-                        if ($current -is [string] -or $null -eq $current) {
-                            $node.Content = $value
+            foreach ($id in $ids) {
+                foreach ($pair in @(
+                        @{ Key = "ui.$id.Text"; Property = "Text" },
+                        @{ Key = "ui.$id.Content"; Property = "Content" },
+                        @{ Key = "ui.$id.Title"; Property = "Title" },
+                        @{ Key = "ui.$id.ToolTip"; Property = "ToolTip" },
+                        @{ Key = "ui.$id.Header"; Property = "Header" }
+                    )) {
+                    if (-not (Test-WinToolTextKey -Key $pair.Key) -and -not ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($pair.Key))) {
+                        continue
+                    }
+                    $value = Get-WinToolText -Key $pair.Key
+                    try {
+                        if ($pair.Property -eq "Content") {
+                            $current = $node.Content
+                            if ($current -is [string] -or $null -eq $current) {
+                                $node.Content = $value
+                            }
+                        }
+                        elseif ($pair.Property -eq "ToolTip") {
+                            $tip = $node.ToolTip
+                            if ($tip -is [string] -or $null -eq $tip) {
+                                $node.ToolTip = $value
+                            }
+                            elseif ($null -ne $tip.PSObject.Properties["Content"] -and $tip.Content -is [string]) {
+                                $tip.Content = $value
+                            }
+                        }
+                        else {
+                            $node.($pair.Property) = $value
                         }
                     }
-                    elseif ($pair.Property -eq "ToolTip") {
-                        $tip = $node.ToolTip
-                        if ($tip -is [string] -or $null -eq $tip) {
-                            $node.ToolTip = $value
-                        }
-                        elseif ($null -ne $tip.PSObject.Properties["Content"] -and $tip.Content -is [string]) {
-                            $tip.Content = $value
-                        }
-                    }
-                    else {
-                        $node.($pair.Property) = $value
+                    catch {
+                        $null = $_.Exception.Message
                     }
                 }
-                catch {
-                    $null = $_.Exception.Message
-                }
-            }
-            $autoKey = "ui.$id.AutomationName"
-            if ((Test-WinToolTextKey -Key $autoKey) -or ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($autoKey))) {
-                try {
-                    [System.Windows.Automation.AutomationProperties]::SetName($node, (Get-WinToolText -Key $autoKey))
-                }
-                catch {
-                    $null = $_.Exception.Message
+                $autoKey = "ui.$id.AutomationName"
+                if ((Test-WinToolTextKey -Key $autoKey) -or ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($autoKey))) {
+                    try {
+                        [System.Windows.Automation.AutomationProperties]::SetName($node, (Get-WinToolText -Key $autoKey))
+                    }
+                    catch {
+                        $null = $_.Exception.Message
+                    }
                 }
             }
         }
@@ -547,20 +552,23 @@ function Set-WinToolXamlText {
         if ($node -is [System.Windows.ResourceDictionary]) {
             $skipChildren = $true
         }
-        if ($script:WinToolXamlTextSkipViews -and -not [string]::IsNullOrWhiteSpace($elementName) -and $script:WinToolXamlTextSkipViews.Contains($elementName)) {
+        elseif ($script:WinToolXamlTextSkipViews -and -not [string]::IsNullOrWhiteSpace($elementName) -and $script:WinToolXamlTextSkipViews.Contains($elementName)) {
             $skipChildren = $true
         }
-        try {
-            if (-not $skipChildren) {
+        elseif ($SkipCollapsed -and $isElement -and $node.Visibility -eq [System.Windows.Visibility]::Collapsed) {
+            $skipChildren = $true
+        }
+        if (-not $skipChildren) {
+            try {
                 foreach ($child in [System.Windows.LogicalTreeHelper]::GetChildren($node)) {
                     if ($child -is [System.Windows.DependencyObject]) {
                         $visit.Enqueue($child)
                     }
                 }
             }
-        }
-        catch {
-            $null = $_.Exception.Message
+            catch {
+                $null = $_.Exception.Message
+            }
         }
     }
 }

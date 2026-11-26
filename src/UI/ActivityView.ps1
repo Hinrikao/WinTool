@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 function Initialize-WinToolActivityView {
+    if ($null -ne $script:WinToolState -and [bool]$script:WinToolState.ActivityReady) { return }
     Initialize-WinToolActivityState
     $script:WinToolState.LogExpanded = $false
     $script:WinToolState.LogPinned = $false
@@ -40,6 +41,7 @@ function Initialize-WinToolActivityView {
         }
     }
     Sync-WinToolLogPanel
+    if ($null -ne $script:WinToolState) { $script:WinToolState.ActivityReady = $true }
 }
 
 function Set-WinToolActivityFilter {

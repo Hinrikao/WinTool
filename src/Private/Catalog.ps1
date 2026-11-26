@@ -25,6 +25,99 @@ function Get-WinToolTweakCatalog {
     return (Get-WinToolCachedPayloadObject -Name "Tweaks")
 }
 
+function Start-WinToolTweakCatalogPrefetch {
+    if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
+    if ($script:WinToolPayloadObject.ContainsKey("Tweaks")) { return }
+    if ($null -ne $script:WinToolTweakCatalogPrefetch) { return }
+    $payload = $null
+    $path = $null
+    if ($null -ne $script:WinToolEmbedded -and $script:WinToolEmbedded.ContainsKey("Tweaks")) {
+        $payload = $script:WinToolEmbedded["Tweaks"]
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($script:WinToolRoot)) {
+        $path = Join-Path $script:WinToolRoot "data/tweaks.json"
+    }
+    else {
+        return
+    }
+    $runspace = [runspacefactory]::CreateRunspace()
+    $runspace.Open()
+    $powershell = [powershell]::Create()
+    $powershell.Runspace = $runspace
+    $sync = [hashtable]::Synchronized(@{ Done = $false; Data = $null; Error = $null })
+    [void]$powershell.AddScript({
+            param($Sync, $Payload, $Path)
+            try {
+                if (-not [string]::IsNullOrWhiteSpace($Path) -and (Test-Path -LiteralPath $Path)) {
+                    $text = [System.IO.File]::ReadAllText($Path)
+                }
+                else {
+                    $clean = ([string]$Payload) -replace '\s', ''
+                    $bytes = [Convert]::FromBase64String($clean)
+                    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0x1F -and $bytes[1] -eq 0x8B) {
+                        $sourceStream = New-Object System.IO.MemoryStream(,$bytes)
+                        $gzip = New-Object System.IO.Compression.GzipStream($sourceStream, [System.IO.Compression.CompressionMode]::Decompress)
+                        try {
+                            $output = New-Object System.IO.MemoryStream
+                            $gzip.CopyTo($output)
+                            $text = [System.Text.Encoding]::UTF8.GetString($output.ToArray())
+                        }
+                        finally {
+                            $gzip.Dispose()
+                            $sourceStream.Dispose()
+                        }
+                    }
+                    else {
+                        $text = [System.Text.Encoding]::UTF8.GetString($bytes)
+                    }
+                }
+                $Sync.Data = $text | ConvertFrom-Json
+            }
+            catch {
+                $Sync.Error = $_.Exception.Message
+            }
+            finally {
+                $Sync.Done = $true
+            }
+        }).AddArgument($sync).AddArgument($payload).AddArgument($path)
+    [void]$powershell.BeginInvoke()
+    $script:WinToolTweakCatalogPrefetch = @{ PowerShell = $powershell; Runspace = $runspace; Sync = $sync }
+}
+
+function Complete-WinToolTweakCatalogPrefetch {
+    if ($null -ne $script:WinToolPayloadObject -and $script:WinToolPayloadObject.ContainsKey("Tweaks")) {
+        return $true
+    }
+    $job = $script:WinToolTweakCatalogPrefetch
+    if ($null -eq $job) { return $true }
+    if (-not $job.Sync.Done) { return $false }
+    if ($null -ne $job.Sync.Data) {
+        $value = $job.Sync.Data
+        $stamp = Get-Date
+        if (Get-Command -Name Set-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
+            Set-WinToolCatalogLocale -Catalog $value -Kind "Tweaks" | Out-Null
+        }
+        if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
+        $script:WinToolPayloadObject["Tweaks"] = $value
+        Write-WinToolStartupMark -Name "catalog.Tweaks.locale" -Started $stamp
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([string]$job.Sync.Error)) {
+        Write-WinToolLog -Message ([string]$job.Sync.Error) -Level "warn"
+    }
+    try { $job.PowerShell.Dispose() } catch { $null = $_.Exception.Message }
+    try { $job.Runspace.Dispose() } catch { $null = $_.Exception.Message }
+    $script:WinToolTweakCatalogPrefetch = $null
+    return $true
+}
+
+function Stop-WinToolTweakCatalogPrefetch {
+    $job = $script:WinToolTweakCatalogPrefetch
+    if ($null -eq $job) { return }
+    try { $null = $job.PowerShell.BeginStop($null, $null) } catch { $null = $_.Exception.Message }
+    try { $null = $job.Runspace.CloseAsync() } catch { $null = $_.Exception.Message }
+    $script:WinToolTweakCatalogPrefetch = $null
+}
+
 function Get-WinToolTerminalCatalog {
     return (Get-WinToolCachedPayloadObject -Name "Terminal")
 }

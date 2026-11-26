@@ -325,6 +325,9 @@ function Initialize-WinToolDeferredView {
     }
     if ([bool]$script:WinToolState.ViewReady[$Name]) { return }
     $script:WinToolState.ViewReady[$Name] = $true
+    if (Get-Command -Name Initialize-WinToolCompiledType -ErrorAction SilentlyContinue) {
+        Initialize-WinToolCompiledType
+    }
     $viewRoot = Get-WinToolUi -Name ("View" + $Name)
     if ($null -ne $viewRoot) {
         Set-WinToolXamlText -Root $viewRoot
@@ -352,23 +355,94 @@ function Initialize-WinToolDeferredView {
 function Start-WinToolAfterFirstFrame {
     if ($script:WinToolShuttingDown -or $script:WinToolAfterFirstFrame) { return }
     $script:WinToolAfterFirstFrame = $true
-    $wingetStamp = Get-Date
-    $winget = $null
-    try { $winget = Get-WinToolWingetPath } catch { $null = $_.Exception.Message }
-    Write-WinToolStartupMark -Name "wingetPath" -Started $wingetStamp
-    if ([string]::IsNullOrWhiteSpace($winget)) {
-        Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
-        Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
+    $script:WinToolAfterFirstFrameStep = 0
+    Invoke-WinToolAfterFirstFrameStep
+}
+
+function Invoke-WinToolAfterFirstFrameStep {
+    if ($script:WinToolShuttingDown -or $null -eq $script:WinToolWindow) { return }
+    $step = [int]$script:WinToolAfterFirstFrameStep
+    $script:WinToolAfterFirstFrameStep = $step + 1
+    $again = $true
+    switch ($step) {
+        0 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.typesActivity" -Script {
+                if (Get-Command -Name Initialize-WinToolCompiledType -ErrorAction SilentlyContinue) {
+                    Initialize-WinToolCompiledType
+                }
+                if (-not [bool]$script:WinToolState.ActivityReady) {
+                    Initialize-WinToolActivityView
+                    Sync-WinToolLogPanel
+                }
+            }
+        }
+        1 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.homeChrome" -Script {
+                Add-WinToolHomeChromeStep
+            }
+            $hs = $script:WinToolState.Home
+            if ($null -ne $hs -and $null -ne $hs.ChromeQueue -and $hs.ChromeQueue.Count -gt 0) {
+                $script:WinToolAfterFirstFrameStep = 1
+            }
+        }
+        2 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.winget" -Script {
+                $wingetStamp = Get-Date
+                $winget = $null
+                try { $winget = Get-WinToolWingetPath } catch { $null = $_.Exception.Message }
+                Write-WinToolStartupMark -Name "wingetPath" -Started $wingetStamp
+                if ([string]::IsNullOrWhiteSpace($winget)) {
+                    Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
+                    Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
+                }
+                else {
+                    Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
+                    Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
+                }
+                try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
+                try { Start-WinToolTweakCatalogPrefetch } catch { $null = $_.Exception.Message }
+            }
+        }
+        3 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.sampler" -Script {
+                try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
+            }
+        }
+        4 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.analysis" -Script {
+                try { Start-WinToolHomeAnalysis -DeferTweaks -Stagger } catch { $null = $_.Exception.Message }
+            }
+        }
+        default {
+            $hs = $script:WinToolState.Home
+            $pendingIds = @()
+            if ($null -ne $script:WinToolHomeStaggerIds) { $pendingIds = @($script:WinToolHomeStaggerIds) }
+            if ($pendingIds.Count -gt 0) {
+                $null = Invoke-WinToolMeasuredWork -Name ("ui.afterFrame.check." + [string]$pendingIds[0]) -Script {
+                    $id = [string]$script:WinToolHomeStaggerIds[0]
+                    if ($script:WinToolHomeStaggerIds.Count -le 1) { $script:WinToolHomeStaggerIds = @() }
+                    else { $script:WinToolHomeStaggerIds = @($script:WinToolHomeStaggerIds | Select-Object -Skip 1) }
+                    Start-WinToolHomeCheck -Id $id
+                }
+            }
+            elseif ($null -ne $hs -and [string]$hs.Phase -eq "analyzing" -and -not $hs.Pending.ContainsKey("tweaks") -and -not $hs.Results.ContainsKey("tweaks")) {
+                $ready = $false
+                try { $ready = Complete-WinToolTweakCatalogPrefetch } catch { $ready = $false }
+                if ($ready) {
+                    $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.tweaks" -Script {
+                        Start-WinToolHomeTweakCheck
+                    }
+                }
+                # Keep ticking until the catalog job finishes or analysis ends.
+            }
+            else {
+                $again = $false
+            }
+        }
     }
-    else {
-        Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
-        Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
+    if ($again) {
+        Start-WinToolIdleWork -Expression "Invoke-WinToolAfterFirstFrameStep"
     }
-    try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
-    try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
-    try { Start-WinToolHomeAnalysis -DeferTweaks } catch { $null = $_.Exception.Message }
-    $callback = [scriptblock]::Create("Start-WinToolHomeTweakCheck")
-    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
 }
 
 function Start-WinToolNavWarmup {
@@ -1167,7 +1241,12 @@ function New-WinToolWindow {
     $script:WinToolShuttingDown = $false
     $script:WinToolSessionExit = $false
 
-    Initialize-WinToolCompiledType
+    if ($DeferViews) {
+        Initialize-WinToolCompiledType -CoreOnly
+    }
+    else {
+        Initialize-WinToolCompiledType
+    }
     $xamlStamp = Get-Date
     $xaml = Get-WinToolPayloadText -Name "Xaml"
     [xml]$document = $xaml
@@ -1181,10 +1260,12 @@ function New-WinToolWindow {
     Register-WinToolUiEvent -Control $window -EventName "SourceInitialized" -Name "Keep the window hidden until it is painted" -Action {
         Hide-WinToolWindowUntilRendered -Window $script:WinToolWindow
     }
-    $null = Invoke-WinToolMeasuredWork -Name "xamlText" -Script { Set-WinToolXamlText -Root $window }
+    $null = Invoke-WinToolMeasuredWork -Name "xamlText" -Script { Set-WinToolXamlText -Root $window -SkipCollapsed }
     $null = Invoke-WinToolMeasuredWork -Name "init.Appearance" -Script { Initialize-WinToolAppearance }
-    $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
-    $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView }
+    if (-not $DeferViews) {
+        $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
+    }
+    $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView -DeferChrome:$DeferViews }
     if (-not $DeferViews) {
         $null = Invoke-WinToolMeasuredWork -Name "init.Tweaks" -Script { Initialize-WinToolTweakView }
         $null = Invoke-WinToolMeasuredWork -Name "init.Install" -Script { Initialize-WinToolInstallView }
@@ -1217,6 +1298,7 @@ function Stop-WinToolBackgroundWork {
     # Stops the log timer, a running plan, and every background runspace, so
     # nothing keeps powershell.exe alive after the window is gone.
     try { Stop-WinToolDispatcherHeartbeat } catch { $null = $_.Exception.Message }
+    try { Stop-WinToolTweakCatalogPrefetch } catch { $null = $_.Exception.Message }
     try { Stop-WinToolElevatedHelper } catch { $null = $_.Exception.Message }
     if ($null -eq $script:WinToolState) { return }
     try { Stop-WinToolMotion } catch { $null = $_.Exception.Message }

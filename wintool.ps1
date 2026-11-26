@@ -12319,7 +12319,10 @@ function Get-WinToolCountText {
 }
 
 function Set-WinToolXamlText {
-    param($Root)
+    param(
+        $Root,
+        [switch]$SkipCollapsed
+    )
     if ($null -eq $Root) {
         $Root = $script:WinToolWindow
     }
@@ -12357,63 +12360,65 @@ function Set-WinToolXamlText {
             $null = $_.Exception.Message
         }
 
-        $ids = New-Object System.Collections.Generic.List[string]
-        try {
+        $isElement = $node -is [System.Windows.FrameworkElement]
+        $uid = $null
+        $elementName = $null
+        if ($isElement) {
             $uid = [string]$node.Uid
-            if (-not [string]::IsNullOrWhiteSpace($uid)) { $ids.Add($uid) | Out-Null }
-        }
-        catch { $null = $_.Exception.Message }
-        try {
             $elementName = [string]$node.Name
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($uid) -or -not [string]::IsNullOrWhiteSpace($elementName)) {
+            $ids = New-Object System.Collections.Generic.List[string]
+            if (-not [string]::IsNullOrWhiteSpace($uid)) { $ids.Add($uid) | Out-Null }
             if (-not [string]::IsNullOrWhiteSpace($elementName) -and -not $ids.Contains($elementName)) {
                 $ids.Add($elementName) | Out-Null
             }
-        }
-        catch { $null = $_.Exception.Message }
 
-        foreach ($id in $ids) {
-            foreach ($pair in @(
-                    @{ Key = "ui.$id.Text"; Property = "Text" },
-                    @{ Key = "ui.$id.Content"; Property = "Content" },
-                    @{ Key = "ui.$id.Title"; Property = "Title" },
-                    @{ Key = "ui.$id.ToolTip"; Property = "ToolTip" },
-                    @{ Key = "ui.$id.Header"; Property = "Header" }
-                )) {
-                if (-not (Test-WinToolTextKey -Key $pair.Key) -and -not ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($pair.Key))) {
-                    continue
-                }
-                $value = Get-WinToolText -Key $pair.Key
-                try {
-                    if ($pair.Property -eq "Content") {
-                        $current = $node.Content
-                        if ($current -is [string] -or $null -eq $current) {
-                            $node.Content = $value
+            foreach ($id in $ids) {
+                foreach ($pair in @(
+                        @{ Key = "ui.$id.Text"; Property = "Text" },
+                        @{ Key = "ui.$id.Content"; Property = "Content" },
+                        @{ Key = "ui.$id.Title"; Property = "Title" },
+                        @{ Key = "ui.$id.ToolTip"; Property = "ToolTip" },
+                        @{ Key = "ui.$id.Header"; Property = "Header" }
+                    )) {
+                    if (-not (Test-WinToolTextKey -Key $pair.Key) -and -not ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($pair.Key))) {
+                        continue
+                    }
+                    $value = Get-WinToolText -Key $pair.Key
+                    try {
+                        if ($pair.Property -eq "Content") {
+                            $current = $node.Content
+                            if ($current -is [string] -or $null -eq $current) {
+                                $node.Content = $value
+                            }
+                        }
+                        elseif ($pair.Property -eq "ToolTip") {
+                            $tip = $node.ToolTip
+                            if ($tip -is [string] -or $null -eq $tip) {
+                                $node.ToolTip = $value
+                            }
+                            elseif ($null -ne $tip.PSObject.Properties["Content"] -and $tip.Content -is [string]) {
+                                $tip.Content = $value
+                            }
+                        }
+                        else {
+                            $node.($pair.Property) = $value
                         }
                     }
-                    elseif ($pair.Property -eq "ToolTip") {
-                        $tip = $node.ToolTip
-                        if ($tip -is [string] -or $null -eq $tip) {
-                            $node.ToolTip = $value
-                        }
-                        elseif ($null -ne $tip.PSObject.Properties["Content"] -and $tip.Content -is [string]) {
-                            $tip.Content = $value
-                        }
-                    }
-                    else {
-                        $node.($pair.Property) = $value
+                    catch {
+                        $null = $_.Exception.Message
                     }
                 }
-                catch {
-                    $null = $_.Exception.Message
-                }
-            }
-            $autoKey = "ui.$id.AutomationName"
-            if ((Test-WinToolTextKey -Key $autoKey) -or ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($autoKey))) {
-                try {
-                    [System.Windows.Automation.AutomationProperties]::SetName($node, (Get-WinToolText -Key $autoKey))
-                }
-                catch {
-                    $null = $_.Exception.Message
+                $autoKey = "ui.$id.AutomationName"
+                if ((Test-WinToolTextKey -Key $autoKey) -or ($null -ne $script:WinToolEnglishText -and $script:WinToolEnglishText.ContainsKey($autoKey))) {
+                    try {
+                        [System.Windows.Automation.AutomationProperties]::SetName($node, (Get-WinToolText -Key $autoKey))
+                    }
+                    catch {
+                        $null = $_.Exception.Message
+                    }
                 }
             }
         }
@@ -12422,20 +12427,23 @@ function Set-WinToolXamlText {
         if ($node -is [System.Windows.ResourceDictionary]) {
             $skipChildren = $true
         }
-        if ($script:WinToolXamlTextSkipViews -and -not [string]::IsNullOrWhiteSpace($elementName) -and $script:WinToolXamlTextSkipViews.Contains($elementName)) {
+        elseif ($script:WinToolXamlTextSkipViews -and -not [string]::IsNullOrWhiteSpace($elementName) -and $script:WinToolXamlTextSkipViews.Contains($elementName)) {
             $skipChildren = $true
         }
-        try {
-            if (-not $skipChildren) {
+        elseif ($SkipCollapsed -and $isElement -and $node.Visibility -eq [System.Windows.Visibility]::Collapsed) {
+            $skipChildren = $true
+        }
+        if (-not $skipChildren) {
+            try {
                 foreach ($child in [System.Windows.LogicalTreeHelper]::GetChildren($node)) {
                     if ($child -is [System.Windows.DependencyObject]) {
                         $visit.Enqueue($child)
                     }
                 }
             }
-        }
-        catch {
-            $null = $_.Exception.Message
+            catch {
+                $null = $_.Exception.Message
+            }
         }
     }
 }
@@ -12926,6 +12934,9 @@ function Initialize-WinToolConsoleApi {
     if (-not (Test-WinToolWindows)) {
         return $false
     }
+    if (Get-Command -Name Add-WinToolCSharpType -ErrorAction SilentlyContinue) {
+        return (Add-WinToolCSharpType -Name "WinToolConsoleApi" -TypeDefinition (Get-WinToolConsoleApiSource))
+    }
     try {
         Add-Type -TypeDefinition (Get-WinToolConsoleApiSource) -Language CSharp -ErrorAction Stop
         return $true
@@ -13270,12 +13281,11 @@ function Show-WinToolWindowAfterRender {
         $null = Set-WinToolWindowAlpha -Handle $source.Handle -Alpha 255
     }
     $Window.Opacity = 1
-    if (Get-Command -Name Start-WinToolDispatcherHeartbeat -ErrorAction SilentlyContinue) {
-        Start-WinToolDispatcherHeartbeat
-        if ($null -ne $script:WinToolDispatcherBeat) {
-            $script:WinToolDispatcherBeat.Restart()
-            $script:WinToolDispatcherLastMs = 0
-        }
+    # Start the heartbeat on the next Input pass so the current ContentRendered
+    # handler (including the startup test screenshot) is not counted as a gap.
+    if (Get-Command -Name Start-WinToolPostRenderHeartbeat -ErrorAction SilentlyContinue) {
+        $callback = [scriptblock]::Create("Start-WinToolPostRenderHeartbeat")
+        $null = $Window.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Input, [System.Action]$callback)
     }
 }
 # endregion
@@ -13385,7 +13395,15 @@ function Add-WinToolCSharpType {
             }
         }
         else {
-            Add-Type -TypeDefinition $TypeDefinition -Language CSharp -ErrorAction Stop
+            if (-not [string]::IsNullOrWhiteSpace($cachePath)) {
+                if (-not (Test-Path -LiteralPath $cacheDir)) {
+                    New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+                }
+                Add-Type -TypeDefinition $TypeDefinition -Language CSharp -OutputAssembly $cachePath -ErrorAction Stop
+            }
+            else {
+                Add-Type -TypeDefinition $TypeDefinition -Language CSharp -ErrorAction Stop
+            }
         }
         Write-WinToolStartupMark -Name ("addType." + $Name) -Started $stamp
         return $true
@@ -13404,15 +13422,39 @@ function Add-WinToolCSharpType {
 }
 
 function Initialize-WinToolCompiledType {
+    param([switch]$CoreOnly)
     $stamp = Get-Date
     try { $null = Initialize-WinToolConsoleApi } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolThemeEntryType } catch { $null = $_.Exception.Message }
+    try { $null = Initialize-WinToolNativeMethod } catch { $null = $_.Exception.Message }
+    if ($CoreOnly) {
+        Write-WinToolStartupMark -Name "compiledTypes" -Started $stamp
+        return
+    }
     try { $null = Initialize-WinToolGlyphMap } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolGlyphDraw } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolProcessPipe } catch { $null = $_.Exception.Message }
-    try { $null = Initialize-WinToolNativeMethod } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolFontLoader } catch { $null = $_.Exception.Message }
-    Write-WinToolStartupMark -Name "compiledTypes" -Started $stamp
+    $mark = "compiledTypes"
+    if ($null -ne $script:WinToolStartupMarks -and $script:WinToolStartupMarks.Contains("compiledTypes")) {
+        $mark = "compiledTypes.deferred"
+    }
+    Write-WinToolStartupMark -Name $mark -Started $stamp
+}
+
+function Start-WinToolIdleWork {
+    param([Parameter(Mandatory = $true)][string]$Expression)
+    if ($null -eq $script:WinToolWindow) { return }
+    $callback = [scriptblock]::Create($Expression)
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
+}
+
+function Start-WinToolPostRenderHeartbeat {
+    Start-WinToolDispatcherHeartbeat
+    if ($null -ne $script:WinToolDispatcherBeat) {
+        $script:WinToolDispatcherBeat.Restart()
+        $script:WinToolDispatcherLastMs = 0
+    }
 }
 
 function Write-WinToolStartupMark {
@@ -13663,6 +13705,99 @@ function Get-WinToolAppCatalog {
 
 function Get-WinToolTweakCatalog {
     return (Get-WinToolCachedPayloadObject -Name "Tweaks")
+}
+
+function Start-WinToolTweakCatalogPrefetch {
+    if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
+    if ($script:WinToolPayloadObject.ContainsKey("Tweaks")) { return }
+    if ($null -ne $script:WinToolTweakCatalogPrefetch) { return }
+    $payload = $null
+    $path = $null
+    if ($null -ne $script:WinToolEmbedded -and $script:WinToolEmbedded.ContainsKey("Tweaks")) {
+        $payload = $script:WinToolEmbedded["Tweaks"]
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($script:WinToolRoot)) {
+        $path = Join-Path $script:WinToolRoot "data/tweaks.json"
+    }
+    else {
+        return
+    }
+    $runspace = [runspacefactory]::CreateRunspace()
+    $runspace.Open()
+    $powershell = [powershell]::Create()
+    $powershell.Runspace = $runspace
+    $sync = [hashtable]::Synchronized(@{ Done = $false; Data = $null; Error = $null })
+    [void]$powershell.AddScript({
+            param($Sync, $Payload, $Path)
+            try {
+                if (-not [string]::IsNullOrWhiteSpace($Path) -and (Test-Path -LiteralPath $Path)) {
+                    $text = [System.IO.File]::ReadAllText($Path)
+                }
+                else {
+                    $clean = ([string]$Payload) -replace '\s', ''
+                    $bytes = [Convert]::FromBase64String($clean)
+                    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0x1F -and $bytes[1] -eq 0x8B) {
+                        $sourceStream = New-Object System.IO.MemoryStream(,$bytes)
+                        $gzip = New-Object System.IO.Compression.GzipStream($sourceStream, [System.IO.Compression.CompressionMode]::Decompress)
+                        try {
+                            $output = New-Object System.IO.MemoryStream
+                            $gzip.CopyTo($output)
+                            $text = [System.Text.Encoding]::UTF8.GetString($output.ToArray())
+                        }
+                        finally {
+                            $gzip.Dispose()
+                            $sourceStream.Dispose()
+                        }
+                    }
+                    else {
+                        $text = [System.Text.Encoding]::UTF8.GetString($bytes)
+                    }
+                }
+                $Sync.Data = $text | ConvertFrom-Json
+            }
+            catch {
+                $Sync.Error = $_.Exception.Message
+            }
+            finally {
+                $Sync.Done = $true
+            }
+        }).AddArgument($sync).AddArgument($payload).AddArgument($path)
+    [void]$powershell.BeginInvoke()
+    $script:WinToolTweakCatalogPrefetch = @{ PowerShell = $powershell; Runspace = $runspace; Sync = $sync }
+}
+
+function Complete-WinToolTweakCatalogPrefetch {
+    if ($null -ne $script:WinToolPayloadObject -and $script:WinToolPayloadObject.ContainsKey("Tweaks")) {
+        return $true
+    }
+    $job = $script:WinToolTweakCatalogPrefetch
+    if ($null -eq $job) { return $true }
+    if (-not $job.Sync.Done) { return $false }
+    if ($null -ne $job.Sync.Data) {
+        $value = $job.Sync.Data
+        $stamp = Get-Date
+        if (Get-Command -Name Set-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
+            Set-WinToolCatalogLocale -Catalog $value -Kind "Tweaks" | Out-Null
+        }
+        if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
+        $script:WinToolPayloadObject["Tweaks"] = $value
+        Write-WinToolStartupMark -Name "catalog.Tweaks.locale" -Started $stamp
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace([string]$job.Sync.Error)) {
+        Write-WinToolLog -Message ([string]$job.Sync.Error) -Level "warn"
+    }
+    try { $job.PowerShell.Dispose() } catch { $null = $_.Exception.Message }
+    try { $job.Runspace.Dispose() } catch { $null = $_.Exception.Message }
+    $script:WinToolTweakCatalogPrefetch = $null
+    return $true
+}
+
+function Stop-WinToolTweakCatalogPrefetch {
+    $job = $script:WinToolTweakCatalogPrefetch
+    if ($null -eq $job) { return }
+    try { $null = $job.PowerShell.BeginStop($null, $null) } catch { $null = $_.Exception.Message }
+    try { $null = $job.Runspace.CloseAsync() } catch { $null = $_.Exception.Message }
+    $script:WinToolTweakCatalogPrefetch = $null
 }
 
 function Get-WinToolTerminalCatalog {
@@ -27167,8 +27302,13 @@ function Start-WinToolHomeJob {
         foreach ($name in @("Get-WinToolTweakProbe", "Get-WinToolTweakState", "Get-WinToolTweakStep", "Test-WinToolTweakStepState", "Add-WinToolActionStep", "Get-WinToolNote", "Get-WinToolText", "Test-WinToolTextKey", "Test-WinToolWindows", "Get-WinToolCountText", "Import-WinToolAppxModule", "Test-WinToolAdministrator")) {
             [void]$needed.Add($name)
         }
-        foreach ($function in @(Get-ChildItem -Path Function:\ | Where-Object { $_.Name -like "*Tweak*" -or $needed.Contains($_.Name) })) {
-            $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $function.Name, $function.Definition
+        foreach ($function in @(Get-Command -Name *Tweak* -CommandType Function -ErrorAction SilentlyContinue)) {
+            [void]$needed.Add($function.Name)
+        }
+        foreach ($name in $needed) {
+            $item = Get-Item -LiteralPath ("Function:" + $name) -ErrorAction SilentlyContinue
+            if ($null -eq $item) { continue }
+            $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $item.Name, $item.Definition
             $state.Commands.Add($entry)
         }
         Write-WinToolStartupMark -Name "homeJob.copyFunctions" -Started $copyStamp
@@ -27486,6 +27626,7 @@ function Add-WinToolAdminBadgeNear {
 # SPDX-License-Identifier: MIT
 
 function Initialize-WinToolActivityView {
+    if ($null -ne $script:WinToolState -and [bool]$script:WinToolState.ActivityReady) { return }
     Initialize-WinToolActivityState
     $script:WinToolState.LogExpanded = $false
     $script:WinToolState.LogPinned = $false
@@ -27524,6 +27665,7 @@ function Initialize-WinToolActivityView {
         }
     }
     Sync-WinToolLogPanel
+    if ($null -ne $script:WinToolState) { $script:WinToolState.ActivityReady = $true }
 }
 
 function Set-WinToolActivityFilter {
@@ -35298,6 +35440,7 @@ function Format-WinToolHomeSize {
 function Update-WinToolHomeCard {
     # Fills the three cards from the static PC info and the latest sample.
     $hs = $script:WinToolState.Home
+    if ($null -eq $hs -or $null -eq $hs.Minis -or $null -eq $hs.Minis["memory"]) { return }
     $dot = " " + [string][char]0x00B7 + " "
     $info = $hs.Info
     $sample = $hs.LastSample
@@ -35386,6 +35529,7 @@ function Add-WinToolHomeSample {
 }
 
 function Initialize-WinToolHomeView {
+    param([switch]$DeferChrome)
     $script:WinToolState.Home = @{
         Phase = "idle"
         Results = @{}
@@ -35405,20 +35549,22 @@ function Initialize-WinToolHomeView {
         Previous = $null
     }
     $hs = $script:WinToolState.Home
-    $checkHost = Get-WinToolUi -Name "HomeChecks"
+    $hs.ChromeQueue = New-Object System.Collections.Generic.Queue[object]
     $checks = @(Get-WinToolHomeCheckList)
     for ($i = 0; $i -lt $checks.Count; $i++) {
-        $row = New-WinToolHomeRow -Check $checks[$i] -Last ($i -eq $checks.Count - 1)
-        $hs.Rows[$row.Id] = $row
-        $null = $checkHost.Children.Add($row.Border)
-        Set-WinToolHomeRow -Row $row -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
+        $hs.ChromeQueue.Enqueue(@{
+                Kind = "row"
+                Check = $checks[$i]
+                Last = ($i -eq $checks.Count - 1)
+            })
     }
-    $minis = Get-WinToolUi -Name "HomeMinis"
-    $hs.Minis["memory"] = New-WinToolHomeMini -Key "memory" -Title (Get-WinToolText "msg.memory") -Column 0 -From "#4C8DFF" -To "#8B5CF6" -Line "#8B7CF6"
-    $hs.Minis["disk"] = New-WinToolHomeMini -Key "disk" -Title (Get-WinToolText "msg.windows-disk") -Column 2 -From "#F5B942" -To "#F07178" -Line "#F5A742"
-    $hs.Minis["pc"] = New-WinToolHomeMini -Key "pc" -Title (Get-WinToolText "drivers.pcLabel") -Column 4 -From "#3DD68C" -To "#4C8DFF" -Line "#4C8DFF"
-    foreach ($key in @("memory", "disk", "pc")) { $null = $minis.Children.Add($hs.Minis[$key].Card) }
-    Update-WinToolHomeCard
+    foreach ($mini in @(
+            @{ Kind = "mini"; Key = "memory"; TitleKey = "msg.memory"; Column = 0; From = "#4C8DFF"; To = "#8B5CF6"; Line = "#8B7CF6" }
+            @{ Kind = "mini"; Key = "disk"; TitleKey = "msg.windows-disk"; Column = 2; From = "#F5B942"; To = "#F07178"; Line = "#F5A742" }
+            @{ Kind = "mini"; Key = "pc"; TitleKey = "drivers.pcLabel"; Column = 4; From = "#3DD68C"; To = "#4C8DFF"; Line = "#4C8DFF" }
+        )) {
+        $hs.ChromeQueue.Enqueue($mini)
+    }
 
     $history = @(Read-WinToolHomeHistory)
     if ($history.Count -gt 0) { $hs.Previous = $history[-1] }
@@ -35438,6 +35584,11 @@ Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeFixAll") -EventName "
     }
     # Timer, sampler, and analysis start after the first frame so they do not
     # block the dispatcher during Loaded.
+    if (-not $DeferChrome) {
+        while ($null -ne $hs.ChromeQueue -and $hs.ChromeQueue.Count -gt 0) {
+            Add-WinToolHomeChromeStep
+        }
+    }
 }
 
 function Sync-WinToolHomeHeader {
@@ -35563,7 +35714,10 @@ function Start-WinToolHomeCheck {
     $hs = $script:WinToolState.Home
     $hs.Pending[$Id] = $true
     $hs.Results.Remove($Id)
-    Set-WinToolHomeRow -Row $hs.Rows[$Id] -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
+    $row = $hs.Rows[$Id]
+    if ($null -ne $row) {
+        Set-WinToolHomeRow -Row $row -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
+    }
     if ($script:WinToolHomeNoJobs) { return }
     $key = "HomeJob_" + $Id
     Stop-WinToolThread -Job $script:WinToolState[$key]
@@ -35666,8 +35820,38 @@ function Complete-WinToolHomeCheck {
     Sync-WinToolHomeCurrentScore
 }
 
+function Add-WinToolHomeChromeStep {
+    $hs = $script:WinToolState.Home
+    if ($null -eq $hs -or $null -eq $hs.ChromeQueue) { return }
+    $added = 0
+    while ($hs.ChromeQueue.Count -gt 0 -and $added -lt 2) {
+        $item = $hs.ChromeQueue.Dequeue()
+        $kind = [string]$item.Kind
+        if ($kind -eq "row") {
+            $checkHost = Get-WinToolUi -Name "HomeChecks"
+            $row = New-WinToolHomeRow -Check $item.Check -Last ([bool]$item.Last)
+            $hs.Rows[$row.Id] = $row
+            $null = $checkHost.Children.Add($row.Border)
+            Set-WinToolHomeRow -Row $row -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
+        }
+        elseif ($kind -eq "mini") {
+            $minis = Get-WinToolUi -Name "HomeMinis"
+            $hs.Minis[$item.Key] = New-WinToolHomeMini -Key $item.Key -Title (Get-WinToolText $item.TitleKey) -Column $item.Column -From $item.From -To $item.To -Line $item.Line
+            $null = $minis.Children.Add($hs.Minis[$item.Key].Card)
+        }
+        $added++
+    }
+    if ($hs.ChromeQueue.Count -eq 0) {
+        $hs.ChromeQueue = $null
+        Update-WinToolHomeCard
+    }
+}
+
 function Start-WinToolHomeAnalysis {
-    param([switch]$DeferTweaks)
+    param(
+        [switch]$DeferTweaks,
+        [switch]$Stagger
+    )
     $hs = $script:WinToolState.Home
     if ($null -eq $hs -or $hs.Phase -eq "analyzing" -or $hs.Phase -eq "fixing") { return }
     $hs.Phase = "analyzing"
@@ -35677,13 +35861,22 @@ function Start-WinToolHomeAnalysis {
     $hs.Started = [DateTime]::Now
     $hs.AnimStart = [DateTime]::Now
     Sync-WinToolHomeHeader
+    $ids = @()
     foreach ($check in @(Get-WinToolHomeCheckList)) {
         if ($DeferTweaks -and $check.Id -eq "tweaks") { continue }
-        Start-WinToolHomeCheck -Id $check.Id
+        $ids += [string]$check.Id
+    }
+    if ($Stagger) {
+        $script:WinToolHomeStaggerIds = @($ids)
+    }
+    else {
+        foreach ($id in $ids) {
+            Start-WinToolHomeCheck -Id $id
+        }
     }
     Update-WinToolHomeCard
     Start-WinToolHomeAnimation
-    if ($hs.Phase -eq "analyzing" -and $hs.Pending.Count -eq 0) { Complete-WinToolHomeAnalysis }
+    if ($hs.Phase -eq "analyzing" -and $hs.Pending.Count -eq 0 -and -not $Stagger) { Complete-WinToolHomeAnalysis }
 }
 
 function Start-WinToolHomeTweakCheck {
@@ -36256,6 +36449,9 @@ function Initialize-WinToolDeferredView {
     }
     if ([bool]$script:WinToolState.ViewReady[$Name]) { return }
     $script:WinToolState.ViewReady[$Name] = $true
+    if (Get-Command -Name Initialize-WinToolCompiledType -ErrorAction SilentlyContinue) {
+        Initialize-WinToolCompiledType
+    }
     $viewRoot = Get-WinToolUi -Name ("View" + $Name)
     if ($null -ne $viewRoot) {
         Set-WinToolXamlText -Root $viewRoot
@@ -36283,23 +36479,94 @@ function Initialize-WinToolDeferredView {
 function Start-WinToolAfterFirstFrame {
     if ($script:WinToolShuttingDown -or $script:WinToolAfterFirstFrame) { return }
     $script:WinToolAfterFirstFrame = $true
-    $wingetStamp = Get-Date
-    $winget = $null
-    try { $winget = Get-WinToolWingetPath } catch { $null = $_.Exception.Message }
-    Write-WinToolStartupMark -Name "wingetPath" -Started $wingetStamp
-    if ([string]::IsNullOrWhiteSpace($winget)) {
-        Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
-        Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
+    $script:WinToolAfterFirstFrameStep = 0
+    Invoke-WinToolAfterFirstFrameStep
+}
+
+function Invoke-WinToolAfterFirstFrameStep {
+    if ($script:WinToolShuttingDown -or $null -eq $script:WinToolWindow) { return }
+    $step = [int]$script:WinToolAfterFirstFrameStep
+    $script:WinToolAfterFirstFrameStep = $step + 1
+    $again = $true
+    switch ($step) {
+        0 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.typesActivity" -Script {
+                if (Get-Command -Name Initialize-WinToolCompiledType -ErrorAction SilentlyContinue) {
+                    Initialize-WinToolCompiledType
+                }
+                if (-not [bool]$script:WinToolState.ActivityReady) {
+                    Initialize-WinToolActivityView
+                    Sync-WinToolLogPanel
+                }
+            }
+        }
+        1 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.homeChrome" -Script {
+                Add-WinToolHomeChromeStep
+            }
+            $hs = $script:WinToolState.Home
+            if ($null -ne $hs -and $null -ne $hs.ChromeQueue -and $hs.ChromeQueue.Count -gt 0) {
+                $script:WinToolAfterFirstFrameStep = 1
+            }
+        }
+        2 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.winget" -Script {
+                $wingetStamp = Get-Date
+                $winget = $null
+                try { $winget = Get-WinToolWingetPath } catch { $null = $_.Exception.Message }
+                Write-WinToolStartupMark -Name "wingetPath" -Started $wingetStamp
+                if ([string]::IsNullOrWhiteSpace($winget)) {
+                    Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr-2") -Level "warn"
+                    Sync-WinToolStatus -Text (Get-WinToolText "status.wingetMissing")
+                }
+                else {
+                    Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
+                    Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
+                }
+                try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
+                try { Start-WinToolTweakCatalogPrefetch } catch { $null = $_.Exception.Message }
+            }
+        }
+        3 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.sampler" -Script {
+                try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
+            }
+        }
+        4 {
+            $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.analysis" -Script {
+                try { Start-WinToolHomeAnalysis -DeferTweaks -Stagger } catch { $null = $_.Exception.Message }
+            }
+        }
+        default {
+            $hs = $script:WinToolState.Home
+            $pendingIds = @()
+            if ($null -ne $script:WinToolHomeStaggerIds) { $pendingIds = @($script:WinToolHomeStaggerIds) }
+            if ($pendingIds.Count -gt 0) {
+                $null = Invoke-WinToolMeasuredWork -Name ("ui.afterFrame.check." + [string]$pendingIds[0]) -Script {
+                    $id = [string]$script:WinToolHomeStaggerIds[0]
+                    if ($script:WinToolHomeStaggerIds.Count -le 1) { $script:WinToolHomeStaggerIds = @() }
+                    else { $script:WinToolHomeStaggerIds = @($script:WinToolHomeStaggerIds | Select-Object -Skip 1) }
+                    Start-WinToolHomeCheck -Id $id
+                }
+            }
+            elseif ($null -ne $hs -and [string]$hs.Phase -eq "analyzing" -and -not $hs.Pending.ContainsKey("tweaks") -and -not $hs.Results.ContainsKey("tweaks")) {
+                $ready = $false
+                try { $ready = Complete-WinToolTweakCatalogPrefetch } catch { $ready = $false }
+                if ($ready) {
+                    $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.tweaks" -Script {
+                        Start-WinToolHomeTweakCheck
+                    }
+                }
+                # Keep ticking until the catalog job finishes or analysis ends.
+            }
+            else {
+                $again = $false
+            }
+        }
     }
-    else {
-        Write-WinToolLog -Message (Get-WinToolText "msg.winget-is-available") -Level "ok"
-        Sync-WinToolStatus -Text (Get-WinToolText "status.ready")
+    if ($again) {
+        Start-WinToolIdleWork -Expression "Invoke-WinToolAfterFirstFrameStep"
     }
-    try { Start-WinToolHomeTimer } catch { $null = $_.Exception.Message }
-    try { Start-WinToolHomeSampler } catch { $null = $_.Exception.Message }
-    try { Start-WinToolHomeAnalysis -DeferTweaks } catch { $null = $_.Exception.Message }
-    $callback = [scriptblock]::Create("Start-WinToolHomeTweakCheck")
-    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
 }
 
 function Start-WinToolNavWarmup {
@@ -37098,7 +37365,12 @@ function New-WinToolWindow {
     $script:WinToolShuttingDown = $false
     $script:WinToolSessionExit = $false
 
-    Initialize-WinToolCompiledType
+    if ($DeferViews) {
+        Initialize-WinToolCompiledType -CoreOnly
+    }
+    else {
+        Initialize-WinToolCompiledType
+    }
     $xamlStamp = Get-Date
     $xaml = Get-WinToolPayloadText -Name "Xaml"
     [xml]$document = $xaml
@@ -37112,10 +37384,12 @@ function New-WinToolWindow {
     Register-WinToolUiEvent -Control $window -EventName "SourceInitialized" -Name "Keep the window hidden until it is painted" -Action {
         Hide-WinToolWindowUntilRendered -Window $script:WinToolWindow
     }
-    $null = Invoke-WinToolMeasuredWork -Name "xamlText" -Script { Set-WinToolXamlText -Root $window }
+    $null = Invoke-WinToolMeasuredWork -Name "xamlText" -Script { Set-WinToolXamlText -Root $window -SkipCollapsed }
     $null = Invoke-WinToolMeasuredWork -Name "init.Appearance" -Script { Initialize-WinToolAppearance }
-    $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
-    $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView }
+    if (-not $DeferViews) {
+        $null = Invoke-WinToolMeasuredWork -Name "init.Activity" -Script { Initialize-WinToolActivityView }
+    }
+    $null = Invoke-WinToolMeasuredWork -Name "init.Home" -Script { Initialize-WinToolHomeView -DeferChrome:$DeferViews }
     if (-not $DeferViews) {
         $null = Invoke-WinToolMeasuredWork -Name "init.Tweaks" -Script { Initialize-WinToolTweakView }
         $null = Invoke-WinToolMeasuredWork -Name "init.Install" -Script { Initialize-WinToolInstallView }
@@ -37148,6 +37422,7 @@ function Stop-WinToolBackgroundWork {
     # Stops the log timer, a running plan, and every background runspace, so
     # nothing keeps powershell.exe alive after the window is gone.
     try { Stop-WinToolDispatcherHeartbeat } catch { $null = $_.Exception.Message }
+    try { Stop-WinToolTweakCatalogPrefetch } catch { $null = $_.Exception.Message }
     try { Stop-WinToolElevatedHelper } catch { $null = $_.Exception.Message }
     if ($null -eq $script:WinToolState) { return }
     try { Stop-WinToolMotion } catch { $null = $_.Exception.Message }

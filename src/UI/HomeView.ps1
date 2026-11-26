@@ -457,6 +457,7 @@ function Format-WinToolHomeSize {
 function Update-WinToolHomeCard {
     # Fills the three cards from the static PC info and the latest sample.
     $hs = $script:WinToolState.Home
+    if ($null -eq $hs -or $null -eq $hs.Minis -or $null -eq $hs.Minis["memory"]) { return }
     $dot = " " + [string][char]0x00B7 + " "
     $info = $hs.Info
     $sample = $hs.LastSample
@@ -545,6 +546,7 @@ function Add-WinToolHomeSample {
 }
 
 function Initialize-WinToolHomeView {
+    param([switch]$DeferChrome)
     $script:WinToolState.Home = @{
         Phase = "idle"
         Results = @{}
@@ -564,20 +566,22 @@ function Initialize-WinToolHomeView {
         Previous = $null
     }
     $hs = $script:WinToolState.Home
-    $checkHost = Get-WinToolUi -Name "HomeChecks"
+    $hs.ChromeQueue = New-Object System.Collections.Generic.Queue[object]
     $checks = @(Get-WinToolHomeCheckList)
     for ($i = 0; $i -lt $checks.Count; $i++) {
-        $row = New-WinToolHomeRow -Check $checks[$i] -Last ($i -eq $checks.Count - 1)
-        $hs.Rows[$row.Id] = $row
-        $null = $checkHost.Children.Add($row.Border)
-        Set-WinToolHomeRow -Row $row -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
+        $hs.ChromeQueue.Enqueue(@{
+                Kind = "row"
+                Check = $checks[$i]
+                Last = ($i -eq $checks.Count - 1)
+            })
     }
-    $minis = Get-WinToolUi -Name "HomeMinis"
-    $hs.Minis["memory"] = New-WinToolHomeMini -Key "memory" -Title (Get-WinToolText "msg.memory") -Column 0 -From "#4C8DFF" -To "#8B5CF6" -Line "#8B7CF6"
-    $hs.Minis["disk"] = New-WinToolHomeMini -Key "disk" -Title (Get-WinToolText "msg.windows-disk") -Column 2 -From "#F5B942" -To "#F07178" -Line "#F5A742"
-    $hs.Minis["pc"] = New-WinToolHomeMini -Key "pc" -Title (Get-WinToolText "drivers.pcLabel") -Column 4 -From "#3DD68C" -To "#4C8DFF" -Line "#4C8DFF"
-    foreach ($key in @("memory", "disk", "pc")) { $null = $minis.Children.Add($hs.Minis[$key].Card) }
-    Update-WinToolHomeCard
+    foreach ($mini in @(
+            @{ Kind = "mini"; Key = "memory"; TitleKey = "msg.memory"; Column = 0; From = "#4C8DFF"; To = "#8B5CF6"; Line = "#8B7CF6" }
+            @{ Kind = "mini"; Key = "disk"; TitleKey = "msg.windows-disk"; Column = 2; From = "#F5B942"; To = "#F07178"; Line = "#F5A742" }
+            @{ Kind = "mini"; Key = "pc"; TitleKey = "drivers.pcLabel"; Column = 4; From = "#3DD68C"; To = "#4C8DFF"; Line = "#4C8DFF" }
+        )) {
+        $hs.ChromeQueue.Enqueue($mini)
+    }
 
     $history = @(Read-WinToolHomeHistory)
     if ($history.Count -gt 0) { $hs.Previous = $history[-1] }
@@ -597,6 +601,11 @@ Register-WinToolUiEvent -Control (Get-WinToolUi -Name "HomeFixAll") -EventName "
     }
     # Timer, sampler, and analysis start after the first frame so they do not
     # block the dispatcher during Loaded.
+    if (-not $DeferChrome) {
+        while ($null -ne $hs.ChromeQueue -and $hs.ChromeQueue.Count -gt 0) {
+            Add-WinToolHomeChromeStep
+        }
+    }
 }
 
 function Sync-WinToolHomeHeader {
@@ -722,7 +731,10 @@ function Start-WinToolHomeCheck {
     $hs = $script:WinToolState.Home
     $hs.Pending[$Id] = $true
     $hs.Results.Remove($Id)
-    Set-WinToolHomeRow -Row $hs.Rows[$Id] -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
+    $row = $hs.Rows[$Id]
+    if ($null -ne $row) {
+        Set-WinToolHomeRow -Row $row -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
+    }
     if ($script:WinToolHomeNoJobs) { return }
     $key = "HomeJob_" + $Id
     Stop-WinToolThread -Job $script:WinToolState[$key]
@@ -825,8 +837,38 @@ function Complete-WinToolHomeCheck {
     Sync-WinToolHomeCurrentScore
 }
 
+function Add-WinToolHomeChromeStep {
+    $hs = $script:WinToolState.Home
+    if ($null -eq $hs -or $null -eq $hs.ChromeQueue) { return }
+    $added = 0
+    while ($hs.ChromeQueue.Count -gt 0 -and $added -lt 2) {
+        $item = $hs.ChromeQueue.Dequeue()
+        $kind = [string]$item.Kind
+        if ($kind -eq "row") {
+            $checkHost = Get-WinToolUi -Name "HomeChecks"
+            $row = New-WinToolHomeRow -Check $item.Check -Last ([bool]$item.Last)
+            $hs.Rows[$row.Id] = $row
+            $null = $checkHost.Children.Add($row.Border)
+            Set-WinToolHomeRow -Row $row -Status "busy" -Text (Get-WinToolText "msg.checking-ellipsis") -Action "off"
+        }
+        elseif ($kind -eq "mini") {
+            $minis = Get-WinToolUi -Name "HomeMinis"
+            $hs.Minis[$item.Key] = New-WinToolHomeMini -Key $item.Key -Title (Get-WinToolText $item.TitleKey) -Column $item.Column -From $item.From -To $item.To -Line $item.Line
+            $null = $minis.Children.Add($hs.Minis[$item.Key].Card)
+        }
+        $added++
+    }
+    if ($hs.ChromeQueue.Count -eq 0) {
+        $hs.ChromeQueue = $null
+        Update-WinToolHomeCard
+    }
+}
+
 function Start-WinToolHomeAnalysis {
-    param([switch]$DeferTweaks)
+    param(
+        [switch]$DeferTweaks,
+        [switch]$Stagger
+    )
     $hs = $script:WinToolState.Home
     if ($null -eq $hs -or $hs.Phase -eq "analyzing" -or $hs.Phase -eq "fixing") { return }
     $hs.Phase = "analyzing"
@@ -836,13 +878,22 @@ function Start-WinToolHomeAnalysis {
     $hs.Started = [DateTime]::Now
     $hs.AnimStart = [DateTime]::Now
     Sync-WinToolHomeHeader
+    $ids = @()
     foreach ($check in @(Get-WinToolHomeCheckList)) {
         if ($DeferTweaks -and $check.Id -eq "tweaks") { continue }
-        Start-WinToolHomeCheck -Id $check.Id
+        $ids += [string]$check.Id
+    }
+    if ($Stagger) {
+        $script:WinToolHomeStaggerIds = @($ids)
+    }
+    else {
+        foreach ($id in $ids) {
+            Start-WinToolHomeCheck -Id $id
+        }
     }
     Update-WinToolHomeCard
     Start-WinToolHomeAnimation
-    if ($hs.Phase -eq "analyzing" -and $hs.Pending.Count -eq 0) { Complete-WinToolHomeAnalysis }
+    if ($hs.Phase -eq "analyzing" -and $hs.Pending.Count -eq 0 -and -not $Stagger) { Complete-WinToolHomeAnalysis }
 }
 
 function Start-WinToolHomeTweakCheck {

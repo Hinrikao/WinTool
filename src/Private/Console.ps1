@@ -52,6 +52,9 @@ function Initialize-WinToolConsoleApi {
     if (-not (Test-WinToolWindows)) {
         return $false
     }
+    if (Get-Command -Name Add-WinToolCSharpType -ErrorAction SilentlyContinue) {
+        return (Add-WinToolCSharpType -Name "WinToolConsoleApi" -TypeDefinition (Get-WinToolConsoleApiSource))
+    }
     try {
         Add-Type -TypeDefinition (Get-WinToolConsoleApiSource) -Language CSharp -ErrorAction Stop
         return $true
@@ -396,11 +399,10 @@ function Show-WinToolWindowAfterRender {
         $null = Set-WinToolWindowAlpha -Handle $source.Handle -Alpha 255
     }
     $Window.Opacity = 1
-    if (Get-Command -Name Start-WinToolDispatcherHeartbeat -ErrorAction SilentlyContinue) {
-        Start-WinToolDispatcherHeartbeat
-        if ($null -ne $script:WinToolDispatcherBeat) {
-            $script:WinToolDispatcherBeat.Restart()
-            $script:WinToolDispatcherLastMs = 0
-        }
+    # Start the heartbeat on the next Input pass so the current ContentRendered
+    # handler (including the startup test screenshot) is not counted as a gap.
+    if (Get-Command -Name Start-WinToolPostRenderHeartbeat -ErrorAction SilentlyContinue) {
+        $callback = [scriptblock]::Create("Start-WinToolPostRenderHeartbeat")
+        $null = $Window.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Input, [System.Action]$callback)
     }
 }

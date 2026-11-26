@@ -102,7 +102,15 @@ function Add-WinToolCSharpType {
             }
         }
         else {
-            Add-Type -TypeDefinition $TypeDefinition -Language CSharp -ErrorAction Stop
+            if (-not [string]::IsNullOrWhiteSpace($cachePath)) {
+                if (-not (Test-Path -LiteralPath $cacheDir)) {
+                    New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+                }
+                Add-Type -TypeDefinition $TypeDefinition -Language CSharp -OutputAssembly $cachePath -ErrorAction Stop
+            }
+            else {
+                Add-Type -TypeDefinition $TypeDefinition -Language CSharp -ErrorAction Stop
+            }
         }
         Write-WinToolStartupMark -Name ("addType." + $Name) -Started $stamp
         return $true
@@ -121,15 +129,39 @@ function Add-WinToolCSharpType {
 }
 
 function Initialize-WinToolCompiledType {
+    param([switch]$CoreOnly)
     $stamp = Get-Date
     try { $null = Initialize-WinToolConsoleApi } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolThemeEntryType } catch { $null = $_.Exception.Message }
+    try { $null = Initialize-WinToolNativeMethod } catch { $null = $_.Exception.Message }
+    if ($CoreOnly) {
+        Write-WinToolStartupMark -Name "compiledTypes" -Started $stamp
+        return
+    }
     try { $null = Initialize-WinToolGlyphMap } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolGlyphDraw } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolProcessPipe } catch { $null = $_.Exception.Message }
-    try { $null = Initialize-WinToolNativeMethod } catch { $null = $_.Exception.Message }
     try { $null = Initialize-WinToolFontLoader } catch { $null = $_.Exception.Message }
-    Write-WinToolStartupMark -Name "compiledTypes" -Started $stamp
+    $mark = "compiledTypes"
+    if ($null -ne $script:WinToolStartupMarks -and $script:WinToolStartupMarks.Contains("compiledTypes")) {
+        $mark = "compiledTypes.deferred"
+    }
+    Write-WinToolStartupMark -Name $mark -Started $stamp
+}
+
+function Start-WinToolIdleWork {
+    param([Parameter(Mandatory = $true)][string]$Expression)
+    if ($null -eq $script:WinToolWindow) { return }
+    $callback = [scriptblock]::Create($Expression)
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::ApplicationIdle, [System.Action]$callback)
+}
+
+function Start-WinToolPostRenderHeartbeat {
+    Start-WinToolDispatcherHeartbeat
+    if ($null -ne $script:WinToolDispatcherBeat) {
+        $script:WinToolDispatcherBeat.Restart()
+        $script:WinToolDispatcherLastMs = 0
+    }
 }
 
 function Write-WinToolStartupMark {
