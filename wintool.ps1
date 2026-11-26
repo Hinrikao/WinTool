@@ -13451,7 +13451,8 @@ function Start-WinToolDispatcherHeartbeat {
         if ($null -ne $script:WinToolDispatcherBeat) { $now = [int]$script:WinToolDispatcherBeat.ElapsedMilliseconds }
         $gap = $now - [int]$script:WinToolDispatcherLastMs
         $script:WinToolDispatcherLastMs = $now
-        if ($gap -ge 50) {
+        # A 50 ms timer naturally wakes at ~50 ms; only record extra stall.
+        if ($gap -ge 100) {
             $work = [string]$script:WinToolUiWork
             if ($work -eq "Dispatcher heartbeat" -or [string]::IsNullOrWhiteSpace($work)) {
                 $work = "(idle or unknown)"
@@ -13493,17 +13494,24 @@ function Write-WinToolStartupPhaseTable {
             Write-Output ("{0,-42} {1,8}" -f [string]$key, $script:WinToolStartupMarks[$key])
         }
     }
-    Write-Output "----- dispatcher gaps of 50 ms or more -----"
-    $gaps = @(@(Get-WinToolDispatcherGap) | Where-Object { $null -ne $_ })
+    Write-Output "----- dispatcher gaps of 100 ms or more -----"
+    $gaps = @()
+    if ($null -ne $script:WinToolDispatcherGaps) {
+        $gaps = @($script:WinToolDispatcherGaps | Where-Object { $null -ne $_ })
+    }
     if ($gaps.Count -eq 0) {
         Write-Output "(none)"
         return
     }
     Write-Output ("{0,8} {1,8}  {2}" -f "AtMs", "GapMs", "Work")
+    $max = 0
     foreach ($gap in $gaps) {
-        Write-Output ("{0,8} {1,8}  {2}" -f $gap.AtMs, $gap.GapMs, $gap.Work)
+        $at = [int]$gap.AtMs
+        $ms = [int]$gap.GapMs
+        $work = [string]$gap.Work
+        if ($ms -gt $max) { $max = $ms }
+        Write-Output ("{0,8} {1,8}  {2}" -f $at, $ms, $work)
     }
-    $max = ($gaps | Measure-Object -Property GapMs -Maximum).Maximum
     Write-Output ("Dispatcher gap count: {0}; max: {1} ms." -f $gaps.Count, $max)
 }
 
@@ -13983,7 +13991,11 @@ function Get-WinToolWingetCandidate {
     }
     Sync-WinToolProcessPath
     $list = New-Object System.Collections.Generic.List[string]
+    $cmdStamp = Get-Date
     $command = Get-Command -Name "winget.exe" -ErrorAction SilentlyContinue
+    if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+        Write-WinToolStartupMark -Name "winget.getCommand" -Started $cmdStamp
+    }
     if ($null -ne $command -and -not [string]::IsNullOrWhiteSpace([string]$command.Source)) {
         $list.Add([string]$command.Source)
     }
@@ -13994,6 +14006,7 @@ function Get-WinToolWingetCandidate {
         }
     }
     try {
+        $appxStamp = Get-Date
         Import-WinToolAppxModule
         foreach ($package in @(Get-AppxPackage -Name "Microsoft.DesktopAppInstaller" -ErrorAction Stop | Sort-Object -Property Version -Descending)) {
             $file = Join-Path ([string]$package.InstallLocation) "winget.exe"
@@ -14001,13 +14014,23 @@ function Get-WinToolWingetCandidate {
                 $list.Add($file)
             }
         }
+        if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+            Write-WinToolStartupMark -Name "winget.appx" -Started $appxStamp
+        }
     }
     catch {
         $null = $_.Exception.Message
+        if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+            Write-WinToolStartupMark -Name "winget.appx" -Started $appxStamp
+        }
     }
+    $resolveStamp = Get-Date
     $pattern = Join-Path $env:ProgramFiles "WindowsApps\Microsoft.DesktopAppInstaller_*__8wekyb3d8bbwe\winget.exe"
     foreach ($item in @(Resolve-Path -Path $pattern -ErrorAction SilentlyContinue | Sort-Object -Property Path -Descending)) {
         $list.Add([string]$item.Path)
+    }
+    if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+        Write-WinToolStartupMark -Name "winget.resolvePath" -Started $resolveStamp
     }
     $seen = @{}
     $unique = New-Object System.Collections.Generic.List[string]
@@ -36092,7 +36115,10 @@ function Initialize-WinToolDeferredView {
     }
     if ([bool]$script:WinToolState.ViewReady[$Name]) { return }
     $script:WinToolState.ViewReady[$Name] = $true
-    $null = Invoke-WinToolMeasuredWork -Name ("init." + $Name) -Script {
+    $mark = "init." + $Name
+    $started = Get-Date
+    Enter-WinToolUiWork -Name $mark
+    try {
         switch ($Name) {
             "Install" { Initialize-WinToolInstallView }
             "Tweaks" { Initialize-WinToolTweakView }
@@ -36103,6 +36129,9 @@ function Initialize-WinToolDeferredView {
             "Features" { Initialize-WinToolFeatureView }
             "Config" { Initialize-WinToolConfigView }
         }
+    }
+    finally {
+        Exit-WinToolUiWork -Started $started -Name $mark
     }
 }
 

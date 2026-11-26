@@ -45,11 +45,16 @@ if (-not [string]::IsNullOrWhiteSpace($env:WINTOOL_SHOT_DIR)) {
     $script:StartupShot = Join-Path $env:WINTOOL_SHOT_DIR "startup-first-frame.png"
 }
 
+$sourceMarks = [ordered]@{}
+$sourceStamp = [System.Diagnostics.Stopwatch]::StartNew()
 foreach ($relative in [System.IO.File]::ReadAllLines((Join-Path $script:WinToolRoot "build/files.txt"))) {
     $trimmed = $relative.Trim()
     if ([string]::IsNullOrWhiteSpace($trimmed) -or $trimmed.StartsWith("#")) { continue }
+    $fileStamp = [System.Diagnostics.Stopwatch]::StartNew()
     . (Join-Path $script:WinToolRoot ($trimmed -replace '\\', '/'))
+    $sourceMarks[$trimmed] = [int]$fileStamp.ElapsedMilliseconds
 }
+$sourceMs = [int]$sourceStamp.ElapsedMilliseconds
 
 Initialize-WinToolLocale -Language en -Force | Out-Null
 $script:WinToolStartupStamp = [System.Diagnostics.Stopwatch]::StartNew()

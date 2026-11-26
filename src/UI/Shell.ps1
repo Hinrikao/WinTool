@@ -325,7 +325,10 @@ function Initialize-WinToolDeferredView {
     }
     if ([bool]$script:WinToolState.ViewReady[$Name]) { return }
     $script:WinToolState.ViewReady[$Name] = $true
-    $null = Invoke-WinToolMeasuredWork -Name ("init." + $Name) -Script {
+    $mark = "init." + $Name
+    $started = Get-Date
+    Enter-WinToolUiWork -Name $mark
+    try {
         switch ($Name) {
             "Install" { Initialize-WinToolInstallView }
             "Tweaks" { Initialize-WinToolTweakView }
@@ -336,6 +339,9 @@ function Initialize-WinToolDeferredView {
             "Features" { Initialize-WinToolFeatureView }
             "Config" { Initialize-WinToolConfigView }
         }
+    }
+    finally {
+        Exit-WinToolUiWork -Started $started -Name $mark
     }
 }
 

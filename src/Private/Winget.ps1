@@ -31,7 +31,11 @@ function Get-WinToolWingetCandidate {
     }
     Sync-WinToolProcessPath
     $list = New-Object System.Collections.Generic.List[string]
+    $cmdStamp = Get-Date
     $command = Get-Command -Name "winget.exe" -ErrorAction SilentlyContinue
+    if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+        Write-WinToolStartupMark -Name "winget.getCommand" -Started $cmdStamp
+    }
     if ($null -ne $command -and -not [string]::IsNullOrWhiteSpace([string]$command.Source)) {
         $list.Add([string]$command.Source)
     }
@@ -42,6 +46,7 @@ function Get-WinToolWingetCandidate {
         }
     }
     try {
+        $appxStamp = Get-Date
         Import-WinToolAppxModule
         foreach ($package in @(Get-AppxPackage -Name "Microsoft.DesktopAppInstaller" -ErrorAction Stop | Sort-Object -Property Version -Descending)) {
             $file = Join-Path ([string]$package.InstallLocation) "winget.exe"
@@ -49,13 +54,23 @@ function Get-WinToolWingetCandidate {
                 $list.Add($file)
             }
         }
+        if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+            Write-WinToolStartupMark -Name "winget.appx" -Started $appxStamp
+        }
     }
     catch {
         $null = $_.Exception.Message
+        if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+            Write-WinToolStartupMark -Name "winget.appx" -Started $appxStamp
+        }
     }
+    $resolveStamp = Get-Date
     $pattern = Join-Path $env:ProgramFiles "WindowsApps\Microsoft.DesktopAppInstaller_*__8wekyb3d8bbwe\winget.exe"
     foreach ($item in @(Resolve-Path -Path $pattern -ErrorAction SilentlyContinue | Sort-Object -Property Path -Descending)) {
         $list.Add([string]$item.Path)
+    }
+    if (Get-Command -Name Write-WinToolStartupMark -ErrorAction SilentlyContinue) {
+        Write-WinToolStartupMark -Name "winget.resolvePath" -Started $resolveStamp
     }
     $seen = @{}
     $unique = New-Object System.Collections.Generic.List[string]
