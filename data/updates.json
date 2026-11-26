@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "vendors": [
+    {
+      "id": "nvidia",
+      "name": "NVIDIA",
+      "match": ["nvidia"],
+      "url": "https://www.nvidia.com/Download/index.aspx",
+      "note": "Official NVIDIA driver downloads"
+    },
+    {
+      "id": "amd",
+      "name": "AMD",
+      "match": ["amd", "radeon", "advanced micro devices"],
+      "url": "https://www.amd.com/en/support",
+      "note": "Official AMD driver and chipset support"
+    },
+    {
+      "id": "intel",
+      "name": "Intel",
+      "match": ["intel"],
+      "url": "https://www.intel.com/content/www/us/en/download-center/home.html",
+      "note": "Official Intel downloads"
+    }
+  ],
+  "modes": [
+    {
+      "id": "default",
+      "name": "Default",
+      "description": "Windows installs updates on its own schedule. Picking this removes every update policy WinTool sets and turns the update services back on.",
+      "policies": [],
+      "services": [
+        {
+          "name": "wuauserv",
+          "startupType": "Manual"
+        },
+        {
+          "name": "UsoSvc",
+          "startupType": "AutomaticDelayed"
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "name": "Security updates only",
+      "description": "Monthly security and quality updates still install, four days after release. Feature updates (new Windows versions) wait 365 days, and Windows does not restart on its own while someone is signed in.",
+      "policies": [
+        {
+          "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferFeatureUpdates",
+          "value": 1
+        },
+        {
+          "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferFeatureUpdatesPeriodInDays",
+          "value": 365
+        },
+        {
+          "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferQualityUpdates",
+          "value": 1
+        },
+        {
+          "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate",
+          "name": "DeferQualityUpdatesPeriodInDays",
+          "value": 4
+        },
+        {
+          "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+          "name": "NoAutoRebootWithLoggedOnUsers",
+          "value": 1
+        }
+      ],
+      "services": [
+        {
+          "name": "wuauserv",
+          "startupType": "Manual"
+        },
+        {
+          "name": "UsoSvc",
+          "startupType": "AutomaticDelayed"
+        }
+      ]
+    },
+    {
+      "id": "disabled",
+      "name": "Disabled",
+      "description": "Stops Windows Update completely. The PC gets no security fixes and the driver scan on this page stops working until you pick another mode. Windows may turn parts of it back on by itself.",
+      "policies": [
+        {
+          "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+          "name": "NoAutoUpdate",
+          "value": 1
+        }
+      ],
+      "services": [
+        {
+          "name": "wuauserv",
+          "startupType": "Disabled",
+          "stop": true
+        },
+        {
+          "name": "UsoSvc",
+          "startupType": "Disabled",
+          "stop": true
+        }
+      ]
+    }
+  ]
+}

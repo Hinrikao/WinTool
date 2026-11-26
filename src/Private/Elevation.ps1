@@ -1,0 +1,411 @@
+# Copyright (c) 2026 Henrique
+# SPDX-License-Identifier: MIT
+
+function Test-WinToolAdministrator {
+    if ($script:WinToolPretendNonAdmin) {
+        return $false
+    }
+    if (-not (Test-WinToolWindows)) {
+        return $false
+    }
+    $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object System.Security.Principal.WindowsPrincipal($identity)
+    return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function ConvertTo-WinToolLiteral {
+    param(
+        [AllowEmptyString()][string]$Text
+    )
+    if ($null -eq $Text) {
+        $Text = ""
+    }
+    return "'" + ($Text.Replace("'", "''")) + "'"
+}
+
+function Resolve-WinToolEntryPath {
+    param(
+        [string]$EntryPath,
+        [string]$CommandPath
+    )
+    if (-not [string]::IsNullOrWhiteSpace($EntryPath)) {
+        return $EntryPath
+    }
+    if (-not [string]::IsNullOrWhiteSpace($CommandPath)) {
+        return $CommandPath
+    }
+    return $null
+}
+
+function Get-WinToolPublishedLaunchUrl {
+    if (-not [string]::IsNullOrWhiteSpace($env:WINTOOL_URL)) {
+        return $env:WINTOOL_URL
+    }
+    if (-not [string]::IsNullOrWhiteSpace($script:WinToolPublishedUrl)) {
+        return $script:WinToolPublishedUrl
+    }
+    return "https://raw.githubusercontent.com/Hinrikao/WinTool/main/wintool.ps1"
+}
+
+function New-WinToolRelaunchScript {
+    param(
+        [string]$WorkingDirectory,
+        [string]$EntryPath,
+        [string]$ApplyProfile,
+        [bool]$Unattended,
+        [string]$LaunchUrl,
+        [bool]$Hidden,
+        [bool]$ShowConsole,
+        [bool]$HideConsole
+    )
+    if (-not $PSBoundParameters.ContainsKey("HideConsole")) {
+        $HideConsole = $Hidden
+    }
+    $lines = New-Object System.Collections.Generic.List[string]
+    [void]$lines.Add('$ErrorActionPreference = "Stop"')
+    [void]$lines.Add('$env:WINTOOL_PAUSE_ON_ERROR = "1"')
+    if ($HideConsole) {
+        # Hide the elevated console immediately, before the launcher is parsed.
+        # Start-Process -Verb RunAs stays visible so the UAC prompt can appear.
+        [void]$lines.Add('try {')
+        [void]$lines.Add('    if ($null -eq ("WinToolStartupConsole" -as [type])) {')
+        [void]$lines.Add("        Add-Type -TypeDefinition @'")
+        [void]$lines.Add('using System;')
+        [void]$lines.Add('using System.Runtime.InteropServices;')
+        [void]$lines.Add('public static class WinToolStartupConsole {')
+        [void]$lines.Add('    [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();')
+        [void]$lines.Add('    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);')
+        [void]$lines.Add('}')
+        [void]$lines.Add("'@")
+        [void]$lines.Add('    }')
+        [void]$lines.Add('    $null = [WinToolStartupConsole]::ShowWindow([WinToolStartupConsole]::GetConsoleWindow(), 0)')
+        [void]$lines.Add('}')
+        [void]$lines.Add('catch {')
+        [void]$lines.Add('    $null = $_.Exception.Message')
+        [void]$lines.Add('}')
+        [void]$lines.Add('$env:WINTOOL_HIDDEN = "1"')
+    }
+    else {
+        [void]$lines.Add('$env:WINTOOL_HIDDEN = $null')
+    }
+    if ($ShowConsole) {
+        [void]$lines.Add('$env:WINTOOL_SHOW_CONSOLE = "1"')
+    }
+    if (-not [string]::IsNullOrWhiteSpace($LaunchUrl)) {
+        [void]$lines.Add('$env:WINTOOL_URL = ' + (ConvertTo-WinToolLiteral -Text $LaunchUrl))
+    }
+    if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
+        [void]$lines.Add("Set-Location -LiteralPath " + (ConvertTo-WinToolLiteral -Text $WorkingDirectory))
+    }
+    [void]$lines.Add("try {")
+    if (-not [string]::IsNullOrWhiteSpace($EntryPath)) {
+        $call = "    & " + (ConvertTo-WinToolLiteral -Text $EntryPath)
+        if (-not [string]::IsNullOrWhiteSpace($ApplyProfile)) {
+            $call += " -ApplyProfile " + (ConvertTo-WinToolLiteral -Text $ApplyProfile)
+        }
+        if ($Unattended) {
+            $call += " -Unattended"
+        }
+        if ($ShowConsole) {
+            $call += " -ShowConsole"
+        }
+        [void]$lines.Add($call)
+    }
+    else {
+        if ([string]::IsNullOrWhiteSpace($LaunchUrl)) {
+            $LaunchUrl = Get-WinToolPublishedLaunchUrl
+        }
+        $download = "    Invoke-Expression (Invoke-RestMethod -Uri " + (ConvertTo-WinToolLiteral -Text $LaunchUrl) + ")"
+        [void]$lines.Add($download)
+    }
+    [void]$lines.Add("}")
+    [void]$lines.Add("catch {")
+    [void]$lines.Add('    $text = ($_ | Out-String)')
+    if ($HideConsole) {
+        # Bring the hidden console back so the error and the Enter prompt are visible.
+        [void]$lines.Add('    try {')
+        [void]$lines.Add('        if ($null -eq ("WinToolConsoleApi" -as [type])) {')
+        [void]$lines.Add("            Add-Type -TypeDefinition @'")
+        foreach ($sourceLine in ((Get-WinToolConsoleApiSource) -split "`r?`n")) {
+            [void]$lines.Add($sourceLine)
+        }
+        [void]$lines.Add("'@")
+        [void]$lines.Add('        }')
+        [void]$lines.Add('        $null = [WinToolConsoleApi]::ShowWindow([WinToolConsoleApi]::GetConsoleWindow(), 5)')
+        [void]$lines.Add('    }')
+        [void]$lines.Add('    catch {')
+        [void]$lines.Add('        $null = $_.Exception.Message')
+        [void]$lines.Add('    }')
+    }
+    [void]$lines.Add('    $logDir = Join-Path $env:TEMP "WinTool"')
+    [void]$lines.Add('    if (-not (Test-Path -LiteralPath $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }')
+    [void]$lines.Add('    $logPath = Join-Path $logDir "wintool.log"')
+    [void]$lines.Add('    Add-Content -LiteralPath $logPath -Value ("==== " + (Get-Date).ToString("o") + " ====") -Encoding UTF8')
+    [void]$lines.Add('    Add-Content -LiteralPath $logPath -Value $text -Encoding UTF8')
+    [void]$lines.Add('    Write-Host $text')
+    [void]$lines.Add('    Write-Host ("Log: " + $logPath)')
+    [void]$lines.Add("    try {")
+    [void]$lines.Add("        Add-Type -AssemblyName PresentationFramework -ErrorAction Stop")
+    [void]$lines.Add('        [System.Windows.MessageBox]::Show($text, "WinTool") | Out-Null')
+    [void]$lines.Add("    }")
+    [void]$lines.Add("    catch {")
+    [void]$lines.Add('        Write-Host $_.Exception.Message')
+    [void]$lines.Add("    }")
+    [void]$lines.Add('    Write-Host ' + (ConvertTo-WinToolJsonString -Text (Get-WinToolText 'error.pressEnter')))
+    [void]$lines.Add("    Read-Host | Out-Null")
+    [void]$lines.Add("    exit 1")
+    [void]$lines.Add("}")
+    return ($lines.ToArray() -join "`r`n") + "`r`n"
+}
+
+function Get-WinToolHostArgument {
+    param(
+        [Parameter(Mandatory = $true)][string]$LauncherPath,
+        [bool]$Hidden
+    )
+    $arguments = @("-STA", "-NoProfile", "-ExecutionPolicy", "Bypass")
+    if ($Hidden) {
+        $arguments += @("-WindowStyle", "Hidden")
+    }
+    return $arguments + @("-File", $LauncherPath)
+}
+
+function Get-WinToolWorkingDirectory {
+    try {
+        $current = Get-Location
+        $path = [string]$current.ProviderPath
+        if (-not [string]::IsNullOrWhiteSpace($path) -and (Test-Path -LiteralPath $path -PathType Container)) {
+            return $path
+        }
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE) -and (Test-Path -LiteralPath $env:USERPROFILE)) {
+        return $env:USERPROFILE
+    }
+    return [string]$env:SystemRoot
+}
+
+function Remove-WinToolStaleTempLauncher {
+    param(
+        [Parameter(Mandatory = $true)][string]$Directory
+    )
+    if (-not (Test-Path -LiteralPath $Directory)) {
+        return
+    }
+    $cutoff = [DateTime]::UtcNow.AddHours(-2)
+    foreach ($pattern in @("relaunch-*.ps1", "wintool-self-*.ps1", "helper-*.ps1")) {
+        foreach ($item in @(Get-ChildItem -Path (Join-Path $Directory $pattern) -File -ErrorAction SilentlyContinue)) {
+            if ($item.LastWriteTimeUtc -lt $cutoff) {
+                Remove-Item -LiteralPath $item.FullName -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+}
+
+
+function Get-WinToolRelaunchHostOption {
+    param(
+        [switch]$Elevate,
+        [bool]$ShowConsole,
+        [bool]$Unattended
+    )
+    $hidden = -not ($ShowConsole -or $Unattended)
+    if ($Elevate) {
+        # Hidden is false so powershell.exe is not started with -WindowStyle Hidden
+        # (that hid the UAC prompt). HideConsole still hides the child after approval.
+        return [pscustomobject]@{ Hidden = $false; HideConsole = $hidden; WindowStyle = "Normal" }
+    }
+    $style = "Normal"
+    if ($hidden) {
+        $style = "Hidden"
+    }
+    return [pscustomobject]@{ Hidden = $hidden; HideConsole = $hidden; WindowStyle = $style }
+}
+
+function Get-WinToolElevationFailureText {
+    param(
+        $ErrorRecord
+    )
+    $code = 0
+    if ($null -ne $ErrorRecord) {
+        $exception = $ErrorRecord.Exception
+        while ($null -ne $exception) {
+            if ($exception -is [System.ComponentModel.Win32Exception]) {
+                $code = [int]$exception.NativeErrorCode
+                break
+            }
+            $exception = $exception.InnerException
+        }
+    }
+    if ($code -eq 1223) {
+        return (Get-WinToolText "error.uacCanceled")
+    }
+    $text = Get-WinToolText "error.uacFailed"
+    if ($code -ne 0) {
+        $text += " Windows error $code."
+    }
+    if ($null -ne $ErrorRecord -and -not [string]::IsNullOrWhiteSpace([string]$ErrorRecord.Exception.Message)) {
+        $text += " " + [string]$ErrorRecord.Exception.Message
+    }
+    $text += " Run the command again, or start PowerShell as administrator."
+    return $text
+}
+
+function Show-WinToolElevationNotice {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+    Write-Host $Text
+    try {
+        Add-Type -AssemblyName PresentationFramework -ErrorAction Stop
+        [System.Windows.MessageBox]::Show($Text, "WinTool") | Out-Null
+    }
+    catch {
+        $null = $_.Exception.Message
+    }
+}
+
+function Write-WinToolCompressedSelfScript {
+    param(
+        [Parameter(Mandatory = $true)][string]$Directory,
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+    $gzPath = Join-Path $Directory ("wintool-self-" + [guid]::NewGuid().ToString("N") + ".ps1.gz")
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    $bytes = $utf8.GetBytes($Text)
+    $output = [System.IO.File]::Create($gzPath)
+    $gzip = New-Object System.IO.Compression.GzipStream($output, [System.IO.Compression.CompressionMode]::Compress)
+    try {
+        $gzip.Write($bytes, 0, $bytes.Length)
+    }
+    finally {
+        $gzip.Dispose()
+        $output.Dispose()
+    }
+    $stubPath = Join-Path $Directory ("wintool-self-" + [guid]::NewGuid().ToString("N") + ".ps1")
+    $literal = ConvertTo-WinToolLiteral -Text $gzPath
+    $stub = @(
+        "#requires -Version 5.1",
+        '$ErrorActionPreference = "Stop"',
+        '$bytes = [System.IO.File]::ReadAllBytes(' + $literal + ')',
+        '$input = New-Object System.IO.MemoryStream(,$bytes)',
+        '$gzip = New-Object System.IO.Compression.GzipStream($input, [System.IO.Compression.CompressionMode]::Decompress)',
+        '$reader = New-Object System.IO.StreamReader($gzip, [System.Text.Encoding]::UTF8)',
+        '$text = $reader.ReadToEnd()',
+        '$reader.Dispose()',
+        '$gzip.Dispose()',
+        '$input.Dispose()',
+        '$scriptPath = [System.IO.Path]::ChangeExtension(' + $literal + ', ".run.ps1")',
+        '[System.IO.File]::WriteAllText($scriptPath, $text, [System.Text.UTF8Encoding]::new($false))',
+        '& $scriptPath @args'
+    ) -join [Environment]::NewLine
+    [System.IO.File]::WriteAllText($stubPath, $stub + [Environment]::NewLine, (New-Object System.Text.UTF8Encoding $true))
+    return $stubPath
+}
+
+function Start-WinToolRelaunch {
+    param(
+        [switch]$Elevate
+    )
+    $executable = Get-WinToolPreferredGuiHostPath
+    if ([string]::IsNullOrWhiteSpace($executable)) {
+        $executable = Get-WinToolPowerShell7Path
+    }
+    if ([string]::IsNullOrWhiteSpace($executable)) {
+        throw (Get-WinToolText "shell.installPowerShell7Failed")
+    }
+    $launcherDirectory = Join-Path $env:TEMP "WinTool"
+    if (-not (Test-Path -LiteralPath $launcherDirectory)) {
+        New-Item -ItemType Directory -Path $launcherDirectory -Force | Out-Null
+    }
+    Remove-WinToolStaleTempLauncher -Directory $launcherDirectory
+    $encoding = New-Object System.Text.UTF8Encoding $true
+    $entry = Resolve-WinToolEntryPath -EntryPath $script:WinToolEntryPath -CommandPath ""
+    if (-not [string]::IsNullOrWhiteSpace($entry) -and -not (Test-Path -LiteralPath $entry)) {
+        $entry = $null
+    }
+    if ([string]::IsNullOrWhiteSpace($entry) -and -not [string]::IsNullOrWhiteSpace($script:WinToolSelfText)) {
+        $entry = Write-WinToolCompressedSelfScript -Directory $launcherDirectory -Text $script:WinToolSelfText
+    }
+    $directory = Get-WinToolWorkingDirectory
+    $showConsole = Test-WinToolShowConsole
+    $options = Get-WinToolRelaunchHostOption -Elevate:$Elevate -ShowConsole $showConsole -Unattended ([bool]$script:WinToolUnattended)
+    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl) -Hidden ([bool]$options.Hidden) -HideConsole ([bool]$options.HideConsole) -ShowConsole $showConsole
+    $launcherPath = Join-Path $launcherDirectory ("relaunch-" + [guid]::NewGuid().ToString("N") + ".ps1")
+    [System.IO.File]::WriteAllText($launcherPath, $scriptText, $encoding)
+    $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden ([bool]$options.Hidden))
+    $style = [string]$options.WindowStyle
+    if ($Elevate) {
+        Write-Host (Get-WinToolText "shell.needsAdmin")
+        try {
+            Start-Process -FilePath $executable -ArgumentList $line -Verb RunAs -WindowStyle $style | Out-Null
+        }
+        catch {
+            Show-WinToolElevationNotice -Text (Get-WinToolElevationFailureText -ErrorRecord $_)
+        }
+        Exit-WinToolOwnedHost
+        return
+    }
+    $snapshot = Get-WinToolLaunchHostSnapshot
+    $signal = Join-Path $launcherDirectory ("launch-" + [guid]::NewGuid().ToString("N") + ".signal")
+    $start = New-WinToolGuiChildStartInfo -FileName $executable -Argument @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden $false) -Environment (Get-WinToolGuiChildEnvironment -Snapshot $snapshot -SignalPath $signal)
+    if ($showConsole) {
+        $start.CreateNoWindow = $false
+    }
+    try {
+        $process = Start-WinToolGuiChildProcess -StartInfo $start
+    }
+    catch {
+        $null = $_.Exception.Message
+        Write-Host (Get-WinToolText "shell.opened")
+        return
+    }
+    if (-not (Wait-WinToolLaunchReady -SignalPath $signal -Process $process)) {
+        try {
+            if (-not $process.HasExited) {
+                Write-Host (Get-WinToolText "shell.opened")
+            }
+        }
+        catch {
+            $null = $_.Exception.Message
+        }
+        return
+    }
+    $swap = Get-WinToolLaunchSignalSwap -SignalPath $signal
+    if ($swap -eq "exit-tab") {
+        exit 0
+    }
+    if ($swap -eq "hide-conhost" -or $swap -eq "morph-wt") {
+        $null = $process.WaitForExit()
+        Write-WinToolLaunchCloseSummary -SignalPath $signal
+        return
+    }
+    if ($script:WinToolUnattended -or $showConsole) {
+        $null = $process.WaitForExit()
+        return
+    }
+    Write-Host (Get-WinToolText "shell.opened")
+}
+
+function Test-WinToolOwnedHost {
+    # True when this powershell.exe was started by WinTool itself (the hidden
+    # relaunch). The user's own console is never closed by WinTool.
+    return ($env:WINTOOL_HIDDEN -eq "1")
+}
+
+function Exit-WinToolOwnedHost {
+    param([int]$Code = 0)
+    if (Test-WinToolOwnedHost) {
+        [Environment]::Exit($Code)
+    }
+}
+
+function Request-WinToolAdministrator {
+    Start-WinToolRelaunch -Elevate
+}
+
+function Request-WinToolStaHost {
+    Start-WinToolRelaunch
+}

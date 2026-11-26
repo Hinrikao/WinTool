@@ -1,0 +1,1878 @@
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    x:Name="Root"
+    Title="WinTool"
+    Width="1120"
+    Height="800"
+    MinWidth="980"
+    MinHeight="680"
+    WindowStartupLocation="CenterScreen"
+    Opacity="0"
+    Background="{DynamicResource BrushCanvas}" Foreground="{DynamicResource BrushInk}"
+    FontFamily="Segoe UI"
+   
+    UseLayoutRounding="True"
+    SnapsToDevicePixels="True"
+    TextOptions.TextFormattingMode="Display">
+  <Window.Resources>
+    <!-- One text size for the whole app. Only page titles and the app name are larger. -->
+    <sys:Double x:Key="FontSizeBody">14</sys:Double>
+    <sys:Double x:Key="FontSizeTitle">28</sys:Double>
+    <SolidColorBrush x:Key="BrushCanvas" Color="#1B2230"/>
+    <SolidColorBrush x:Key="BrushCard" Color="#262E40"/>
+    <SolidColorBrush x:Key="BrushLine" Color="#3A445C"/>
+    <SolidColorBrush x:Key="BrushInk" Color="#E8EDF7"/>
+    <SolidColorBrush x:Key="BrushMuted" Color="#A7B3C9"/>
+    <SolidColorBrush x:Key="BrushAccent" Color="#6C9BFF"/>
+    <SolidColorBrush x:Key="BrushAccentSoft" Color="#2A3A5C"/>
+    <SolidColorBrush x:Key="BrushOk" Color="#3DDC97"/>
+    <SolidColorBrush x:Key="BrushOkSoft" Color="#17382E"/>
+    <SolidColorBrush x:Key="BrushWarn" Color="#E6B15A"/>
+    <SolidColorBrush x:Key="BrushWarnSoft" Color="#3A3120"/>
+    <SolidColorBrush x:Key="BrushBad" Color="#F07178"/>
+    <SolidColorBrush x:Key="BrushSidebar" Color="#141A27"/>
+    <SolidColorBrush x:Key="BrushLog" Color="#121826"/>
+    <SolidColorBrush x:Key="BrushAccentHover" Color="#8BB0FF"/>
+    <SolidColorBrush x:Key="BrushAccentPressed" Color="#4E86F5"/>
+    <SolidColorBrush x:Key="BrushSidebarText" Color="#E8EEF8"/>
+    <SolidColorBrush x:Key="BrushSidebarMuted" Color="#93A0B8"/>
+    <SolidColorBrush x:Key="BrushNavHover" Color="#2A3348"/>
+    <SolidColorBrush x:Key="BrushLogText" Color="#D5DEEE"/>
+    <SolidColorBrush x:Key="BrushProgress" Color="#6C9BFF"/>
+    <SolidColorBrush x:Key="BrushProgressTrack" Color="#2A3348"/>
+    <SolidColorBrush x:Key="BrushInput" Color="#1C2434"/>
+    <SolidColorBrush x:Key="BrushInputBorder" Color="#44506A"/>
+    <SolidColorBrush x:Key="BrushHint" Color="#8E9BB3"/>
+    <SolidColorBrush x:Key="BrushOnAccent" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushBadSoft" Color="#3A1D24"/>
+    <SolidColorBrush x:Key="BrushOkLine" Color="#2F6B4A"/>
+    <SolidColorBrush x:Key="BrushWarnLine" Color="#7A5A1E"/>
+    <SolidColorBrush x:Key="BrushWarnStrong" Color="#D39B2A"/>
+    <SolidColorBrush x:Key="BrushOnWarn" Color="#1B1B1B"/>
+
+    <!-- Small rounded button used on app cards; colors are set per button. -->
+    <Style x:Key="CardButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Width" Value="96"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Background" Value="{DynamicResource BrushNavHover}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Pill chips: filters on Install (radio) and presets on Tweaks (button). -->
+    <Style x:Key="ChipRadio" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Margin" Value="0,0,6,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="16" Padding="12,0">
+              <ContentPresenter VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="ChipButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Margin" Value="0,0,6,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="16" Padding="12,0">
+              <ContentPresenter VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="ToolbarButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Padding" Value="12,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- On/off switch. The thumb slides with a render transform, so the 40 px track never changes size. -->
+    <Style x:Key="SwitchToggle" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Grid Width="40" Height="20" Background="Transparent">
+              <Border x:Name="Track" CornerRadius="10" Background="{DynamicResource BrushInputBorder}"/>
+              <Ellipse x:Name="Knob" Width="14" Height="14" Fill="White" HorizontalAlignment="Left" Margin="3,0,0,0" IsHitTestVisible="False">
+                <Ellipse.RenderTransform>
+                  <TranslateTransform x:Name="KnobShift" X="0"/>
+                </Ellipse.RenderTransform>
+              </Ellipse>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="KnobShift" Storyboard.TargetProperty="X" To="20" Duration="0:0:0.12"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="KnobShift" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.12"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <!-- The compact 30 x 15 switch used on each tweak row. -->
+    <Style x:Key="SwitchToggleSmall" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Grid Width="30" Height="15" Background="Transparent">
+              <Border x:Name="Track" CornerRadius="7.5" Background="{DynamicResource BrushInputBorder}"/>
+              <Ellipse x:Name="Knob" Width="11" Height="11" Fill="White" HorizontalAlignment="Left" Margin="2,0,0,0" IsHitTestVisible="False">
+                <Ellipse.RenderTransform>
+                  <TranslateTransform x:Name="KnobShift" X="0"/>
+                </Ellipse.RenderTransform>
+              </Ellipse>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Track" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="KnobShift" Storyboard.TargetProperty="X" To="15" Duration="0:0:0.12"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="KnobShift" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.12"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="NavGlyph" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+      <Setter Property="Margin" Value="0,0,10,0"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Width" Value="18"/>
+      <Setter Property="TextAlignment" Value="Center"/>
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=RadioButton}}" Value="True">
+          <Setter Property="Foreground" Value="{DynamicResource BrushAccent}"/>
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+    <Style x:Key="NavButton" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource BrushSidebarText}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="40"/>
+      <Setter Property="Margin" Value="0,1,0,1"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Bd" Background="Transparent" CornerRadius="10" Padding="12,0">
+              <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+              </Trigger>
+              <MultiTrigger>
+                <MultiTrigger.Conditions>
+                  <Condition Property="IsChecked" Value="True"/>
+                  <Condition Property="IsMouseOver" Value="True"/>
+                </MultiTrigger.Conditions>
+                <Setter TargetName="Bd" Property="Background" Value="Transparent"/>
+              </MultiTrigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="ConfigTab" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Bd" Background="{DynamicResource BrushNavHover}" BorderBrush="Transparent" BorderThickness="1" CornerRadius="16" Padding="12,0">
+              <ContentPresenter VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                <Setter Property="Foreground" Value="#FFFFFF"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="PrimaryButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="Background" Value="{DynamicResource BrushAccent}"/>
+      <Setter Property="Padding" Value="16,9"/>
+      <Setter Property="Margin" Value="8,0,0,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentHover}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentPressed}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Background" Value="{DynamicResource BrushCard}"/>
+      <Setter Property="Padding" Value="14,9"/>
+      <Setter Property="MinHeight" Value="32"/>
+      <Setter Property="Margin" Value="8,0,0,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushCanvas}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="QuietButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushLogText}"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Padding" Value="10,4"/>
+      <Setter Property="Margin" Value="8,0,0,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+
+
+    <Style x:Key="SegmentRadio" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="30"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Bd" Background="Transparent" CornerRadius="7" Padding="16,0">
+              <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="TextBox">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Background" Value="{DynamicResource BrushInput}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BrushInputBorder}"/>
+      <Setter Property="CaretBrush" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Padding" Value="10,8"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <!-- Home: the gradient call to action, the row Fix/Review buttons and a text link. -->
+    <LinearGradientBrush x:Key="BrushHomeGradient" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#4C8DFF" Offset="0"/>
+      <GradientStop Color="#8B5CF6" Offset="1"/>
+    </LinearGradientBrush>
+    <Style x:Key="HomeGradientButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Border x:Name="Bd" Background="{StaticResource BrushHomeGradient}" CornerRadius="9"/>
+              <Border x:Name="Off" Background="{DynamicResource BrushCanvas}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="9" Visibility="Collapsed"/>
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Off" Property="Visibility" Value="Visible"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushHint}"/>
+                <Setter Property="Cursor" Value="Arrow"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="HomeRowButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BrushLine}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Width" Value="76"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="9">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                <Setter Property="Cursor" Value="Arrow"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="HomeLinkButton" TargetType="Button">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushAccent}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="Transparent" Padding="0">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource BrushAccentHover}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource BrushHint}"/>
+                <Setter Property="Cursor" Value="Arrow"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="PageSearch" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Padding" Value="9,0"/>
+    </Style>
+    <!-- Rounded checkbox: 20 px box, 1.5 px border, accent fill and a white
+         check mark when ticked. No dotted focus rectangle. -->
+    <Style TargetType="CheckBox">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Grid Background="Transparent">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Border x:Name="Box" Grid.Column="0" Width="20" Height="20" CornerRadius="5" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushMuted}" BorderThickness="1.5">
+                <Grid>
+                  <Border x:Name="Fill" Background="{DynamicResource BrushAccent}" CornerRadius="4" Opacity="0"/>
+                  <Path x:Name="Mark" Data="M 4.5,10 L 8.5,14 L 15.5,6.5" Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Margin="-1.5" Opacity="0"/>
+                  <Rectangle x:Name="Dash" Width="9" Height="2" RadiusX="1" RadiusY="1" Fill="White" Opacity="0"/>
+                </Grid>
+              </Border>
+              <ContentPresenter x:Name="Label" Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="Content" Value="{x:Null}">
+                <Setter TargetName="Label" Property="Margin" Value="0"/>
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                <Setter TargetName="Box" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                <Trigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="Fill" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.1"/>
+                      <DoubleAnimation Storyboard.TargetName="Mark" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.1"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="Fill" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.1"/>
+                      <DoubleAnimation Storyboard.TargetName="Mark" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.1"/>
+                    </Storyboard>
+                  </BeginStoryboard>
+                </Trigger.ExitActions>
+              </Trigger>
+              <MultiTrigger>
+                <MultiTrigger.Conditions>
+                  <Condition Property="IsChecked" Value="True"/>
+                  <Condition Property="IsMouseOver" Value="True"/>
+                </MultiTrigger.Conditions>
+                <Setter TargetName="Fill" Property="Background" Value="{DynamicResource BrushAccentHover}"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BrushAccentHover}"/>
+              </MultiTrigger>
+              <Trigger Property="IsChecked" Value="{x:Null}">
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                <Setter TargetName="Fill" Property="Opacity" Value="1"/>
+                <Setter TargetName="Dash" Property="Opacity" Value="1"/>
+                <Setter TargetName="Mark" Property="Opacity" Value="0"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Grid Background="Transparent">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Grid Grid.Column="0" Width="18" Height="18" Margin="0,2,8,0" VerticalAlignment="Top">
+                <Ellipse x:Name="Ring" Stroke="{DynamicResource BrushInputBorder}" StrokeThickness="1.5" Fill="{DynamicResource BrushInput}"/>
+                <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource BrushAccent}" Visibility="Collapsed"/>
+              </Grid>
+              <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource BrushAccent}"/>
+                <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="ListBox">
+      <Setter Property="Background" Value="{DynamicResource BrushInput}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BrushInputBorder}"/>
+    </Style>
+    <Style TargetType="ListBoxItem">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="Padding" Value="8,4"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="ScrollBar">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Width" Value="10"/>
+      <Setter Property="MinWidth" Value="10"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Grid Background="Transparent">
+              <Track x:Name="PART_Track" IsDirectionReversed="True">
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                </Track.DecreaseRepeatButton>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                </Track.IncreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb>
+                    <Thumb.Template>
+                      <ControlTemplate TargetType="Thumb">
+                        <Border Background="{DynamicResource BrushMuted}" CornerRadius="4" Margin="2,0"/>
+                      </ControlTemplate>
+                    </Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+              </Track>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="PART_Track" Property="Visibility" Value="Hidden"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <!-- Dark drop-down shared by Terminal and Config, as tall as a search box. -->
+    <Style x:Key="TerminalComboToggle" TargetType="ToggleButton">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border x:Name="Bd" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushInputBorder}" BorderThickness="1" CornerRadius="6">
+              <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="{DynamicResource FontSizeBody}" VerticalAlignment="Center" Margin="0,0,10,0" HorizontalAlignment="Right" Foreground="{DynamicResource BrushMuted}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="TerminalCombo" TargetType="ComboBox">
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+      <Setter Property="IsTextSearchEnabled" Value="True"/>
+      <Setter Property="ItemsPanel">
+        <Setter.Value>
+          <ItemsPanelTemplate>
+            <VirtualizingStackPanel/>
+          </ItemsPanelTemplate>
+        </Setter.Value>
+      </Setter>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBox">
+            <Grid>
+              <ToggleButton Style="{StaticResource TerminalComboToggle}" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+              <ContentPresenter Margin="10,0,30,0" IsHitTestVisible="False" VerticalAlignment="Center" HorizontalAlignment="Left" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
+              <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade" IsOpen="{TemplateBinding IsDropDownOpen}">
+                <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="6" Padding="2" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                  <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                  </ScrollViewer>
+                </Border>
+              </Popup>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="TerminalComboItem" TargetType="ComboBoxItem">
+      <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBoxItem">
+            <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="10,8">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="248"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0" Background="{StaticResource BrushSidebar}">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Margin="20,12,20,16">
+          <TextBlock x:Name="VersionText" Text="Version" Foreground="{DynamicResource BrushSidebarMuted}"/>
+          <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource BrushSidebarText}">
+            <Hyperlink x:Name="ProjectLink" Foreground="{DynamicResource BrushSidebarText}" NavigateUri="https://github.com/Hinrikao/WinTool"><Run x:Name="ProjectLinkText" Text="Project on GitHub"/></Hyperlink>
+          </TextBlock>
+        </StackPanel>
+        <StackPanel Margin="14,16,14,0">
+          <StackPanel Orientation="Horizontal" Margin="6,2,6,0">
+            <Border Width="32" Height="32" CornerRadius="8" Margin="0,0,10,0">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                  <GradientStop Color="#8BB0FF" Offset="0"/>
+                  <GradientStop Color="#4E86F5" Offset="1"/>
+                </LinearGradientBrush>
+              </Border.Background>
+              <Viewbox Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Path Stroke="White" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M 3,13.5 V 4.5 L 9,11 L 15,4.5 V 13.5"/>
+              </Viewbox>
+            </Border>
+            <TextBlock Text="WinTool" FontSize="{DynamicResource FontSizeTitle}" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarText}" VerticalAlignment="Center"/>
+          </StackPanel>
+          <TextBlock x:Uid="t.a-calm-setup-helper-for-a-fresh-windows-11-pc" Text="A calm setup helper for a fresh Windows 11 PC." Foreground="{DynamicResource BrushSidebarMuted}" TextWrapping="Wrap" Margin="6,10,6,18"/>
+
+          <Grid x:Name="NavList">
+            <Border x:Name="NavPill" Height="40" VerticalAlignment="Top" CornerRadius="10" Background="{DynamicResource BrushAccentSoft}" IsHitTestVisible="False">
+              <Border.RenderTransform>
+                <TranslateTransform x:Name="NavPillShift" Y="0"/>
+              </Border.RenderTransform>
+              <Border Width="3" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="0,8" CornerRadius="0,3,3,0" Background="{DynamicResource BrushAccent}"/>
+            </Border>
+            <StackPanel>
+              <TextBlock x:Uid="t.setup" Text="Setup" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,0,12,6"/>
+              <RadioButton x:Name="NavHome" GroupName="WinToolNav" Style="{StaticResource NavButton}" IsChecked="True" AutomationProperties.Name="Home">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE80F;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.home" Text="Home" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="NavInstall" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Install">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE7B8;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.install" Text="Install" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="NavTweaks" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Tweaks">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE713;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.tweaks" Text="Tweaks" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="NavTerminal" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Terminal">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE756;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.terminal" Text="Terminal" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <TextBlock x:Uid="t.system" Text="System" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,14,12,6"/>
+              <RadioButton x:Name="NavDrivers" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Drivers">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE964;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.drivers" Text="Drivers" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="NavUpdates" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Drivers and updates">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE895;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.updates" Text="Updates" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="NavFixes" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Fixes">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE90F;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.fixes" Text="Fixes" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <RadioButton x:Name="NavFeatures" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Windows features">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE71D;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.features" Text="Features" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+              <TextBlock x:Uid="t.settings" Text="Settings" FontWeight="SemiBold" Foreground="{DynamicResource BrushSidebarMuted}" Margin="12,14,12,6"/>
+              <RadioButton x:Name="NavConfig" GroupName="WinToolNav" Style="{StaticResource NavButton}" AutomationProperties.Name="Config">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE8F1;" Style="{StaticResource NavGlyph}"/>
+                  <TextBlock x:Uid="t.config" Text="Config" VerticalAlignment="Center"/>
+                </StackPanel>
+              </RadioButton>
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <Grid Grid.Column="1">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <Grid Grid.Row="0">
+        <!-- Home: one fixed layout for analyzing, done and fixing. Only the
+             content inside each slot changes; no state moves or resizes anything. -->
+        <Grid x:Name="ViewHome">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <Grid Grid.Row="0" Margin="20,15,20,0">
+            <TextBlock x:Uid="t.home" Text="Home" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+              <TextBlock x:Name="HomeRunText" Width="150" TextAlignment="Right" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text=" "/>
+              <Button x:Name="HomeAgain" Content="Analyze again" Style="{StaticResource HomeLinkButton}" MinWidth="104" MinHeight="32" Margin="16,0,0,0"/>
+            </StackPanel>
+          </Grid>
+          <ScrollViewer x:Name="HomeScroll" Grid.Row="1" Margin="0,12,0,0" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+            <Grid x:Name="HomeBody" Margin="20,0,10,16">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="420"/>
+                <RowDefinition Height="14"/>
+                <RowDefinition Height="160"/>
+              </Grid.RowDefinitions>
+              <Grid x:Name="HomeHero" Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="340"/>
+                  <ColumnDefinition Width="14"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="18,18,18,16">
+                  <StackPanel VerticalAlignment="Center">
+                    <Grid x:Name="HomeRing" Width="196" Height="196" HorizontalAlignment="Center">
+                      <Canvas Width="196" Height="196" IsHitTestVisible="False">
+                        <Ellipse Canvas.Left="-18" Canvas.Top="-18" Width="232" Height="232">
+                          <Ellipse.Fill>
+                            <RadialGradientBrush>
+                              <GradientStop Color="#384C8DFF" Offset="0"/>
+                              <GradientStop Color="#1A8B5CF6" Offset="0.42"/>
+                              <GradientStop Color="#008B5CF6" Offset="0.68"/>
+                            </RadialGradientBrush>
+                          </Ellipse.Fill>
+                        </Ellipse>
+                        <Ellipse Canvas.Left="20" Canvas.Top="20" Width="156" Height="156" StrokeThickness="10" Stroke="{DynamicResource BrushProgressTrack}"/>
+                        <Ellipse Canvas.Left="36" Canvas.Top="36" Width="124" Height="124" Fill="{DynamicResource BrushCanvas}" Stroke="{DynamicResource BrushLine}" StrokeThickness="1"/>
+                        <Path x:Name="HomeArc" StrokeThickness="10" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Stroke="{StaticResource BrushHomeGradient}"/>
+                        <Ellipse x:Name="HomeArcCap" Width="12" Height="12" Fill="#FFFFFF"/>
+                      </Canvas>
+                      <StackPanel x:Name="HomeRingBusy" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Width="22" Height="22" HorizontalAlignment="Center" Stroke="{DynamicResource BrushAccent}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 9,2 A 7,7 0 1 1 8.99,2 M 14,14 L 20,20"/>
+                        <TextBlock x:Uid="t.analyzing" Text="ANALYZING" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock x:Name="HomeRingProgress" Text="0 of 5 checks" Foreground="{DynamicResource BrushMuted}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                      </StackPanel>
+                      <StackPanel x:Name="HomeRingDone" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                        <TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource BrushInk}">
+                          <Run x:Name="HomeScore" Text="0" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold"/><Run Text=" / 100" FontSize="{DynamicResource FontSizeBody}" FontWeight="Medium" Foreground="{DynamicResource BrushMuted}"/>
+                        </TextBlock>
+                        <Border x:Name="HomeVerdict" MinHeight="24" MaxWidth="180" CornerRadius="12" Padding="10,2" Margin="0,6,0,0" HorizontalAlignment="Center" Background="{DynamicResource BrushWarnSoft}">
+                          <TextBlock x:Name="HomeVerdictText" Text="Needs attention" FontWeight="SemiBold" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource BrushWarn}"/>
+                        </Border>
+                      </StackPanel>
+                    </Grid>
+                    <StackPanel x:Name="HomeInfo" Margin="0,12,0,0">
+                      <TextBlock x:Name="HomeHeadline" MinHeight="20" Text="Analyzing your PC..." FontWeight="Bold" Foreground="{DynamicResource BrushInk}" TextAlignment="Center" TextWrapping="Wrap"/>
+                      <TextBlock x:Name="HomeLead" MinHeight="40" Margin="0,4,0,0" Text="Takes less than a minute. Nothing is changed during the analysis." Foreground="{DynamicResource BrushMuted}" TextAlignment="Center" TextWrapping="Wrap"/>
+                      <TextBlock x:Name="HomeMeta" MinHeight="20" Margin="0,10,0,0" Foreground="{DynamicResource BrushHint}" TextAlignment="Center" TextWrapping="Wrap"><Run x:Name="HomeMetaText" Text="No earlier analysis on this PC"/><Run Text=" &#183; "/><Hyperlink x:Name="HomeHistoryLink" Foreground="{DynamicResource BrushAccent}" TextDecorations="{x:Null}"><Run x:Name="HomeHistoryLinkText" Text="View history"/></Hyperlink></TextBlock>
+                    </StackPanel>
+                    <Button x:Name="HomeFixAll" Content="Fix all" MinWidth="120" MinHeight="32" Margin="0,14,0,0" HorizontalAlignment="Center" Style="{StaticResource HomeGradientButton}" IsEnabled="False"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="0,10,0,6">
+                  <DockPanel>
+                    <Grid DockPanel.Dock="Top" Height="32" Margin="16,6,16,8">
+                      <TextBlock x:Uid="t.needs-attention" Text="Needs attention" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+                      <TextBlock x:Name="HomeCheckCount" Text="0 of 5 complete" Width="180" Margin="148,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}"/>
+                    </Grid>
+                    <StackPanel x:Name="HomeChecks"/>
+                  </DockPanel>
+                </Border>
+              </Grid>
+              <Grid x:Name="HomeMinis" Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="14"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="14"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+              </Grid>
+            </Grid>
+          </ScrollViewer>
+        </Grid>
+
+        <Grid x:Name="ViewInstall" Visibility="Collapsed">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <Grid Grid.Row="0" Margin="20,15,20,0">
+            <TextBlock x:Uid="t.install" Text="Install" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+            <!-- Selection actions: on the title row, right side, only while apps are ticked. The title row is taller than the buttons, so nothing below moves. -->
+            <StackPanel x:Name="AppBulkBar" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed">
+              <TextBlock x:Name="AppCount" Text="0 selected" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,12,0" TextWrapping="NoWrap"/>
+              <Button x:Name="AppInstall" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" MinHeight="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushAccent}" Foreground="{DynamicResource BrushOnAccent}" FontWeight="SemiBold"/>
+              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" MinHeight="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
+              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" MinHeight="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
+              <Button x:Name="AppClear" Content="Clear" Style="{StaticResource ToolbarButton}" MinHeight="32" Padding="14,0"/>
+            </StackPanel>
+          </Grid>
+          <Grid Grid.Row="1" Margin="20,7,20,0">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="260"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" Height="34" VerticalAlignment="Top">
+              <TextBox x:Name="AppSearch" Style="{StaticResource PageSearch}" Height="34" AutomationProperties.Name="Search apps"/>
+              <TextBlock x:Name="AppSearchHint" Text="Search apps&#x2026;" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
+            </Grid>
+            <!-- The chips get the full width on their own row; below about 1280 px they scroll sideways (mouse wheel). -->
+            <ScrollViewer x:Name="AppFilterScroll" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,8,0,0" Height="34" VerticalAlignment="Top" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+              <StackPanel x:Name="AppFilters" Orientation="Horizontal" VerticalAlignment="Center"/>
+            </ScrollViewer>
+            <!-- Status of the installed-apps check, in the free space of the search row, so it never pushes the cards. -->
+            <TextBlock x:Name="AppInstalledStatus" Grid.Column="1" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" Visibility="Hidden" Margin="12,0,12,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+              <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" MinHeight="32" Padding="14,0" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
+              <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" MinWidth="32" MinHeight="32" Padding="0" FontFamily="Segoe MDL2 Assets" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
+            </StackPanel>
+          </Grid>
+          <StackPanel Grid.Row="2" Margin="20,6,20,0">
+          </StackPanel>
+          <ScrollViewer x:Name="AppScroll" Grid.Row="3" Margin="20,0,20,8" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+              <TextBlock x:Name="AppEmpty" Text="No apps match that search." Foreground="{DynamicResource BrushMuted}" Margin="0,8,0,0" Visibility="Collapsed"/>
+              <StackPanel x:Name="AppCategories"/>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+
+        <Grid x:Name="ViewTweaks" Visibility="Collapsed">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <Grid Grid.Row="0" Margin="20,15,20,0" MinHeight="36">
+            <TextBlock x:Uid="t.tweaks" Text="Tweaks" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+              <TextBlock x:Name="TweakRestoreNote" Text="Restore point is created before the first change" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="420"/>
+              <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushOk}" VerticalAlignment="Center" Margin="16,0,4,0"/>
+              <TextBlock x:Uid="t.safe" Text="Safe" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
+              <Ellipse Width="6" Height="6" Fill="{DynamicResource BrushWarn}" VerticalAlignment="Center" Margin="10,0,4,0"/>
+              <TextBlock x:Uid="t.caution" Text="Caution" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Grid>
+          <Grid Grid.Row="1" Margin="20,7,20,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="260"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" Height="34">
+              <TextBox x:Name="TweakSearch" Style="{StaticResource PageSearch}" Height="34" AutomationProperties.Name="Search tweaks"/>
+              <TextBlock x:Name="TweakSearchHint" Text="Search tweaks&#x2026;" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushHint}"/>
+            </Grid>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+              <TextBlock x:Uid="t.presets" Text="Presets:" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <StackPanel x:Name="TweakPresets" Orientation="Horizontal" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Grid>
+          <ScrollViewer x:Name="TweakScroll" Grid.Row="2" Margin="20,10,20,8" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+              <TextBlock x:Name="TweakEmpty" Text="No tweaks match that search." Foreground="{DynamicResource BrushMuted}" Margin="0,8,0,0" Visibility="Collapsed"/>
+              <!-- Masonry columns, built in code from the available width. -->
+              <Grid x:Name="TweakCategories"/>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+
+        <Grid x:Name="ViewTerminal" Visibility="Collapsed" TextElement.FontSize="{DynamicResource FontSizeBody}">
+          <Grid.Resources>
+            <Style x:Key="TerminalCard" TargetType="Border">
+              <Setter Property="Background" Value="{DynamicResource BrushCard}"/>
+              <Setter Property="BorderBrush" Value="{DynamicResource BrushLine}"/>
+              <Setter Property="BorderThickness" Value="1"/>
+              <Setter Property="CornerRadius" Value="8"/>
+              <Setter Property="Padding" Value="12"/>
+            </Style>
+            <Style x:Key="TerminalStep" TargetType="TextBlock">
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="FontWeight" Value="Bold"/>
+              <Setter Property="Margin" Value="0,0,8,0"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushAccent}"/>
+            </Style>
+            <Style x:Key="TerminalCardTitle" TargetType="TextBlock">
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="FontWeight" Value="Bold"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+            </Style>
+            <Style x:Key="TerminalCount" TargetType="TextBlock">
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Margin" Value="8,0,0,0"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+            </Style>
+            <Style x:Key="TerminalSearch" TargetType="TextBox" BasedOn="{StaticResource PageSearch}">
+              <Setter Property="Padding" Value="30,0,9,0"/>
+            </Style>
+            <Style x:Key="TerminalHint" TargetType="TextBlock">
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Margin" Value="32,0,0,0"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="IsHitTestVisible" Value="False"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushHint}"/>
+            </Style>
+            <Style x:Key="TerminalGlyph" TargetType="TextBlock">
+              <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <!-- Simple / Advanced as one segmented control, 32 px tall. -->
+            <Style x:Key="TerminalSegment" TargetType="RadioButton">
+              <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Height" Value="30"/>
+              <Setter Property="Cursor" Value="Hand"/>
+              <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="7" Padding="16,0">
+                      <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+                      </Trigger>
+                      <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+            <!-- Rows in the prompt and theme lists: the accent border marks the choice. -->
+            <Style x:Key="TerminalRow" TargetType="ListBoxItem">
+              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Padding" Value="8,7"/>
+              <Setter Property="Cursor" Value="Hand"/>
+              <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+              <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                      <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+                      </Trigger>
+                      <Trigger Property="IsSelected" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccentSoft}"/>
+                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                      </Trigger>
+                      <Trigger Property="IsEnabled" Value="False">
+                        <Setter TargetName="Bd" Property="Background" Value="Transparent"/>
+                        <Setter Property="Cursor" Value="Arrow"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+            <Style x:Key="TerminalList" TargetType="ListBox">
+              <Setter Property="Background" Value="Transparent"/>
+              <Setter Property="BorderThickness" Value="0"/>
+              <Setter Property="Padding" Value="0"/>
+              <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+              <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
+              <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+              <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+              <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+              <Setter Property="VirtualizingStackPanel.IsVirtualizing" Value="True"/>
+              <Setter Property="VirtualizingStackPanel.VirtualizationMode" Value="Recycling"/>
+              <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+              <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+              <Setter Property="VirtualizingPanel.ScrollUnit" Value="Item"/>
+              <Setter Property="ItemsPanel">
+                <Setter.Value>
+                  <ItemsPanelTemplate>
+                    <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling"/>
+                  </ItemsPanelTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+          </Grid.Resources>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+
+          <!-- Header: title, Simple / Advanced, and the promise that nothing changes yet. -->
+          <DockPanel Grid.Row="0" Margin="20,15,20,0" LastChildFill="False">
+            <TextBlock x:Uid="t.terminal" DockPanel.Dock="Left" Text="Terminal" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+            <Border DockPanel.Dock="Left" Margin="16,0,0,0" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="TerminalModeSimple" GroupName="TerminalMode" Content="Simple" IsChecked="True" Style="{StaticResource TerminalSegment}" ToolTip="A recommended setup in one click."/>
+                <RadioButton x:Name="TerminalModeAdvanced" GroupName="TerminalMode" Content="Advanced" Style="{StaticResource TerminalSegment}" ToolTip="Choose the prompt, theme, font, color scheme, and extras."/>
+              </StackPanel>
+            </Border>
+            <TextBlock x:Uid="t.nothing-changes-until-you-press-apply" DockPanel.Dock="Right" Text="Nothing changes until you press Apply" VerticalAlignment="Center" Foreground="{DynamicResource BrushMuted}"/>
+          </DockPanel>
+          <TextBlock x:Name="TerminalSubtitle" Grid.Row="1" Margin="20,6,20,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="A recommended setup in one click. Switch to Advanced to choose each part."/>
+
+          <ScrollViewer x:Name="TerminalSimpleScroll" Grid.Row="2" Margin="20,12,20,10" Background="{DynamicResource BrushCanvas}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid x:Name="TerminalSimpleHost">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="360"/>
+              </Grid.ColumnDefinitions>
+              <Border x:Name="TerminalSimplePreview" Grid.Column="0" Style="{StaticResource TerminalCard}" Padding="0" ClipToBounds="True">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="36"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <StackPanel Margin="14,12,14,0">
+                    <TextBlock x:Uid="t.recommended-setup" Text="Recommended setup" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushInk}"/>
+                    <TextBlock x:Name="TerminalSimpleLead" Margin="0,4,0,0" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushMuted}" Text="A recommended setup in one click."/>
+                  </StackPanel>
+                  <Border x:Name="TerminalSimpleTab" Grid.Row="1" Margin="14,10,14,0" Height="36" CornerRadius="8,8,0,0" Background="#1B2230" Padding="12,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <TextBlock Text="&#xE756;" FontFamily="Segoe MDL2 Assets" FontSize="{DynamicResource FontSizeBody}" Margin="0,0,8,0" Foreground="{DynamicResource BrushInk}"/>
+                      <TextBlock x:Uid="t.powershell" Text="PowerShell" FontSize="{DynamicResource FontSizeBody}" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+                    </StackPanel>
+                  </Border>
+                  <Border x:Name="TerminalSimpleScreen" Grid.Row="2" Margin="14,0,14,0" Background="#1B2230" Padding="16,14" ClipToBounds="True">
+                    <TextBlock x:Name="TerminalSimpleSample" FontFamily="Cascadia Mono, Consolas" LineStackingStrategy="BlockLineHeight" TextWrapping="Wrap" VerticalAlignment="Top" Foreground="{DynamicResource BrushLogText}" Text=""/>
+                  </Border>
+                  <TextBlock x:Name="TerminalSimpleCaption" Grid.Row="3" Margin="14,8,14,12" FontSize="{DynamicResource FontSizeBody}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}" Text=""/>
+                </Grid>
+              </Border>
+              <Border x:Name="TerminalSimpleIncluded" Grid.Column="2" Style="{StaticResource TerminalCard}">
+                <DockPanel>
+                  <TextBlock x:Uid="t.included" DockPanel.Dock="Top" Text="Included" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeBody}" Margin="0,0,0,8" Foreground="{DynamicResource BrushInk}"/>
+                  <TextBlock x:Uid="t.switch-to-advanced-to-change-any-part" DockPanel.Dock="Bottom" Text="Switch to Advanced to change any part." FontSize="{DynamicResource FontSizeBody}" TextWrapping="Wrap" Margin="0,12,0,0" Foreground="{DynamicResource BrushMuted}"/>
+                  <StackPanel x:Name="TerminalSimpleIncludedList"/>
+                </DockPanel>
+              </Border>
+            </Grid>
+          </ScrollViewer>
+
+          <!-- Advanced: prompt engines | themes | preview with font and colors; extras under the last two.
+               When the window is short the body scrolls instead of squeezing the cards. -->
+          <ScrollViewer x:Name="TerminalBodyScroll" Grid.Row="2" Margin="20,12,20,10" Background="{DynamicResource BrushCanvas}" Visibility="Collapsed" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+            <Grid x:Name="TerminalAdvancedHost">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="TerminalColumnLeft" Width="230"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition x:Name="TerminalColumnMiddle" Width="*"/>
+                <ColumnDefinition x:Name="TerminalColumnGap" Width="12"/>
+                <ColumnDefinition x:Name="TerminalColumnRight" Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition x:Name="TerminalRowMain" Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+
+              <!-- 1. Prompt engine, grouped by the shell it runs in. -->
+              <Border x:Name="TerminalCardPrompt" Grid.Row="0" Grid.RowSpan="1" Grid.Column="0" Style="{StaticResource TerminalCard}">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MinHeight="108"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Left" Text="1" Style="{StaticResource TerminalStep}"/>
+                    <TextBlock x:Name="TerminalPromptCount" DockPanel.Dock="Right" MinWidth="90" TextAlignment="Right" Text="8 engines" Style="{StaticResource TerminalCount}"/>
+                    <TextBlock x:Uid="t.prompt" Text="Prompt" Style="{StaticResource TerminalCardTitle}"/>
+                  </DockPanel>
+                  <ListBox x:Name="TerminalPromptList" Grid.Row="1" Style="{StaticResource TerminalList}" AutomationProperties.Name="Prompt engine"/>
+                  <!-- Fixed height (name plus three lines), so picking an engine never resizes the list above. -->
+                  <Border Grid.Row="2" BorderBrush="{DynamicResource BrushLine}" BorderThickness="0,1,0,0" Padding="0,8,0,0" Margin="0,8,0,0" Height="99">
+                    <StackPanel>
+                      <TextBlock x:Name="TerminalPromptName" FontWeight="Bold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" LineStackingStrategy="BlockLineHeight" LineHeight="20" Height="20" Foreground="{DynamicResource BrushInk}"/>
+                      <TextBlock x:Name="TerminalPromptAbout" Margin="0,2,0,0" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" LineStackingStrategy="BlockLineHeight" LineHeight="20" Height="60" Foreground="{DynamicResource BrushMuted}"/>
+                    </StackPanel>
+                  </Border>
+                </Grid>
+              </Border>
+
+              <!-- 2. Theme, preset, or style of the chosen engine. -->
+              <Border x:Name="TerminalCardTheme" Grid.Row="0" Grid.Column="2" Style="{StaticResource TerminalCard}">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MinHeight="132"/>
+                  </Grid.RowDefinitions>
+                  <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Left" Text="2" Style="{StaticResource TerminalStep}"/>
+                    <TextBlock x:Name="TerminalThemeCount" DockPanel.Dock="Right" MinWidth="90" TextAlignment="Right" Text="" Style="{StaticResource TerminalCount}"/>
+                    <TextBlock x:Name="TerminalThemeTitle" Text="Theme" Style="{StaticResource TerminalCardTitle}"/>
+                  </DockPanel>
+                  <Grid Grid.Row="1" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*"/>
+                      <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="TerminalThemeSearch" Grid.Column="0" Style="{StaticResource TerminalSearch}" AutomationProperties.Name="Search prompt themes"/>
+                    <TextBlock Grid.Column="0" Text="&#xE721;" Style="{StaticResource TerminalGlyph}" Margin="10,0,0,0" IsHitTestVisible="False" Foreground="{DynamicResource BrushHint}"/>
+                    <TextBlock x:Name="TerminalThemeSearchHint" Grid.Column="0" Text="Search themes&#x2026;" Style="{StaticResource TerminalHint}" TextTrimming="CharacterEllipsis"/>
+                    <Button x:Name="TerminalRefresh" Grid.Column="1" Style="{StaticResource ChipButton}" Width="32" Margin="6,0,0,0" ToolTip="Refresh the Nerd Fonts and Oh My Posh lists from GitHub." AutomationProperties.Name="Refresh lists from GitHub">
+                      <TextBlock Text="&#xE72C;" Style="{StaticResource TerminalGlyph}" Margin="-6,0"/>
+                    </Button>
+                  </Grid>
+                  <WrapPanel Grid.Row="2" Margin="0,0,0,2">
+                    <RadioButton x:Name="TerminalFilterAll" GroupName="TerminalThemeFilter" Content="All" IsChecked="True" Style="{StaticResource ChipRadio}" Margin="0,0,6,6" Tag="all"/>
+                    <RadioButton x:Name="TerminalFilterPowerline" GroupName="TerminalThemeFilter" Content="Powerline" Style="{StaticResource ChipRadio}" Margin="0,0,6,6" Tag="powerline" ToolTip="Themes drawn as colored blocks."/>
+                    <RadioButton x:Name="TerminalFilterMinimal" GroupName="TerminalThemeFilter" Content="Minimal" Style="{StaticResource ChipRadio}" Margin="0,0,6,6" Tag="minimal" ToolTip="Plain colored text, no blocks."/>
+                    <RadioButton x:Name="TerminalFilterNoNerd" GroupName="TerminalThemeFilter" Content="No Nerd Font" Style="{StaticResource ChipRadio}" Margin="0,0,0,6" Tag="no-nerd" ToolTip="No Nerd Font needed: themes that look right with any font."/>
+                  </WrapPanel>
+                  <Border Grid.Row="3" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="6" Background="{DynamicResource BrushInput}" ClipToBounds="True">
+                    <Grid>
+                      <ListBox x:Name="TerminalStyleList" Style="{StaticResource TerminalList}" VirtualizingPanel.CacheLength="1,1" VirtualizingPanel.ScrollUnit="Item" AutomationProperties.Name="Prompt theme">
+                        <ListBox.ItemContainerStyle>
+                          <Style TargetType="ListBoxItem" BasedOn="{StaticResource TerminalRow}">
+                            <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                            <Setter Property="Padding" Value="8,6,8,7"/>
+                            <Setter Property="Margin" Value="0,0,0,1"/>
+                            <Setter Property="ToolTip" Value="{Binding Tip}"/>
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+                          </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                          <DataTemplate>
+                            <StackPanel>
+                              <DockPanel>
+                                <TextBlock x:Uid="t.nerd-font" DockPanel.Dock="Right" Text="Nerd Font" Visibility="{Binding Nerd}" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushWarn}"/>
+                                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeBody}" Foreground="{DynamicResource BrushInk}"/>
+                              </DockPanel>
+                              <Border Background="{DynamicResource BrushLog}" CornerRadius="4" Padding="6,3,6,3" Margin="0,4,0,0" ClipToBounds="True" Visibility="{Binding SampleVisible}">
+                                <Image Source="{Binding PreviewImage}" Height="18" HorizontalAlignment="Left" Stretch="None" SnapsToDevicePixels="True"/>
+                              </Border>
+                            </StackPanel>
+                          </DataTemplate>
+                        </ListBox.ItemTemplate>
+                      </ListBox>
+                      <TextBlock x:Name="TerminalStyleNote" Text="Themes" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16,0" IsHitTestVisible="False"/>
+                    </Grid>
+                  </Border>
+                </Grid>
+              </Border>
+
+              <!-- Right column: live preview, then font and colors. -->
+              <Grid x:Name="TerminalSideColumn" Grid.Row="0" Grid.Column="4">
+                <Grid.RowDefinitions>
+                  <RowDefinition x:Name="TerminalRowPreview" Height="*" MinHeight="120"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Border x:Name="TerminalCardPreview" Grid.Row="0" Style="{StaticResource TerminalCard}" Padding="0" ClipToBounds="True" ToolTip="Live preview: sample output, not a real shell.">
+                  <Grid>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="*"/>
+                      <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Height="36" Background="{DynamicResource BrushSidebar}" CornerRadius="8,8,0,0" Padding="8,0,10,0">
+                      <DockPanel LastChildFill="False">
+                        <Border x:Name="TerminalPreviewTab" DockPanel.Dock="Left" Height="30" VerticalAlignment="Bottom" CornerRadius="6,6,0,0" Padding="12,0" Background="#1B2230">
+                          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE756;" Style="{StaticResource TerminalGlyph}" Margin="0,0,8,0" Foreground="{DynamicResource BrushInk}"/>
+                            <TextBlock x:Name="TerminalPreviewTabText" Text="PowerShell" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="160" Foreground="{DynamicResource BrushInk}"/>
+                          </StackPanel>
+                        </Border>
+                        <TextBlock DockPanel.Dock="Left" Text="+   &#x2304;" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushMuted}"/>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" TextElement.Foreground="{DynamicResource BrushHint}">
+                          <TextBlock Text="&#xE921;" Style="{StaticResource TerminalGlyph}" Margin="0,0,16,0"/>
+                          <TextBlock Text="&#xE922;" Style="{StaticResource TerminalGlyph}" Margin="0,0,16,0"/>
+                          <TextBlock Text="&#xE8BB;" Style="{StaticResource TerminalGlyph}"/>
+                        </StackPanel>
+                      </DockPanel>
+                    </Border>
+                    <!-- The sample text uses the chosen terminal font size: it is content, not interface text. -->
+                    <Border x:Name="TerminalFontPreview" Grid.Row="1" Background="#1B2230" Padding="14,10" ClipToBounds="True">
+                      <TextBlock x:Name="TerminalFontSample" Text="Font preview" Typography.StandardLigatures="True" Typography.ContextualAlternates="True" LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource BrushLogText}" TextWrapping="NoWrap" VerticalAlignment="Bottom"/>
+                    </Border>
+                    <Border Grid.Row="2" BorderBrush="{DynamicResource BrushLine}" BorderThickness="0,1,0,0" Padding="12,8">
+                      <TextBlock x:Name="TerminalPreviewInfo" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}"/>
+                    </Border>
+                  </Grid>
+                </Border>
+
+                <!-- 3. Font and colors. -->
+                <Border x:Name="TerminalCardFont" Grid.Row="1" Style="{StaticResource TerminalCard}" Margin="0,12,0,0">
+                  <StackPanel>
+                    <DockPanel Margin="0,0,0,8">
+                      <TextBlock DockPanel.Dock="Left" Text="3" Style="{StaticResource TerminalStep}"/>
+                      <CheckBox x:Name="TerminalFontNerdOnly" DockPanel.Dock="Right" Content="Nerd Fonts only" IsChecked="True" Margin="8,0,0,0" AutomationProperties.Name="Nerd Fonts only" ToolTip="Nerd Fonts carry the icons that most prompt themes use."/>
+                      <TextBlock x:Uid="t.font-and-colors" Text="Font and colors" Style="{StaticResource TerminalCardTitle}"/>
+                    </DockPanel>
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="88"/>
+                      </Grid.ColumnDefinitions>
+                      <ComboBox x:Name="TerminalFontList" Grid.Column="0" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" MaxDropDownHeight="360" AutomationProperties.Name="Terminal font" ToolTip="Type a name to jump to it."/>
+                      <ComboBox x:Name="TerminalFontSize" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" AutomationProperties.Name="Font size"/>
+                    </Grid>
+                    <TextBlock x:Name="TerminalFontCount" Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text=""/>
+                    <UniformGrid x:Name="TerminalSchemeHost" Columns="4" Rows="1" Margin="0,0,-6,0"/>
+                    <TextBlock x:Name="TerminalFontLigatureNote" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="Font ligatures are always on in every Terminal profile." ToolTip="WinTool sets calt and liga in profiles.defaults.font.features in the Windows Terminal settings.json and keeps your other font features."/>
+                  </StackPanel>
+                </Border>
+                <!-- Extras stay in this column, in a fixed slot under the font, so the three cards stay aligned. -->
+                <Border x:Name="TerminalCardExtras" Grid.Row="2" Style="{StaticResource TerminalCard}" Margin="0,12,0,0">
+                  <StackPanel>
+                    <DockPanel Margin="0,0,0,4">
+                      <TextBlock DockPanel.Dock="Left" Text="4" Style="{StaticResource TerminalStep}"/>
+                      <TextBlock x:Name="TerminalExtrasCount" DockPanel.Dock="Right" MinWidth="90" TextAlignment="Right" Text="" Style="{StaticResource TerminalCount}"/>
+                      <TextBlock x:Uid="t.extras" Text="Extras" Style="{StaticResource TerminalCardTitle}"/>
+                    </DockPanel>
+                    <UniformGrid x:Name="TerminalExtrasHost" Columns="2" Margin="0,0,-16,0"/>
+                  </StackPanel>
+                </Border>
+              </Grid>
+            </Grid>
+          </ScrollViewer>
+
+          <!-- Fixed action bar: missing (+), already installed, and changes (~), then Update and Apply. -->
+          <Border x:Name="TerminalSummaryCard" Grid.Row="3" Margin="20,0,20,10" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8" Padding="12,10">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Uid="t.what-will-happen" Grid.Row="0" Grid.Column="0" Text="What will happen" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+              <CheckBox x:Name="TerminalEnabled" Grid.Row="0" Grid.Column="1" Content="Include in saved profiles" IsChecked="True" Margin="14,0,16,0" ToolTip="Include this terminal setup when a saved WinTool profile is replayed."/>
+              <Button x:Name="TerminalUpdate" Grid.Row="0" Grid.Column="2" Content="Update" Style="{StaticResource SecondaryButton}" FontSize="{DynamicResource FontSizeBody}" MinWidth="100" MinHeight="32" Padding="14,0" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Upgrade apps that are already installed and refresh modules and the prompt theme. Apply still installs only what is missing." AutomationProperties.Name="Update terminal setup"/>
+              <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="3" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" MinWidth="190" MinHeight="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
+              <!-- One line of chips, always 32 px tall: more chips scroll sideways (mouse wheel), the tooltip lists every step. -->
+              <ScrollViewer x:Name="TerminalSummaryScroll" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Margin="0,8,0,0" Height="32" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="TerminalSummaryHost" Orientation="Horizontal"/>
+              </ScrollViewer>
+              <TextBlock x:Name="TerminalSummary" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Visibility="Collapsed" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}"/>
+            </Grid>
+          </Border>
+        </Grid>
+
+        <Grid x:Name="ViewDrivers" Visibility="Collapsed">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <DockPanel Grid.Row="0" Margin="20,15,20,0" LastChildFill="False">
+            <TextBlock x:Name="DriversTitle" DockPanel.Dock="Left" Text="Drivers" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+            <Border DockPanel.Dock="Left" Margin="16,0,0,0" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="DriversModeSimple" GroupName="DriversMode" Content="Simple" IsChecked="True" Style="{StaticResource SegmentRadio}" ToolTip="A short list of outdated or missing drivers and the game runtimes that usually need attention."/>
+                <RadioButton x:Name="DriversModeAdvanced" GroupName="DriversMode" Content="Advanced" Style="{StaticResource SegmentRadio}" ToolTip="Browse by category, inspect a device, and choose an action."/>
+                <RadioButton x:Name="DriversModeTools" GroupName="DriversMode" Content="Tools" Style="{StaticResource SegmentRadio}" ToolTip="Backup, repair, and other driver utilities."/>
+              </StackPanel>
+            </Border>
+          </DockPanel>
+
+          <ScrollViewer x:Name="DriversSimpleScroll" Grid.Row="1" VerticalScrollBarVisibility="Visible">
+            <Grid x:Name="DriversBody" Margin="20,15,20,12">
+              <StackPanel x:Name="DriversStart">
+                <TextBlock x:Name="DriversSubtitle" Text="Check this PC for outdated or missing drivers, then update only what you choose. WinTool uses Windows Update and official packages - it does not install driver-booster tools." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="280"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="22,20">
+                    <StackPanel>
+                      <TextBlock x:Name="DriversHeroTitle" Text="No scan yet" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+                      <TextBlock x:Name="DriversHeroBody" Text="WinTool will list the devices on this PC, ask Windows Update for newer or missing drivers, and check a few game runtimes. Nothing is installed until you choose it. A restore point is created first when System Protection is on." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,8,0,16"/>
+                      <Button x:Name="DriversScan" Content="Scan drivers" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Height="36" Padding="18,0" ToolTip="Scan devices and Windows Update for newer or missing drivers." AutomationProperties.Name="Scan drivers"/>
+                    </StackPanel>
+                  </Border>
+                  <StackPanel x:Name="DriversStepList" Grid.Column="2" VerticalAlignment="Center"/>
+                </Grid>
+                <TextBlock x:Name="DriversPcLabel" Text="This PC" FontWeight="SemiBold" Foreground="{DynamicResource BrushMuted}" Margin="0,18,0,8"/>
+                <WrapPanel x:Name="DriversChipHost"/>
+              </StackPanel>
+              <StackPanel x:Name="DriversResult" Visibility="Collapsed">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="DriversHeader" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                  <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
+                    <Button x:Name="DriversBackup" Content="Back up drivers" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" MinHeight="32" Padding="14,0" ToolTip="Export the drivers now on this PC to a folder you choose." AutomationProperties.Name="Back up drivers"/>
+                    <Button x:Name="DriversScanAgain" Content="Scan again" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" MinHeight="32" Padding="14,0" AutomationProperties.Name="Scan drivers again"/>
+                    <Button x:Name="DriversUpdate" Content="Update all" Style="{StaticResource PrimaryButton}" Margin="0,0,0,8" MinHeight="32" Padding="16,0" ToolTip="Install the ticked driver updates and official packages. A restore point is created first when System Protection is on." AutomationProperties.Name="Update all"/>
+                  </WrapPanel>
+                </Grid>
+                <StackPanel x:Name="DriversGroupHost" Margin="0,10,0,0"/>
+              </StackPanel>
+              <StackPanel x:Name="DriversScanning" Visibility="Collapsed">
+                <TextBlock x:Name="DriversScanningTitle" Text="Scanning drivers" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+                <StackPanel x:Name="DriversPhaseHost" Margin="0,12,0,0"/>
+                <Button x:Name="DriversScanCancel" Content="Cancel" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" MinHeight="32" Padding="16,0" Margin="0,16,0,0"/>
+              </StackPanel>
+            </Grid>
+          </ScrollViewer>
+
+          <Grid x:Name="DriversAdvanced" Grid.Row="1" Visibility="Collapsed" Margin="20,12,20,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock x:Name="DriversAdvancedSub" Text="Browse by category, inspect a device, and choose an action. Official sources only. A restore point is created before installs when it can." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+            <Grid Grid.Row="1" x:Name="DriversColumns">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.9*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="1.2*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="1.3*"/>
+              </Grid.ColumnDefinitions>
+              <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="0">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                  </Grid.RowDefinitions>
+                  <TextBlock x:Name="DriversCategoryTitle" Text="Categories" FontWeight="SemiBold" Margin="14,12,14,8" Foreground="{DynamicResource BrushInk}"/>
+                  <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="8,0,8,8">
+                    <StackPanel x:Name="DriversCategoryHost"/>
+                  </ScrollViewer>
+                </Grid>
+              </Border>
+              <Border Grid.Column="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                  </Grid.RowDefinitions>
+                  <TextBlock x:Name="DriversDeviceTitle" Text="Categories" FontWeight="SemiBold" Margin="14,12,14,8" Foreground="{DynamicResource BrushInk}"/>
+                  <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="8,0,8,8">
+                    <StackPanel x:Name="DriversDeviceHost"/>
+                  </ScrollViewer>
+                </Grid>
+              </Border>
+              <Border Grid.Column="4" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                  </Grid.RowDefinitions>
+                  <TextBlock x:Name="DriversDetailTitle" Text="Details" FontWeight="SemiBold" Margin="14,12,14,8" Foreground="{DynamicResource BrushInk}"/>
+                  <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="14,0,14,14">
+                    <StackPanel x:Name="DriversDetailHost"/>
+                  </ScrollViewer>
+                </Grid>
+              </Border>
+            </Grid>
+          </Grid>
+
+          <ScrollViewer x:Name="DriversToolsScroll" Grid.Row="1" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
+            <StackPanel x:Name="DriversToolsBody" Margin="20,15,20,12">
+              <UniformGrid x:Name="DriversToolList" Columns="2"/>
+              <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="18" Margin="0,14,0,0">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE946;" FontSize="16" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="{DynamicResource BrushAccent}"/>
+                  <StackPanel>
+                    <TextBlock x:Name="DriversInfoTitle" Text="System information" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
+                    <TextBlock x:Name="DriversInfoText" Text="Hardware details appear here after this page is opened." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+
+        <ScrollViewer x:Name="ViewUpdates" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
+          <Grid x:Name="UpdatesBody" Margin="20,15,20,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock x:Uid="t.drivers-and-updates" Text="Drivers and updates" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.wintool-uses-windows-update-and-links-to-the-gra" Grid.Row="1" Text="WinTool uses Windows Update and links to the graphics vendor. It does not install driver cleaner or booster tools. For a full driver scan, backup, and repair tools, open the Drivers tab." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <Border Grid.Row="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="14,14" Margin="0,12,0,0">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock x:Uid="t.graphics-on-this-pc" Text="Graphics on this PC" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="GpuSummary" Text="Looking up graphics adapters..." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,16,0"/>
+                </StackPanel>
+                <WrapPanel x:Name="VendorLinks" Grid.Column="1" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <Grid Grid.Row="3" Margin="0,14,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="14"/>
+                <ColumnDefinition Width="1.25*"/>
+              </Grid.ColumnDefinitions>
+              <Border Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel>
+                  <TextBlock x:Uid="t.update-mode" Text="Update mode" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.choose-how-windows-update-behaves-on-this-pc-win" Text="Choose how Windows Update behaves on this PC. WinTool only writes Windows Update policies and service settings, and Default removes them all again." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+                  <TextBlock x:Name="UpdateModeCurrent" Text="Current mode: checking..." FontWeight="SemiBold" Margin="0,0,0,8"/>
+                  <StackPanel x:Name="UpdateModeList" Margin="0,0,0,12"/>
+                  <WrapPanel>
+                    <Button x:Name="ApplyUpdateMode" Content="Apply mode" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"/>
+                    <Button x:Name="RevertUpdateMode" Content="Back to default" Style="{StaticResource SecondaryButton}" Margin="0"/>
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel>
+                  <TextBlock x:Uid="t.windows-update" Text="Windows Update" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.the-scan-lists-driver-updates-windows-update-is-" Text="The scan lists driver updates Windows Update is offering right now. Optional updates are easier to review in Settings. Installing can take a while and may ask for a restart." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                  <CheckBox x:Name="IncludeSoftwareUpdates" Content="Include software updates, not only drivers" Margin="0,0,0,12"/>
+                  <WrapPanel Margin="0,0,0,12">
+                    <Button x:Name="ScanDrivers" Content="Scan for updates" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"/>
+                    <Button x:Name="OpenWindowsUpdate" Content="Open Windows Update" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+                    <Button x:Name="OpenOptionalUpdates" Content="Open optional updates" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8"/>
+                    <Button x:Name="InstallScannedUpdates" Content="Install scanned updates" Style="{StaticResource SecondaryButton}" Margin="0,0,0,8" IsEnabled="False"/>
+                  </WrapPanel>
+                  <TextBlock x:Name="UpdateEmpty" Text="No scan yet." Foreground="{DynamicResource BrushMuted}"/>
+                  <ListBox x:Name="UpdateList" BorderThickness="0" Background="Transparent" MaxHeight="280" Margin="0,8,0,0"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+          </Grid>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="ViewFixes" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
+          <Grid x:Name="FixesBody" Margin="20,15,20,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock x:Uid="t.fixes" Text="Fixes" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.repairs-for-common-windows-problems-each-one-ask" Grid.Row="1" Text="Repairs for common Windows problems. Each one asks first and writes what it does to the log." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <UniformGrid x:Name="FixList" Grid.Row="2" Columns="2" Margin="0,14,0,0"/>
+          </Grid>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="ViewFeatures" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
+          <Grid x:Name="FeaturesBody" Margin="20,15,20,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock x:Uid="t.windows-features" Text="Windows features" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.optional-parts-of-windows-ticked-means-on-change" Grid.Row="1" Text="Optional parts of Windows. Ticked means on. Change the ticks and press Apply. Windows needs a restart after a change." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
+              <Button x:Name="FeatureApply" Content="Apply changes" Style="{StaticResource PrimaryButton}" Margin="0"/>
+              <Button x:Name="FeatureRefresh" Content="Refresh" Style="{StaticResource SecondaryButton}"/>
+              <TextBlock x:Name="FeatureStatus" Text="Open this tab to read the current state." Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="16,0,0,0" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+            <Border Grid.Row="3" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="6,6" Margin="0,14,0,0">
+              <UniformGrid x:Name="FeatureList" Columns="2" VerticalAlignment="Top"/>
+            </Border>
+          </Grid>
+        </ScrollViewer>
+
+        <ScrollViewer x:Name="ViewConfig" Visibility="Collapsed" VerticalScrollBarVisibility="Visible">
+          <Grid x:Name="ConfigBody" Margin="20,15,20,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock x:Uid="t.config" Text="Config" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}"/>
+            <TextBlock x:Uid="t.save-what-you-picked-and-use-it-again-after-the-" Grid.Row="1" Text="Save what you picked and use it again after the next format. The sections below stay in a fixed tab row. Only the content of this panel changes." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <StackPanel x:Name="ConfigLanguageRow" Grid.Row="2" Orientation="Horizontal" Margin="0,14,0,0" VerticalAlignment="Center">
+              <TextBlock x:Name="ConfigLanguageLabel" Text="Language" VerticalAlignment="Center" Margin="0,0,12,0"/>
+              <ComboBox x:Name="ConfigLanguage" Width="300" Height="32" VerticalAlignment="Center" AutomationProperties.Name="Language"/>
+              <TextBlock x:Name="ConfigLanguageHint" Text="WinTool follows the Windows display language unless you pick one here." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="14,0,0,0"/>
+            </StackPanel>
+            <StackPanel x:Name="ConfigTabs" Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0" Height="32">
+              <RadioButton x:Name="ConfigTabProfile" GroupName="WinToolConfigTab" Content="WinTool profile" IsChecked="True" Style="{StaticResource ConfigTab}"/>
+              <RadioButton x:Name="ConfigTabWinget" GroupName="WinToolConfigTab" Content="winget package list" Style="{StaticResource ConfigTab}"/>
+              <RadioButton x:Name="ConfigTabTweaks" GroupName="WinToolConfigTab" Content="Tweaks" Style="{StaticResource ConfigTab}"/>
+              <RadioButton x:Name="ConfigTabDns" GroupName="WinToolConfigTab" Content="DNS servers" Style="{StaticResource ConfigTab}"/>
+              <RadioButton x:Name="ConfigTabPower" GroupName="WinToolConfigTab" Content="Ultimate Performance power plan" Style="{StaticResource ConfigTab}"/>
+            </StackPanel>
+            <Grid Grid.Row="4" Margin="0,14,0,0">
+              <Grid x:Name="ConfigPanelProfile">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="1.15*"/>
+                  <ColumnDefinition Width="14"/>
+                  <ColumnDefinition Width="0.85*"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="ConfigProfileCard" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+                  <StackPanel>
+                    <TextBlock x:Uid="t.wintool-profile" Text="WinTool profile" FontWeight="SemiBold"/>
+                    <TextBlock x:Uid="t.a-profile-remembers-the-apps-tweaks-and-terminal" Text="A profile remembers the apps, tweaks, and terminal choices. Loading it selects them in this window. It does not install anything until you press Install, Apply, or Set up terminal." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+                    <TextBlock x:Name="ProfileSummary" Text="Nothing selected yet." FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                      <Button x:Name="SaveProfile" Content="Save profile" Style="{StaticResource PrimaryButton}" Margin="0"/>
+                      <Button x:Name="LoadProfile" Content="Load profile" Style="{StaticResource SecondaryButton}"/>
+                    </StackPanel>
+                    <TextBlock x:Uid="t.to-replay-a-profile-from-a-command-after-the-nex" TextWrapping="Wrap" Foreground="{DynamicResource BrushMuted}" Text="To replay a profile from a command after the next format, run PowerShell as admin:"/>
+                    <Border Margin="0,12,0,0" Background="{DynamicResource BrushLog}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8" Padding="10,10">
+                      <TextBlock x:Uid="t.powershell-sta-executionpolicy-bypass-file-winto" TextWrapping="Wrap" FontFamily="Consolas" Foreground="{DynamicResource BrushLogText}" Text="powershell -STA -ExecutionPolicy Bypass -File .\wintool.ps1 -ApplyProfile .\wintool-profile.json -Unattended"/>
+                    </Border>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+                  <DockPanel>
+                    <TextBlock x:Uid="t.in-this-profile" DockPanel.Dock="Top" Text="In this profile" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <StackPanel x:Name="ProfilePreview"/>
+                  </DockPanel>
+                </Border>
+              </Grid>
+              <Border x:Name="ConfigPanelWinget" Visibility="Collapsed" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel>
+                  <TextBlock x:Uid="t.winget-package-list" Text="winget package list" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.this-is-winget-s-own-export-file-which-can-inclu" Text="This is winget's own export file, which can include apps that were not installed by WinTool. Import asks winget to install every package in the file." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                  <StackPanel Orientation="Horizontal">
+                    <Button x:Name="ExportWinget" Content="Export winget list" Style="{StaticResource SecondaryButton}" Margin="0"/>
+                    <Button x:Name="ImportWinget" Content="Import winget list" Style="{StaticResource SecondaryButton}"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+              <Border x:Name="ConfigPanelTweaks" Visibility="Collapsed" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel>
+                  <TextBlock x:Uid="t.tweaks" Text="Tweaks" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.some-tweaks-only-show-up-after-file-explorer-res" Text="Some tweaks only show up after File Explorer restarts." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                  <CheckBox x:Name="TweakRestartExplorer" Content="Restart File Explorer when a tweak needs it" IsChecked="True"/>
+                </StackPanel>
+              </Border>
+              <Border x:Name="ConfigPanelDns" Visibility="Collapsed" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel>
+                  <TextBlock x:Uid="t.dns-servers" Text="DNS servers" FontWeight="SemiBold"/>
+                  <TextBlock x:Uid="t.pick-which-dns-servers-a-network-adapter-uses-au" Text="Pick which DNS servers a network adapter uses. Automatic goes back to what your router hands out." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                  <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock x:Uid="t.adapter" Text="Adapter" VerticalAlignment="Center" Margin="0,0,12,8"/>
+                    <ComboBox x:Name="DnsAdapter" Grid.Column="1" Margin="0,0,0,8" Height="34" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" MaxDropDownHeight="320" AutomationProperties.Name="Network adapter"/>
+                    <TextBlock x:Uid="t.dns" Text="DNS" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <ComboBox x:Name="DnsProvider" Grid.Row="1" Grid.Column="1" Height="34" Style="{StaticResource TerminalCombo}" ItemContainerStyle="{StaticResource TerminalComboItem}" MaxDropDownHeight="320" AutomationProperties.Name="DNS provider"/>
+                  </Grid>
+                  <CheckBox x:Name="DnsIncludeIpv6" Content="Also set IPv6 DNS servers" IsChecked="True" Margin="0,4,0,8"/>
+                  <TextBlock x:Name="DnsCurrent" Text="Open this tab to read the current DNS servers." Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                  <StackPanel Orientation="Horizontal">
+                    <Button x:Name="ApplyDns" Content="Apply DNS" Style="{StaticResource PrimaryButton}" Margin="0"/>
+                    <Button x:Name="RefreshDns" Content="Refresh adapters" Style="{StaticResource SecondaryButton}"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+              <Border x:Name="ConfigPanelPower" Visibility="Collapsed" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="12" Padding="16">
+                <StackPanel>
+                  <TextBlock x:Uid="t.ultimate-performance-power-plan" Text="Ultimate Performance power plan" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="PowerPlanDescription" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+                  <TextBlock x:Name="PowerPlanStatus" Text="Checking..." FontWeight="SemiBold" Margin="0,0,0,12"/>
+                  <StackPanel Orientation="Horizontal">
+                    <Button x:Name="AddUltimatePlan" Content="Add and switch to it" Style="{StaticResource SecondaryButton}" Margin="0"/>
+                    <Button x:Name="RemoveUltimatePlan" Content="Remove it" Style="{StaticResource SecondaryButton}"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </Grid>
+          </Grid>
+        </ScrollViewer>
+      </Grid>
+
+      <Border x:Name="ActivityPanel" Grid.Row="1" Height="280" Margin="20,0,20,8" Background="{StaticResource BrushLog}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Visibility="Collapsed">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <DockPanel Margin="16,12,12,10" LastChildFill="False">
+            <TextBlock x:Name="ActivityTitle" DockPanel.Dock="Left" Text="Activity" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,12,0"/>
+            <Border DockPanel.Dock="Left" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="ActivityFilterAll" GroupName="ActivityFilter" Content="All" IsChecked="True" Style="{StaticResource SegmentRadio}"/>
+                <RadioButton x:Name="ActivityFilterWarnings" GroupName="ActivityFilter" Content="Warnings" Style="{StaticResource SegmentRadio}"/>
+                <RadioButton x:Name="ActivityFilterErrors" GroupName="ActivityFilter" Content="Errors" Style="{StaticResource SegmentRadio}"/>
+              </StackPanel>
+            </Border>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button x:Name="ActivityCopy" Content="Copy details" Style="{StaticResource QuietButton}" Margin="0,0,4,0"/>
+              <Button x:Name="ActivitySave" Content="Save report" Style="{StaticResource QuietButton}"/>
+            </StackPanel>
+          </DockPanel>
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="12,0,12,10">
+            <StackPanel x:Name="ActivityHost"/>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+      <Border x:Name="ToastPanel" Grid.Row="0" Width="340" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,28,8" Padding="14,14,14,14" Panel.ZIndex="20" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="14" Visibility="Collapsed">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <Border x:Name="ToastAccent" Width="3" CornerRadius="0,3,3,0" Margin="0,0,12,0" Background="{DynamicResource BrushOk}" HorizontalAlignment="Left"/>
+          <Border x:Name="ToastIcon" Grid.Column="1" Width="28" Height="28" CornerRadius="8" Margin="0,0,12,0" Background="{DynamicResource BrushOkSoft}" VerticalAlignment="Top">
+            <TextBlock x:Name="ToastIconMark" FontFamily="Segoe MDL2 Assets" Text="&#xE73E;" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource BrushOk}"/>
+          </Border>
+          <StackPanel Grid.Column="2">
+            <TextBlock x:Name="ToastTitle" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}" TextWrapping="Wrap"/>
+            <TextBlock x:Name="ToastBody" Foreground="{DynamicResource BrushMuted}" TextWrapping="Wrap" Margin="0,3,0,0"/>
+          </StackPanel>
+          <Button x:Name="ToastDismiss" Grid.Column="3" Style="{StaticResource QuietButton}" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" MinWidth="28" Padding="0" Margin="8,0,0,0" VerticalAlignment="Top" ToolTip="Dismiss"/>
+        </Grid>
+      </Border>
+      <Border x:Name="StatusBar" Grid.Row="2" Background="{StaticResource BrushLog}" CornerRadius="12" Margin="20,0,20,16" Padding="14,8">
+        <DockPanel>
+          <DockPanel DockPanel.Dock="Top" LastChildFill="True">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button x:Name="CancelRun" Content="Cancel" Style="{StaticResource QuietButton}" Visibility="Collapsed"/>
+              <Button x:Name="ToggleLogButton" Style="{StaticResource QuietButton}" MinWidth="84" Padding="8,0" AutomationProperties.Name="Activity">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock x:Name="ActivityToggleText" Text="Activity" VerticalAlignment="Center"/>
+                  <Border x:Name="ActivityBadgeHost" MinWidth="18" Height="18" CornerRadius="9" Padding="5,0" Margin="8,0,0,0" Background="{DynamicResource BrushAccentSoft}" Visibility="Collapsed" VerticalAlignment="Center">
+                    <TextBlock x:Name="ActivityBadgeText" Text="1" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource BrushAccentHover}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  </Border>
+                </StackPanel>
+              </Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <Ellipse x:Name="StatusDot" Width="8" Height="8" Margin="0,0,10,0" Fill="{DynamicResource BrushOk}"/>
+              <TextBlock x:Name="StatusText" Text="Ready" Foreground="{DynamicResource BrushLogText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <TextBlock x:Name="StatusSummary" Text="" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" Margin="10,0,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+          </DockPanel>
+          <Grid DockPanel.Dock="Top" Height="8" Margin="0,10,0,0" ClipToBounds="True">
+            <ProgressBar x:Name="MainProgress" Height="8" Minimum="0" Maximum="100" Value="0" Foreground="{DynamicResource BrushProgress}" Background="{DynamicResource BrushProgressTrack}" BorderThickness="0" Visibility="Hidden"/>
+            <Border x:Name="ProgressShimmer" Width="80" Height="8" HorizontalAlignment="Left" IsHitTestVisible="False" Opacity="0">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                  <GradientStop Color="#00FFFFFF" Offset="0"/>
+                  <GradientStop Color="#66FFFFFF" Offset="0.5"/>
+                  <GradientStop Color="#00FFFFFF" Offset="1"/>
+                </LinearGradientBrush>
+              </Border.Background>
+              <Border.RenderTransform>
+                <TranslateTransform x:Name="ProgressShimmerShift" X="-80"/>
+              </Border.RenderTransform>
+            </Border>
+          </Grid>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>

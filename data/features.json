@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "features": [
+    {
+      "id": "hyper-v",
+      "name": "Hyper-V",
+      "description": "Microsoft's virtual machine platform and Hyper-V Manager. Needs Windows 11 Pro, Enterprise, or Education and virtualization turned on in the firmware.",
+      "names": ["Microsoft-Hyper-V-All"]
+    },
+    {
+      "id": "sandbox",
+      "name": "Windows Sandbox",
+      "description": "A throwaway desktop for trying unknown apps. Everything inside is deleted when it closes. Pro, Enterprise, or Education only.",
+      "names": ["Containers-DisposableClientVM"]
+    },
+    {
+      "id": "wsl",
+      "name": "Windows Subsystem for Linux",
+      "description": "Runs Linux distributions such as Ubuntu. Turn on Virtual Machine Platform too for WSL 2.",
+      "names": ["Microsoft-Windows-Subsystem-Linux"]
+    },
+    {
+      "id": "vm-platform",
+      "name": "Virtual Machine Platform",
+      "description": "The virtualization layer WSL 2 and Android apps need.",
+      "names": ["VirtualMachinePlatform"]
+    },
+    {
+      "id": "hypervisor-platform",
+      "name": "Windows Hypervisor Platform",
+      "description": "Lets other virtualization apps, such as some Android emulators, run on top of Hyper-V.",
+      "names": ["HypervisorPlatform"]
+    },
+    {
+      "id": "netfx3",
+      "name": ".NET Framework 3.5",
+      "description": "Includes .NET 2.0 and 3.0. Older apps and games ask for it. Windows downloads it from Windows Update.",
+      "names": ["NetFx3"]
+    },
+    {
+      "id": "nfs-client",
+      "name": "NFS client",
+      "description": "Mount NFS network shares, common on Linux servers and NAS devices.",
+      "names": ["ServicesForNFS-ClientOnly", "ClientForNFS-Infrastructure"]
+    },
+    {
+      "id": "legacy-directplay",
+      "name": "DirectPlay (legacy games)",
+      "description": "An old networking component some games from the early 2000s still need.",
+      "names": ["LegacyComponents", "DirectPlay"]
+    },
+    {
+      "id": "telnet",
+      "name": "Telnet client",
+      "description": "The telnet command, handy for testing whether a network port answers.",
+      "names": ["TelnetClient"]
+    },
+    {
+      "id": "tftp",
+      "name": "TFTP client",
+      "description": "The tftp command, used to flash routers and network gear.",
+      "names": ["TFTP"]
+    }
+  ]
+}

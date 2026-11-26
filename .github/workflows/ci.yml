@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Analyze, test, and build
+        shell: pwsh
+        run: |
+          & ./build/Invoke-CI.ps1
+
+  window:
+    runs-on: windows-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Build the WPF window with PowerShell 7
+        shell: pwsh
+        env:
+          WINTOOL_SHOT_DIR: ${{ runner.temp }}\wintool-shots
+        run: pwsh -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolUiBuild.ps1
+
+      - name: Open and close WinTool, then check nothing is left running
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolLifecycle.ps1
+
+      - name: Time startup, paint the first frame, and run theme warmup
+        shell: pwsh
+        env:
+          WINTOOL_SHOT_DIR: ${{ runner.temp }}\wintool-shots
+        run: pwsh -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolStartup.ps1
+
+      - name: Exercise every tab and action
+        shell: pwsh
+        timeout-minutes: 45
+        run: pwsh -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolFeatures.ps1
+
+      - name: Hand off from Windows PowerShell 5.1 to PowerShell 7
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolBootstrap.ps1
+
+      - name: Upload window screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: ${{ runner.temp }}\wintool-shots
+          if-no-files-found: ignore
+
+  wsl-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Run the WSL shell setup in an existing Ubuntu
+        run: docker run --rm -v "$PWD:/src:ro" ubuntu:24.04 bash /src/tests/Test-WslSetup.sh /src
+
+  i18n:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/cursor/wintool-v1-ecdf' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check whether generated locales need a refresh
+        id: i18n-check
+        env:
+          WINTOOL_I18N_PYTHON: python
+        shell: pwsh
+        run: |
+          & ./build/Sync-WinToolLocales.ps1 -Check
+          if ($LASTEXITCODE -eq 0) {
+            "needed=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+          if ($LASTEXITCODE -eq 2) {
+            "needed=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+          throw "Locale check failed with exit code $LASTEXITCODE."
+
+      - name: Cache the NLLB model and pip packages
+        if: steps.i18n-check.outputs.needed == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/i18n/.cache
+            ~/.cache/huggingface
+            ~/.cache/pip
+          key: wintool-nllb-200-distilled-600M-int8-${{ runner.os }}
+
+      - name: Install translator dependencies
+        if: steps.i18n-check.outputs.needed == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "ctranslate2>=4.0" "sentencepiece>=0.2" "huggingface_hub>=0.25" "transformers>=4.44" "torch" --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Translate new or changed English strings
+        if: steps.i18n-check.outputs.needed == 'true'
+        env:
+          WINTOOL_I18N_PROVIDER: ctranslate2
+          WINTOOL_I18N_PYTHON: python
+        shell: pwsh
+        run: |
+          & ./build/Sync-WinToolLocales.ps1 -EnsureModelOnly
+          & ./build/Sync-WinToolLocales.ps1
+
+      - name: Commit generated locales when they change
+        if: steps.i18n-check.outputs.needed == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/i18n/generated
+          if git diff --cached --quiet; then
+            echo "Locales are already up to date."
+            exit 0
+          fi
+          git commit -m "Refresh generated WinTool locales."
+          git push

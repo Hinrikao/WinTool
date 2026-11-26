@@ -1,0 +1,318 @@
+{
+  "schemaVersion": 1,
+  "components": {
+    "windowsTerminal": "Microsoft.WindowsTerminal",
+    "powerShell": "Microsoft.PowerShell"
+  },
+  "simple": {
+    "prompt": "oh-my-posh",
+    "promptStyle": "jandedobbeleer",
+    "fontId": "cascadiacode-nf",
+    "schemeId": "wintool-night",
+    "terminalIcons": true,
+    "psReadLine": true,
+    "zoxide": false,
+    "fzf": false,
+    "hideStartupBanner": true
+  },
+  "prompts": [
+    {
+      "id": "oh-my-posh",
+      "name": "Oh My Posh",
+      "summary": "A colorful PowerShell prompt. Pick any official theme.",
+      "wingetId": "JanDeDobbeleer.OhMyPosh",
+      "shell": "powershell",
+      "installs": ["Windows Terminal", "PowerShell 7", "Oh My Posh", "Your chosen Nerd Font"]
+    },
+    {
+      "id": "starship",
+      "name": "Starship",
+      "summary": "A small, fast prompt that stays out of the way.",
+      "wingetId": "Starship.Starship",
+      "shell": "powershell",
+      "installs": ["Windows Terminal", "PowerShell 7", "Starship", "Your chosen font"]
+    },
+    {
+      "id": "powerlevel10k",
+      "name": "Powerlevel10k",
+      "summary": "The familiar zsh prompt, inside Ubuntu on WSL, with Oh My Zsh.",
+      "shell": "wsl-zsh",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "zsh", "Oh My Zsh", "Powerlevel10k", "Your chosen Nerd Font"]
+    },
+    {
+      "id": "pure",
+      "name": "Pure",
+      "summary": "A minimal zsh prompt. Installed inside Ubuntu on WSL.",
+      "shell": "wsl-zsh",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "zsh", "Oh My Zsh", "Pure"]
+    },
+    {
+      "id": "spaceship",
+      "name": "Spaceship",
+      "summary": "A feature-rich zsh prompt. Installed inside Ubuntu on WSL.",
+      "shell": "wsl-zsh",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "zsh", "Oh My Zsh", "Spaceship"]
+    },
+    {
+      "id": "oh-my-zsh",
+      "name": "Oh My Zsh theme",
+      "summary": "Use one of the themes that ship with Oh My Zsh.",
+      "shell": "wsl-zsh",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "zsh", "Oh My Zsh", "The theme you pick"]
+    },
+    {
+      "id": "tide",
+      "name": "Tide",
+      "summary": "A Fish prompt for Ubuntu on WSL. This installs Fish as well as zsh.",
+      "shell": "wsl-fish",
+      "installs": ["Windows Terminal", "WSL Ubuntu", "Fish", "Fisher", "Tide"]
+    },
+    {
+      "id": "powerline-go",
+      "name": "Powerline-go",
+      "summary": "A single small program that draws a Powerline-style prompt in PowerShell.",
+      "shell": "powershell",
+      "downloadUrl": "https://github.com/justjanne/powerline-go/releases/latest/download/powerline-go-windows-amd64.exe",
+      "installs": ["Windows Terminal", "PowerShell 7", "powerline-go"]
+    }
+  ],
+  "starshipPresets": [
+    {"id": "nerd-font-symbols", "name": "Nerd Font symbols", "nerdFont": true, "preview": [{"text": "~/src", "color": "#61D6D6"}, {"text": " on ", "color": "#E8EDF7"}, {"text": "\uf418 main", "color": "#B4009E"}, {"text": " via ", "color": "#E8EDF7"}, {"text": "\ue718 v20.11", "color": "#16C60C"}, {"text": " \u276f", "color": "#16C60C"}]},
+    {"id": "no-nerd-font", "name": "No Nerd Fonts", "nerdFont": false, "preview": [{"text": "~/src", "color": "#61D6D6"}, {"text": " on ", "color": "#E8EDF7"}, {"text": "main", "color": "#B4009E"}, {"text": " via ", "color": "#E8EDF7"}, {"text": "\u2b22 v20.11", "color": "#16C60C"}, {"text": " \u276f", "color": "#16C60C"}]},
+    {"id": "bracketed-segments", "name": "Bracketed segments", "nerdFont": true, "preview": [{"text": "~/src ", "color": "#61D6D6"}, {"text": "[", "color": "#E8EDF7"}, {"text": "\uf418 main", "color": "#B4009E"}, {"text": "]", "color": "#E8EDF7"}, {"text": "[", "color": "#E8EDF7"}, {"text": "\ue718 v20.11", "color": "#16C60C"}, {"text": "]", "color": "#E8EDF7"}, {"text": " \u276f", "color": "#16C60C"}]},
+    {"id": "plain-text-symbols", "name": "Plain text symbols", "nerdFont": false, "preview": [{"text": "~/src", "color": "#61D6D6"}, {"text": " on ", "color": "#E8EDF7"}, {"text": "git main", "color": "#B4009E"}, {"text": " via ", "color": "#E8EDF7"}, {"text": "nodejs v20.11", "color": "#16C60C"}, {"text": " >", "color": "#16C60C"}]},
+    {"id": "no-runtime-versions", "name": "No runtime versions", "nerdFont": true, "preview": [{"text": "~/src", "color": "#61D6D6"}, {"text": " on ", "color": "#E8EDF7"}, {"text": "\uf418 main", "color": "#B4009E"}, {"text": " via ", "color": "#E8EDF7"}, {"text": "\ue718", "color": "#16C60C"}, {"text": " \u276f", "color": "#16C60C"}]},
+    {"id": "no-empty-icons", "name": "No empty icons", "nerdFont": true, "preview": [{"text": "~/src", "color": "#61D6D6"}, {"text": " on ", "color": "#E8EDF7"}, {"text": "\uf418 main", "color": "#B4009E"}, {"text": " via ", "color": "#E8EDF7"}, {"text": "\ue718 v20.11", "color": "#16C60C"}, {"text": " \u276f", "color": "#16C60C"}]},
+    {"id": "pure-preset", "name": "Pure prompt", "nerdFont": false, "preview": [{"text": "~/src", "color": "#3B78FF"}, {"text": " main", "color": "#767676"}, {"text": " \u276f", "color": "#B4009E"}]},
+    {"id": "pastel-powerline", "name": "Pastel powerline", "nerdFont": true, "preview": [{"text": "\ue0b6", "color": "#9A348E", "fg": "#9A348E"}, {"text": "user ", "color": "#9A348E", "fg": "#FFFFFF", "bg": "#9A348E"}, {"text": "\ue0b0", "color": "#9A348E", "fg": "#9A348E", "bg": "#DA627D"}, {"text": " ~/src ", "color": "#DA627D", "fg": "#FFFFFF", "bg": "#DA627D"}, {"text": "\ue0b0", "color": "#DA627D", "fg": "#DA627D", "bg": "#FCA17D"}, {"text": " \uf418 main ", "color": "#FCA17D", "fg": "#FFFFFF", "bg": "#FCA17D"}, {"text": "\ue0b0", "color": "#FCA17D", "fg": "#FCA17D", "bg": "#86BBD8"}, {"text": " \ue718 v20.11 ", "color": "#86BBD8", "fg": "#FFFFFF", "bg": "#86BBD8"}, {"text": "\ue0b0", "color": "#86BBD8", "fg": "#86BBD8", "bg": "#06969A"}, {"text": "\ue0b0", "color": "#06969A", "fg": "#06969A", "bg": "#33658A"}, {"text": " \u2665 23:14 ", "color": "#33658A", "fg": "#FFFFFF", "bg": "#33658A"}, {"text": "\ue0b0 ", "color": "#33658A", "fg": "#33658A"}]},
+    {"id": "tokyo-night", "name": "Tokyo Night", "nerdFont": true, "preview": [{"text": "\u2591\u2592\u2593", "color": "#A3AED2", "fg": "#A3AED2"}, {"text": " \ue70f ", "color": "#A3AED2", "fg": "#090C0C", "bg": "#A3AED2"}, {"text": "\ue0b4", "color": "#A3AED2", "fg": "#A3AED2", "bg": "#769FF0"}, {"text": " ~/src ", "color": "#769FF0", "fg": "#E3E5E5", "bg": "#769FF0"}, {"text": "\ue0b4", "color": "#769FF0", "fg": "#769FF0", "bg": "#394260"}, {"text": " \uf418 main ", "color": "#394260", "fg": "#769FF0", "bg": "#394260"}, {"text": "\ue0b4", "color": "#394260", "fg": "#394260", "bg": "#212736"}, {"text": " \ue718 v20.11 ", "color": "#212736", "fg": "#769FF0", "bg": "#212736"}, {"text": "\ue0b4", "color": "#212736", "fg": "#212736", "bg": "#1D2230"}, {"text": " \uf43a 23:14 ", "color": "#1D2230", "fg": "#A0A9CB", "bg": "#1D2230"}, {"text": "\ue0b4 ", "color": "#1D2230", "fg": "#1D2230"}, {"text": "\u276f", "color": "#16C60C"}]},
+    {"id": "gruvbox-rainbow", "name": "Gruvbox rainbow", "nerdFont": true, "preview": [{"text": "\ue0b6", "color": "#D65D0E", "fg": "#D65D0E"}, {"text": "\ue70f user ", "color": "#D65D0E", "fg": "#FBF1C7", "bg": "#D65D0E"}, {"text": "\ue0b0", "color": "#D65D0E", "fg": "#D65D0E", "bg": "#D79921"}, {"text": " ~/src ", "color": "#D79921", "fg": "#FBF1C7", "bg": "#D79921"}, {"text": "\ue0b0", "color": "#D79921", "fg": "#D79921", "bg": "#689D6A"}, {"text": " \uf418 main ", "color": "#689D6A", "fg": "#FBF1C7", "bg": "#689D6A"}, {"text": "\ue0b0", "color": "#689D6A", "fg": "#689D6A", "bg": "#458588"}, {"text": " \ue718 v20.11 ", "color": "#458588", "fg": "#FBF1C7", "bg": "#458588"}, {"text": "\ue0b0", "color": "#458588", "fg": "#458588", "bg": "#665C54"}, {"text": "\ue0b0", "color": "#665C54", "fg": "#665C54", "bg": "#3C3836"}, {"text": " \uf43a 23:14 ", "color": "#3C3836", "fg": "#FBF1C7", "bg": "#3C3836"}, {"text": "\ue0b4 ", "color": "#3C3836", "fg": "#3C3836"}, {"text": "\uf432", "color": "#98971A"}]},
+    {"id": "jetpack", "name": "Jetpack", "nerdFont": false, "preview": [{"text": "\u25ce ", "color": "#F9F1A5"}, {"text": "   ", "color": "#E8EDF7"}, {"text": "\u2302/src", "color": "#3B78FF"}, {"text": " \u25b3", "color": "#3B78FF"}, {"text": " feature", "color": "#3B78FF"}, {"text": "  23:14", "color": "#767676"}]},
+    {"id": "catppuccin-powerline", "name": "Catppuccin powerline", "nerdFont": true, "preview": [{"text": "\ue0b6", "color": "#F38BA8", "fg": "#F38BA8"}, {"text": "\ue70f user", "color": "#F38BA8", "fg": "#11111B", "bg": "#F38BA8"}, {"text": "\ue0b0", "color": "#F38BA8", "fg": "#F38BA8", "bg": "#FAB387"}, {"text": " ~/src ", "color": "#FAB387", "fg": "#11111B", "bg": "#FAB387"}, {"text": "\ue0b0", "color": "#FAB387", "fg": "#FAB387", "bg": "#F9E2AF"}, {"text": " \uf418 main ", "color": "#F9E2AF", "fg": "#11111B", "bg": "#F9E2AF"}, {"text": "\ue0b0", "color": "#F9E2AF", "fg": "#F9E2AF", "bg": "#A6E3A1"}, {"text": " \ue718 v20.11 ", "color": "#A6E3A1", "fg": "#11111B", "bg": "#A6E3A1"}, {"text": "\ue0b0", "color": "#A6E3A1", "fg": "#A6E3A1", "bg": "#74C7EC"}, {"text": "\ue0b0", "color": "#74C7EC", "fg": "#74C7EC", "bg": "#B4BEFE"}, {"text": " \uf43a 23:14 ", "color": "#B4BEFE", "fg": "#11111B", "bg": "#B4BEFE"}, {"text": "\ue0b4 ", "color": "#B4BEFE", "fg": "#B4BEFE"}, {"text": "\u276f", "color": "#A6E3A1"}]}
+  ],
+  "omzThemes": [
+    "3den", "Soliah", "adben", "af-magic", "afowler", "agnoster", "alanpeabody", "amuse", "apple", "arrow",
+    "aussiegeek", "avit", "awesomepanda", "bira", "blinks", "bureau", "candy-kingdom", "candy", "clean", "cloud",
+    "crcandy", "crunch", "cypher", "dallas", "darkblood", "daveverwer", "dieter", "dogenpunk", "dpoggi", "dst",
+    "dstufft", "duellj", "eastwood", "edvardm", "emotty", "essembeh", "evan", "fino-time", "fino", "fishy",
+    "flazz", "fletcherm", "fox", "frisk", "frontcube", "funky", "fwalch", "gallifrey", "gallois", "garyblessington",
+    "gentoo", "geoffgarside", "gianu", "gnzh", "gozilla", "half-life", "humza", "imajes", "intheloop", "itchy",
+    "jaischeema", "jbergantine", "jispwoso", "jnrowe", "jonathan", "josh", "jreese", "jtriley", "juanghurtado", "junkfood",
+    "kafeitu", "kardan", "kennethreitz", "kiwi", "kolo", "kphoen", "lambda", "linuxonly", "lukerandall", "macovsky-ruby",
+    "macovsky", "maran", "mgutz", "mh", "michelebologna", "mikeh", "miloshadzic", "minimal", "mira", "mlh",
+    "mortalscumbag", "mrtazz", "murilasso", "muse", "nanotech", "nebirhos", "nicoulaj", "norm", "obraun", "oldgallois",
+    "peepcode", "philips", "pmcgee", "pygmalion-virtualenv", "pygmalion", "random", "re5et", "refined", "rgm", "risto",
+    "rixius", "rkj-repos", "rkj", "robbyrussell", "sammy", "simonoff", "simple", "skaro", "smt", "sonicradish",
+    "sorin", "sporty_256", "steeef", "strug", "sunaku", "sunrise", "superjarin", "suvash", "takashiyoshida", "terminalparty",
+    "theunraveler", "tjkirch", "tjkirch_mod", "tonotdo", "trapd00r", "wedisagree", "wezm", "wuffers", "xiong-chiamiov-plus", "xiong-chiamiov",
+    "ys", "zhann"
+  ],
+  "extras": [
+    {"id": "hide-startup-banner", "name": "Hide startup banner", "description": "No copyright, version, or profile-loading line when a terminal opens.", "kind": "setting"},
+    {"id": "terminal-icons", "name": "Terminal-Icons", "description": "Folder and file icons in PowerShell listings.", "kind": "module"},
+    {"id": "psreadline", "name": "PSReadLine predictions", "description": "Suggest the rest of a command from your history.", "kind": "profile"},
+    {"id": "zoxide", "name": "zoxide", "description": "Jump to folders you use often. The command is z.", "kind": "winget", "wingetId": "ajeetdsouza.zoxide"},
+    {"id": "fzf", "name": "fzf", "description": "Fuzzy find files and history from the keyboard.", "kind": "winget", "wingetId": "junegunn.fzf"}
+  ],
+  "previews": {
+    "powerlevel10k": [
+      {
+        "text": " ~/src ",
+        "fg": "#FFFFFF",
+        "bg": "#0087AF"
+      },
+      {
+        "text": " main ",
+        "fg": "#000000",
+        "bg": "#5FAF00"
+      },
+      {
+        "text": " \u276f",
+        "fg": "#5FD700"
+      }
+    ],
+    "pure": [
+      {
+        "text": "~/src",
+        "fg": "#6C9BFF"
+      },
+      {
+        "text": " main",
+        "fg": "#8B94A7"
+      },
+      {
+        "text": " \u276f",
+        "fg": "#C678DD"
+      }
+    ],
+    "spaceship": [
+      {
+        "text": "~/src",
+        "fg": "#56B6C2"
+      },
+      {
+        "text": " on ",
+        "fg": "#E8EDF7"
+      },
+      {
+        "text": "main",
+        "fg": "#C678DD"
+      },
+      {
+        "text": " \u279c",
+        "fg": "#98C379"
+      }
+    ],
+    "tide": [
+      {
+        "text": " ~/src ",
+        "fg": "#5FAFFF",
+        "bg": "#303030"
+      },
+      {
+        "text": " main ",
+        "fg": "#5FD700",
+        "bg": "#303030"
+      },
+      {
+        "text": " \u276f",
+        "fg": "#5FD700"
+      }
+    ],
+    "powerline-go": [
+      {
+        "text": " ~ ",
+        "fg": "#FFFFFF",
+        "bg": "#0087AF"
+      },
+      {
+        "text": " src ",
+        "fg": "#D0D0D0",
+        "bg": "#444444"
+      },
+      {
+        "text": " main ",
+        "fg": "#000000",
+        "bg": "#87AF00"
+      },
+      {
+        "text": " $",
+        "fg": "#E8EDF7"
+      }
+    ],
+    "oh-my-zsh:agnoster": [
+      {
+        "text": " user@pc ",
+        "fg": "#FFFFFF",
+        "bg": "#000000"
+      },
+      {
+        "text": " ~/src ",
+        "fg": "#000000",
+        "bg": "#3B78FF"
+      },
+      {
+        "text": " main ",
+        "fg": "#000000",
+        "bg": "#13A10E"
+      }
+    ],
+    "oh-my-zsh:af-magic": [{"text": "~/src", "fg": "#0087D7"}, {"text": " (", "fg": "#5FAFFF"}, {"text": "main", "fg": "#5FD787"}, {"text": ")", "fg": "#5FAFFF"}, {"text": " \u00bb", "fg": "#0037DA"}],
+    "oh-my-zsh:arrow": [{"text": "src \u27a4 ", "fg": "#C19C00"}],
+    "oh-my-zsh:bira": [{"text": "\u256d\u2500", "fg": "#E8EDF7"}, {"text": "user@pc ", "fg": "#16C60C"}, {"text": "~/src ", "fg": "#3B78FF"}, {"text": "\u2039main\u203a", "fg": "#C19C00"}],
+    "oh-my-zsh:candy": [{"text": "user@pc ", "fg": "#16C60C"}, {"text": "[23:14:05] ", "fg": "#0037DA"}, {"text": "[~/src] ", "fg": "#CCCCCC"}, {"text": "[main]", "fg": "#13A10E"}],
+    "oh-my-zsh:clean": [{"text": "user", "fg": "#CCCCCC"}, {"text": ":", "fg": "#E8EDF7"}, {"text": "src/", "fg": "#3B78FF"}, {"text": " (", "fg": "#3B78FF"}, {"text": "main", "fg": "#F9F1A5"}, {"text": ")", "fg": "#3B78FF"}, {"text": " $", "fg": "#E8EDF7"}],
+    "oh-my-zsh:eastwood": [{"text": "[main]", "fg": "#13A10E"}, {"text": "[~/src]", "fg": "#3A96DD"}, {"text": "$", "fg": "#E8EDF7"}],
+    "oh-my-zsh:fishy": [{"text": "user", "fg": "#13A10E"}, {"text": "@", "fg": "#E8EDF7"}, {"text": "pc ", "fg": "#13A10E"}, {"text": "~/src", "fg": "#13A10E"}, {"text": ">", "fg": "#E8EDF7"}],
+    "oh-my-zsh:gentoo": [{"text": "user@pc ", "fg": "#16C60C"}, {"text": "~/src ", "fg": "#3B78FF"}, {"text": "$", "fg": "#3B78FF"}],
+    "oh-my-zsh:kphoen": [{"text": "[", "fg": "#E8EDF7"}, {"text": "user", "fg": "#C50F1F"}, {"text": "@", "fg": "#E8EDF7"}, {"text": "pc", "fg": "#881798"}, {"text": ":", "fg": "#E8EDF7"}, {"text": "~/src", "fg": "#0037DA"}, {"text": " on ", "fg": "#E8EDF7"}, {"text": "main", "fg": "#13A10E"}, {"text": "]", "fg": "#E8EDF7"}],
+    "oh-my-zsh:lambda": [{"text": "\u03bb ~/src/ ", "fg": "#E8EDF7"}, {"text": "main", "fg": "#13A10E"}],
+    "oh-my-zsh:refined": [{"text": "~/src", "fg": "#0037DA"}, {"text": " main", "fg": "#767676"}, {"text": " \u276f", "fg": "#881798"}],
+    "oh-my-zsh:simple": [{"text": "~/src", "fg": "#13A10E"}, {"text": " (main)", "fg": "#3B78FF"}],
+    "oh-my-zsh:sorin": [{"text": "src", "fg": "#3A96DD"}, {"text": " git", "fg": "#0037DA"}, {"text": ":", "fg": "#E8EDF7"}, {"text": "main", "fg": "#C50F1F"}, {"text": " \u276f", "fg": "#16C60C"}],
+    "oh-my-zsh:ys": [{"text": "# ", "fg": "#3B78FF"}, {"text": "user", "fg": "#3A96DD"}, {"text": " @ ", "fg": "#E8EDF7"}, {"text": "pc", "fg": "#13A10E"}, {"text": " in ", "fg": "#E8EDF7"}, {"text": "~/src", "fg": "#F9F1A5"}, {"text": " on ", "fg": "#E8EDF7"}, {"text": "git:", "fg": "#E8EDF7"}, {"text": "main", "fg": "#3A96DD"}, {"text": " o", "fg": "#13A10E"}],
+    "oh-my-zsh": [
+      {
+        "text": "\u279c  ",
+        "fg": "#13A10E"
+      },
+      {
+        "text": "src ",
+        "fg": "#3A96DD"
+      },
+      {
+        "text": "git:(",
+        "fg": "#3B78FF"
+      },
+      {
+        "text": "main",
+        "fg": "#C50F1F"
+      },
+      {
+        "text": ")",
+        "fg": "#3B78FF"
+      }
+    ],
+    "oh-my-posh": [
+      {
+        "text": " ~/src ",
+        "fg": "#FFFFFF",
+        "bg": "#3B78FF"
+      },
+      {
+        "text": " main ",
+        "fg": "#1B2230",
+        "bg": "#FFD866"
+      },
+      {
+        "text": " \u276f",
+        "fg": "#6C9BFF"
+      }
+    ]
+  },
+  "promptVariants": {
+    "powerlevel10k": [
+      {"id": "lean", "name": "Lean", "description": "Clean, no background colors. Prompt on its own line.", "configFile": "config/p10k-lean.zsh", "preview": [{"text": "~/src", "fg": "#0087AF"}, {"text": " \uf126 main", "fg": "#5FD700"}, {"text": " \u276f", "fg": "#5FD700"}]},
+      {"id": "lean-8colors", "name": "Lean (8 colors)", "description": "Lean style using only the basic 8 terminal colors.", "configFile": "config/p10k-lean-8colors.zsh", "preview": [{"text": "~/src", "fg": "#0037DA"}, {"text": " \uf126 main", "fg": "#13A10E"}, {"text": " \u276f", "fg": "#13A10E"}]},
+      {"id": "classic", "name": "Classic", "description": "Dark segments with arrow separators.", "configFile": "config/p10k-classic.zsh", "preview": [{"text": " ~/src ", "fg": "#0087AF", "bg": "#444444"}, {"text": "\ue0b1", "fg": "#949494", "bg": "#444444"}, {"text": " \uf126 main ", "fg": "#5FD700", "bg": "#444444"}, {"text": "\ue0b0", "fg": "#444444"}, {"text": " \u276f", "fg": "#5FD700"}]},
+      {"id": "rainbow", "name": "Rainbow", "description": "A colored block for each segment.", "configFile": "config/p10k-rainbow.zsh", "preview": [{"text": " ~/src ", "fg": "#E4E4E4", "bg": "#0037DA"}, {"text": "\ue0b0", "fg": "#0037DA", "bg": "#13A10E"}, {"text": " \uf126 main ", "fg": "#000000", "bg": "#13A10E"}, {"text": "\ue0b0", "fg": "#13A10E"}, {"text": " \u276f", "fg": "#5FD700"}]},
+      {"id": "pure", "name": "Pure", "description": "Looks like the Pure prompt.", "configFile": "config/p10k-pure.zsh", "preview": [{"text": "~/src", "fg": "#3B78FF"}, {"text": " main", "fg": "#767676"}, {"text": " \u276f", "fg": "#B4009E"}]},
+      {"id": "robbyrussell", "name": "robbyrussell", "description": "Looks like the default Oh My Zsh theme.", "configFile": "config/p10k-robbyrussell.zsh", "preview": [{"text": "\u279c  ", "fg": "#16C60C"}, {"text": "src ", "fg": "#3A96DD"}, {"text": "git:(", "fg": "#3B78FF"}, {"text": "main", "fg": "#C50F1F"}, {"text": ")", "fg": "#3B78FF"}]}
+    ],
+    "tide": [
+      {"id": "lean", "name": "Lean", "description": "No background colors.", "configFile": "functions/tide/configure/configs/lean.fish", "preview": [{"text": "~/src", "fg": "#00AFFF"}, {"text": " main", "fg": "#5FD700"}, {"text": " \u276f", "fg": "#5FD700"}]},
+      {"id": "lean-16color", "name": "Lean (16 colors)", "description": "Lean style using the 16 terminal colors.", "configFile": "functions/tide/configure/configs/lean_16color.fish", "preview": [{"text": "~/src", "fg": "#3B78FF"}, {"text": " main", "fg": "#13A10E"}, {"text": " \u276f", "fg": "#13A10E"}]},
+      {"id": "classic", "name": "Classic", "description": "Dark segments with arrow separators.", "configFile": "functions/tide/configure/configs/classic.fish", "preview": [{"text": " ~/src ", "fg": "#00AFFF", "bg": "#444444"}, {"text": " main ", "fg": "#5FD700", "bg": "#444444"}, {"text": "\ue0b0", "fg": "#444444"}, {"text": " \u276f", "fg": "#5FD700"}]},
+      {"id": "classic-16color", "name": "Classic (16 colors)", "description": "Classic style using the 16 terminal colors.", "configFile": "functions/tide/configure/configs/classic_16color.fish", "preview": [{"text": " ~/src ", "fg": "#3B78FF", "bg": "#0C0C0C"}, {"text": " main ", "fg": "#13A10E", "bg": "#0C0C0C"}, {"text": "\ue0b0", "fg": "#0C0C0C"}, {"text": " \u276f", "fg": "#13A10E"}]},
+      {"id": "rainbow", "name": "Rainbow", "description": "A colored block for each segment.", "configFile": "functions/tide/configure/configs/rainbow.fish", "preview": [{"text": " ~/src ", "fg": "#E4E4E4", "bg": "#3465A4"}, {"text": "\ue0b0", "fg": "#3465A4", "bg": "#4E9A06"}, {"text": " main ", "fg": "#000000", "bg": "#4E9A06"}, {"text": "\ue0b0", "fg": "#4E9A06"}, {"text": " \u276f", "fg": "#5FD700"}]},
+      {"id": "rainbow-16color", "name": "Rainbow (16 colors)", "description": "Rainbow style using the 16 terminal colors.", "configFile": "functions/tide/configure/configs/rainbow_16color.fish", "preview": [{"text": " ~/src ", "fg": "#CCCCCC", "bg": "#0037DA"}, {"text": "\ue0b0", "fg": "#0037DA", "bg": "#13A10E"}, {"text": " main ", "fg": "#0C0C0C", "bg": "#13A10E"}, {"text": "\ue0b0", "fg": "#13A10E"}, {"text": " \u276f", "fg": "#13A10E"}]}
+    ],
+    "spaceship": [
+      {"id": "default", "name": "Two lines", "description": "The default: a blank line, the info line, then the prompt character.", "settings": [], "preview": [{"text": "~/src", "fg": "#3A96DD"}, {"text": " on ", "fg": "#E8EDF7"}, {"text": "\ue0a0 main", "fg": "#881798"}, {"text": " \u279c", "fg": "#13A10E"}]},
+      {"id": "single-line", "name": "One line", "description": "Keeps the prompt character on the same line.", "settings": ["SPACESHIP_PROMPT_SEPARATE_LINE=false"], "preview": [{"text": "~/src", "fg": "#3A96DD"}, {"text": " on ", "fg": "#E8EDF7"}, {"text": "\ue0a0 main", "fg": "#881798"}, {"text": " \u279c", "fg": "#13A10E"}]},
+      {"id": "compact", "name": "Compact", "description": "No blank line between prompts.", "settings": ["SPACESHIP_PROMPT_ADD_NEWLINE=false"], "preview": [{"text": "~/src", "fg": "#3A96DD"}, {"text": " on ", "fg": "#E8EDF7"}, {"text": "\ue0a0 main", "fg": "#881798"}, {"text": " \u279c", "fg": "#13A10E"}]},
+      {"id": "no-prefixes", "name": "No prefixes", "description": "Hides words such as \"on\" and \"via\" between sections.", "settings": ["SPACESHIP_PROMPT_PREFIXES_SHOW=false"], "preview": [{"text": "~/src ", "fg": "#3A96DD"}, {"text": "\ue0a0 main", "fg": "#881798"}, {"text": " \u279c", "fg": "#13A10E"}]}
+    ],
+    "pure": [
+      {"id": "default", "name": "Default", "description": "Path and Git branch, then \u276f on the next line.", "settings": [], "preview": [{"text": "~/src", "fg": "#0037DA"}, {"text": " main", "fg": "#767676"}, {"text": " \u276f", "fg": "#881798"}]},
+      {"id": "git-stash", "name": "Show Git stash", "description": "Adds \u2261 when the repository has stashed changes.", "settings": ["zstyle :prompt:pure:git:stash show yes"], "preview": [{"text": "~/src", "fg": "#0037DA"}, {"text": " main", "fg": "#767676"}, {"text": " \u2261", "fg": "#3A96DD"}, {"text": " \u276f", "fg": "#881798"}]},
+      {"id": "detailed-dirty", "name": "Detailed Git status", "description": "Shows which kind of change makes the repository dirty.", "settings": ["zstyle :prompt:pure:git:dirty detailed yes"], "preview": [{"text": "~/src", "fg": "#0037DA"}, {"text": " main", "fg": "#767676"}, {"text": "*", "fg": "#767676"}, {"text": " \u276f", "fg": "#881798"}]},
+      {"id": "node-version", "name": "Show Node.js version", "description": "Shows the Node.js version inside Node projects.", "settings": ["zstyle :prompt:pure:environment:node_version show yes"], "preview": [{"text": "~/src", "fg": "#0037DA"}, {"text": " main", "fg": "#767676"}, {"text": " \u2b22 20.11", "fg": "#13A10E"}, {"text": " \u276f", "fg": "#881798"}]}
+    ],
+    "powerline-go": [
+      {"id": "default", "name": "Default", "description": "Blue home, grey path, green Git.", "args": ["-theme", "default"], "preview": [{"text": " ~ ", "fg": "#FFFFFF", "bg": "#0087AF"}, {"text": "\ue0b0", "fg": "#0087AF", "bg": "#3A3A3A"}, {"text": " src ", "fg": "#BCBCBC", "bg": "#3A3A3A"}, {"text": "\ue0b0", "fg": "#3A3A3A", "bg": "#AFD700"}, {"text": " main ", "fg": "#000000", "bg": "#AFD700"}, {"text": "\ue0b0", "fg": "#AFD700", "bg": "#303030"}, {"text": " $ ", "fg": "#FFFFFF", "bg": "#303030"}, {"text": "\ue0b0", "fg": "#303030"}]},
+      {"id": "low-contrast", "name": "Low contrast", "description": "Light backgrounds with dark text.", "args": ["-theme", "low-contrast"], "preview": [{"text": " ~ ", "fg": "#008787", "bg": "#FFFFFF"}, {"text": "\ue0b0", "fg": "#FFFFFF", "bg": "#E4E4E4"}, {"text": " src ", "fg": "#1C1C1C", "bg": "#E4E4E4"}, {"text": "\ue0b0", "fg": "#E4E4E4", "bg": "#FFFFD7"}, {"text": " main ", "fg": "#080808", "bg": "#FFFFD7"}, {"text": "\ue0b0", "fg": "#FFFFD7", "bg": "#C0C0C0"}, {"text": " $ ", "fg": "#000087", "bg": "#C0C0C0"}, {"text": "\ue0b0", "fg": "#C0C0C0"}]},
+      {"id": "gruvbox", "name": "Gruvbox", "description": "Warm Gruvbox colors.", "args": ["-theme", "gruvbox"], "preview": [{"text": " ~ ", "fg": "#BCBCBC", "bg": "#5F8787"}, {"text": "\ue0b0", "fg": "#5F8787", "bg": "#626262"}, {"text": " src ", "fg": "#A8A8A8", "bg": "#626262"}, {"text": "\ue0b0", "fg": "#626262", "bg": "#878700"}, {"text": " main ", "fg": "#3A3A3A", "bg": "#878700"}, {"text": "\ue0b0", "fg": "#878700", "bg": "#3A3A3A"}, {"text": " $ ", "fg": "#949494", "bg": "#3A3A3A"}, {"text": "\ue0b0", "fg": "#3A3A3A"}]},
+      {"id": "solarized-dark16", "name": "Solarized dark (16 colors)", "description": "For a terminal using the Solarized dark palette.", "args": ["-theme", "solarized-dark16"], "preview": [{"text": " ~ ", "fg": "#FDF6E3", "bg": "#268BD2"}, {"text": "\ue0b0", "fg": "#268BD2", "bg": "#586E75"}, {"text": " src ", "fg": "#FDF6E3", "bg": "#586E75"}, {"text": "\ue0b0", "fg": "#586E75", "bg": "#B58900"}, {"text": " main ", "fg": "#FDF6E3", "bg": "#B58900"}, {"text": "\ue0b0", "fg": "#B58900", "bg": "#073642"}, {"text": " $ ", "fg": "#FDF6E3", "bg": "#073642"}, {"text": "\ue0b0", "fg": "#073642"}]},
+      {"id": "solarized-light16", "name": "Solarized light (16 colors)", "description": "For a terminal using the Solarized light palette.", "args": ["-theme", "solarized-light16"], "preview": [{"text": " ~ ", "fg": "#FDF6E3", "bg": "#268BD2"}, {"text": "\ue0b0", "fg": "#268BD2", "bg": "#586E75"}, {"text": " src ", "fg": "#FDF6E3", "bg": "#586E75"}, {"text": "\ue0b0", "fg": "#586E75", "bg": "#B58900"}, {"text": " main ", "fg": "#FDF6E3", "bg": "#B58900"}, {"text": "\ue0b0", "fg": "#B58900", "bg": "#EEE8D5"}, {"text": " $ ", "fg": "#586E75", "bg": "#EEE8D5"}, {"text": "\ue0b0", "fg": "#EEE8D5"}]},
+      {"id": "compatible", "name": "Compatible symbols", "description": "Works without a patched font: uses \u25b6 instead of the Powerline arrow.", "args": ["-mode", "compatible"], "preview": [{"text": " ~ ", "fg": "#FFFFFF", "bg": "#0087AF"}, {"text": "\u25b6", "fg": "#0087AF", "bg": "#3A3A3A"}, {"text": " src ", "fg": "#BCBCBC", "bg": "#3A3A3A"}, {"text": "\u25b6", "fg": "#3A3A3A", "bg": "#AFD700"}, {"text": " main ", "fg": "#000000", "bg": "#AFD700"}, {"text": "\u25b6", "fg": "#AFD700"}]},
+      {"id": "flat", "name": "Flat", "description": "Plain blocks with no separators.", "args": ["-mode", "flat"], "preview": [{"text": " ~ ", "fg": "#FFFFFF", "bg": "#0087AF"}, {"text": " src ", "fg": "#BCBCBC", "bg": "#3A3A3A"}, {"text": " main ", "fg": "#000000", "bg": "#AFD700"}, {"text": " $ ", "fg": "#FFFFFF", "bg": "#303030"}]}
+    ]
+  },
+  "schemes": [
+    {"id": "wintool-night", "name": "Night", "background": "#1B2230", "foreground": "#E8EDF7", "cursor": "#6C9BFF", "selection": "#2A3A5C", "palette": {"black": "#2A3242", "red": "#F07178", "green": "#A6DA95", "yellow": "#EED49F", "blue": "#6C9BFF", "purple": "#C6A0F6", "cyan": "#7DCFDA", "white": "#C8D0E0", "brightBlack": "#5B6680", "brightRed": "#FF8F95", "brightGreen": "#B8E8A8", "brightYellow": "#F5E0B0", "brightBlue": "#8CB4FF", "brightPurple": "#D7B8FA", "brightCyan": "#9EE3EC", "brightWhite": "#F4F7FC"}},
+    {"id": "wintool-paper", "name": "Paper", "background": "#F7F4EC", "foreground": "#2B261C", "cursor": "#A87412", "selection": "#E7D7B0", "palette": {"black": "#2B261C", "red": "#B3261E", "green": "#3B7A2A", "yellow": "#8A6500", "blue": "#2F5DA8", "purple": "#7A3E9D", "cyan": "#1F7A7A", "white": "#D8D2C4", "brightBlack": "#6B6354", "brightRed": "#D2453C", "brightGreen": "#4E9A3A", "brightYellow": "#A87412", "brightBlue": "#4776C4", "brightPurple": "#9558B8", "brightCyan": "#2E9494", "brightWhite": "#FFFDF7"}},
+    {"id": "wintool-ocean", "name": "Ocean", "background": "#10242C", "foreground": "#D5E7EA", "cursor": "#3DCEB5", "selection": "#1A3A36", "palette": {"black": "#163039", "red": "#E06C75", "green": "#3DCEB5", "yellow": "#E5C07B", "blue": "#4FA3D9", "purple": "#B88AE0", "cyan": "#56D4DD", "white": "#C4D8DB", "brightBlack": "#4A6670", "brightRed": "#F08890", "brightGreen": "#6BE0CB", "brightYellow": "#F0D49A", "brightBlue": "#75BBE8", "brightPurple": "#CDA8EE", "brightCyan": "#86E4EA", "brightWhite": "#EEF6F7"}},
+    {"id": "wintool-berry", "name": "Berry", "background": "#24141C", "foreground": "#F6E7EE", "cursor": "#F08AA8", "selection": "#3D2430", "palette": {"black": "#341E28", "red": "#F07A8A", "green": "#9FD39A", "yellow": "#F2C98A", "blue": "#8FA8F0", "purple": "#F08AA8", "cyan": "#86CFD0", "white": "#E3CFD8", "brightBlack": "#6A4D5A", "brightRed": "#FF98A6", "brightGreen": "#B6E3B1", "brightYellow": "#F8DAA8", "brightBlue": "#AEC0F7", "brightPurple": "#F7A8C0", "brightCyan": "#A6E0E0", "brightWhite": "#FBF1F5"}}
+  ]
+}

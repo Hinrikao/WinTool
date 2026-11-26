@@ -1,0 +1,7 @@
+Nome                                   ID                                Versão          Disponível    Origem
+---------------------------------------------------------------------------------------------------------------
+7-Zip 24.08 (x64)                      7zip.7zip                         24.08           24.09         winget
+Git                                    Git.Git                           2.47.0                        winget
+Steam                                  Valve.Steam                       2.10.91.91                    winget
+Google Chrome                          Google.Chrome                     131.0.6778.86                 winget
+Microsoft Visual Studio Code (User)    Microsoft.VisualStudioCod…         1.95.3          1.96.0        winget
