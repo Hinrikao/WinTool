@@ -936,8 +936,8 @@
                         <TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource BrushInk}">
                           <Run x:Name="HomeScore" Text="0" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold"/><Run Text=" / 100" FontSize="{DynamicResource FontSizeBody}" FontWeight="Medium" Foreground="{DynamicResource BrushMuted}"/>
                         </TextBlock>
-                        <Border x:Name="HomeVerdict" Height="24" CornerRadius="12" Padding="10,0" Margin="0,6,0,0" HorizontalAlignment="Center" Background="{DynamicResource BrushWarnSoft}">
-                          <TextBlock x:Name="HomeVerdictText" Text="Needs attention" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushWarn}"/>
+                        <Border x:Name="HomeVerdict" MinHeight="24" MaxWidth="180" CornerRadius="12" Padding="10,2" Margin="0,6,0,0" HorizontalAlignment="Center" Background="{DynamicResource BrushWarnSoft}">
+                          <TextBlock x:Name="HomeVerdictText" Text="Needs attention" FontWeight="SemiBold" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource BrushWarn}"/>
                         </Border>
                       </StackPanel>
                     </Grid>
@@ -1374,7 +1374,7 @@
                         <Border x:Name="TerminalPreviewTab" DockPanel.Dock="Left" Height="30" VerticalAlignment="Bottom" CornerRadius="6,6,0,0" Padding="12,0" Background="#1B2230">
                           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="&#xE756;" Style="{StaticResource TerminalGlyph}" Margin="0,0,8,0" Foreground="{DynamicResource BrushInk}"/>
-                            <TextBlock x:Name="TerminalPreviewTabText" Text="PowerShell" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
+                            <TextBlock x:Name="TerminalPreviewTabText" Text="PowerShell" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="160" Foreground="{DynamicResource BrushInk}"/>
                           </StackPanel>
                         </Border>
                         <TextBlock DockPanel.Dock="Left" Text="+   &#x2304;" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource BrushMuted}"/>

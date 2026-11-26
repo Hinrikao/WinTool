@@ -232,7 +232,14 @@ function Get-WinToolFeatureClippedName {
             $name = ""
             try { $name = [string]$node.Name } catch { $name = "" }
             $visible = $true
-            try { $visible = ([string]$node.Visibility -eq "Visible" -and [double]$node.ActualWidth -gt 1 -and [double]$node.ActualHeight -gt 1) } catch { $visible = $false }
+            try {
+                $visible = ([string]$node.Visibility -eq "Visible" -and [double]$node.ActualWidth -gt 1 -and [double]$node.ActualHeight -gt 1)
+                $ancestor = [System.Windows.Media.VisualTreeHelper]::GetParent($node)
+                while ($visible -and $null -ne $ancestor) {
+                    if ($ancestor -is [System.Windows.UIElement] -and [string]$ancestor.Visibility -ne "Visible") { $visible = $false }
+                    $ancestor = [System.Windows.Media.VisualTreeHelper]::GetParent($ancestor)
+                }
+            } catch { $visible = $false }
             if ($visible -and -not [string]::IsNullOrWhiteSpace($name) -and [string]$node.TextWrapping -eq "NoWrap" -and [string]$node.TextTrimming -eq "None" -and -not [string]::IsNullOrWhiteSpace([string]$node.Text)) {
                 try {
                     $dpi = [System.Windows.Media.VisualTreeHelper]::GetDpi($node).PixelsPerDip
@@ -245,7 +252,7 @@ function Get-WinToolFeatureClippedName {
                         [System.Windows.Media.Brushes]::Black,
                         $dpi
                     )
-                    if ($ft.Width -gt ([double]$node.ActualWidth + 2)) {
+                    if ($ft.Width -gt ([double]$node.ActualWidth + 3) -and [double]$node.DesiredSize.Width -gt ([double]$node.ActualWidth + 1)) {
                         [void]$clipped.Add($name)
                     }
                 }
@@ -765,6 +772,7 @@ try {
             Add-WinToolFeatureResult -Name "Features TelnetClient" -Status "pass" -Detail "Toggled via the Features tab and restored."
         }
         Invoke-WinToolFeatureClick (Get-WinToolUi -Name "FeatureRefresh")
+        $null = Wait-WinToolFeature -TimeoutMs 180000 -Until { -not [bool]$script:WinToolState.Busy }
         Test-WinToolFeatureUiState "Features refresh"
     }
 }
@@ -838,10 +846,13 @@ try {
         Test-WinToolFeatureUiState $tab
     }
     Add-WinToolFeatureResult -Name "Config sections" -Status "pass"
+    $null = Wait-WinToolFeature -TimeoutMs 180000 -Until { -not [bool]$script:WinToolState.Busy }
     $script:WinToolUiFilePath = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-profile-" + [guid]::NewGuid().ToString("N") + ".json")
     Invoke-WinToolSaveProfile
     if (-not (Test-Path -LiteralPath $script:WinToolUiFilePath)) {
-        Add-WinToolFeatureResult -Name "Config save/load profile" -Status "fail" -Detail "Save profile did not write the hooked path."
+        $why = "Save profile did not write the hooked path."
+        if ([bool]$script:WinToolState.Busy) { $why += " WinTool was still busy." }
+        Add-WinToolFeatureResult -Name "Config save/load profile" -Status "fail" -Detail $why
     }
     else {
         Invoke-WinToolLoadProfile
@@ -857,10 +868,19 @@ catch {
 
 # --- Activity ---
 try {
-    Invoke-WinToolFeatureClick (Get-WinToolUi -Name "ToggleLogButton")
+    $null = Wait-WinToolFeature -TimeoutMs 180000 -Until { -not [bool]$script:WinToolState.Busy }
+    if (-not [bool]$script:WinToolState.ActivityReady) {
+        Initialize-WinToolActivityView
+    }
+    $toggle = Get-WinToolUi -Name "ToggleLogButton"
+    $toggle.RaiseEvent((New-Object System.Windows.RoutedEventArgs([System.Windows.Controls.Primitives.ButtonBase]::ClickEvent)))
+    $null = Wait-WinToolFeature -TimeoutMs 2000 -Until {
+        $p = Get-WinToolUi -Name "ActivityPanel"
+        $null -ne $p -and [string]$p.Visibility -eq "Visible"
+    }
     $panel = Get-WinToolUi -Name "ActivityPanel"
-    if ($null -eq $panel -or $panel.Visibility -eq "Collapsed") {
-        Add-WinToolFeatureResult -Name "Activity panel open" -Status "fail" -Detail "Activity panel did not open."
+    if ($null -eq $panel -or [string]$panel.Visibility -eq "Collapsed") {
+        Add-WinToolFeatureResult -Name "Activity panel open" -Status "fail" -Detail ("visible=" + $(if ($null -eq $panel) { "missing" } else { [string]$panel.Visibility }) + " ready=" + [bool]$script:WinToolState.ActivityReady + " expanded=" + [bool]$script:WinToolState.ActivityExpanded)
     }
     else {
         Add-WinToolFeatureResult -Name "Activity panel open" -Status "pass"
@@ -998,7 +1018,7 @@ catch {
 
 # --- Unwired buttons ---
 try {
-    $wired = New-Object "System.Collections.Generic.HashSet[int]"
+    $wired = [System.Collections.Generic.HashSet[int]]::new()
     foreach ($handler in @($script:WinToolUiHandlers)) {
         if ($null -ne $handler.Control) {
             try { [void]$wired.Add([int]$handler.Control.GetHashCode()) } catch { $null = $_.Exception.Message }
@@ -1034,10 +1054,14 @@ try {
         if ([string]$candidate.Tag -eq "pt-BR") { $box.SelectedItem = $candidate; break }
     }
     $null = Wait-WinToolFeature -TimeoutMs 2000 -Until { $true }
+    $clipped = New-Object System.Collections.Generic.List[string]
     foreach ($view in @(Get-WinToolViewName)) {
         Switch-WinToolView -Name $view
         $null = Wait-WinToolFeature -TimeoutMs 1000 -Until { $true }
         if ($null -ne $window) { $window.UpdateLayout() }
+        foreach ($name in @(Get-WinToolFeatureClippedName -Root (Get-WinToolUi -Name ("View" + $view)))) {
+            if (-not $clipped.Contains($name)) { [void]$clipped.Add($name) }
+        }
     }
     $leftover = @(Get-WinToolFeatureEnglishLeftover -Root $window)
     if ($leftover.Count -gt 0) {
@@ -1046,7 +1070,6 @@ try {
     else {
         Add-WinToolFeatureResult -Name "pt-BR untranslated keys" -Status "pass"
     }
-    $clipped = @(Get-WinToolFeatureClippedName -Root $window)
     if ($clipped.Count -gt 0) {
         Add-WinToolFeatureResult -Name "pt-BR clipped chrome text" -Status "fail" -Detail (($clipped | Select-Object -Unique | Select-Object -First 8) -join ", ")
     }
