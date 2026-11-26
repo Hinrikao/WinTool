@@ -458,8 +458,14 @@ function Set-WinToolXamlText {
     $script:WinToolXamlTextSkipViews = $null
     if ($null -ne $script:WinToolWindow -and [object]::ReferenceEquals($Root, $script:WinToolWindow)) {
         $script:WinToolXamlTextSkipViews = New-Object "System.Collections.Generic.HashSet[string]"
-        foreach ($name in @("ViewInstall", "ViewTweaks", "ViewTerminal", "ViewDrivers", "ViewUpdates", "ViewFixes", "ViewFeatures", "ViewConfig")) {
-            [void]$script:WinToolXamlTextSkipViews.Add($name)
+        foreach ($name in @("Install", "Tweaks", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")) {
+            $ready = $false
+            if ($null -ne $script:WinToolState -and $null -ne $script:WinToolState.ViewReady) {
+                $ready = [bool]$script:WinToolState.ViewReady[$name]
+            }
+            if (-not $ready) {
+                [void]$script:WinToolXamlTextSkipViews.Add("View" + $name)
+            }
         }
     }
     $visit = New-Object System.Collections.Generic.Queue[object]
