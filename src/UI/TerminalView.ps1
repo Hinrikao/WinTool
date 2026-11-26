@@ -1878,7 +1878,6 @@ function Update-WinToolFontList {
     }
     $nerdCount = @($allFonts | Where-Object { $_.nerd }).Count
     $schemeCount = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "schemes" -Default @()).Count
-    $dot = " " + [string][char]0x00B7 + " "
     $countBlock = Get-WinToolUi -Name "TerminalFontCount"
     if ($null -ne $countBlock) {
         $countBlock.Text = (Get-WinToolText "msg.n-installed-n-nerd-fonts-n-schemes" $allFonts.Count $nerdCount $schemeCount)

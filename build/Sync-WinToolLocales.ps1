@@ -19,7 +19,6 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = Split-Path -Parent $PSScriptRoot
 $script = Join-Path $PSScriptRoot "i18n/translate.py"
 if (-not (Test-Path -LiteralPath $script)) {
     throw "build/i18n/translate.py is missing."
@@ -40,23 +39,23 @@ function Get-WinToolPython {
 }
 
 $python = Get-WinToolPython
-$args = @($script)
+$pythonArgs = @($script)
 if ($EnsureModelOnly) {
-    $args += "--ensure-model"
+    $pythonArgs += "--ensure-model"
 }
 elseif ($Check) {
-    $args += @("--locales", $Locales, "--check")
+    $pythonArgs += @("--locales", $Locales, "--check")
 }
 else {
-    $args += @("--locales", $Locales)
+    $pythonArgs += @("--locales", $Locales)
     if (-not [string]::IsNullOrWhiteSpace($Provider)) {
-        $args += @("--provider", $Provider)
+        $pythonArgs += @("--provider", $Provider)
     }
     if ($Force) {
-        $args += "--force"
+        $pythonArgs += "--force"
     }
 }
-& $python @args
+& $python @pythonArgs
 $code = $LASTEXITCODE
 if ($Check) {
     exit $code

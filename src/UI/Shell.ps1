@@ -1104,7 +1104,7 @@ function New-WinToolWindow {
     $window = [System.Windows.Markup.XamlReader]::Load($reader)
     $script:WinToolWindow = $window
     $script:WinToolLogBox = $null
-    Apply-WinToolXamlText -Root $window
+    Set-WinToolXamlText -Root $window
 
     Initialize-WinToolAppearance
     Initialize-WinToolActivityView

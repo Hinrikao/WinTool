@@ -94,11 +94,11 @@ function Invoke-WinToolLanguageChoice {
     if ([string]::IsNullOrWhiteSpace($tag)) {
         $tag = "auto"
     }
-    $prefs = Get-WinToolPreferences
+    $prefs = Get-WinToolPreference
     $prefs.language = $tag
-    Save-WinToolPreferences -Preferences $prefs
+    Save-WinToolPreference -Preferences $prefs
     Initialize-WinToolLocale -Language $tag -Force | Out-Null
-    Apply-WinToolXamlText -Root $script:WinToolWindow
+    Set-WinToolXamlText -Root $script:WinToolWindow
     Initialize-WinToolLanguageChoice
     Update-WinToolProfileSummary
     if ($null -ne $script:WinToolState) {

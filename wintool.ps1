@@ -16710,7 +16710,7 @@ $script:WinToolCultureAliases = @{
     "pt"    = "pt-BR"
 }
 
-function Get-WinToolPreferencesPath {
+function Get-WinToolPreferencePath {
     if (-not [string]::IsNullOrWhiteSpace($script:WinToolPreferencesPath)) {
         return $script:WinToolPreferencesPath
     }
@@ -16720,8 +16720,8 @@ function Get-WinToolPreferencesPath {
     return (Join-Path $env:LOCALAPPDATA "WinTool\preferences.json")
 }
 
-function Get-WinToolPreferences {
-    $path = Get-WinToolPreferencesPath
+function Get-WinToolPreference {
+    $path = Get-WinToolPreferencePath
     $prefs = [pscustomobject]@{
         schemaVersion = 1
         language = "auto"
@@ -16743,11 +16743,11 @@ function Get-WinToolPreferences {
     return $prefs
 }
 
-function Save-WinToolPreferences {
+function Save-WinToolPreference {
     param(
         [Parameter(Mandatory = $true)]$Preferences
     )
-    $path = Get-WinToolPreferencesPath
+    $path = Get-WinToolPreferencePath
     if ([string]::IsNullOrWhiteSpace($path)) {
         return
     }
@@ -16828,7 +16828,7 @@ function Get-WinToolLocalePackObject {
 
 function ConvertTo-WinToolTextMap {
     param($Source)
-    $map = New-Object System.Collections.Hashtable ([StringComparer]::Ordinal)
+    $map = New-Object "System.Collections.Generic.Dictionary[string,string]" ([StringComparer]::Ordinal)
     if ($null -eq $Source) {
         return $map
     }
@@ -16985,7 +16985,7 @@ function Merge-WinToolTextTable {
     param(
         [Parameter(Mandatory = $true)][string]$Language
     )
-    $merged = New-Object System.Collections.Hashtable ([StringComparer]::Ordinal)
+    $merged = New-Object "System.Collections.Generic.Dictionary[string,string]" ([StringComparer]::Ordinal)
     $english = ConvertTo-WinToolTextMap -Source (Get-WinToolLocaleTable -Code "en")
     foreach ($key in @($english.Keys)) {
         $merged[$key] = $english[$key]
@@ -17013,7 +17013,7 @@ function Initialize-WinToolLocale {
     )
     $requested = $Language
     if ([string]::IsNullOrWhiteSpace($requested)) {
-        $requested = [string](Get-WinToolNote -Object (Get-WinToolPreferences) -Name "language" -Default "auto")
+        $requested = [string](Get-WinToolNote -Object (Get-WinToolPreference) -Name "language" -Default "auto")
     }
     if ([string]::IsNullOrWhiteSpace($requested)) {
         $requested = "auto"
@@ -17122,7 +17122,7 @@ function Get-WinToolCountText {
     return (Get-WinToolText -Key $chosen -Format $values)
 }
 
-function Apply-WinToolXamlText {
+function Set-WinToolXamlText {
     param($Root)
     if ($null -eq $Root) {
         $Root = $script:WinToolWindow
@@ -17222,7 +17222,7 @@ function Apply-WinToolXamlText {
     }
 }
 
-function Apply-WinToolCatalogLocale {
+function Set-WinToolCatalogLocale {
     param($Catalog, [Parameter(Mandatory = $true)][string]$Kind)
     if ($null -eq $Catalog) {
         return $Catalog
@@ -17967,8 +17967,8 @@ function Get-WinToolCachedPayloadObject {
     if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
     if ($script:WinToolPayloadObject.ContainsKey($Name)) { return $script:WinToolPayloadObject[$Name] }
     $value = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name $Name)
-    if (Get-Command -Name Apply-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
-        Apply-WinToolCatalogLocale -Catalog $value -Kind $Name | Out-Null
+    if (Get-Command -Name Set-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
+        Set-WinToolCatalogLocale -Catalog $value -Kind $Name | Out-Null
     }
     $script:WinToolPayloadObject[$Name] = $value
     return $value
@@ -33866,7 +33866,6 @@ function Update-WinToolFontList {
     }
     $nerdCount = @($allFonts | Where-Object { $_.nerd }).Count
     $schemeCount = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "schemes" -Default @()).Count
-    $dot = " " + [string][char]0x00B7 + " "
     $countBlock = Get-WinToolUi -Name "TerminalFontCount"
     if ($null -ne $countBlock) {
         $countBlock.Text = (Get-WinToolText "msg.n-installed-n-nerd-fonts-n-schemes" $allFonts.Count $nerdCount $schemeCount)
@@ -36577,11 +36576,11 @@ function Invoke-WinToolLanguageChoice {
     if ([string]::IsNullOrWhiteSpace($tag)) {
         $tag = "auto"
     }
-    $prefs = Get-WinToolPreferences
+    $prefs = Get-WinToolPreference
     $prefs.language = $tag
-    Save-WinToolPreferences -Preferences $prefs
+    Save-WinToolPreference -Preferences $prefs
     Initialize-WinToolLocale -Language $tag -Force | Out-Null
-    Apply-WinToolXamlText -Root $script:WinToolWindow
+    Set-WinToolXamlText -Root $script:WinToolWindow
     Initialize-WinToolLanguageChoice
     Update-WinToolProfileSummary
     if ($null -ne $script:WinToolState) {
@@ -39235,7 +39234,7 @@ function New-WinToolWindow {
     $window = [System.Windows.Markup.XamlReader]::Load($reader)
     $script:WinToolWindow = $window
     $script:WinToolLogBox = $null
-    Apply-WinToolXamlText -Root $window
+    Set-WinToolXamlText -Root $window
 
     Initialize-WinToolAppearance
     Initialize-WinToolActivityView

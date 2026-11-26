@@ -8,8 +8,8 @@ function Get-WinToolCachedPayloadObject {
     if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
     if ($script:WinToolPayloadObject.ContainsKey($Name)) { return $script:WinToolPayloadObject[$Name] }
     $value = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name $Name)
-    if (Get-Command -Name Apply-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
-        Apply-WinToolCatalogLocale -Catalog $value -Kind $Name | Out-Null
+    if (Get-Command -Name Set-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
+        Set-WinToolCatalogLocale -Catalog $value -Kind $Name | Out-Null
     }
     $script:WinToolPayloadObject[$Name] = $value
     return $value

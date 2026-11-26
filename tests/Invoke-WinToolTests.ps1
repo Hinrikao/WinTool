@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Henrique
+﻿# Copyright (c) 2026 Henrique
 # SPDX-License-Identifier: MIT
 #requires -Version 5.1
 
@@ -2338,7 +2338,6 @@ Invoke-WinToolCase -Name "Driver header, display advice, and runtime rows only c
 
 Invoke-WinToolCase -Name "Locale detection follows the Windows display language and preferences" -Body {
     $originalPath = $script:WinToolPreferencesPath
-    $originalPack = $script:WinToolLocalePackObject
     $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("wintool-i18n-test-" + [Guid]::NewGuid().ToString("N") + ".json")
     try {
         $script:WinToolPreferencesPath = $temp
@@ -2368,10 +2367,10 @@ Invoke-WinToolCase -Name "Locale detection follows the Windows display language 
         Test-WinToolExpectation -Condition ($homeLabel -eq "Início") -Message ("pt-BR Home should be Início, got " + $homeLabel)
         Test-WinToolExpectation -Condition ($lang -eq "Usar o idioma do Windows") -Message ("pt-BR Match Windows wording was wrong: " + $lang)
         Test-WinToolExpectation -Condition ($scan -eq "Verificar drivers") -Message ("pt-BR Scan drivers wording was wrong: " + $scan)
-        $prefs = Get-WinToolPreferences
+        $prefs = Get-WinToolPreference
         $prefs.language = "pt-BR"
-        Save-WinToolPreferences -Preferences $prefs
-        $loaded = Get-WinToolPreferences
+        Save-WinToolPreference -Preferences $prefs
+        $loaded = Get-WinToolPreference
         Test-WinToolExpectation -Condition ($loaded.language -eq "pt-BR") -Message "The language override is saved in preferences.json."
 
         $forced = Initialize-WinToolLocale -Language "en" -UiCulture "pt-BR" -Force
