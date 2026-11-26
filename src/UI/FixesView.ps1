@@ -10,7 +10,7 @@ function Initialize-WinToolFixView {
         $card = New-WinToolCard
         $card.CornerRadius = [System.Windows.CornerRadius]::new(16)
         $card.Padding = [System.Windows.Thickness]::new(18)
-        $card.MinHeight = 180
+        $card.MinHeight = 0
         $gapLeft = 0
         $gapTop = 0
         if (($index % 2) -eq 0) { $gapLeft = 0 } else { $gapLeft = 14 }
@@ -18,8 +18,11 @@ function Initialize-WinToolFixView {
         $card.Margin = [System.Windows.Thickness]::new($gapLeft, $gapTop, 0, 0)
         $grid = New-Object System.Windows.Controls.Grid
         $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::Auto }))
-        $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }))
-        $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new(32) }))
+        $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::Auto }))
+        $footRow = New-Object System.Windows.Controls.RowDefinition
+        $footRow.Height = [System.Windows.GridLength]::Auto
+        $footRow.MinHeight = 36
+        $grid.RowDefinitions.Add($footRow)
         $title = New-WinToolText -Text ([string]$fix.name) -Weight "Bold"
         [void]$grid.Children.Add($title)
         $description = New-WinToolText -Text ([string]$fix.description) -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 8, 0, 8))
@@ -31,10 +34,10 @@ function Initialize-WinToolFixView {
         $foot.ColumnDefinitions.Add((New-WinToolColumn -Auto))
         [System.Windows.Controls.Grid]::SetRow($foot, 2)
         $restart = [bool](Get-WinToolNote -Object $fix -Name "restart" -Default $false)
-        $badgeText = "No restart"
+        $badgeText = Get-WinToolText "msg.no-restart"
         $badgeKind = "ok"
         if ($restart) {
-            $badgeText = "Restart needed"
+            $badgeText = Get-WinToolText "msg.restart-needed"
             $badgeKind = "caution"
         }
         $badge = New-WinToolBadge -Text $badgeText -Kind $badgeKind
@@ -42,9 +45,8 @@ function Initialize-WinToolFixView {
         [void]$foot.Children.Add($badge)
         $button = New-Object System.Windows.Controls.Button
         $button.Content = (Get-WinToolText "msg.run-fix")
-        $button.Width = 96
-        $button.Height = 32
         $button.Style = $script:WinToolWindow.FindResource("SecondaryButton")
+        Set-WinToolAutoButton -Button $button
         $button.HorizontalAlignment = "Right"
         $button.VerticalAlignment = "Center"
         [System.Windows.Controls.Grid]::SetColumn($button, 2)
@@ -74,15 +76,15 @@ function Invoke-WinToolFixClick {
     $message = ([string]$Fix.name) + "?`n`n" + ([string]$Fix.description)
     $restart = [bool](Get-WinToolNote -Object $Fix -Name "restart" -Default $false)
     if ($restart) {
-        $message += "`n`nRestart the PC when it finishes."
+        $message += "`n`n" + (Get-WinToolText "msg.restart-the-pc-when-it-finishes")
     }
     $ok = Request-WinToolConfirmation -Message $message -Title ([string]$Fix.name)
     if (-not $ok) {
         return
     }
-    $done = ([string]$Fix.name) + " finished."
+    $done = (Get-WinToolText "msg.fix-finished" ([string]$Fix.name))
     if ($restart) {
-        $done += " Restart the PC to complete it."
+        $done += " " + (Get-WinToolText "msg.restart-the-pc-to-complete-it")
     }
     Invoke-WinToolPlanAsync -Step @(Get-WinToolFixPlan -Fix $Fix) -DoneMessage $done
 }

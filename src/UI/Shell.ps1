@@ -319,6 +319,26 @@ function Complete-WinToolNavFollowUp {
     }
 }
 
+function Initialize-WinToolDeferredView {
+    param([Parameter(Mandatory = $true)][string]$Name)
+    if ($null -eq $script:WinToolState) { return }
+    if ($null -eq $script:WinToolState.ViewReady) {
+        $script:WinToolState.ViewReady = @{}
+    }
+    if ([bool]$script:WinToolState.ViewReady[$Name]) { return }
+    $script:WinToolState.ViewReady[$Name] = $true
+    switch ($Name) {
+        "Install" { Initialize-WinToolInstallView }
+        "Tweaks" { Initialize-WinToolTweakView }
+        "Terminal" { Initialize-WinToolTerminalView }
+        "Drivers" { Initialize-WinToolDriverView }
+        "Updates" { Initialize-WinToolUpdateView }
+        "Fixes" { Initialize-WinToolFixView }
+        "Features" { Initialize-WinToolFeatureView }
+        "Config" { Initialize-WinToolConfigView }
+    }
+}
+
 function Start-WinToolNavWarmup {
     # Measures each page once while Home is on screen, so the first click
     # does not pay for building that page.
@@ -334,6 +354,7 @@ function Invoke-WinToolNavWarmupStep {
     $name = [string]$pending[0]
     if ($pending.Count -le 1) { $script:WinToolState.WarmViews = @() }
     else { $script:WinToolState.WarmViews = @($pending | Select-Object -Skip 1) }
+    Initialize-WinToolDeferredView -Name $name
     if ([string]$script:WinToolState.ActiveView -ne $name) {
         $shown = @($script:WinToolState.ViewShown)
         $element = Get-WinToolUi -Name ("View" + $name)
@@ -362,6 +383,7 @@ function Switch-WinToolView {
     if ($null -eq $script:WinToolState.ViewShown) {
         $script:WinToolState.ViewShown = @("Home")
     }
+    Initialize-WinToolDeferredView -Name $Name
     $stamp = [System.Diagnostics.Stopwatch]::GetTimestamp()
     $script:WinToolState.NavStamp = [int64]$stamp
     $script:WinToolState.ActiveView = $Name
@@ -1005,12 +1027,15 @@ function Initialize-WinToolShellEvent {
         Start-WinToolNavWarmup
     }
     Register-WinToolUiEvent -Control $script:WinToolWindow -EventName "Loaded" -Name "Check installed apps" -Action {
-        Update-WinToolLocalPackageCache | Out-Null
-        Start-WinToolAppDetection
+        if ($null -ne $script:WinToolState.ViewReady -and [bool]$script:WinToolState.ViewReady["Install"]) {
+            Update-WinToolLocalPackageCache | Out-Null
+            Start-WinToolAppDetection
+        }
     }
 }
 
 function New-WinToolWindow {
+    param([switch]$DeferViews)
     Add-Type -AssemblyName PresentationFramework
     Add-Type -AssemblyName PresentationCore
     Add-Type -AssemblyName WindowsBase
@@ -1094,6 +1119,9 @@ function New-WinToolWindow {
         HomeInfoJob = $null
         HomeCleanJob = $null
         TweakRequestStarted = $false
+        ViewReady = @{}
+        DeferViews = [bool]$DeferViews
+        FirstFrameMs = -1
     }
     $script:WinToolShuttingDown = $false
     $script:WinToolSessionExit = $false
@@ -1104,19 +1132,29 @@ function New-WinToolWindow {
     $window = [System.Windows.Markup.XamlReader]::Load($reader)
     $script:WinToolWindow = $window
     $script:WinToolLogBox = $null
+    $window.Background = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.Color]::FromRgb(0x1B, 0x22, 0x30))
+    if ($DeferViews) {
+        $window.Opacity = 0
+    }
     Set-WinToolXamlText -Root $window
 
     Initialize-WinToolAppearance
     Initialize-WinToolActivityView
     Initialize-WinToolHomeView
-    Initialize-WinToolInstallView
     Initialize-WinToolTweakView
-    Initialize-WinToolTerminalView
-    Initialize-WinToolDriverView
-    Initialize-WinToolUpdateView
-    Initialize-WinToolFixView
-    Initialize-WinToolFeatureView
-    Initialize-WinToolConfigView
+    $script:WinToolState.ViewReady["Tweaks"] = $true
+    if (-not $DeferViews) {
+        Initialize-WinToolInstallView
+        Initialize-WinToolTerminalView
+        Initialize-WinToolDriverView
+        Initialize-WinToolUpdateView
+        Initialize-WinToolFixView
+        Initialize-WinToolFeatureView
+        Initialize-WinToolConfigView
+        foreach ($name in @("Install", "Terminal", "Drivers", "Updates", "Fixes", "Features", "Config")) {
+            $script:WinToolState.ViewReady[$name] = $true
+        }
+    }
     Initialize-WinToolShellEvent
     Sync-WinToolLogPanel
 
@@ -1361,6 +1399,9 @@ function Exit-WinToolSingleInstance {
 function Show-WinToolWindow {
     # Hide before the window exists, including when a test host calls this
     # directly. A second hide later does not forget a console that was visible.
+    if ($null -eq $script:WinToolStartupStamp) {
+        $script:WinToolStartupStamp = [System.Diagnostics.Stopwatch]::StartNew()
+    }
     if ((Get-WinToolCurrentConsoleMode) -eq "hide") {
         Hide-WinToolConsole
     }
@@ -1376,10 +1417,29 @@ function Show-WinToolWindow {
     }
     $closedNormally = $false
     try {
-        $window = New-WinToolWindow
+        $window = New-WinToolWindow -DeferViews
         $script:WinToolSessionExit = $true
         Enable-WinToolLogPump
-        Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Hide the console" -Action { Hide-WinToolConsole }
+        Register-WinToolUiEvent -Control $window -EventName "ContentRendered" -Name "Show the first frame" -Action {
+            $window = $script:WinToolWindow
+            if ($null -ne $window -and $window.Opacity -lt 1) {
+                $window.Opacity = 1
+            }
+            Hide-WinToolConsole
+            if ($null -ne $script:WinToolStartupStamp -and $null -ne $script:WinToolState -and [int]$script:WinToolState.FirstFrameMs -lt 0) {
+                $script:WinToolState.FirstFrameMs = [int]$script:WinToolStartupStamp.ElapsedMilliseconds
+                Write-WinToolLog -Message (Get-WinToolText "msg.first-interactive-frame-ms" $script:WinToolState.FirstFrameMs) -Level "info"
+                $path = [string]$env:WINTOOL_STARTUP_LOG
+                if (-not [string]::IsNullOrWhiteSpace($path)) {
+                    try {
+                        Set-Content -LiteralPath $path -Value ("firstFrameMs={0}" -f $script:WinToolState.FirstFrameMs) -Encoding UTF8
+                    }
+                    catch {
+                        $null = $_.Exception.Message
+                    }
+                }
+            }
+        }
         $null = $window.ShowDialog()
         $closedNormally = $true
     }

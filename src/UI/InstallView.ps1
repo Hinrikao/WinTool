@@ -134,6 +134,10 @@ function Initialize-WinToolInstallView {
     }
     Update-WinToolAppChip
     Sync-WinToolAppCount
+    if ($null -ne $script:WinToolWindow -and $script:WinToolWindow.IsLoaded -and -not [bool]$script:WinToolState.AppsDetected -and $null -eq $script:WinToolState.DetectJob) {
+        Update-WinToolLocalPackageCache | Out-Null
+        Start-WinToolAppDetection
+    }
 }
 
 function Get-WinToolInstallWidth {

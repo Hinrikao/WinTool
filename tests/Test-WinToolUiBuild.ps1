@@ -2236,6 +2236,143 @@ Invoke-WinToolNavPump
 Invoke-WinToolFillShot -Name "config-1920" -Width 1920 -Height 1080 -ScrollName "ViewConfig" -BodyName "ConfigBody"
 Assert-WinToolPageFill -Element $window.FindName("ConfigProfileCard") -Label "Config 1920" -ScrollName "ViewConfig" -BodyName "ConfigBody"
 
+# Switch the live window to pt-BR and review every tab for leftover English
+# or known bad machine translations.
+Initialize-WinToolLocale -Language "pt-BR" -Force | Out-Null
+Set-WinToolCatalogLocale
+Set-WinToolXamlText -Root $window
+Initialize-WinToolFixView
+Initialize-WinToolFeatureView
+Initialize-WinToolDriverView
+Sync-WinToolHomeHeader
+function Get-WinToolVisualText {
+    param($Root)
+    $list = New-Object System.Collections.Generic.List[string]
+    $visit = New-Object System.Collections.Generic.Queue[object]
+    $visit.Enqueue($Root)
+    $seen = New-Object System.Collections.Generic.HashSet[int]
+    while ($visit.Count -gt 0) {
+        $node = $visit.Dequeue()
+        if ($null -eq $node) { continue }
+        try {
+            if (-not $seen.Add([int]$node.GetHashCode())) { continue }
+        }
+        catch { $null = $_.Exception.Message }
+        foreach ($prop in @("Text", "Content")) {
+            try {
+                $value = $node.$prop
+                if ($value -is [string] -and -not [string]::IsNullOrWhiteSpace($value)) {
+                    $list.Add($value)
+                }
+            }
+            catch { $null = $_.Exception.Message }
+        }
+        try {
+            if ($node -is [System.Windows.Documents.Span] -or $node -is [System.Windows.Documents.Paragraph]) {
+                foreach ($inline in @($node.Inlines)) { $visit.Enqueue($inline) }
+            }
+        }
+        catch { $null = $_.Exception.Message }
+        try {
+            if ($null -ne $node.Inlines) { foreach ($inline in @($node.Inlines)) { $visit.Enqueue($inline) } }
+        }
+        catch { $null = $_.Exception.Message }
+        try {
+            if ($null -ne $node.Children) { foreach ($child in @($node.Children)) { $visit.Enqueue($child) } }
+        }
+        catch { $null = $_.Exception.Message }
+        try {
+            if ($null -ne $node.Child) { $visit.Enqueue($node.Child) }
+        }
+        catch { $null = $_.Exception.Message }
+        try {
+            if ($null -ne $node.Content -and $node.Content -isnot [string]) { $visit.Enqueue($node.Content) }
+        }
+        catch { $null = $_.Exception.Message }
+    }
+    return @($list)
+}
+$forbidden = @(
+    "Restart needed",
+    "No restart",
+    "Project on GitHub",
+    "View history",
+    "Finished in",
+    "Needs attention",
+    "Last analysis:",
+    "can be deleted",
+    "All recommended tweaks are on",
+    "programs start with Windows",
+    "device has a problem",
+    "The drive reports healthy",
+    "Driver issue",
+    "Chatear",
+    "Serviços públicos",
+    "Medios de comunicação",
+    "garrafas",
+    "Disco de janelas",
+    "Programas de startups",
+    "Refrigeração",
+    "Rede de reinicialização",
+    "quatroot2",
+    "Horários de execução",
+    "Reparação winget",
+    "Aplicação gráfica oficial"
+)
+$snapshot = @(Get-WinToolVisualText -Root $window)
+$hits = @()
+foreach ($text in $snapshot) {
+    foreach ($bad in $forbidden) {
+        if ($text.IndexOf($bad, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            $hits += ($bad + " <= " + $text)
+        }
+    }
+}
+if ($hits.Count -gt 0) {
+    throw ("pt-BR snapshot still has leftover or bad strings: " + ($hits -join "; "))
+}
+$project = $window.FindName("ProjectLinkText")
+if ($null -eq $project -or [string]$project.Text -ne (Get-WinToolText "ui.ProjectLinkText.Text")) {
+    throw ("Project link was not localized. Got: " + $(if ($null -eq $project) { "<missing>" } else { $project.Text }))
+}
+$refresh = $window.FindName("FeatureRefresh")
+if ($null -eq $refresh -or [string]$refresh.Content -ne (Get-WinToolText "ui.FeatureRefresh.Content")) {
+    throw ("Features refresh was not localized. Got: " + $(if ($null -eq $refresh) { "<missing>" } else { $refresh.Content }))
+}
+
+# Snapshot every tab in pt-BR so the wording can be reviewed from CI artifacts.
+foreach ($nav in @(
+        @{ Nav = "NavHome"; Name = "ptbr-home"; Scroll = "ViewHome"; Body = "HomeBody" },
+        @{ Nav = "NavInstall"; Name = "ptbr-install"; Scroll = "AppScroll"; Body = "ViewInstall" },
+        @{ Nav = "NavDrivers"; Name = "ptbr-drivers"; Scroll = "DriversSimpleScroll"; Body = "DriversBody" },
+        @{ Nav = "NavFixes"; Name = "ptbr-fixes"; Scroll = "ViewFixes"; Body = "FixesBody" },
+        @{ Nav = "NavFeatures"; Name = "ptbr-features"; Scroll = "ViewFeatures"; Body = "FeaturesBody" }
+    )) {
+    $window.FindName($nav.Nav).IsChecked = $true
+    Invoke-WinToolNavPump
+    try {
+        Invoke-WinToolFillShot -Name $nav.Name -Width 1440 -Height 900 -ScrollName $nav.Scroll -BodyName $nav.Body
+    }
+    catch {
+        Write-Output ("pt-BR snapshot " + $nav.Name + ": " + $_.Exception.Message)
+    }
+}
+# Drivers Advanced / Tools modes if the mode buttons exist.
+foreach ($mode in @("DriversModeAdvanced", "DriversModeTools", "DriversModeSimple")) {
+    $button = $window.FindName($mode)
+    if ($null -eq $button) { continue }
+    $button.IsChecked = $true
+    Invoke-WinToolNavPump
+    $shotName = "ptbr-" + ($mode.Replace("DriversMode", "drivers-").ToLowerInvariant())
+    try {
+        Invoke-WinToolFillShot -Name $shotName -Width 1440 -Height 900 -ScrollName "ViewDrivers" -BodyName "DriversBody"
+    }
+    catch {
+        Write-Output ("pt-BR snapshot " + $shotName + ": " + $_.Exception.Message)
+    }
+}
+Write-Output ("pt-BR snapshot reviewed " + $snapshot.Count + " visible strings.")
+
 try {
     $window.Close()
 }

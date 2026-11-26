@@ -622,6 +622,11 @@ Invoke-WinToolCase -Name "Elevation relaunches the entry script" -Body {
     Test-WinToolExpectation -Condition ($pinnedScript.Contains('$env:WINTOOL_URL =') -and $pinnedScript.Contains($pinned) -and $pinnedScript.Contains("Invoke-RestMethod")) -Message "A piped relaunch keeps the pinned WINTOOL_URL."
     $elevateOption = Get-WinToolRelaunchHostOption -Elevate -ShowConsole $false -Unattended $false
     Test-WinToolExpectation -Condition ($elevateOption.WindowStyle -eq "Normal" -and $elevateOption.Hidden -eq $false) -Message "Elevation uses a visible window so the UAC prompt can appear."
+    Test-WinToolExpectation -Condition ($elevateOption.HideConsole -eq $true) -Message "The elevated stub still hides the console after the UAC prompt."
+    $elevateScript = New-WinToolRelaunchScript -WorkingDirectory "C:\Temp" -EntryPath "C:\Temp\wintool.ps1" -ApplyProfile "" -Unattended $false -LaunchUrl "" -Hidden $false -HideConsole $true -ShowConsole $false
+    $hideAt = $elevateScript.IndexOf("ShowWindow")
+    $runAt = $elevateScript.IndexOf("& 'C:\Temp\wintool.ps1'")
+    Test-WinToolExpectation -Condition ($elevateScript.Contains('$env:WINTOOL_HIDDEN = "1"') -and $hideAt -ge 0 -and $runAt -gt $hideAt) -Message "The elevated stub hides the console before the launcher is parsed."
     $hiddenOption = Get-WinToolRelaunchHostOption -ShowConsole $false -Unattended $false
     Test-WinToolExpectation -Condition ($hiddenOption.WindowStyle -eq "Hidden" -and $hiddenOption.Hidden -eq $true) -Message "A non-elevated relaunch can still use a hidden host window."
     $canceled = $null
@@ -1655,7 +1660,7 @@ Invoke-WinToolCase -Name "Home checks parse stubbed results" -Body {
     Test-WinToolExpectation -Condition ($verdict.Text -eq "Needs attention" -and $verdict.Tone -eq "warn") -Message "Score 72 needs attention."
     Test-WinToolExpectation -Condition ((Get-WinToolHomeVerdict -Score 95).Text -eq "Healthy") -Message "Score 95 is healthy."
     $lead = Get-WinToolHomeLead -Result @($junk, $tweaks, $startup, $drivers, $disk)
-    Test-WinToolExpectation -Condition ($lead -eq "Two items can be fixed. Nothing was changed during the analysis.") -Message "The lead counts fixable items, got '$lead'."
+    Test-WinToolExpectation -Condition ($lead -eq (Get-WinToolCountText "msg.items-can-be-fixed-nothing-changed" 2)) -Message "The lead counts fixable items, got '$lead'."
 
     $now = [datetime]::new(2026, 11, 23, 20, 0, 0)
     Test-WinToolExpectation -Condition ((Format-WinToolHomeWhen -Time ([datetime]::new(2026, 11, 23, 19, 31, 0)) -Now $now) -eq "today 19:31") -Message "Same-day analyses read 'today'."
@@ -2367,6 +2372,43 @@ Invoke-WinToolCase -Name "Locale detection follows the Windows display language 
         Test-WinToolExpectation -Condition ($homeLabel -eq "Início") -Message ("pt-BR Home should be Início, got " + $homeLabel)
         Test-WinToolExpectation -Condition ($lang -eq "Usar o idioma do Windows") -Message ("pt-BR Match Windows wording was wrong: " + $lang)
         Test-WinToolExpectation -Condition ($scan -eq "Verificar drivers") -Message ("pt-BR Scan drivers wording was wrong: " + $scan)
+        $expected = @{
+            "msg.windows-disk" = "Disco do Windows"
+            "msg.startup-programs" = "Programas na inicialização"
+            "msg.n-of-n-can-be-fixed" = "{0} de {1} podem ser corrigidos"
+            "msg.finished-in-ns" = "Concluído em {0}s"
+            "button.repairNetwork" = "Reparo de rede"
+            "button.repairRuntimes" = "Reparar runtimes de jogos"
+            "drivers.group.runtime" = "Runtimes de jogos"
+            "drivers.group.gpu" = "App oficial da placa de vídeo"
+            "drivers.group.ghost" = "Entradas restantes"
+            "drivers.info.board" = "Placa-mãe"
+            "catalog.fixes.network-reset.name" = "Redefinir rede"
+            "catalog.fixes.winget-repair.name" = "Reparar winget"
+            "catalog.fixes.windows-update-reset.description" = "Interrompe os serviços de atualização, renomeia as pastas SoftwareDistribution e catroot2 para o Windows recriá-las e, em seguida, inicia os serviços novamente. As pastas antigas ficam com o sufixo .WinTool-<date>."
+            "ui.FeatureRefresh.Content" = "Atualizar"
+            "ui.ProjectLinkText.Text" = "Projeto no GitHub"
+            "ui.HomeHistoryLinkText.Text" = "Ver histórico"
+            "catalog.apps.category.communication.chip" = "Chat"
+            "catalog.apps.category.media.chip" = "Mídia"
+            "catalog.apps.category.utilities.chip" = "Utilitários"
+            "catalog.apps.category.runtimes.chip" = "Runtimes"
+            "catalog.apps.waterfox.description" = "Um fork do Firefox focado em privacidade, sem telemetria."
+            "msg.no-restart" = "Sem reinicialização"
+            "msg.restart-needed" = "Reinicialização necessária"
+            "msg.on" = "Ativado"
+            "msg.off" = "Desativado"
+        }
+        foreach ($key in $expected.Keys) {
+            $got = Get-WinToolText $key
+            Test-WinToolExpectation -Condition ($got -eq $expected[$key]) -Message ("pt-BR " + $key + " should be '" + $expected[$key] + "', got '" + $got + "'")
+        }
+        $attention = New-WinToolHomeResult -Id "drivers" -Status "bad" -Text (Get-WinToolText "msg.n-devices-have-problems.one") -Action "review" -Penalty 10
+        $lead = Get-WinToolHomeLead -Result @($attention)
+        $reviewLead = Get-WinToolText "msg.review-items-that-need-attention-nothing-changed"
+        Test-WinToolExpectation -Condition ($lead -eq $reviewLead) -Message ("A driver issue that cannot be auto-fixed should not say nothing needs fixing. Got: " + $lead)
+        $okLead = Get-WinToolHomeLead -Result @((New-WinToolHomeResult -Id "junk" -Status "ok" -Text "ok"))
+        Test-WinToolExpectation -Condition ($okLead -eq (Get-WinToolText "msg.nothing-needs-fixing-nothing-was-changed-during-the-anal")) -Message ("A healthy score should say nothing needs fixing. Got: " + $okLead)
         $prefs = Get-WinToolPreference
         $prefs.language = "pt-BR"
         Save-WinToolPreference -Preferences $prefs

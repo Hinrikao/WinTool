@@ -29,7 +29,29 @@
     "Task Manager",
     "Recycle Bin",
     "System Protection",
-    "Settings"
+    "Settings",
+    "Windows",
+    "Sandbox",
+    "SoftwareDistribution",
+    "catroot2",
+    "Winsock",
+    "DISM",
+    "SFC",
+    "TCP/IP",
+    "IPv4",
+    "IPv6",
+    "DNS",
+    "GitHub",
+    "Firefox",
+    "Waterfox",
+    "Microsoft Edge",
+    ".NET",
+    "NFS",
+    "System File Checker",
+    "Hyper-V Manager",
+    "WinGet",
+    "<date>",
+    ".WinTool-<date>"
   ],
   "phrases": {
     "restore point": {
@@ -122,5 +144,17 @@
       "ru": "Защита системы",
       "tr": "Sistem Koruması"
     }
-  }
+  },
+  "copy_exact": [
+    "Chat",
+    "Media",
+    "Utilities",
+    "Runtimes",
+    "Dev",
+    "Office",
+    "Gaming",
+    "Browsers",
+    "Security",
+    "Drivers"
+  ]
 }

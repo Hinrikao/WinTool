@@ -52,12 +52,34 @@ function New-WinToolRelaunchScript {
         [bool]$Unattended,
         [string]$LaunchUrl,
         [bool]$Hidden,
-        [bool]$ShowConsole
+        [bool]$ShowConsole,
+        [bool]$HideConsole
     )
+    if (-not $PSBoundParameters.ContainsKey("HideConsole")) {
+        $HideConsole = $Hidden
+    }
     $lines = New-Object System.Collections.Generic.List[string]
     [void]$lines.Add('$ErrorActionPreference = "Stop"')
     [void]$lines.Add('$env:WINTOOL_PAUSE_ON_ERROR = "1"')
-    if ($Hidden) {
+    if ($HideConsole) {
+        # Hide the elevated console immediately, before the launcher is parsed.
+        # Start-Process -Verb RunAs stays visible so the UAC prompt can appear.
+        [void]$lines.Add('try {')
+        [void]$lines.Add('    if ($null -eq ("WinToolStartupConsole" -as [type])) {')
+        [void]$lines.Add("        Add-Type -TypeDefinition @'")
+        [void]$lines.Add('using System;')
+        [void]$lines.Add('using System.Runtime.InteropServices;')
+        [void]$lines.Add('public static class WinToolStartupConsole {')
+        [void]$lines.Add('    [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();')
+        [void]$lines.Add('    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);')
+        [void]$lines.Add('}')
+        [void]$lines.Add("'@")
+        [void]$lines.Add('    }')
+        [void]$lines.Add('    $null = [WinToolStartupConsole]::ShowWindow([WinToolStartupConsole]::GetConsoleWindow(), 0)')
+        [void]$lines.Add('}')
+        [void]$lines.Add('catch {')
+        [void]$lines.Add('    $null = $_.Exception.Message')
+        [void]$lines.Add('}')
         [void]$lines.Add('$env:WINTOOL_HIDDEN = "1"')
     }
     else {
@@ -96,7 +118,7 @@ function New-WinToolRelaunchScript {
     [void]$lines.Add("}")
     [void]$lines.Add("catch {")
     [void]$lines.Add('    $text = ($_ | Out-String)')
-    if ($Hidden) {
+    if ($HideConsole) {
         # Bring the hidden console back so the error and the Enter prompt are visible.
         [void]$lines.Add('    try {')
         [void]$lines.Add('        if ($null -eq ("WinToolConsoleApi" -as [type])) {')
@@ -188,13 +210,15 @@ function Get-WinToolRelaunchHostOption {
     )
     $hidden = -not ($ShowConsole -or $Unattended)
     if ($Elevate) {
-        return [pscustomobject]@{ Hidden = $false; WindowStyle = "Normal" }
+        # Hidden is false so powershell.exe is not started with -WindowStyle Hidden
+        # (that hid the UAC prompt). HideConsole still hides the child after approval.
+        return [pscustomobject]@{ Hidden = $false; HideConsole = $hidden; WindowStyle = "Normal" }
     }
     $style = "Normal"
     if ($hidden) {
         $style = "Hidden"
     }
-    return [pscustomobject]@{ Hidden = $hidden; WindowStyle = $style }
+    return [pscustomobject]@{ Hidden = $hidden; HideConsole = $hidden; WindowStyle = $style }
 }
 
 function Get-WinToolElevationFailureText {
@@ -263,7 +287,7 @@ function Start-WinToolRelaunch {
     $directory = Get-WinToolWorkingDirectory
     $showConsole = Test-WinToolShowConsole
     $options = Get-WinToolRelaunchHostOption -Elevate:$Elevate -ShowConsole $showConsole -Unattended ([bool]$script:WinToolUnattended)
-    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl) -Hidden ([bool]$options.Hidden) -ShowConsole $showConsole
+    $scriptText = New-WinToolRelaunchScript -WorkingDirectory $directory -EntryPath $entry -ApplyProfile $script:WinToolApplyProfile -Unattended ([bool]$script:WinToolUnattended) -LaunchUrl (Get-WinToolPublishedLaunchUrl) -Hidden ([bool]$options.Hidden) -HideConsole ([bool]$options.HideConsole) -ShowConsole $showConsole
     $launcherPath = Join-Path $launcherDirectory ("relaunch-" + [guid]::NewGuid().ToString("N") + ".ps1")
     [System.IO.File]::WriteAllText($launcherPath, $scriptText, $encoding)
     $line = ConvertTo-WinToolArgumentLine -ArgumentList @(Get-WinToolHostArgument -LauncherPath $launcherPath -Hidden ([bool]$options.Hidden))

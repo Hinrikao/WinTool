@@ -278,7 +278,10 @@ function Initialize-WinToolDriverToolList {
         $grid = New-Object System.Windows.Controls.Grid
         $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::Auto }))
         $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }))
-        $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new(32) }))
+        $footRow = New-Object System.Windows.Controls.RowDefinition
+        $footRow.Height = [System.Windows.GridLength]::Auto
+        $footRow.MinHeight = 36
+        $grid.RowDefinitions.Add($footRow)
         $titleRow = New-Object System.Windows.Controls.DockPanel
         $glyph = New-WinToolText -Text ([string]$tool.Glyph) -Weight "Normal"
         $glyph.FontFamily = (New-Object System.Windows.Media.FontFamily("Segoe MDL2 Assets"))
@@ -300,19 +303,18 @@ function Initialize-WinToolDriverToolList {
         $description = New-WinToolText -Text (Get-WinToolText ([string]$tool.BodyKey)) -Brush "BrushMuted" -Wrap -Margin ([System.Windows.Thickness]::new(0, 8, 0, 8))
         [System.Windows.Controls.Grid]::SetRow($description, 1)
         [void]$grid.Children.Add($description)
-        $foot = New-Object System.Windows.Controls.StackPanel
-        $foot.Orientation = "Horizontal"
+        $foot = New-Object System.Windows.Controls.WrapPanel
         $foot.HorizontalAlignment = "Right"
+        $foot.Orientation = "Horizontal"
         [System.Windows.Controls.Grid]::SetRow($foot, 2)
         $buttons = Get-WinToolDriverToolButton -Id ([string]$tool.Id)
         foreach ($entry in @($buttons)) {
             $button = New-Object System.Windows.Controls.Button
             $button.Content = [string]$entry.Label
-            $button.MinWidth = 88
-            $button.Height = 28
-            $button.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
+            $button.Margin = [System.Windows.Thickness]::new(8, 4, 0, 0)
             $button.Style = $script:WinToolWindow.FindResource("SecondaryButton")
             $button.VerticalAlignment = "Center"
+            Set-WinToolAutoButton -Button $button
             $actionId = [string]$entry.Action
             Register-WinToolUiEvent -Control $button -EventName "Click" -Name ("Drivers: " + [string]$entry.Label) -Data $actionId -Action {
                 param($source, $eventData, $boundAction)
@@ -1376,16 +1378,24 @@ function Update-WinToolDriverAdvanced {
         if ($id -eq $selected) {
             $button.SetResourceReference([System.Windows.Controls.Button]::BackgroundProperty, "BrushAccentSoft")
         }
-        $row = New-Object System.Windows.Controls.DockPanel
-        $badge = New-WinToolText -Text ([string]$count) -Weight "SemiBold" -Brush "BrushMuted"
-        $badge.VerticalAlignment = "Center"
-        [System.Windows.Controls.DockPanel]::SetDock($badge, "Right")
-        [void]$row.Children.Add($badge)
+        $row = New-Object System.Windows.Controls.Grid
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }))
+        $row.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::Auto }))
         $name = New-WinToolText -Text (Get-WinToolText ([string]$entry[1])) -Weight "SemiBold"
         $name.VerticalAlignment = "Center"
+        $name.HorizontalAlignment = "Left"
+        $name.TextAlignment = "Left"
         $name.TextWrapping = "Wrap"
+        $name.Margin = [System.Windows.Thickness]::new(0, 0, 8, 0)
         [void]$row.Children.Add($name)
+        $badge = New-WinToolBadge -Text ([string]$count) -Kind "ok"
+        $badge.VerticalAlignment = "Center"
+        $badge.HorizontalAlignment = "Right"
+        $badge.MinWidth = 28
+        [System.Windows.Controls.Grid]::SetColumn($badge, 1)
+        [void]$row.Children.Add($badge)
         $button.Content = $row
+        $button.HorizontalContentAlignment = "Stretch"
         Register-WinToolUiEvent -Control $button -EventName "Click" -Name ("Drivers: category " + $id) -Data $id -Action {
             param($source, $eventData, $boundGroup)
             $null = $source, $eventData

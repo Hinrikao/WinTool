@@ -352,6 +352,7 @@
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
       <Setter Property="Background" Value="{DynamicResource BrushCard}"/>
       <Setter Property="Padding" Value="14,9"/>
+      <Setter Property="MinHeight" Value="32"/>
       <Setter Property="Margin" Value="8,0,0,0"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
@@ -781,7 +782,7 @@
         <StackPanel DockPanel.Dock="Bottom" Margin="20,12,20,16">
           <TextBlock x:Name="VersionText" Text="Version" Foreground="{DynamicResource BrushSidebarMuted}"/>
           <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource BrushSidebarText}">
-            <Hyperlink x:Name="ProjectLink" Foreground="{DynamicResource BrushSidebarText}" NavigateUri="https://github.com/Hinrikao/WinTool">Project on GitHub</Hyperlink>
+            <Hyperlink x:Name="ProjectLink" Foreground="{DynamicResource BrushSidebarText}" NavigateUri="https://github.com/Hinrikao/WinTool"><Run x:Name="ProjectLinkText" Text="Project on GitHub"/></Hyperlink>
           </TextBlock>
         </StackPanel>
         <StackPanel Margin="14,16,14,0">
@@ -890,7 +891,7 @@
             <TextBlock x:Uid="t.home" Text="Home" FontSize="{DynamicResource FontSizeTitle}" FontWeight="Bold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
               <TextBlock x:Name="HomeRunText" Width="150" TextAlignment="Right" Foreground="{DynamicResource BrushMuted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text=" "/>
-              <Button x:Name="HomeAgain" Content="Analyze again" Style="{StaticResource HomeLinkButton}" Width="104" Height="32" Margin="16,0,0,0"/>
+              <Button x:Name="HomeAgain" Content="Analyze again" Style="{StaticResource HomeLinkButton}" MinWidth="104" MinHeight="32" Margin="16,0,0,0"/>
             </StackPanel>
           </Grid>
           <ScrollViewer x:Name="HomeScroll" Grid.Row="1" Margin="0,12,0,0" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
@@ -939,11 +940,11 @@
                       </StackPanel>
                     </Grid>
                     <StackPanel x:Name="HomeInfo" Margin="0,12,0,0">
-                      <TextBlock x:Name="HomeHeadline" Height="20" Text="Analyzing your PC..." FontWeight="Bold" Foreground="{DynamicResource BrushInk}" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                      <TextBlock x:Name="HomeLead" Height="40" Margin="0,4,0,0" Text="Takes less than a minute. Nothing is changed during the analysis." Foreground="{DynamicResource BrushMuted}" TextAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"/>
-                      <TextBlock x:Name="HomeMeta" Height="20" Margin="0,10,0,0" Foreground="{DynamicResource BrushHint}" TextAlignment="Center" TextTrimming="CharacterEllipsis"><Run x:Name="HomeMetaText" Text="No earlier analysis on this PC"/><Run Text=" &#183; "/><Hyperlink x:Name="HomeHistoryLink" Foreground="{DynamicResource BrushAccent}" TextDecorations="{x:Null}">View history</Hyperlink></TextBlock>
+                      <TextBlock x:Name="HomeHeadline" MinHeight="20" Text="Analyzing your PC..." FontWeight="Bold" Foreground="{DynamicResource BrushInk}" TextAlignment="Center" TextWrapping="Wrap"/>
+                      <TextBlock x:Name="HomeLead" MinHeight="40" Margin="0,4,0,0" Text="Takes less than a minute. Nothing is changed during the analysis." Foreground="{DynamicResource BrushMuted}" TextAlignment="Center" TextWrapping="Wrap"/>
+                      <TextBlock x:Name="HomeMeta" MinHeight="20" Margin="0,10,0,0" Foreground="{DynamicResource BrushHint}" TextAlignment="Center" TextWrapping="Wrap"><Run x:Name="HomeMetaText" Text="No earlier analysis on this PC"/><Run Text=" &#183; "/><Hyperlink x:Name="HomeHistoryLink" Foreground="{DynamicResource BrushAccent}" TextDecorations="{x:Null}"><Run x:Name="HomeHistoryLinkText" Text="View history"/></Hyperlink></TextBlock>
                     </StackPanel>
-                    <Button x:Name="HomeFixAll" Content="Fix all" Width="120" Height="32" Margin="0,14,0,0" HorizontalAlignment="Center" Style="{StaticResource HomeGradientButton}" IsEnabled="False"/>
+                    <Button x:Name="HomeFixAll" Content="Fix all" MinWidth="120" MinHeight="32" Margin="0,14,0,0" HorizontalAlignment="Center" Style="{StaticResource HomeGradientButton}" IsEnabled="False"/>
                   </StackPanel>
                 </Border>
                 <Border Grid.Column="2" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="16" Padding="0,10,0,6">
@@ -981,10 +982,10 @@
             <!-- Selection actions: on the title row, right side, only while apps are ticked. The title row is taller than the buttons, so nothing below moves. -->
             <StackPanel x:Name="AppBulkBar" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed">
               <TextBlock x:Name="AppCount" Text="0 selected" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,12,0" TextWrapping="NoWrap"/>
-              <Button x:Name="AppInstall" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushAccent}" Foreground="{DynamicResource BrushOnAccent}" FontWeight="SemiBold"/>
-              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
-              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" Height="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
-              <Button x:Name="AppClear" Content="Clear" Style="{StaticResource ToolbarButton}" Height="32" Padding="14,0"/>
+              <Button x:Name="AppInstall" Content="Install selected" Style="{StaticResource CardButton}" Width="Auto" MinHeight="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushAccent}" Foreground="{DynamicResource BrushOnAccent}" FontWeight="SemiBold"/>
+              <Button x:Name="AppUpdate" Content="Update selected" Style="{StaticResource CardButton}" Width="Auto" MinHeight="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushWarnStrong}" Foreground="{DynamicResource BrushOnWarn}"/>
+              <Button x:Name="AppUninstall" Content="Uninstall selected" Style="{StaticResource CardButton}" Width="Auto" MinHeight="32" Padding="14,0" Margin="0,0,6,0" Background="{DynamicResource BrushBadSoft}" Foreground="{DynamicResource BrushBad}"/>
+              <Button x:Name="AppClear" Content="Clear" Style="{StaticResource ToolbarButton}" MinHeight="32" Padding="14,0"/>
             </StackPanel>
           </Grid>
           <Grid Grid.Row="1" Margin="20,7,20,0">
@@ -1008,8 +1009,8 @@
             <!-- Status of the installed-apps check, in the free space of the search row, so it never pushes the cards. -->
             <TextBlock x:Name="AppInstalledStatus" Grid.Column="1" Text="Installed apps not checked yet." Foreground="{DynamicResource BrushMuted}" Visibility="Hidden" Margin="12,0,12,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-              <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" Height="32" Padding="14,0" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
-              <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" Width="32" Height="32" Padding="0" FontFamily="Segoe MDL2 Assets" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
+              <Button x:Name="AppUpgradeAll" Style="{StaticResource ToolbarButton}" MinHeight="32" Padding="14,0" Margin="0,0,6,0" Content="Update all" ToolTip="Runs winget upgrade --all"/>
+              <Button x:Name="AppRefreshInstalled" Style="{StaticResource ToolbarButton}" MinWidth="32" MinHeight="32" Padding="0" FontFamily="Segoe MDL2 Assets" Content="&#xE72C;" ToolTip="Check again which apps are installed and which have updates" AutomationProperties.Name="Refresh installed apps"/>
             </StackPanel>
           </Grid>
           <StackPanel Grid.Row="2" Margin="20,6,20,0">
@@ -1443,8 +1444,8 @@
               </Grid.ColumnDefinitions>
               <TextBlock x:Uid="t.what-will-happen" Grid.Row="0" Grid.Column="0" Text="What will happen" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
               <CheckBox x:Name="TerminalEnabled" Grid.Row="0" Grid.Column="1" Content="Include in saved profiles" IsChecked="True" Margin="14,0,16,0" ToolTip="Include this terminal setup when a saved WinTool profile is replayed."/>
-              <Button x:Name="TerminalUpdate" Grid.Row="0" Grid.Column="2" Content="Update" Style="{StaticResource SecondaryButton}" FontSize="{DynamicResource FontSizeBody}" Width="100" Height="32" Padding="14,0" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Upgrade apps that are already installed and refresh modules and the prompt theme. Apply still installs only what is missing." AutomationProperties.Name="Update terminal setup"/>
-              <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="3" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" Width="190" Height="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
+              <Button x:Name="TerminalUpdate" Grid.Row="0" Grid.Column="2" Content="Update" Style="{StaticResource SecondaryButton}" FontSize="{DynamicResource FontSizeBody}" MinWidth="100" MinHeight="32" Padding="14,0" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Upgrade apps that are already installed and refresh modules and the prompt theme. Apply still installs only what is missing." AutomationProperties.Name="Update terminal setup"/>
+              <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="3" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" MinWidth="190" MinHeight="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
               <!-- One line of chips, always 32 px tall: more chips scroll sideways (mouse wheel), the tooltip lists every step. -->
               <ScrollViewer x:Name="TerminalSummaryScroll" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Margin="0,8,0,0" Height="32" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
                 <StackPanel x:Name="TerminalSummaryHost" Orientation="Horizontal"/>
@@ -1500,9 +1501,9 @@
                   </Grid.ColumnDefinitions>
                   <TextBlock x:Name="DriversHeader" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                   <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
-                    <Button x:Name="DriversBackup" Content="Back up drivers" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Height="32" Padding="14,0" ToolTip="Export the drivers now on this PC to a folder you choose." AutomationProperties.Name="Back up drivers"/>
-                    <Button x:Name="DriversScanAgain" Content="Scan again" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" Height="32" Padding="14,0" AutomationProperties.Name="Scan drivers again"/>
-                    <Button x:Name="DriversUpdate" Content="Update all" Style="{StaticResource PrimaryButton}" Margin="0,0,0,8" Height="32" Padding="16,0" ToolTip="Install the ticked driver updates and official packages. A restore point is created first when System Protection is on." AutomationProperties.Name="Update all"/>
+                    <Button x:Name="DriversBackup" Content="Back up drivers" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" MinHeight="32" Padding="14,0" ToolTip="Export the drivers now on this PC to a folder you choose." AutomationProperties.Name="Back up drivers"/>
+                    <Button x:Name="DriversScanAgain" Content="Scan again" Style="{StaticResource SecondaryButton}" Margin="0,0,8,8" MinHeight="32" Padding="14,0" AutomationProperties.Name="Scan drivers again"/>
+                    <Button x:Name="DriversUpdate" Content="Update all" Style="{StaticResource PrimaryButton}" Margin="0,0,0,8" MinHeight="32" Padding="16,0" ToolTip="Install the ticked driver updates and official packages. A restore point is created first when System Protection is on." AutomationProperties.Name="Update all"/>
                   </WrapPanel>
                 </Grid>
                 <StackPanel x:Name="DriversGroupHost" Margin="0,10,0,0"/>
@@ -1510,7 +1511,7 @@
               <StackPanel x:Name="DriversScanning" Visibility="Collapsed">
                 <TextBlock x:Name="DriversScanningTitle" Text="Scanning drivers" FontWeight="SemiBold" Foreground="{DynamicResource BrushInk}"/>
                 <StackPanel x:Name="DriversPhaseHost" Margin="0,12,0,0"/>
-                <Button x:Name="DriversScanCancel" Content="Cancel" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Height="32" Padding="16,0" Margin="0,16,0,0"/>
+                <Button x:Name="DriversScanCancel" Content="Cancel" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" MinHeight="32" Padding="16,0" Margin="0,16,0,0"/>
               </StackPanel>
             </Grid>
           </ScrollViewer>

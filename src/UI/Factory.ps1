@@ -52,6 +52,21 @@ function New-WinToolText {
     return $block
 }
 
+function Set-WinToolAutoButton {
+    # Drop fixed Width/Height so longer translations are not clipped.
+    param(
+        [Parameter(Mandatory = $true)][System.Windows.Controls.Button]$Button,
+        [double]$MinWidth = 88,
+        [double]$MinHeight = 32
+    )
+    $Button.MinWidth = $MinWidth
+    $Button.MinHeight = $MinHeight
+    $Button.Padding = [System.Windows.Thickness]::new(12, 7, 12, 7)
+    $Button.ClearValue([System.Windows.FrameworkElement]::WidthProperty)
+    $Button.ClearValue([System.Windows.FrameworkElement]::HeightProperty)
+}
+
+
 function New-WinToolCard {
     $border = New-Object System.Windows.Controls.Border
     $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BrushCard")

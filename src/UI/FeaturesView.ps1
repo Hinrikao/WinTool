@@ -131,8 +131,8 @@ function Set-WinToolFeatureState {
         $status = Get-WinToolFeatureStatus -Feature $row.Feature -State $State
         $row.Status = $status
         switch ($status) {
-            "On" { $row.StateText.Text = "On"; $on++ }
-            "Off" { $row.StateText.Text = "Off" }
+            "On" { $row.StateText.Text = (Get-WinToolText "msg.on"); $on++ }
+            "Off" { $row.StateText.Text = (Get-WinToolText "msg.off") }
             "Partial" { $row.StateText.Text = (Get-WinToolText "msg.partly-on") }
             default { $row.StateText.Text = (Get-WinToolText "msg.not-available-on-this-pc") }
         }
@@ -148,7 +148,7 @@ function Set-WinToolFeatureState {
             $row.StateText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, $tone[1])
         }
     }
-    (Get-WinToolUi -Name "FeatureStatus").Text = ((Get-WinToolText "msg.n-of-these-features-are-on-tick-or-untick-then-apply") -f $on)
+    (Get-WinToolUi -Name "FeatureStatus").Text = (Get-WinToolCountText "msg.n-of-these-features-are-on-tick-or-untick-then-apply" $on)
 }
 
 function Get-WinToolFeatureChange {

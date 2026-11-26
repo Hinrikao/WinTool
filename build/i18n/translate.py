@@ -79,7 +79,10 @@ def protect(text: str, protect_terms: list[str]) -> tuple[str, dict[str, str]]:
         if not term:
             continue
         token = PROTECTED_SLOT.format(index)
-        pattern = re.compile(re.escape(term), re.IGNORECASE)
+        escaped = re.escape(term)
+        if re.search(r"^[A-Za-z0-9]", term) and re.search(r"[A-Za-z0-9]$", term):
+            escaped = r"\b" + escaped + r"\b"
+        pattern = re.compile(escaped, re.IGNORECASE)
 
         def repl(match, token=token, term=term):
             slots[token] = match.group(0)
@@ -307,9 +310,10 @@ def locales_need_work(targets: list[str], force: bool) -> bool:
 
 def sync_locales(targets: list[str], provider_name: str | None, force: bool) -> None:
     english = load_json(EN_PATH, {})
-    glossary = load_json(GLOSSARY_PATH, {"protect": [], "phrases": {}})
+    glossary = load_json(GLOSSARY_PATH, {"protect": [], "phrases": {}, "copy_exact": []})
     protect_terms = list(glossary.get("protect") or [])
     phrases = dict(glossary.get("phrases") or {})
+    copy_exact = {str(item).strip() for item in (glossary.get("copy_exact") or []) if str(item).strip()}
     manifest = load_json(MANIFEST_PATH, {})
     if not isinstance(manifest, dict):
         manifest = {}
@@ -324,7 +328,7 @@ def sync_locales(targets: list[str], provider_name: str | None, force: bool) -> 
         pending_slots: list[dict[str, str]] = []
         kept = 0
         for key, value in english.items():
-            if should_skip_key(key):
+            if should_skip_key(key) or str(value).strip() in copy_exact:
                 current[key] = value
                 loc_manifest[key] = sha(value)
                 kept += 1

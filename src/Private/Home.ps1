@@ -11,7 +11,7 @@ function Get-WinToolHomeCheckList {
         [pscustomobject]@{ Id = "junk"; Name = (Get-WinToolText "msg.junk-files") },
         [pscustomobject]@{ Id = "tweaks"; Name = (Get-WinToolText "msg.recommended-tweaks") },
         [pscustomobject]@{ Id = "startup"; Name = (Get-WinToolText "msg.startup-programs") },
-        [pscustomobject]@{ Id = "drivers"; Name = "Drivers" },
+        [pscustomobject]@{ Id = "drivers"; Name = (Get-WinToolText "msg.drivers") },
         [pscustomobject]@{ Id = "disk"; Name = (Get-WinToolText "msg.disk-health") }
     )
 }
@@ -24,7 +24,7 @@ function Format-WinToolByteSize {
     if ($Bytes -ge 1GB) { return ([string]::Format($culture, "{0:0.0} GB", $Bytes / 1GB)) }
     if ($Bytes -ge 1MB) { return ([string]::Format($culture, "{0:0} MB", $Bytes / 1MB)) }
     if ($Bytes -ge 1KB) { return ([string]::Format($culture, "{0:0} KB", $Bytes / 1KB)) }
-    return ("{0:0} bytes" -f $Bytes)
+    return (Get-WinToolText "msg.n-bytes" ([string]::Format([System.Globalization.CultureInfo]::InvariantCulture, "{0:0}", $Bytes)))
 }
 
 function New-WinToolHomeResult {
@@ -56,7 +56,7 @@ function ConvertTo-WinToolHomeErrorResult {
         [Parameter(Mandatory = $true)][string]$Id,
         [string]$Message
     )
-    $text = "Could not check"
+    $text = Get-WinToolText "msg.could-not-check"
     if (-not [string]::IsNullOrWhiteSpace($Message)) {
         $detail = @($Message)
     }
@@ -79,9 +79,9 @@ function ConvertTo-WinToolHomeJunkResult {
         $detail.Add(("{0}: {1}" -f [string]$item.Name, (Format-WinToolByteSize -Bytes $bytes)))
     }
     if ($total -lt 50MB) {
-        return (New-WinToolHomeResult -Id "junk" -Status "ok" -Text "Nothing worth cleaning" -Detail $detail.ToArray() -Amount $total)
+        return (New-WinToolHomeResult -Id "junk" -Status "ok" -Text (Get-WinToolText "msg.nothing-worth-cleaning") -Detail $detail.ToArray() -Amount $total)
     }
-    $text = "{0} can be deleted" -f (Format-WinToolByteSize -Bytes $total)
+    $text = (Get-WinToolText "msg.can-be-deleted" (Format-WinToolByteSize -Bytes $total))
     if ($total -lt 200MB) {
         # Too little to be worth a Fix.
         return (New-WinToolHomeResult -Id "junk" -Status "ok" -Text $text -Detail $detail.ToArray() -Amount $total)
@@ -98,14 +98,13 @@ function ConvertTo-WinToolHomeTweakResult {
     $off = @(@($Data) | Where-Object { $null -ne $_ -and [string]$_.State -eq "off" })
     $read = @(@($Data) | Where-Object { $null -ne $_ -and [string]$_.State -ne "unknown" })
     if (@($Data).Count -gt 0 -and $read.Count -eq 0) {
-        return (New-WinToolHomeResult -Id "tweaks" -Status "unknown" -Text "Could not read the tweaks")
+        return (New-WinToolHomeResult -Id "tweaks" -Status "unknown" -Text (Get-WinToolText "msg.could-not-read-the-tweaks"))
     }
     $names = @($off | ForEach-Object { [string]$_.Name })
     if ($off.Count -eq 0) {
-        return (New-WinToolHomeResult -Id "tweaks" -Status "ok" -Text "All recommended tweaks are on")
+        return (New-WinToolHomeResult -Id "tweaks" -Status "ok" -Text (Get-WinToolText "msg.all-recommended-tweaks-are-on"))
     }
-    $text = "{0} tweaks not applied yet" -f $off.Count
-    if ($off.Count -eq 1) { $text = "1 tweak not applied yet" }
+    $text = Get-WinToolCountText "msg.n-tweaks-not-applied-yet" $off.Count
     $penalty = [Math]::Min(16, 2 * $off.Count)
     return (New-WinToolHomeResult -Id "tweaks" -Status "warn" -Text $text -Action "fix" -Penalty $penalty -Detail $names -Amount $off.Count)
 }
@@ -138,10 +137,9 @@ function ConvertTo-WinToolHomeStartupResult {
     }
     $count = $enabled.Count
     if ($count -eq 0) {
-        return (New-WinToolHomeResult -Id "startup" -Status "ok" -Text "No programs start with Windows")
+        return (New-WinToolHomeResult -Id "startup" -Status "ok" -Text (Get-WinToolText "msg.no-programs-start-with-windows"))
     }
-    $text = "{0} programs start with Windows" -f $count
-    if ($count -eq 1) { $text = "1 program starts with Windows" }
+    $text = Get-WinToolCountText "msg.n-programs-start-with-windows" $count
     $status = "ok"
     $penalty = 0
     if ($count -gt 8) { $status = "warn"; $penalty = 6 }
@@ -183,14 +181,14 @@ function ConvertTo-WinToolHomeDriverResult {
             return ($code -ne 22 -and $code -ne 45)
         })
     if ($bad.Count -eq 0) {
-        return (New-WinToolHomeResult -Id "drivers" -Status "ok" -Text "No device with problems")
+        return (New-WinToolHomeResult -Id "drivers" -Status "ok" -Text (Get-WinToolText "msg.no-device-with-problems"))
     }
     $detail = @($bad | ForEach-Object {
             $label = [string]$_.Name
             if ([string]::IsNullOrWhiteSpace($label) -and $null -ne $_.PSObject.Properties["InstanceId"]) {
                 $label = [string]$_.InstanceId
             }
-            if ([string]::IsNullOrWhiteSpace($label)) { $label = "Unknown device" }
+            if ([string]::IsNullOrWhiteSpace($label)) { $label = Get-WinToolText "msg.unknown-device" }
             if (-not [string]::IsNullOrWhiteSpace([string]$_.Class)) { $label += " (" + [string]$_.Class + ")" }
             $code = -1
             if ($null -ne $_.PSObject.Properties["Problem"] -and $null -ne $_.Problem) { $code = [int]$_.Problem }
@@ -201,8 +199,7 @@ function ConvertTo-WinToolHomeDriverResult {
             }
             $label
         })
-    $text = "{0} devices have problems" -f $bad.Count
-    if ($bad.Count -eq 1) { $text = "1 device has a problem" }
+    $text = Get-WinToolCountText "msg.n-devices-have-problems" $bad.Count
     $penalty = [Math]::Min(20, 10 * $bad.Count)
     return (New-WinToolHomeResult -Id "drivers" -Status "bad" -Text $text -Action "review" -Penalty $penalty -Detail $detail -Amount $bad.Count)
 }
@@ -212,17 +209,17 @@ function ConvertTo-WinToolHomeDiskResult {
     param([object[]]$Data)
     $disks = @(@($Data) | Where-Object { $null -ne $_ })
     if ($disks.Count -eq 0) {
-        return (New-WinToolHomeResult -Id "disk" -Status "unknown" -Text "No drive reported its health")
+        return (New-WinToolHomeResult -Id "disk" -Status "unknown" -Text (Get-WinToolText "msg.no-drive-reported-its-health"))
     }
     $detail = @($disks | ForEach-Object { "{0}: {1}" -f [string]$_.Name, [string]$_.Health })
     $bad = @($disks | Where-Object { [string]$_.Health -ne "Healthy" })
     if ($bad.Count -eq 0) {
-        $text = "All drives report healthy"
-        if ($disks.Count -eq 1) { $text = "The drive reports healthy" }
+        $text = Get-WinToolText "msg.all-drives-report-healthy"
+        if ($disks.Count -eq 1) { $text = Get-WinToolText "msg.the-drive-reports-healthy" }
         return (New-WinToolHomeResult -Id "disk" -Status "ok" -Text $text -Detail $detail)
     }
-    $text = "{0} drives need attention" -f $bad.Count
-    if ($bad.Count -eq 1) { $text = "{0} reports {1}" -f [string]$bad[0].Name, ([string]$bad[0].Health).ToLowerInvariant() }
+    $text = Get-WinToolCountText "msg.n-drives-need-attention" $bad.Count
+    if ($bad.Count -eq 1) { $text = (Get-WinToolText "msg.drive-reports-health" ([string]$bad[0].Name) ([string]$bad[0].Health)) }
     return (New-WinToolHomeResult -Id "disk" -Status "bad" -Text $text -Action "review" -Penalty 30 -Detail $detail -Amount $bad.Count)
 }
 
@@ -262,23 +259,25 @@ function Get-WinToolHomeScore {
 
 function Get-WinToolHomeVerdict {
     param([int]$Score)
-    if ($Score -ge 90) { return [pscustomobject]@{ Text = "Healthy"; Tone = "ok" } }
-    if ($Score -ge 60) { return [pscustomobject]@{ Text = "Needs attention"; Tone = "warn" } }
-    return [pscustomobject]@{ Text = "Needs care"; Tone = "bad" }
+    if ($Score -ge 90) { return [pscustomobject]@{ Text = (Get-WinToolText "msg.healthy"); Tone = "ok" } }
+    if ($Score -ge 60) { return [pscustomobject]@{ Text = (Get-WinToolText "msg.needs-attention"); Tone = "warn" } }
+    return [pscustomobject]@{ Text = (Get-WinToolText "msg.needs-care"); Tone = "bad" }
 }
 
 function Get-WinToolHomeLead {
     param([object[]]$Result)
-    $fixable = @(@($Result) | Where-Object { $null -ne $_ -and $_.Fixable }).Count
-    $words = @("No", "One", "Two", "Three", "Four", "Five")
-    if ($fixable -eq 0) {
-        return (Get-WinToolText "msg.nothing-needs-fixing-nothing-was-changed-during-the-anal")
+    $items = @(@($Result) | Where-Object { $null -ne $_ })
+    $fixable = @($items | Where-Object { $_.Fixable }).Count
+    if ($fixable -gt 0) {
+        return (Get-WinToolCountText "msg.items-can-be-fixed-nothing-changed" $fixable)
     }
-    $word = [string]$fixable
-    if ($fixable -lt $words.Count) { $word = $words[$fixable] }
-    $noun = "items"
-    if ($fixable -eq 1) { $noun = "item" }
-    return ("{0} {1} can be fixed. Nothing was changed during the analysis." -f $word, $noun)
+    $needsAttention = @($items | Where-Object {
+            $_.Status -eq "warn" -or $_.Status -eq "bad" -or $_.Action -eq "review" -or [int]$_.Penalty -gt 0
+        }).Count
+    if ($needsAttention -gt 0) {
+        return (Get-WinToolText "msg.review-items-that-need-attention-nothing-changed")
+    }
+    return (Get-WinToolText "msg.nothing-needs-fixing-nothing-was-changed-during-the-anal")
 }
 
 function Format-WinToolHomeWhen {
@@ -287,8 +286,8 @@ function Format-WinToolHomeWhen {
         [datetime]$Now = (Get-Date)
     )
     $clock = $Time.ToString("HH:mm", [System.Globalization.CultureInfo]::InvariantCulture)
-    if ($Time.Date -eq $Now.Date) { return ("today " + $clock) }
-    if ($Time.Date -eq $Now.Date.AddDays(-1)) { return ("yesterday " + $clock) }
+    if ($Time.Date -eq $Now.Date) { return (Get-WinToolText "msg.today-at" $clock) }
+    if ($Time.Date -eq $Now.Date.AddDays(-1)) { return (Get-WinToolText "msg.yesterday-at" $clock) }
     return ($Time.ToString("MMM d", [System.Globalization.CultureInfo]::InvariantCulture) + " " + $clock)
 }
 
@@ -301,7 +300,7 @@ function Format-WinToolHomeMeta {
         return (Get-WinToolText "ui.HomeMetaText.Text")
     }
     $when = Format-WinToolHomeWhen -Time ([datetime]$Last.Time) -Now $Now
-    return ("Last analysis: {0} {2} Score {1}" -f $when, [int]$Last.Score, [char]0x00B7)
+    return (Get-WinToolText "msg.last-analysis-score" $when ([int]$Last.Score))
 }
 
 function Get-WinToolMemoryTypeName {

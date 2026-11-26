@@ -207,21 +207,21 @@ function Set-WinToolHomeRow {
     $button = $Row.Button
     switch ($Action) {
         "fix" {
-            $button.Content = "Fix"
+            $button.Content = Get-WinToolText "button.fix"
             $button.SetResourceReference([System.Windows.Controls.Control]::BackgroundProperty, "BrushAccentSoft")
             $button.SetResourceReference([System.Windows.Controls.Control]::BorderBrushProperty, "BrushAccent")
             $button.Visibility = "Visible"
             $button.IsEnabled = $true
         }
         "review" {
-            $button.Content = "Review"
+            $button.Content = Get-WinToolText "button.review"
             $button.Background = [System.Windows.Media.Brushes]::Transparent
             $button.SetResourceReference([System.Windows.Controls.Control]::BorderBrushProperty, "BrushLine")
             $button.Visibility = "Visible"
             $button.IsEnabled = $true
         }
         "off" {
-            $button.Content = "Fix"
+            $button.Content = Get-WinToolText "button.fix"
             $button.Background = [System.Windows.Media.Brushes]::Transparent
             $button.SetResourceReference([System.Windows.Controls.Control]::BorderBrushProperty, "BrushLine")
             $button.Visibility = "Visible"
@@ -257,7 +257,11 @@ function New-WinToolHomeMini {
     $grid = New-Object System.Windows.Controls.Grid
     $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star) }))
     $grid.ColumnDefinitions.Add((New-Object System.Windows.Controls.ColumnDefinition -Property @{ Width = [System.Windows.GridLength]::new(98) }))
-    foreach ($height in @(30, 32, 32)) {
+    $titleHeight = New-Object System.Windows.Controls.RowDefinition
+    $titleHeight.Height = [System.Windows.GridLength]::Auto
+    $titleHeight.MinHeight = 30
+    $grid.RowDefinitions.Add($titleHeight)
+    foreach ($height in @(32, 32)) {
         $grid.RowDefinitions.Add((New-Object System.Windows.Controls.RowDefinition -Property @{ Height = [System.Windows.GridLength]::new($height) }))
     }
     $card.Child = $grid
@@ -270,15 +274,15 @@ function New-WinToolHomeMini {
     $titleText.Text = $Title
     $titleText.FontWeight = "SemiBold"
     $titleText.VerticalAlignment = "Center"
-    $titleText.TextTrimming = "CharacterEllipsis"
+    $titleText.TextWrapping = "Wrap"
+    $titleText.ToolTip = $Title
     $titleText.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "BrushMuted")
     $null = $titleRow.Children.Add($titleText)
 
     $tag = New-Object System.Windows.Controls.Border
-    $tag.Height = 22
-    $tag.Width = 96
+    $tag.MinHeight = 22
     $tag.CornerRadius = [System.Windows.CornerRadius]::new(11)
-    $tag.Padding = [System.Windows.Thickness]::new(6, 0, 6, 0)
+    $tag.Padding = [System.Windows.Thickness]::new(8, 2, 8, 2)
     $tag.HorizontalAlignment = "Right"
     $tag.VerticalAlignment = "Center"
     $tag.Margin = [System.Windows.Thickness]::new(8, 0, 0, 0)
@@ -287,8 +291,7 @@ function New-WinToolHomeMini {
     $tagText.FontWeight = "SemiBold"
     $tagText.HorizontalAlignment = "Center"
     $tagText.VerticalAlignment = "Center"
-    $tagText.TextTrimming = "CharacterEllipsis"
-    $tagText.Text = "Reading"
+    $tagText.Text = Get-WinToolText "msg.reading"
     $tag.Child = $tagText
     $null = $titleRow.Children.Add($tag)
 
@@ -463,7 +466,7 @@ function Update-WinToolHomeCard {
     if ($null -ne $sample -and [double]$sample.MemoryTotal -gt 0) {
         $fraction = [double]$sample.MemoryUsed / [double]$sample.MemoryTotal
         Set-WinToolHomeMiniRing -Mini $memory -Fraction $fraction
-        Set-WinToolHomeMiniTag -Mini $memory -Text ("{0:0}% used" -f ($fraction * 100)) -Tone "neutral"
+        Set-WinToolHomeMiniTag -Mini $memory -Text ((Get-WinToolText "msg.percent-used") -f ($fraction * 100)) -Tone "neutral"
         $memory.Value.Text = (Get-WinToolText "msg.n-in-use" (Format-WinToolByteSize -Bytes ([double]$sample.MemoryUsed)))
         $total = [double]$sample.MemoryTotal
         $kind = ""
@@ -471,7 +474,7 @@ function Update-WinToolHomeCard {
             if ([double]$info.MemoryTotal -gt 0) { $total = [double]$info.MemoryTotal }
             $kind = Get-WinToolMemoryTypeName -Code ([int]$info.MemoryType)
         }
-        $text = (Format-WinToolHomeSize -Bytes $total) + " total"
+        $text = (Get-WinToolText "msg.n-total" (Format-WinToolHomeSize -Bytes $total))
         if (-not [string]::IsNullOrWhiteSpace($kind)) { $text += $dot + $kind }
         $memory.Detail.Text = $text
         $memory.Card.ToolTip = ((Get-WinToolText "msg.memory-n-n") -f $memory.Value.Text, $memory.Detail.Text)
@@ -479,8 +482,8 @@ function Update-WinToolHomeCard {
     if ($null -ne $sample -and [double]$sample.DiskTotal -gt 0) {
         $free = [double]$sample.DiskFree / [double]$sample.DiskTotal
         Set-WinToolHomeMiniRing -Mini $disk -Fraction (1 - $free)
-        Set-WinToolHomeMiniTag -Mini $disk -Text ("{0:0}% free" -f ($free * 100)) -Tone (Get-WinToolHomeDiskTone -FreePercent ($free * 100))
-        $disk.Value.Text = (Format-WinToolByteSize -Bytes ([double]$sample.DiskFree)) + " free"
+        Set-WinToolHomeMiniTag -Mini $disk -Text ((Get-WinToolText "msg.percent-free") -f ($free * 100)) -Tone (Get-WinToolHomeDiskTone -FreePercent ($free * 100))
+        $disk.Value.Text = (Get-WinToolText "msg.n-free" (Format-WinToolByteSize -Bytes ([double]$sample.DiskFree)))
         $size = [double]$sample.DiskTotal
         $media = ""
         if ($null -ne $info) {
@@ -504,27 +507,27 @@ function Update-WinToolHomeCard {
     $driver = $hs.Results["drivers"]
     $diskHealth = $hs.Results["disk"]
     if ($hs.Phase -eq "analyzing" -or $null -eq $driver -or $null -eq $diskHealth) {
-        Set-WinToolHomeMiniTag -Mini $pc -Text "Checking" -Tone "neutral"
+        Set-WinToolHomeMiniTag -Mini $pc -Text (Get-WinToolText "msg.checking") -Tone "neutral"
         $pc.Card.ToolTip = (Get-WinToolText "msg.checking-device-drivers-and-drive-health")
     }
     elseif ($driver.Status -eq "bad" -and $diskHealth.Status -eq "bad") {
-        Set-WinToolHomeMiniTag -Mini $pc -Text "2 issues" -Tone "warn"
+        Set-WinToolHomeMiniTag -Mini $pc -Text (Get-WinToolCountText "msg.n-issues" 2) -Tone "warn"
         $pc.Card.ToolTip = ((Get-WinToolText "msg.drivers-n-disk-health-n") -f $driver.Text, $diskHealth.Text)
     }
     elseif ($driver.Status -eq "bad") {
-        Set-WinToolHomeMiniTag -Mini $pc -Text "Driver issue" -Tone "warn"
+        Set-WinToolHomeMiniTag -Mini $pc -Text (Get-WinToolText "msg.driver-issue") -Tone "warn"
         $tip = (Get-WinToolText "msg.drivers-colon-n" $driver.Text)
         if (@($driver.Detail).Count -gt 0) { $tip += "`n" + ((@($driver.Detail | Select-Object -First 5)) -join "`n") }
         $pc.Card.ToolTip = $tip
     }
     elseif ($diskHealth.Status -eq "bad") {
-        Set-WinToolHomeMiniTag -Mini $pc -Text "Disk issue" -Tone "bad"
+        Set-WinToolHomeMiniTag -Mini $pc -Text (Get-WinToolText "msg.disk-issue") -Tone "bad"
         $tip = (Get-WinToolText "msg.disk-health-colon-n" $diskHealth.Text)
         if (@($diskHealth.Detail).Count -gt 0) { $tip += "`n" + ((@($diskHealth.Detail | Select-Object -First 5)) -join "`n") }
         $pc.Card.ToolTip = $tip
     }
     else {
-        Set-WinToolHomeMiniTag -Mini $pc -Text "Healthy" -Tone "ok"
+        Set-WinToolHomeMiniTag -Mini $pc -Text (Get-WinToolText "msg.healthy") -Tone "ok"
         $pc.Card.ToolTip = (Get-WinToolText "msg.device-drivers-and-drive-health-report-no-problems")
     }
 }
@@ -567,10 +570,10 @@ function Initialize-WinToolHomeView {
         $row = New-WinToolHomeRow -Check $checks[$i] -Last ($i -eq $checks.Count - 1)
         $hs.Rows[$row.Id] = $row
         $null = $checkHost.Children.Add($row.Border)
-        Set-WinToolHomeRow -Row $row -Status "busy" -Text ("Waiting" + (Get-WinToolHomeEllipsis)) -Action "off"
+        Set-WinToolHomeRow -Row $row -Status "busy" -Text ((Get-WinToolText "msg.waiting") + (Get-WinToolHomeEllipsis)) -Action "off"
     }
     $minis = Get-WinToolUi -Name "HomeMinis"
-    $hs.Minis["memory"] = New-WinToolHomeMini -Key "memory" -Title "Memory" -Column 0 -From "#4C8DFF" -To "#8B5CF6" -Line "#8B7CF6"
+    $hs.Minis["memory"] = New-WinToolHomeMini -Key "memory" -Title (Get-WinToolText "msg.memory") -Column 0 -From "#4C8DFF" -To "#8B5CF6" -Line "#8B7CF6"
     $hs.Minis["disk"] = New-WinToolHomeMini -Key "disk" -Title (Get-WinToolText "msg.windows-disk") -Column 2 -From "#F5B942" -To "#F07178" -Line "#F5A742"
     $hs.Minis["pc"] = New-WinToolHomeMini -Key "pc" -Title (Get-WinToolText "drivers.pcLabel") -Column 4 -From "#3DD68C" -To "#4C8DFF" -Line "#4C8DFF"
     foreach ($key in @("memory", "disk", "pc")) { $null = $minis.Children.Add($hs.Minis[$key].Card) }
@@ -721,7 +724,7 @@ function Start-WinToolHomeCheck {
     $hs = $script:WinToolState.Home
     $hs.Pending[$Id] = $true
     $hs.Results.Remove($Id)
-    Set-WinToolHomeRow -Row $hs.Rows[$Id] -Status "busy" -Text ("Checking" + (Get-WinToolHomeEllipsis)) -Action "off"
+    Set-WinToolHomeRow -Row $hs.Rows[$Id] -Status "busy" -Text ((Get-WinToolText "msg.checking") + (Get-WinToolHomeEllipsis)) -Action "off"
     if ($script:WinToolHomeNoJobs) { return }
     $key = "HomeJob_" + $Id
     Stop-WinToolThread -Job $script:WinToolState[$key]
@@ -997,8 +1000,8 @@ function Invoke-WinToolHomeFixAll {
     $lines = New-Object System.Collections.Generic.List[string]
     $junk = $hs.Results["junk"]
     $tweaks = $hs.Results["tweaks"]
-    if ($null -ne $junk -and $junk.Fixable) { $lines.Add(("- Delete {0} of junk files (recent and in-use files are kept)" -f (Format-WinToolByteSize -Bytes ([double]$junk.Amount)))) }
-    if ($null -ne $tweaks -and $tweaks.Fixable) { $lines.Add(("- Turn on {0} Recommended tweak(s); WinTool creates a restore point first" -f [int]$tweaks.Amount)) }
+    if ($null -ne $junk -and $junk.Fixable) { $lines.Add(("- " + (Get-WinToolText "msg.delete-n-of-junk-files-recent-and-in-use-files-are-kept" (Format-WinToolByteSize -Bytes ([double]$junk.Amount))))) }
+    if ($null -ne $tweaks -and $tweaks.Fixable) { $lines.Add(("- " + (Get-WinToolCountText "msg.turn-on-n-recommended-tweaks-restore-point-first" ([int]$tweaks.Amount)))) }
     $ok = Request-WinToolConfirmation -Message ((Get-WinToolText "msg.fix-n-item-s-n-nothing-else-is-changed") -f $lines.Count, ($lines -join "`n")) -Title (Get-WinToolText "ui.HomeFixAll.Content")
     if (-not $ok) { return }
     if ($null -ne $tweaks -and $tweaks.Fixable) { $null = Start-WinToolHomeTweakFix -NoConfirm }
