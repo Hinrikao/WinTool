@@ -334,9 +334,12 @@ function Format-LifecycleCloseProblem {
     if ($Spawned.Count -gt 0) {
         $names = New-Object System.Collections.Generic.List[string]
         foreach ($id in @($Spawned.Keys)) {
+            if (Test-LifecycleKeptProcess -Name $Spawned[$id]) { continue }
             $names.Add(("{0} ({1})" -f $Spawned[$id], $id))
         }
-        $parts.Add("process: " + ($names -join ", "))
+        if ($names.Count -gt 0) {
+            $parts.Add("process: " + ($names -join ", "))
+        }
     }
     return ($parts -join " | ")
 }
@@ -467,12 +470,18 @@ function Invoke-LifecycleCloseWatch {
     }
 }
 
+function Test-LifecycleKeptProcess {
+    param([string]$Name)
+    $keep = @("conhost.exe", "openconsole.exe", "explorer.exe", "taskmgr.exe", "mmc.exe", "systemsettings.exe", "applicationframehost.exe")
+    return $keep -contains ([string]$Name).ToLowerInvariant()
+}
+
 function Test-LifecycleLeftover {
     param($Ever)
     $left = @()
     foreach ($id in @($Ever.Keys)) {
         $alive = Get-Process -Id $id -ErrorAction SilentlyContinue
-        if ($null -ne $alive -and [string]$Ever[$id] -ne "conhost.exe") {
+        if ($null -ne $alive -and -not (Test-LifecycleKeptProcess -Name $Ever[$id])) {
             $left += ("{0} ({1})" -f $Ever[$id], $id)
         }
     }
