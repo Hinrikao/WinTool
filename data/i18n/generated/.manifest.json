@@ -1490,7 +1490,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "es": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -2983,7 +2991,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "fr": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -4476,7 +4492,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "de": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -5969,7 +5993,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "it": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -7462,7 +7494,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "ja": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -8955,7 +8995,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "ko": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -10448,7 +10496,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "zh-Hans": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -11941,7 +11997,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "zh-Hant": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -13434,7 +13498,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "pl": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -14927,7 +14999,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "nl": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -16420,7 +16500,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "ru": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -17913,7 +18001,15 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   },
   "tr": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -19406,6 +19502,14 @@
     "msg.admin-needed-to-finish": "4a1f6c678fe25652ae7f7a3b8bbc2a9f1154082248663e94bb46ccd8973def35",
     "shell.helperStarting": "c3e0ba89581d7c13f08df1628e64b4f66565c3f1b2d2021ca0e0d0db3e2bfc83",
     "shell.opened": "7c9c9becf127b6cd9d854ba8a6cc9fc1fd743713b8b3109f179ab3712ccb3ecb",
-    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f"
+    "ui.adminBadge": "c1c224b03cd9bc7b6a86d77f5dace40191766c485cd55dc48caf9ac873335d6f",
+    "shell.closed": "2907deeb2153f8e0de4618e1b45277da6e03dbc3f1c972f97001132f391efc56",
+    "shell.hostOffer.body": "4ed6304c89e59040c4b08362b02b2f01b1cf0f5bfa6c4cd23aca59af8ec7b115",
+    "shell.hostOffer.failed": "8d1adcdc54b0fca9ca52c01a5f3af276e12af4050994fab6f8b142b06c55a4a6",
+    "shell.hostOffer.install": "f76810b9e38d30e48582136cd653b19e87dac7d9637dce79856fdba293cb2fd8",
+    "shell.hostOffer.installed": "02275eeff26bed3857637d62e51aa7da4cd7a238c151b6941972a07a585e7ef1",
+    "shell.hostOffer.installing": "95a68f8c99a2d46a45b55760efd7c20fc1d95a3e78f6c4d9c298f8d9b98cf742",
+    "shell.hostOffer.stay": "4489be858b26345987561ed5e09be3368c7c97d60bace62695d55784a2a5f299",
+    "shell.hostOffer.title": "9cb353f551284ad38811bf898034816cc22df291b6be3f2a4a4240496c3cdb98"
   }
 }
