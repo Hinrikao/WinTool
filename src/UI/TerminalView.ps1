@@ -17,6 +17,10 @@ function Get-WinToolActiveFont {
 }
 
 function Get-WinToolActiveOhMyPoshTheme {
+    $extra = @($script:WinToolExtraOhMyPoshTheme).Count
+    if ($null -ne $script:WinToolActiveOhMyPoshTheme -and [int]$script:WinToolActiveOhMyPoshCount -eq $extra) {
+        return @($script:WinToolActiveOhMyPoshTheme)
+    }
     $rows = New-Object System.Collections.Generic.List[object]
     $seen = @{}
     foreach ($item in @(Get-WinToolNote -Object (Get-WinToolOhMyPoshDocument) -Name "themes" -Default @())) {
@@ -28,7 +32,9 @@ function Get-WinToolActiveOhMyPoshTheme {
             $rows.Add($item)
         }
     }
-    return $rows.ToArray()
+    $script:WinToolActiveOhMyPoshTheme = $rows.ToArray()
+    $script:WinToolActiveOhMyPoshCount = $extra
+    return @($script:WinToolActiveOhMyPoshTheme)
 }
 
 function New-WinToolSimpleIncludedRow {
@@ -652,6 +658,7 @@ function Initialize-WinToolTerminalView {
     # Keep Advanced measured behind Simple so the first click does not lay it out.
     $script:WinToolTerminalSurfaceWarm = $true
     Set-WinToolTerminalModeView
+    Request-WinToolThemeViewCache
 }
 
 function Set-WinToolTerminalModeView {
@@ -719,10 +726,10 @@ function Select-WinToolTerminalPrompt {
     finally {
         $script:WinToolTerminalSyncing = $wasSyncing
     }
-    # The theme-row pictures are painted lazily. The large preview is one
-    # drawing, and a previously painted engine is restored from cache.
-    Update-WinToolTerminalPreview
-    Sync-WinToolVisibleThemePreview
+    # The theme list is swapped from cache. Pictures and the large preview
+    # are painted after this click, on the background dispatcher queue.
+    Request-WinToolTerminalPreview
+    Request-WinToolVisibleThemePreview
     Show-WinToolTerminalSelection
 }
 
@@ -903,6 +910,51 @@ function Get-WinToolThemeListKey {
     return ($prompt + "|" + $filter + "|" + $query)
 }
 
+function Initialize-WinToolThemeViewCache {
+    # Build every engine's theme rows and list entries once, off the click
+    # path. Pictures stay lazy.
+    $ids = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "prompts" -Default @() | ForEach-Object { [string]$_.id })
+    foreach ($promptId in $ids) {
+        if ([string]::IsNullOrWhiteSpace($promptId)) { continue }
+        $null = Get-WinToolCachedThemeRow -PromptId $promptId
+        if ($null -eq $script:WinToolThemeViewByPrompt) { $script:WinToolThemeViewByPrompt = @{} }
+        if ($script:WinToolThemeViewByPrompt.ContainsKey($promptId)) { continue }
+        Initialize-WinToolThemeEntryType
+        $rows = @(Get-WinToolCachedThemeRow -PromptId $promptId)
+        $entries = New-Object System.Collections.Generic.List[object]
+        foreach ($row in $rows) {
+            [void]$entries.Add((Get-WinToolCachedThemeEntry -Row $row -PromptId $promptId))
+        }
+        $filterObject = New-Object WinToolThemeFilter
+        $view = [System.Windows.Data.ListCollectionView]::new($entries)
+        $filterObject.Mode = "all"
+        $filterObject.Query = ""
+        $filterObject.Attach($view)
+        $script:WinToolThemeViewByPrompt[$promptId] = [pscustomobject]@{
+            Entries = $entries
+            Filter  = $filterObject
+            View    = $view
+        }
+    }
+}
+
+function Request-WinToolThemeViewCache {
+    if ($script:WinToolThemeViewCacheQueued) { return }
+    $script:WinToolThemeViewCacheQueued = $true
+    if ($null -eq $script:WinToolWindow) {
+        $script:WinToolThemeViewCacheQueued = $false
+        Initialize-WinToolThemeViewCache
+        return
+    }
+    $callback = [scriptblock]::Create("Complete-WinToolQueuedThemeViewCache")
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$callback)
+}
+
+function Complete-WinToolQueuedThemeViewCache {
+    $script:WinToolThemeViewCacheQueued = $false
+    Initialize-WinToolThemeViewCache
+}
+
 function Reset-WinToolThemeListCache {
     param([switch]$Force)
     $extra = @($script:WinToolExtraOhMyPoshTheme).Count
@@ -912,6 +964,7 @@ function Reset-WinToolThemeListCache {
     $script:WinToolThemeItemCache = @{}
     $script:WinToolThemeViewByPrompt = @{}
     $script:WinToolThemeImageByKey = @{}
+    $script:WinToolActiveOhMyPoshTheme = $null
     $script:WinToolThemeListKey = ""
     $script:WinToolThemeEntryPrompt = ""
     $script:WinToolThemeView = $null

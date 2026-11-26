@@ -965,6 +965,7 @@ function Assert-WinToolSampleGlyph {
         [string]$Label,
         [switch]$ForbidPrivateUse
     )
+    Complete-WinToolStyleSelectionWork
     if ($null -eq $Sample) { throw ($Label + " sample is missing.") }
     $drawn = Get-WinToolSampleInlineText -Sample $Sample
     if ([string]::IsNullOrEmpty($drawn)) { throw ($Label + " drew no text.") }
@@ -1099,36 +1100,14 @@ function Measure-WinToolEngineSwitch {
     param([Parameter(Mandatory = $true)][string]$PromptId)
     $format = [System.Globalization.CultureInfo]::InvariantCulture
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
-    Set-WinToolTerminalChoiceValue -Name "prompt" -Value $PromptId
-    $script:WinToolTerminalFilter = "all"
-    $wasSyncing = [bool]$script:WinToolTerminalSyncing
-    $script:WinToolTerminalSyncing = $true
-    try {
-        $allChip = $window.FindName("TerminalFilterAll")
-        if ($null -ne $allChip -and $allChip.IsChecked -ne $true) { $allChip.IsChecked = $true }
-        Update-WinToolPromptStyleList
-    }
-    finally {
-        $script:WinToolTerminalSyncing = $wasSyncing
-    }
-    $listMs = $watch.Elapsed.TotalMilliseconds
+    Select-WinToolTerminalPrompt -PromptId $PromptId
+    $clickMs = $watch.Elapsed.TotalMilliseconds
     $watch.Restart()
-    Update-WinToolPromptSelection
-    Update-WinToolTerminalSummary
-    $summaryMs = $watch.Elapsed.TotalMilliseconds
-    $watch.Restart()
-    Update-WinToolTerminalPreview
-    $previewMs = $watch.Elapsed.TotalMilliseconds
-    $watch.Restart()
-    Sync-WinToolVisibleThemePreview
-    $thumbMs = $watch.Elapsed.TotalMilliseconds
-    $watch.Restart()
-    Show-WinToolTerminalSelection
-    $showMs = $watch.Elapsed.TotalMilliseconds
-    $total = $listMs + $summaryMs + $previewMs + $thumbMs + $showMs
-    Write-Host ("Engine switch phases " + $PromptId + ": list " + $listMs.ToString("0.0", $format) + " ms, summary " + $summaryMs.ToString("0.0", $format) + " ms, preview " + $previewMs.ToString("0.0", $format) + " ms, thumbs " + $thumbMs.ToString("0.0", $format) + " ms, show " + $showMs.ToString("0.0", $format) + " ms, total " + $total.ToString("0.0", $format) + " ms.")
+    Complete-WinToolStyleSelectionWork
+    $flushMs = $watch.Elapsed.TotalMilliseconds
+    Write-Host ("Engine switch phases " + $PromptId + ": click " + $clickMs.ToString("0.0", $format) + " ms, preview flush " + $flushMs.ToString("0.0", $format) + " ms, total " + ($clickMs + $flushMs).ToString("0.0", $format) + " ms.")
     Write-WinToolThemeListStat -Label $PromptId
-    return ,([double]$total)
+    return ,([double]$clickMs)
 }
 
 function Measure-WinToolUiAction {
@@ -1157,6 +1136,7 @@ function Assert-WinToolUiSwitchSpeed {
     if ($ids.Count -lt 8) { throw ("Expected 8 prompt engines, found " + $ids.Count + ".") }
 
     Reset-WinToolThemeListCache -Force
+    Initialize-WinToolThemeViewCache
     Reset-WinToolPreviewDrawCache
     $script:WinToolThemePreviewFontKey = Get-WinToolPreviewFontKey
 
@@ -1387,6 +1367,7 @@ $window.FindName("TerminalModeAdvanced").IsChecked = $true
 $themeList = $window.FindName("TerminalStyleList")
 function Assert-WinToolThemeCard {
     param([string]$Label)
+    Complete-WinToolStyleSelectionWork
     $engine = [string]$script:WinToolTerminalChoice.prompt
     $want = Get-WinToolThemeTitle -PromptId $engine
     $rows = @(Get-WinToolThemeRow -PromptId $engine -OhMyPoshTheme @(Get-WinToolActiveOhMyPoshTheme))

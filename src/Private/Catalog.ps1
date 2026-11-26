@@ -1,20 +1,31 @@
 # Copyright (c) 2026 Henrique
 # SPDX-License-Identifier: MIT
 
+function Get-WinToolCachedPayloadObject {
+    param([Parameter(Mandatory = $true)][string]$Name)
+    # Parsed catalogs are immutable after load. Re-parsing Apps, Terminal, or
+    # Oh My Posh themes on every click stalls the UI thread.
+    if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
+    if ($script:WinToolPayloadObject.ContainsKey($Name)) { return $script:WinToolPayloadObject[$Name] }
+    $value = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name $Name)
+    $script:WinToolPayloadObject[$Name] = $value
+    return $value
+}
+
 function Get-WinToolAppCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Apps"))
+    return (Get-WinToolCachedPayloadObject -Name "Apps")
 }
 
 function Get-WinToolTweakCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Tweaks"))
+    return (Get-WinToolCachedPayloadObject -Name "Tweaks")
 }
 
 function Get-WinToolTerminalCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Terminal"))
+    return (Get-WinToolCachedPayloadObject -Name "Terminal")
 }
 
 function Get-WinToolUpdateCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Updates"))
+    return (Get-WinToolCachedPayloadObject -Name "Updates")
 }
 
 function Get-WinToolPresetTweak {

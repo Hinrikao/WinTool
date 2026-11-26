@@ -8899,20 +8899,31 @@ function Write-WinToolJsonFile {
 # Copyright (c) 2026 Henrique
 # SPDX-License-Identifier: MIT
 
+function Get-WinToolCachedPayloadObject {
+    param([Parameter(Mandatory = $true)][string]$Name)
+    # Parsed catalogs are immutable after load. Re-parsing Apps, Terminal, or
+    # Oh My Posh themes on every click stalls the UI thread.
+    if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
+    if ($script:WinToolPayloadObject.ContainsKey($Name)) { return $script:WinToolPayloadObject[$Name] }
+    $value = ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name $Name)
+    $script:WinToolPayloadObject[$Name] = $value
+    return $value
+}
+
 function Get-WinToolAppCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Apps"))
+    return (Get-WinToolCachedPayloadObject -Name "Apps")
 }
 
 function Get-WinToolTweakCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Tweaks"))
+    return (Get-WinToolCachedPayloadObject -Name "Tweaks")
 }
 
 function Get-WinToolTerminalCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Terminal"))
+    return (Get-WinToolCachedPayloadObject -Name "Terminal")
 }
 
 function Get-WinToolUpdateCatalog {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Updates"))
+    return (Get-WinToolCachedPayloadObject -Name "Updates")
 }
 
 function Get-WinToolPresetTweak {
@@ -10720,11 +10731,11 @@ function Invoke-WinToolTweakItem {
 # SPDX-License-Identifier: MIT
 
 function Get-WinToolFontDocument {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Fonts"))
+    return (Get-WinToolCachedPayloadObject -Name "Fonts")
 }
 
 function Get-WinToolOhMyPoshDocument {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "OmpThemes"))
+    return (Get-WinToolCachedPayloadObject -Name "OmpThemes")
 }
 
 function Select-WinToolFont {
@@ -13019,7 +13030,8 @@ function Get-WinToolThemeRow {
     }
     elseif ($PromptId -eq "starship") {
         foreach ($preset in @(Get-WinToolNote -Object $catalog -Name "starshipPresets" -Default @())) {
-            $preview = @(Get-WinToolPromptPreview -PromptId "starship" -PromptStyle ([string]$preset.id))
+            $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @(Get-WinToolNote -Object $preset -Name "preview" -Default @()))
+            if ($preview.Count -eq 0) { $preview = @(Get-WinToolPromptPreview -PromptId "starship" -PromptStyle ([string]$preset.id)) }
             $nerd = Get-WinToolNote -Object $preset -Name "nerdFont"
             if ($null -ne $nerd) { $nerd = [bool]$nerd }
             $rows.Add((New-WinToolThemeRow -Id ([string]$preset.id) -Name ([string]$preset.name) -Preview $preview -NerdFont $nerd))
@@ -13029,15 +13041,23 @@ function Get-WinToolThemeRow {
         $previews = Get-WinToolNote -Object $catalog -Name "previews"
         foreach ($name in @(Get-WinToolNote -Object $catalog -Name "omzThemes" -Default @())) {
             $preview = @()
-            if ($null -ne $previews -and $null -ne $previews.PSObject.Properties[("oh-my-zsh:" + [string]$name)]) {
-                $preview = @(Get-WinToolPromptPreview -PromptId "oh-my-zsh" -PromptStyle ([string]$name))
+            if ($null -ne $previews) {
+                $sample = Get-WinToolNote -Object $previews -Name ("oh-my-zsh:" + [string]$name) -Default $null
+                if ($null -ne $sample) { $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @($sample)) }
             }
             $rows.Add((New-WinToolThemeRow -Id ([string]$name) -Name ([string]$name) -Preview $preview -NerdFont $null))
         }
     }
     else {
+        $previewMap = Get-WinToolNote -Object $catalog -Name "previews" -Default $null
         foreach ($variant in @(Get-WinToolPromptVariantList -PromptId $PromptId)) {
-            $preview = @(Get-WinToolPromptPreview -PromptId $PromptId -PromptStyle ([string]$variant.id))
+            $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @(Get-WinToolNote -Object $variant -Name "preview" -Default @()))
+            if ($preview.Count -eq 0 -and $null -ne $previewMap) {
+                $sample = Get-WinToolNote -Object $previewMap -Name ($PromptId + ":" + [string]$variant.id) -Default $null
+                if ($null -eq $sample) { $sample = Get-WinToolNote -Object $previewMap -Name $PromptId -Default $null }
+                if ($null -ne $sample) { $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @($sample)) }
+            }
+            if ($preview.Count -eq 0) { $preview = @(Get-WinToolPromptPreview -PromptId $PromptId -PromptStyle ([string]$variant.id)) }
             $about = [string](Get-WinToolNote -Object $variant -Name "description" -Default "")
             $rows.Add((New-WinToolThemeRow -Id ([string]$variant.id) -Name ([string]$variant.name) -Preview $preview -NerdFont $null -Description $about))
         }
@@ -18195,6 +18215,10 @@ function Get-WinToolActiveFont {
 }
 
 function Get-WinToolActiveOhMyPoshTheme {
+    $extra = @($script:WinToolExtraOhMyPoshTheme).Count
+    if ($null -ne $script:WinToolActiveOhMyPoshTheme -and [int]$script:WinToolActiveOhMyPoshCount -eq $extra) {
+        return @($script:WinToolActiveOhMyPoshTheme)
+    }
     $rows = New-Object System.Collections.Generic.List[object]
     $seen = @{}
     foreach ($item in @(Get-WinToolNote -Object (Get-WinToolOhMyPoshDocument) -Name "themes" -Default @())) {
@@ -18206,7 +18230,9 @@ function Get-WinToolActiveOhMyPoshTheme {
             $rows.Add($item)
         }
     }
-    return $rows.ToArray()
+    $script:WinToolActiveOhMyPoshTheme = $rows.ToArray()
+    $script:WinToolActiveOhMyPoshCount = $extra
+    return @($script:WinToolActiveOhMyPoshTheme)
 }
 
 function New-WinToolSimpleIncludedRow {
@@ -18830,6 +18856,7 @@ function Initialize-WinToolTerminalView {
     # Keep Advanced measured behind Simple so the first click does not lay it out.
     $script:WinToolTerminalSurfaceWarm = $true
     Set-WinToolTerminalModeView
+    Request-WinToolThemeViewCache
 }
 
 function Set-WinToolTerminalModeView {
@@ -18897,10 +18924,10 @@ function Select-WinToolTerminalPrompt {
     finally {
         $script:WinToolTerminalSyncing = $wasSyncing
     }
-    # The theme-row pictures are painted lazily. The large preview is one
-    # drawing, and a previously painted engine is restored from cache.
-    Update-WinToolTerminalPreview
-    Sync-WinToolVisibleThemePreview
+    # The theme list is swapped from cache. Pictures and the large preview
+    # are painted after this click, on the background dispatcher queue.
+    Request-WinToolTerminalPreview
+    Request-WinToolVisibleThemePreview
     Show-WinToolTerminalSelection
 }
 
@@ -19081,6 +19108,51 @@ function Get-WinToolThemeListKey {
     return ($prompt + "|" + $filter + "|" + $query)
 }
 
+function Initialize-WinToolThemeViewCache {
+    # Build every engine's theme rows and list entries once, off the click
+    # path. Pictures stay lazy.
+    $ids = @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "prompts" -Default @() | ForEach-Object { [string]$_.id })
+    foreach ($promptId in $ids) {
+        if ([string]::IsNullOrWhiteSpace($promptId)) { continue }
+        $null = Get-WinToolCachedThemeRow -PromptId $promptId
+        if ($null -eq $script:WinToolThemeViewByPrompt) { $script:WinToolThemeViewByPrompt = @{} }
+        if ($script:WinToolThemeViewByPrompt.ContainsKey($promptId)) { continue }
+        Initialize-WinToolThemeEntryType
+        $rows = @(Get-WinToolCachedThemeRow -PromptId $promptId)
+        $entries = New-Object System.Collections.Generic.List[object]
+        foreach ($row in $rows) {
+            [void]$entries.Add((Get-WinToolCachedThemeEntry -Row $row -PromptId $promptId))
+        }
+        $filterObject = New-Object WinToolThemeFilter
+        $view = [System.Windows.Data.ListCollectionView]::new($entries)
+        $filterObject.Mode = "all"
+        $filterObject.Query = ""
+        $filterObject.Attach($view)
+        $script:WinToolThemeViewByPrompt[$promptId] = [pscustomobject]@{
+            Entries = $entries
+            Filter  = $filterObject
+            View    = $view
+        }
+    }
+}
+
+function Request-WinToolThemeViewCache {
+    if ($script:WinToolThemeViewCacheQueued) { return }
+    $script:WinToolThemeViewCacheQueued = $true
+    if ($null -eq $script:WinToolWindow) {
+        $script:WinToolThemeViewCacheQueued = $false
+        Initialize-WinToolThemeViewCache
+        return
+    }
+    $callback = [scriptblock]::Create("Complete-WinToolQueuedThemeViewCache")
+    $null = $script:WinToolWindow.Dispatcher.BeginInvoke([System.Windows.Threading.DispatcherPriority]::Background, [System.Action]$callback)
+}
+
+function Complete-WinToolQueuedThemeViewCache {
+    $script:WinToolThemeViewCacheQueued = $false
+    Initialize-WinToolThemeViewCache
+}
+
 function Reset-WinToolThemeListCache {
     param([switch]$Force)
     $extra = @($script:WinToolExtraOhMyPoshTheme).Count
@@ -19090,6 +19162,7 @@ function Reset-WinToolThemeListCache {
     $script:WinToolThemeItemCache = @{}
     $script:WinToolThemeViewByPrompt = @{}
     $script:WinToolThemeImageByKey = @{}
+    $script:WinToolActiveOhMyPoshTheme = $null
     $script:WinToolThemeListKey = ""
     $script:WinToolThemeEntryPrompt = ""
     $script:WinToolThemeView = $null

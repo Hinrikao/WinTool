@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: MIT
 
 function Get-WinToolFontDocument {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "Fonts"))
+    return (Get-WinToolCachedPayloadObject -Name "Fonts")
 }
 
 function Get-WinToolOhMyPoshDocument {
-    return (ConvertFrom-WinToolJsonText -Text (Get-WinToolPayloadText -Name "OmpThemes"))
+    return (Get-WinToolCachedPayloadObject -Name "OmpThemes")
 }
 
 function Select-WinToolFont {
@@ -2301,7 +2301,8 @@ function Get-WinToolThemeRow {
     }
     elseif ($PromptId -eq "starship") {
         foreach ($preset in @(Get-WinToolNote -Object $catalog -Name "starshipPresets" -Default @())) {
-            $preview = @(Get-WinToolPromptPreview -PromptId "starship" -PromptStyle ([string]$preset.id))
+            $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @(Get-WinToolNote -Object $preset -Name "preview" -Default @()))
+            if ($preview.Count -eq 0) { $preview = @(Get-WinToolPromptPreview -PromptId "starship" -PromptStyle ([string]$preset.id)) }
             $nerd = Get-WinToolNote -Object $preset -Name "nerdFont"
             if ($null -ne $nerd) { $nerd = [bool]$nerd }
             $rows.Add((New-WinToolThemeRow -Id ([string]$preset.id) -Name ([string]$preset.name) -Preview $preview -NerdFont $nerd))
@@ -2311,15 +2312,23 @@ function Get-WinToolThemeRow {
         $previews = Get-WinToolNote -Object $catalog -Name "previews"
         foreach ($name in @(Get-WinToolNote -Object $catalog -Name "omzThemes" -Default @())) {
             $preview = @()
-            if ($null -ne $previews -and $null -ne $previews.PSObject.Properties[("oh-my-zsh:" + [string]$name)]) {
-                $preview = @(Get-WinToolPromptPreview -PromptId "oh-my-zsh" -PromptStyle ([string]$name))
+            if ($null -ne $previews) {
+                $sample = Get-WinToolNote -Object $previews -Name ("oh-my-zsh:" + [string]$name) -Default $null
+                if ($null -ne $sample) { $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @($sample)) }
             }
             $rows.Add((New-WinToolThemeRow -Id ([string]$name) -Name ([string]$name) -Preview $preview -NerdFont $null))
         }
     }
     else {
+        $previewMap = Get-WinToolNote -Object $catalog -Name "previews" -Default $null
         foreach ($variant in @(Get-WinToolPromptVariantList -PromptId $PromptId)) {
-            $preview = @(Get-WinToolPromptPreview -PromptId $PromptId -PromptStyle ([string]$variant.id))
+            $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @(Get-WinToolNote -Object $variant -Name "preview" -Default @()))
+            if ($preview.Count -eq 0 -and $null -ne $previewMap) {
+                $sample = Get-WinToolNote -Object $previewMap -Name ($PromptId + ":" + [string]$variant.id) -Default $null
+                if ($null -eq $sample) { $sample = Get-WinToolNote -Object $previewMap -Name $PromptId -Default $null }
+                if ($null -ne $sample) { $preview = @(ConvertTo-WinToolPreviewSegmentList -Item @($sample)) }
+            }
+            if ($preview.Count -eq 0) { $preview = @(Get-WinToolPromptPreview -PromptId $PromptId -PromptStyle ([string]$variant.id)) }
             $about = [string](Get-WinToolNote -Object $variant -Name "description" -Default "")
             $rows.Add((New-WinToolThemeRow -Id ([string]$variant.id) -Name ([string]$variant.name) -Preview $preview -NerdFont $null -Description $about))
         }
