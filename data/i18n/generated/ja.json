@@ -987,6 +987,7 @@
   "msg.junk-files-cleaning-stopped-n": "Junk files: cleaning stopped. {0}",
   "msg.junk-files-cleaning-temporary-files-the-recycle-bin-and-": "ゴミファイル:一時的なファイル, ごみ箱,キャッシュを清掃する",
   "msg.junk-files-freed-n-files-in-use-were-skipped": "ゴミファイル:解放された {0} 使用中のファイルはスキップされました.",
+  "msg.junk-scan-partial": "部分的な結果: {0}",
   "msg.last-analysis-score": "最後の分析: {0} ·スコア {1}",
   "msg.left-an-existing-n-hushlogin-in-place": "Left an existing {0}\\.hushlogin in place.",
   "msg.left-start-menu-shortcut-unchanged-n": "左のスタートメニューのショートカット変更なし: {0}.",

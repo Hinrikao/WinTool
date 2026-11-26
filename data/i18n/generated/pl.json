@@ -987,6 +987,7 @@
   "msg.junk-files-cleaning-stopped-n": "Junk files: cleaning stopped. {0}",
   "msg.junk-files-cleaning-temporary-files-the-recycle-bin-and-": "Pliki śmieciowe: czyszczenie tymczasowych plików, Kosz i pamięci podręcznej.",
   "msg.junk-files-freed-n-files-in-use-were-skipped": "Pliki śmieciowe: zwolnione {0}. Pliki używane zostały pominięte.",
+  "msg.junk-scan-partial": "Wynik częściowy: {0}",
   "msg.last-analysis-score": "Ostatnia analiza: {0} · wynik {1}",
   "msg.left-an-existing-n-hushlogin-in-place": "Left an existing {0}\\.hushlogin in place.",
   "msg.left-start-menu-shortcut-unchanged-n": "Lewa skrót do menu Start niezmieniony: {0}.",

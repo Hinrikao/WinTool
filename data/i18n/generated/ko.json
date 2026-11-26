@@ -987,6 +987,7 @@
   "msg.junk-files-cleaning-stopped-n": "Junk files: cleaning stopped. {0}",
   "msg.junk-files-cleaning-temporary-files-the-recycle-bin-and-": "쓰레기 파일: 임시 파일 청소, 휴지통 및 캐시",
   "msg.junk-files-freed-n-files-in-use-were-skipped": "쓰레기 파일: 방출된 {0}. 사용된 파일은 생략되었습니다.",
+  "msg.junk-scan-partial": "부분 결과: {0}",
   "msg.last-analysis-score": "마지막 분석: {0} · 점수 {1}",
   "msg.left-an-existing-n-hushlogin-in-place": "Left an existing {0}\\.hushlogin in place.",
   "msg.left-start-menu-shortcut-unchanged-n": "왼쪽 시작 메뉴 단축키 변경되지 않았습니다: {0}.",

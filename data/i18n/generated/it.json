@@ -987,6 +987,7 @@
   "msg.junk-files-cleaning-stopped-n": "Junk files: cleaning stopped. {0}",
   "msg.junk-files-cleaning-temporary-files-the-recycle-bin-and-": "File spazzatura: pulizia di file temporanei, Cestino e cache.",
   "msg.junk-files-freed-n-files-in-use-were-skipped": "File spazzatura: rilasciato {0}. I file in uso sono stati saltati.",
+  "msg.junk-scan-partial": "Partial result: {0}",
   "msg.last-analysis-score": "Last analysis: {0} · Score {1}",
   "msg.left-an-existing-n-hushlogin-in-place": "Left an existing {0}\\.hushlogin in place.",
   "msg.left-start-menu-shortcut-unchanged-n": "La scorciatoia sinistra del menu Start inalterata: {0}.",

@@ -987,6 +987,7 @@
   "msg.junk-files-cleaning-stopped-n": "Junk files: cleaning stopped. {0}",
   "msg.junk-files-cleaning-temporary-files-the-recycle-bin-and-": "Junk files: het schoonmaken van tijdelijke bestanden, de Prullenbak en caches.",
   "msg.junk-files-freed-n-files-in-use-were-skipped": "Junk-bestanden: vrijgelaten {0}. Gebruikte bestanden werden overgeslagen.",
+  "msg.junk-scan-partial": "Deelresultaat: {0}",
   "msg.last-analysis-score": "Laatste analyse: {0} · Punt {1}",
   "msg.left-an-existing-n-hushlogin-in-place": "Left an existing {0}\\.hushlogin in place.",
   "msg.left-start-menu-shortcut-unchanged-n": "Links start menu snelkoppeling onveranderd: {0}.",
