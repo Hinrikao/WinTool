@@ -367,6 +367,332 @@ function Set-WinToolJsoncObjectString {
     return $Text.Substring(0, $afterOpen) + $insert + $Text.Substring($afterOpen)
 }
 
+function Get-WinToolJsoncLiteralText {
+    param(
+        $Value,
+        [string]$Kind = "string"
+    )
+    if ($Kind -eq "string") {
+        return (ConvertTo-WinToolJsonString -Text ([string]$Value))
+    }
+    if ($Kind -eq "number") {
+        if ($null -eq $Value) {
+            return "0"
+        }
+        return ([string]$Value)
+    }
+    if ($Kind -eq "boolean") {
+        if ($Value) { return "true" }
+        return "false"
+    }
+    if ($Kind -eq "object") {
+        if ([string]::IsNullOrWhiteSpace([string]$Value)) { return "{}" }
+        return [string]$Value
+    }
+    if ($Kind -eq "array") {
+        if ([string]::IsNullOrWhiteSpace([string]$Value)) { return "[]" }
+        return [string]$Value
+    }
+    return [string]$Value
+}
+
+function Set-WinToolJsoncObjectLiteral {
+    param(
+        [string]$Text,
+        $Object,
+        [string]$Name,
+        [string]$Literal
+    )
+    $property = Get-WinToolJsoncProperty -Object $Object -Name $Name
+    if ($null -ne $property) {
+        return $Text.Substring(0, [int]$property.ValueStart) + $Literal + $Text.Substring([int]$property.ValueEnd)
+    }
+    $afterOpen = [int]$Object.Start + 1
+    $next = Skip-WinToolJsoncTrivia -Text $Text -Index $afterOpen
+    $hasSibling = ($next -lt [int]$Object.End -and $Text[$next] -ne "}")
+    if (Test-WinToolJsoncObjectIsCompact -Text $Text -Object $Object) {
+        $insert = " " + (ConvertTo-WinToolJsonString -Text $Name) + ": " + $Literal
+        if ($hasSibling) {
+            $insert += ","
+            if ($afterOpen -lt $Text.Length -and $Text[$afterOpen] -ne " " -and $Text[$afterOpen] -ne "`n" -and $Text[$afterOpen] -ne "`r") {
+                $insert += " "
+            }
+        }
+        return $Text.Substring(0, $afterOpen) + $insert + $Text.Substring($afterOpen)
+    }
+    $indent = Get-WinToolJsoncObjectIndent -Text $Text -Object $Object
+    $insert = "`n" + $indent + (ConvertTo-WinToolJsonString -Text $Name) + ": " + $Literal
+    if ($hasSibling) {
+        $insert += ","
+    }
+    return $Text.Substring(0, $afterOpen) + $insert + $Text.Substring($afterOpen)
+}
+
+function Get-WinToolJsoncRootStart {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+    $span = Get-WinToolJsoncValueSpan -Text $Text -Start 0
+    if ($null -eq $span -or [string]$span.Kind -ne "object") {
+        return $null
+    }
+    return [int]$span.Start
+}
+
+function Set-WinToolJsoncPath {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][string[]]$Name,
+        $Value,
+        [string]$Kind = "string"
+    )
+    $names = @($Name)
+    if ($names.Count -lt 1) {
+        throw "A settings path needs at least one name."
+    }
+    $literal = Get-WinToolJsoncLiteralText -Value $Value -Kind $Kind
+    $guard = 0
+    while ($guard -lt 20) {
+        $guard++
+        $root = Get-WinToolJsoncRootStart -Text $Text
+        if ($null -eq $root) {
+            throw "The settings file has no JSON object at the root."
+        }
+        $start = [int]$root
+        $created = $false
+        for ($index = 0; $index -lt ($names.Count - 1); $index++) {
+            $map = Get-WinToolJsoncObjectMap -Text $Text -Start $start
+            if ($null -eq $map) {
+                throw "The settings file is not a valid JSON object."
+            }
+            $property = Get-WinToolJsoncProperty -Object $map -Name $names[$index]
+            if ($null -eq $property) {
+                $Text = Set-WinToolJsoncObjectLiteral -Text $Text -Object $map -Name $names[$index] -Literal "{}"
+                $created = $true
+                break
+            }
+            if ([string]$property.Kind -ne "object") {
+                throw ("The settings property '{0}' is not an object." -f $names[$index])
+            }
+            $start = [int]$property.ValueStart
+        }
+        if ($created) {
+            continue
+        }
+        $map = Get-WinToolJsoncObjectMap -Text $Text -Start $start
+        $existing = Get-WinToolJsoncProperty -Object $map -Name $names[$names.Count - 1]
+        if ($null -ne $existing) {
+            $current = $Text.Substring([int]$existing.ValueStart, ([int]$existing.ValueEnd - [int]$existing.ValueStart))
+            if ($current.Trim() -eq $literal) {
+                return [pscustomobject]@{ Text = $Text; Changed = $false }
+            }
+        }
+        $Text = Set-WinToolJsoncObjectLiteral -Text $Text -Object $map -Name $names[$names.Count - 1] -Literal $literal
+        return [pscustomobject]@{ Text = $Text; Changed = $true }
+    }
+    throw "Could not write the settings path."
+}
+
+function Get-WinToolJsoncArrayItem {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][int]$Start
+    )
+    $items = New-Object System.Collections.Generic.List[object]
+    if ($Start -ge $Text.Length -or $Text[$Start] -ne "[") {
+        return $items.ToArray()
+    }
+    $end = Get-WinToolJsoncMatchEnd -Text $Text -Index $Start
+    if ($end -lt 0) {
+        return $items.ToArray()
+    }
+    $cursor = Skip-WinToolJsoncTrivia -Text $Text -Index ($Start + 1)
+    while ($cursor -lt ($end - 1)) {
+        if ($Text[$cursor] -eq "]") {
+            break
+        }
+        $value = Get-WinToolJsoncValueSpan -Text $Text -Index $cursor
+        if ($null -eq $value) {
+            break
+        }
+        $items.Add($value) | Out-Null
+        $cursor = Skip-WinToolJsoncTrivia -Text $Text -Index ([int]$value.End)
+        if ($cursor -lt $Text.Length -and $Text[$cursor] -eq ",") {
+            $cursor = Skip-WinToolJsoncTrivia -Text $Text -Index ($cursor + 1)
+        }
+    }
+    return $items.ToArray()
+}
+
+function Add-WinToolJsoncArrayItem {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][int]$Start,
+        [Parameter(Mandatory = $true)][string]$Item
+    )
+    if ($Start -ge $Text.Length -or $Text[$Start] -ne "[") {
+        throw "The settings path is not a JSON array."
+    }
+    $end = Get-WinToolJsoncMatchEnd -Text $Text -Index $Start
+    if ($end -lt 0) {
+        throw "The JSON array is not closed."
+    }
+    $close = $end - 1
+    $items = @(Get-WinToolJsoncArrayItem -Text $Text -Start $Start)
+    $closeLine = $Text.LastIndexOf("`n", $close)
+    $closeIndent = ""
+    if ($closeLine -ge 0) {
+        $pad = $closeLine + 1
+        while ($pad -lt $close -and ($Text[$pad] -eq " " -or $Text[$pad] -eq "`t")) {
+            $closeIndent += $Text[$pad]
+            $pad++
+        }
+    }
+    $itemIndent = $closeIndent + "    "
+    if ($items.Count -gt 0) {
+        $first = $items[0]
+        $line = $Text.LastIndexOf("`n", [int]$first.Start)
+        if ($line -ge 0 -and $line -lt [int]$first.Start) {
+            $itemIndent = $Text.Substring($line + 1, ([int]$first.Start - ($line + 1)))
+        }
+        $last = $items[$items.Count - 1]
+        $insert = "," + "`n" + $itemIndent + $Item
+        return $Text.Substring(0, [int]$last.End) + $insert + $Text.Substring([int]$last.End)
+    }
+    $trim = $close
+    while ($trim -gt $Start -and ($Text[$trim - 1] -eq " " -or $Text[$trim - 1] -eq "`t")) {
+        $trim--
+    }
+    $insert = $itemIndent + $Item + "`n" + $closeIndent
+    if ($trim -eq $Start + 1) {
+        $insert = "`n" + $insert
+    }
+    return $Text.Substring(0, $trim) + $insert + $Text.Substring($close)
+}
+
+function ConvertTo-WinToolJsoncCompactObject {
+    param(
+        [Parameter(Mandatory = $true)]$Field
+    )
+    $parts = New-Object System.Collections.Generic.List[string]
+    foreach ($key in $Field.Keys) {
+        $parts.Add((ConvertTo-WinToolJsonString -Text ([string]$key)) + ": " + (ConvertTo-WinToolJsonString -Text ([string]$Field[$key]))) | Out-Null
+    }
+    return ("{ " + ($parts.ToArray() -join ", ") + " }")
+}
+
+function Get-WinToolJsoncSchemeEntry {
+
+    param(
+        [Parameter(Mandatory = $true)]$Scheme
+    )
+    $fields = [ordered]@{
+        name = [string]$Scheme.name
+        background = [string]$Scheme.background
+        foreground = [string]$Scheme.foreground
+        cursorColor = [string](Get-WinToolNote -Object $Scheme -Name "cursor" -Default (Get-WinToolNote -Object $Scheme -Name "cursorColor" -Default ""))
+        selectionBackground = [string](Get-WinToolNote -Object $Scheme -Name "selection" -Default (Get-WinToolNote -Object $Scheme -Name "selectionBackground" -Default ""))
+    }
+    $palette = Get-WinToolNote -Object $Scheme -Name "palette"
+    foreach ($key in $script:WinToolSchemeColorKeys) {
+        $fromScheme = [string](Get-WinToolNote -Object $Scheme -Name $key -Default "")
+        $value = $fromScheme
+        if ([string]::IsNullOrWhiteSpace($value) -and $null -ne $palette) {
+            $value = [string](Get-WinToolNote -Object $palette -Name $key -Default "")
+        }
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            throw ("The color scheme " + [string]$Scheme.name + " has no " + $key + " color.")
+        }
+        $fields[$key] = $value
+    }
+    return $fields
+}
+
+function Set-WinToolJsoncColorScheme {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)]$Scheme
+    )
+    $fields = Get-WinToolJsoncSchemeEntry -Scheme $Scheme
+    $changed = $false
+    $original = $Text
+    $root = Get-WinToolJsoncRootStart -Text $Text
+    if ($null -eq $root) {
+        throw "The settings file has no JSON object at the root."
+    }
+    $map = Get-WinToolJsoncObjectMap -Text $Text -Start ([int]$root)
+    $schemes = Get-WinToolJsoncProperty -Object $map -Name "schemes"
+    $itemText = ConvertTo-WinToolJsoncCompactObject -Field $fields
+    if ($null -eq $schemes) {
+        $Text = Set-WinToolJsoncObjectLiteral -Text $Text -Object $map -Name "schemes" -Literal ("[ " + $itemText + " ]")
+        $changed = $true
+    }
+    else {
+        if ([string]$schemes.Kind -ne "array") {
+            throw "The settings property 'schemes' is not an array."
+        }
+        $items = @(Get-WinToolJsoncArrayItem -Text $Text -Start ([int]$schemes.ValueStart))
+        $found = $null
+        foreach ($item in $items) {
+            if ([string]$item.Kind -ne "object") { continue }
+            $object = Get-WinToolJsoncObjectMap -Text $Text -Start ([int]$item.Start)
+            $nameProperty = Get-WinToolJsoncProperty -Object $object -Name "name"
+            if ($null -eq $nameProperty) { continue }
+            $nameText = $Text.Substring([int]$nameProperty.ValueStart, ([int]$nameProperty.ValueEnd - [int]$nameProperty.ValueStart)).Trim()
+            if ($nameText -eq (ConvertTo-WinToolJsonString -Text ([string]$fields.name))) {
+                $found = $object
+                break
+            }
+        }
+        if ($null -eq $found) {
+            $Text = Add-WinToolJsoncArrayItem -Text $Text -Start ([int]$schemes.ValueStart) -Item $itemText
+            $changed = $true
+        }
+        else {
+            foreach ($key in $fields.Keys) {
+                $wanted = Get-WinToolJsoncLiteralText -Value $fields[$key] -Kind "string"
+                $property = Get-WinToolJsoncProperty -Object $found -Name $key
+                if ($null -ne $property) {
+                    $current = $Text.Substring([int]$property.ValueStart, ([int]$property.ValueEnd - [int]$property.ValueStart))
+                    if ($current.Trim() -eq $wanted) {
+                        continue
+                    }
+                }
+                $Text = Set-WinToolJsoncObjectLiteral -Text $Text -Object $found -Name $key -Literal $wanted
+                $changed = $true
+                $root = Get-WinToolJsoncRootStart -Text $Text
+                $map = Get-WinToolJsoncObjectMap -Text $Text -Start ([int]$root)
+                $schemes = Get-WinToolJsoncProperty -Object $map -Name "schemes"
+                $items = @(Get-WinToolJsoncArrayItem -Text $Text -Start ([int]$schemes.ValueStart))
+                $found = $null
+                foreach ($item in $items) {
+                    if ([string]$item.Kind -ne "object") { continue }
+                    $object = Get-WinToolJsoncObjectMap -Text $Text -Start ([int]$item.Start)
+                    $nameProperty = Get-WinToolJsoncProperty -Object $object -Name "name"
+                    if ($null -eq $nameProperty) { continue }
+                    $nameText = $Text.Substring([int]$nameProperty.ValueStart, ([int]$nameProperty.ValueEnd - [int]$nameProperty.ValueStart)).Trim()
+                    if ($nameText -eq (ConvertTo-WinToolJsonString -Text ([string]$fields.name))) {
+                        $found = $object
+                        break
+                    }
+                }
+                if ($null -eq $found) {
+                    throw "The color scheme disappeared while it was being updated."
+                }
+            }
+        }
+    }
+    $result = Set-WinToolJsoncPath -Text $Text -Name @("profiles", "defaults", "colorScheme") -Value ([string]$fields.name) -Kind "string"
+    if ([bool]$result.Changed) {
+        $changed = $true
+    }
+    $next = [string]$result.Text
+    if ($next -eq $original) {
+        $changed = $false
+    }
+    return [pscustomobject]@{ Text = $next; Changed = $changed }
+}
+
 function Remove-WinToolJsoncObjectProperty {
     param(
         [string]$Text,

@@ -1396,7 +1396,7 @@
             </Grid>
           </ScrollViewer>
 
-          <!-- Fixed action bar: what will be installed (+) and changed (~), then Apply. -->
+          <!-- Fixed action bar: missing (+), already installed, and changes (~), then Update and Apply. -->
           <Border x:Name="TerminalSummaryCard" Grid.Row="3" Margin="20,0,20,10" Background="{DynamicResource BrushCard}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8" Padding="12,10">
             <Grid>
               <Grid.RowDefinitions>
@@ -1407,15 +1407,17 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
               <TextBlock Grid.Row="0" Grid.Column="0" Text="What will happen" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}"/>
               <CheckBox x:Name="TerminalEnabled" Grid.Row="0" Grid.Column="1" Content="Include in saved profiles" IsChecked="True" Margin="14,0,16,0" ToolTip="Include this terminal setup when a saved WinTool profile is replayed."/>
-              <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="2" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" Width="190" Height="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
+              <Button x:Name="TerminalUpdate" Grid.Row="0" Grid.Column="2" Content="Update" Style="{StaticResource SecondaryButton}" FontSize="{DynamicResource FontSizeBody}" Width="100" Height="32" Padding="14,0" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Upgrade apps that are already installed and refresh modules and the prompt theme. Apply still installs only what is missing." AutomationProperties.Name="Update terminal setup"/>
+              <Button x:Name="TerminalSetup" Grid.Row="0" Grid.Column="3" Content="Apply terminal setup" Style="{StaticResource PrimaryButton}" FontSize="{DynamicResource FontSizeBody}" Width="190" Height="32" Padding="18,0" Margin="0" VerticalAlignment="Center"/>
               <!-- One line of chips, always 32 px tall: more chips scroll sideways (mouse wheel), the tooltip lists every step. -->
-              <ScrollViewer x:Name="TerminalSummaryScroll" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,8,0,0" Height="32" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+              <ScrollViewer x:Name="TerminalSummaryScroll" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Margin="0,8,0,0" Height="32" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
                 <StackPanel x:Name="TerminalSummaryHost" Orientation="Horizontal"/>
               </ScrollViewer>
-              <TextBlock x:Name="TerminalSummary" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Visibility="Collapsed" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}"/>
+              <TextBlock x:Name="TerminalSummary" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Visibility="Collapsed" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource BrushMuted}"/>
             </Grid>
           </Border>
         </Grid>

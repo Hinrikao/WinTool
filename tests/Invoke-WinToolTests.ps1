@@ -1476,6 +1476,7 @@ Invoke-WinToolCase -Name "Advanced Terminal page: engines, theme rows, filters, 
     $steps = @(Get-WinToolTerminalPlan -Selection $choice)
     $fontStep = @($steps | Where-Object { $_.Type -eq "font" })[0]
     Test-WinToolExpectation -Condition ([int]$fontStep.Size -eq 13 -and [string]$fontStep.Label -like "*13 pt") -Message "The font size goes into the font step."
+    Reset-WinToolPackageCache | Out-Null
     $chips = @(Get-WinToolSummaryChip -Step $steps)
     $adds = @($chips | Where-Object { $_.Kind -eq "add" } | ForEach-Object { [string]$_.Text })
     $changes = @($chips | Where-Object { $_.Kind -eq "change" } | ForEach-Object { [string]$_.Text })
@@ -1559,7 +1560,7 @@ Invoke-WinToolCase -Name "Terminal setup always turns on font ligatures for ever
         $path = Join-Path $folder "settings.json"
         [System.IO.File]::WriteAllText($path, $text)
         $env:LOCALAPPDATA = $root
-        Invoke-WinToolLocalStep -Step ([pscustomobject]@{ Type = "ligatures"; Label = "Turn on font ligatures" })
+        $null = Invoke-WinToolLocalStep -Step ([pscustomobject]@{ Type = "ligatures"; Label = "Turn on font ligatures" })
         $written = ConvertFrom-WinToolJsonText -Text ([System.IO.File]::ReadAllText($path))
         $saved = $written.profiles.defaults.font.features
         Test-WinToolExpectation -Condition ([int]$saved.calt -eq 1 -and [int]$saved.liga -eq 1 -and [int]$saved.ss01 -eq 1 -and @($written.profiles.list).Count -eq 4) -Message "The ligature step writes settings.json and keeps the profiles."
@@ -1989,6 +1990,183 @@ Invoke-WinToolCase -Name "Hide startup banner patches every known terminal and c
     Test-WinToolExpectation -Condition ((Get-WinToolShortcutBannerArgument -Kind "powershell" -Arguments "-NoExit") -eq "-NoLogo -NoExit") -Message "Start menu PowerShell shortcuts get -NoLogo."
     Test-WinToolExpectation -Condition ((Get-WinToolShortcutBannerArgument -Kind "cmd" -Arguments "") -eq "/k cls") -Message "Start menu Command Prompt shortcuts get /k cls."
 }
+
+
+Invoke-WinToolCase -Name "Package cache, chips, and apply skip already-installed steps" -Body {
+    Reset-WinToolPackageCache | Out-Null
+    $choice = Get-WinToolSimpleTerminalChoice
+    $choice.zoxide = $true
+    $choice.fzf = $true
+    $choice.terminalIcons = $true
+    $choice.psReadLine = $true
+    $steps = @(Get-WinToolTerminalPlan -Selection $choice)
+    $wt = @($steps | Where-Object { $_.Type -eq "winget" -and $_.Label -eq "Install Windows Terminal" })[0]
+    $font = @($steps | Where-Object { $_.Type -eq "font-download" })[0]
+    $icons = @($steps | Where-Object { $_.Type -eq "module" -and $_.Name -eq "Terminal-Icons" -and $_.Host -eq "powershell" })[0]
+    $psrl = @($steps | Where-Object { $_.Type -eq "module" -and $_.Name -eq "PSReadLine" })[0]
+    Test-WinToolExpectation -Condition (-not [string]::IsNullOrWhiteSpace([string]$wt.WingetId) -and -not [string]::IsNullOrWhiteSpace([string]$font.FontId)) -Message "Plan steps include winget ids and font ids."
+
+    $pending = Get-WinToolPlanStepDecision -Step $wt -Cache (New-WinToolPackageCache)
+    Test-WinToolExpectation -Condition ([bool]$pending.Run -and [string]$pending.Outcome -eq "install") -Message "A package is installed when detection has not finished."
+
+    $cache = New-WinToolPackageCache
+    $cache.WingetReady = $true
+    $cache.InstalledId = New-WinToolIdSet -Id @([string]$wt.WingetId, "JanDeDobbeleer.OhMyPosh", "ajeetdsouza.zoxide")
+    $cache.UpdateId = New-WinToolIdSet -Id @("ajeetdsouza.zoxide")
+    $cache.Font = @{ ([string]$font.FontId.ToLowerInvariant()) = $true }
+    $folder = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-modcache-" + [guid]::NewGuid().ToString("N"))
+    $ps51 = Join-Path $folder "WindowsPowerShell\Modules"
+    $pwsh = Join-Path $folder "PowerShell\Modules"
+    New-Item -ItemType Directory -Path (Join-Path $ps51 "Terminal-Icons\0.3.0") -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $ps51 "Terminal-Icons\0.3.0\Terminal-Icons.psd1") -Value "@{ ModuleVersion = '0.3.0' }" -Encoding UTF8
+    New-Item -ItemType Directory -Path (Join-Path $ps51 "PSReadLine\2.0.0") -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $ps51 "PSReadLine\2.0.0\PSReadLine.psd1") -Value "@{ ModuleVersion = '2.0.0' }" -Encoding UTF8
+    New-Item -ItemType Directory -Path (Join-Path $pwsh "Terminal-Icons\0.3.0") -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $pwsh "Terminal-Icons\0.3.0\Terminal-Icons.psd1") -Value "@{ ModuleVersion = '0.3.0' }" -Encoding UTF8
+    $themeFolder = Join-Path $folder "themes"
+    New-Item -ItemType Directory -Path $themeFolder -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $themeFolder "jandedobbeleer.omp.json") -Value "{}" -Encoding UTF8
+    try {
+        Update-WinToolLocalPackageCache -ModuleRoot @(
+            [pscustomobject]@{ Host = "powershell"; Path = $ps51 },
+            [pscustomobject]@{ Host = "pwsh"; Path = $pwsh }
+        ) -ThemeFolder $themeFolder | Out-Null
+        $cache.Module = (Get-WinToolPackageCache).Module
+        $cache.Theme = (Get-WinToolPackageCache).Theme
+        Test-WinToolExpectation -Condition (Test-WinToolCachedModule -Name "Terminal-Icons" -HostName "powershell" -Cache $cache) -Message "Terminal-Icons 0.3 is present for Windows PowerShell."
+        Test-WinToolExpectation -Condition (-not (Test-WinToolCachedModule -Name "PSReadLine" -HostName "powershell" -Cache $cache)) -Message "PSReadLine 2.0 is too old and still needs an update."
+        New-Item -ItemType Directory -Path (Join-Path $ps51 "PSReadLine\2.3.6") -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $ps51 "PSReadLine\2.3.6\PSReadLine.psd1") -Value "@{ ModuleVersion = '2.3.6' }" -Encoding UTF8
+        Update-WinToolLocalPackageCache -ModuleRoot @([pscustomobject]@{ Host = "powershell"; Path = $ps51 }, [pscustomobject]@{ Host = "pwsh"; Path = $pwsh }) -ThemeFolder $themeFolder | Out-Null
+        $cache.Module = (Get-WinToolPackageCache).Module
+        Test-WinToolExpectation -Condition (Test-WinToolCachedModule -Name "PSReadLine" -HostName "powershell" -Cache $cache) -Message "PSReadLine 2.3.6 meets the minimum version."
+        Test-WinToolExpectation -Condition (Test-WinToolCachedTheme -FileName "jandedobbeleer.omp.json" -Cache $cache) -Message "A saved Oh My Posh theme is visible in the cache."
+
+        $skipWt = Get-WinToolPlanStepDecision -Step $wt -Cache $cache
+        Test-WinToolExpectation -Condition ((-not [bool]$skipWt.Run) -and [string]$skipWt.Outcome -eq "already-had") -Message "Apply skips Windows Terminal when it is already installed."
+        $zoxide = @($steps | Where-Object { $_.Type -eq "winget" -and $_.Label -eq "Install zoxide" })[0]
+        $applyZ = Get-WinToolPlanStepDecision -Step $zoxide -Cache $cache
+        $updateZ = Get-WinToolPlanStepDecision -Step $zoxide -Cache $cache -Update
+        Test-WinToolExpectation -Condition ((-not [bool]$applyZ.Run) -and [bool]$updateZ.Run -and [string]$updateZ.Action -eq "upgrade") -Message "Update upgrades zoxide when winget lists a newer version."
+        $skipFont = Get-WinToolPlanStepDecision -Step $font -Cache $cache
+        $updateFont = Get-WinToolPlanStepDecision -Step $font -Cache $cache -Update
+        Test-WinToolExpectation -Condition ((-not [bool]$skipFont.Run) -and (-not [bool]$updateFont.Run)) -Message "A present font is not re-downloaded on Apply or Update."
+        $skipIcons = Get-WinToolPlanStepDecision -Step $icons -Cache $cache
+        $updateIcons = Get-WinToolPlanStepDecision -Step $icons -Cache $cache -Update
+        Test-WinToolExpectation -Condition ((-not [bool]$skipIcons.Run) -and [bool]$updateIcons.Run -and [string]$updateIcons.Outcome -eq "update") -Message "Apply skips Terminal-Icons; Update refreshes it."
+        $skipPsrl = Get-WinToolPlanStepDecision -Step $psrl -Cache $cache
+        Test-WinToolExpectation -Condition ((-not [bool]$skipPsrl.Run) -and [string]$skipPsrl.Outcome -eq "already-had") -Message "Apply skips PSReadLine once a new enough version is present."
+
+        $chips = @(Get-WinToolSummaryChip -Step $steps -Cache $cache -ConfigNeed @{ font = $false; ligatures = $false; scheme = $false; banner = $true; profile = $false })
+        $adds = @($chips | Where-Object { $_.Kind -eq "add" } | ForEach-Object { [string]$_.Text })
+        $haves = @($chips | Where-Object { $_.Kind -eq "have" } | ForEach-Object { [string]$_.Text })
+        $sets = @($chips | Where-Object { $_.Kind -eq "set" } | ForEach-Object { [string]$_.Text })
+        $changes = @($chips | Where-Object { $_.Kind -eq "change" } | ForEach-Object { [string]$_.Text })
+        Test-WinToolExpectation -Condition ($haves -contains "Windows Terminal" -and $haves -contains "zoxide" -and $haves -contains "Terminal-Icons" -and $adds -notcontains "Windows Terminal") -Message ("Already-installed chips: " + ($haves -join ", "))
+        Test-WinToolExpectation -Condition ($adds -contains "PowerShell 7" -or $adds -contains "fzf") -Message ("Missing packages still show a + chip: " + ($adds -join ", "))
+        Test-WinToolExpectation -Condition ($sets -contains "Terminal font" -and $sets -contains "Font ligatures on" -and $sets -contains "Scheme Night" -and $sets -contains "PowerShell `$PROFILE") -Message ("Already-set chips: " + ($sets -join ", "))
+        Test-WinToolExpectation -Condition ($changes -contains "Startup banner hidden" -and $changes -notcontains "Scheme Night") -Message ("Change chips when some settings already match: " + ($changes -join ", "))
+
+        $updateChips = @(Get-WinToolSummaryChip -Step $steps -Cache $cache -Update -ConfigNeed @{ font = $false; ligatures = $false; scheme = $false; banner = $true; profile = $false })
+        $updates = @($updateChips | Where-Object { $_.Kind -eq "update" } | ForEach-Object { [string]$_.Text })
+        Test-WinToolExpectation -Condition ($updates -contains "zoxide" -and $updates -contains "Terminal-Icons") -Message ("Update chips: " + ($updates -join ", "))
+    }
+    finally {
+        Reset-WinToolPackageCache | Out-Null
+        Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    $tally = New-WinToolPlanTally
+    Add-WinToolPlanTally -Tally $tally -Bucket "Installed" -Name "PowerShell 7"
+    Add-WinToolPlanTally -Tally $tally -Bucket "AlreadyHad" -Name "Windows Terminal"
+    Add-WinToolPlanTally -Tally $tally -Bucket "AlreadyHad" -Name "Oh My Posh"
+    Add-WinToolPlanTally -Tally $tally -Bucket "Updated" -Name "zoxide"
+    Add-WinToolPlanTally -Tally $tally -Bucket "ConfigChanged" -Name "Scheme Night"
+    Add-WinToolPlanTally -Tally $tally -Bucket "ConfigUnchanged" -Name "Font ligatures on"
+    $summary = Format-WinToolPlanSummary -Tally $tally
+    Test-WinToolExpectation -Condition ($summary -like "Installed PowerShell 7.*" -and $summary -like "*Already had Windows Terminal and Oh My Posh.*" -and $summary -like "*Updated zoxide.*" -and $summary -like "*Updated settings: Scheme Night.*" -and $summary -like "*Already set Font ligatures on.*") -Message ("Plan summary: " + $summary)
+
+    $ids = @(Get-WinToolTerminalWingetId)
+    Test-WinToolExpectation -Condition ($ids.Count -ge 3) -Message "Terminal component winget ids are listed for cache updates."
+}
+
+Invoke-WinToolCase -Name "JSONC writers keep comments and skip unchanged Terminal settings and profiles" -Body {
+    $folder = Join-Path ([System.IO.Path]::GetTempPath()) ("WinTool-jsonc-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $folder -Force | Out-Null
+    $settingsFile = Join-Path $folder "settings.json"
+    $profileFile = Join-Path $folder "Microsoft.PowerShell_profile.ps1"
+    $source = @'
+{
+    // user comment
+    "profiles": {
+        "defaults": {
+            "colorScheme": "Campbell"
+        }
+        // keep defaults
+    },
+    "schemes": [
+        // keep schemes
+    ]
+}
+'@
+    [System.IO.File]::WriteAllText($settingsFile, $source)
+    try {
+        $fontChanged = Invoke-WinToolTerminalFont -Face "CaskaydiaCove Nerd Font" -Size 12 -SettingsPath @($settingsFile)
+        $afterFont = [System.IO.File]::ReadAllText($settingsFile)
+        $fontSettings = ConvertFrom-WinToolJsonText -Text $afterFont
+        Test-WinToolExpectation -Condition ([bool]$fontChanged -and [string]$fontSettings.profiles.defaults.font.face -eq "CaskaydiaCove Nerd Font" -and [int]$fontSettings.profiles.defaults.font.size -eq 12) -Message "The font writer sets face and size."
+        Test-WinToolExpectation -Condition ($afterFont.Contains("// user comment") -and $afterFont.Contains("// keep defaults")) -Message "The font writer keeps comments in settings.json."
+        $fontAgain = Invoke-WinToolTerminalFont -Face "CaskaydiaCove Nerd Font" -Size 12 -SettingsPath @($settingsFile)
+        Test-WinToolExpectation -Condition ((-not [bool]$fontAgain) -and [System.IO.File]::ReadAllText($settingsFile) -eq $afterFont) -Message "A second font apply does not rewrite settings.json."
+
+        $ligaChanged = Invoke-WinToolTerminalLigature -SettingsPath @($settingsFile)
+        $afterLiga = [System.IO.File]::ReadAllText($settingsFile)
+        $ligaSettings = ConvertFrom-WinToolJsonText -Text $afterLiga
+        Test-WinToolExpectation -Condition ([bool]$ligaChanged -and [int]$ligaSettings.profiles.defaults.font.features.calt -eq 1 -and [int]$ligaSettings.profiles.defaults.font.features.liga -eq 1) -Message "The ligature writer sets calt and liga."
+        Test-WinToolExpectation -Condition ($afterLiga.Contains("// user comment") -and $afterLiga.Contains("// keep defaults")) -Message "The ligature writer keeps comments in settings.json."
+        $ligaAgain = Invoke-WinToolTerminalLigature -SettingsPath @($settingsFile)
+        Test-WinToolExpectation -Condition ((-not [bool]$ligaAgain) -and [System.IO.File]::ReadAllText($settingsFile) -eq $afterLiga) -Message "A second ligature apply does not rewrite settings.json."
+
+        $schemeChanged = Invoke-WinToolTerminalScheme -SchemeId "wintool-night" -SettingsPath @($settingsFile)
+        $afterScheme = [System.IO.File]::ReadAllText($settingsFile)
+        $schemeSettings = ConvertFrom-WinToolJsonText -Text $afterScheme
+        Test-WinToolExpectation -Condition ([bool]$schemeChanged -and [string]$schemeSettings.profiles.defaults.colorScheme -eq "Night") -Message "The scheme writer sets the default color scheme."
+        Test-WinToolExpectation -Condition ($afterScheme.Contains("// user comment") -and $afterScheme.Contains("// keep schemes") -and $afterScheme.Contains("// keep defaults")) -Message "The scheme writer keeps comments in settings.json."
+        $schemeAgain = Invoke-WinToolTerminalScheme -SchemeId "wintool-night" -SettingsPath @($settingsFile)
+        Test-WinToolExpectation -Condition ((-not [bool]$schemeAgain) -and [System.IO.File]::ReadAllText($settingsFile) -eq $afterScheme) -Message "A second scheme apply does not rewrite settings.json."
+
+        $empty = Join-Path $folder "empty.json"
+        [System.IO.File]::WriteAllText($empty, "{`n    // only comment`n}`n")
+        $fromEmpty = Invoke-WinToolTerminalScheme -SchemeId "wintool-night" -SettingsPath @($empty)
+        $emptyText = [System.IO.File]::ReadAllText($empty)
+        Test-WinToolExpectation -Condition ([bool]$fromEmpty -and $emptyText.Contains("// only comment") -and $emptyText.Contains('"colorScheme": "Night"')) -Message "A scheme can be added to a nearly empty settings file without dropping comments."
+
+        $body = Get-WinToolPromptScript -PromptId "oh-my-posh" -TerminalIcons $true -PromptStyle "jandedobbeleer" -PsReadLine $true -Zoxide $true
+        $first = Write-WinToolShellProfile -PromptId "starship" -TerminalIcons $false -PromptStyle "tokyo-night" -PsReadLine $false -Zoxide $false -ProfilePath @($profileFile)
+        $written = [System.IO.File]::ReadAllText($profileFile)
+        Test-WinToolExpectation -Condition ([bool]$first -and $written.Contains($script:WinToolProfileBegin) -and $written.Contains("starship")) -Message "The profile writer creates a managed block."
+        $stamp = [System.IO.File]::GetLastWriteTimeUtc($profileFile)
+        Start-Sleep -Milliseconds 20
+        $second = Write-WinToolShellProfile -PromptId "starship" -TerminalIcons $false -PromptStyle "tokyo-night" -PsReadLine $false -Zoxide $false -ProfilePath @($profileFile)
+        Test-WinToolExpectation -Condition ((-not [bool]$second) -and [System.IO.File]::ReadAllText($profileFile) -eq $written -and [System.IO.File]::GetLastWriteTimeUtc($profileFile) -eq $stamp) -Message "A second profile apply is a no-op when the managed block already matches."
+        Test-WinToolExpectation -Condition (Test-WinToolTextNeedsManagedBlock -Text $written -Body $body) -Message "A different prompt body is detected as a needed profile change."
+    }
+    finally {
+        Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+Invoke-WinToolCase -Name "Install view bulk Install skips apps that are already installed" -Body {
+    $pendingApp = [pscustomobject]@{ Name = "Firefox"; WingetId = "Mozilla.Firefox"; Installed = $false }
+    $installedApp = [pscustomobject]@{ Name = "Visual Studio Code"; WingetId = "Microsoft.VisualStudioCode"; Installed = $true }
+    $beforeDetect = Select-WinToolInstallApp -App @($pendingApp, $installedApp) -Detected $false
+    Test-WinToolExpectation -Condition (@($beforeDetect.Pending).Count -eq 2 -and @($beforeDetect.Already).Count -eq 0) -Message "Before detection finishes, every selected app is still installed."
+    $afterDetect = Select-WinToolInstallApp -App @($pendingApp, $installedApp) -Detected $true
+    Test-WinToolExpectation -Condition (@($afterDetect.Pending).Count -eq 1 -and [string]$afterDetect.Pending[0].WingetId -eq "Mozilla.Firefox" -and @($afterDetect.Already).Count -eq 1) -Message "After detection, already installed apps are split out so Install can point the user to Update."
+    $onlyInstalled = Select-WinToolInstallApp -App @($installedApp) -Detected $true
+    Test-WinToolExpectation -Condition (@($onlyInstalled.Pending).Count -eq 0 -and @($onlyInstalled.Already).Count -eq 1) -Message "Install with only already-installed apps has nothing left to install."
+}
+
 
 if ($script:WinToolFailures.Count -gt 0) {
     Write-Output ""

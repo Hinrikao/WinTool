@@ -704,7 +704,7 @@ if ($null -ne $themeLine -and -not [System.Windows.Documents.Typography]::GetSta
 }
 # Sizes from the 14 px standard: chips and buttons 32, search 34, engine rows about 36.
 Invoke-WinToolTerminalShotLayout -Width 1280 -Height 800
-foreach ($chipName in @("TerminalFilterAll", "TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd", "TerminalSetup", "TerminalRefresh")) {
+foreach ($chipName in @("TerminalFilterAll", "TerminalFilterPowerline", "TerminalFilterMinimal", "TerminalFilterNoNerd", "TerminalSetup", "TerminalUpdate", "TerminalRefresh")) {
     $chipControl = $window.FindName($chipName)
     if ([Math]::Abs($chipControl.ActualHeight - 32) -gt 0.5) { throw ($chipName + " should be 32 px tall, not " + $chipControl.ActualHeight) }
 }

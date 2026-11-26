@@ -510,14 +510,32 @@ function Complete-WinToolTerminalCatalogOnline {
     }
 }
 
+function Complete-WinToolTerminalApply {
+    Reset-WinToolFontResolution
+    Update-WinToolLocalPackageCache | Out-Null
+    $script:WinToolConfigNeedCache = $null
+    try { Update-WinToolFontList } catch { $null = $_.Exception.Message }
+    try { Update-WinToolTerminalSummary } catch { $null = $_.Exception.Message }
+    Start-WinToolAppDetection
+}
+
 function Invoke-WinToolTerminalClick {
+    param(
+        [switch]$Update
+    )
     $choice = Get-WinToolTerminalChoice
-    $summary = @(Get-WinToolTerminalSummary -Selection $choice)
+    $summary = @(Get-WinToolTerminalSummary -Selection $choice -Update:$Update)
     $preview = ($summary -join "`n")
-    $ok = Request-WinToolConfirmation -Message ("Apply this terminal setup?`n`n" + $preview) -Title "Terminal"
+    $title = "Apply this terminal setup?"
+    $done = "Terminal setup finished. Open a new terminal window to see the prompt."
+    if ($Update) {
+        $title = "Update this terminal setup?"
+        $done = "Terminal update finished. Open a new terminal window to see the prompt."
+    }
+    $ok = Request-WinToolConfirmation -Message ($title + "`n`n" + $preview) -Title "Terminal"
     if (-not $ok) { return }
     $steps = @(Get-WinToolTerminalPlan -Selection $choice)
-    Invoke-WinToolPlanAsync -Step $steps -DoneMessage "Terminal setup finished. Open a new terminal window to see the prompt."
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage $done -AfterDone "Complete-WinToolTerminalApply" -Update:$Update
 }
 
 function Initialize-WinToolTerminalView {
@@ -600,6 +618,7 @@ function Initialize-WinToolTerminalView {
     }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalRefresh") -EventName "Click" -Name "Terminal: refresh lists" -Action { Update-WinToolTerminalCatalogOnline }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalSetup") -EventName "Click" -Name "Terminal: apply setup" -Action { Invoke-WinToolTerminalClick }
+    Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalUpdate") -EventName "Click" -Name "Terminal: update setup" -Action { Invoke-WinToolTerminalClick -Update }
     Register-WinToolUiEvent -Control (Get-WinToolUi -Name "TerminalFontList") -EventName "SelectionChanged" -Name "Terminal: choose font" -Action {
         if ($script:WinToolTerminalSyncing) { return }
         Update-WinToolFontSample
@@ -2172,8 +2191,11 @@ function Update-WinToolTerminalSummary {
     $steps = @(Get-WinToolTerminalPlan -Selection $script:WinToolTerminalChoice)
     $lines = @($steps | ForEach-Object { [string]$_.Label })
     $planText = ($lines -join "`n")
-    $planChanged = ($planText -ne [string]$script:WinToolSummaryPlanKey)
-    $script:WinToolSummaryPlanKey = $planText
+    $chips = @(Get-WinToolSummaryChip -Step $steps -Selection $script:WinToolTerminalChoice)
+    $chipKey = (@($chips | ForEach-Object { [string]$_.Kind + "|" + [string]$_.Text }) -join ";")
+    $summaryKey = $planText + "`n" + $chipKey
+    $planChanged = ($summaryKey -ne [string]$script:WinToolSummaryPlanKey)
+    $script:WinToolSummaryPlanKey = $summaryKey
     (Get-WinToolUi -Name "TerminalSummary").Text = $planText
     $extrasCount = Get-WinToolUi -Name "TerminalExtrasCount"
     if ($null -ne $extrasCount) {
@@ -2185,12 +2207,14 @@ function Update-WinToolTerminalSummary {
     $summaryHost = Get-WinToolUi -Name "TerminalSummaryHost"
     if ($null -eq $summaryHost) { return }
     if (-not $planChanged -and $summaryHost.Children.Count -gt 0) { return }
-    $chips = @(Get-WinToolSummaryChip -Step $steps)
     $labels = New-Object System.Collections.Generic.List[object]
-    foreach ($kind in @("add", "change")) {
+    foreach ($kind in @("add", "update", "change", "have", "set")) {
         foreach ($chip in @($chips | Where-Object { $_.Kind -eq $kind })) {
             if ($kind -eq "add") { $caption = "+ " + [string]$chip.Text }
-            else { $caption = ([string][char]0x007E + " " + [string]$chip.Text) }
+            elseif ($kind -eq "update") { $caption = ([string][char]0x2191 + " " + [string]$chip.Text) }
+            elseif ($kind -eq "change") { $caption = ([string][char]0x007E + " " + [string]$chip.Text) }
+            elseif ($kind -eq "have") { $caption = "Already installed: " + [string]$chip.Text }
+            else { $caption = "Already set: " + [string]$chip.Text }
             [void]$labels.Add([pscustomobject]@{ Kind = $kind; Text = $caption })
         }
     }
@@ -2210,16 +2234,24 @@ function Update-WinToolTerminalSummary {
             return
         }
     }
-    # One wrapping row of chips: what gets installed (+), then what gets changed (~).
+    # One wrapping row of chips: missing (+), updates, changes (~), then
+    # already installed and already set.
     $summaryHost.Children.Clear()
     foreach ($item in $labels) {
-        if ([string]$item.Kind -eq "add") {
+        $kind = [string]$item.Kind
+        if ($kind -eq "add") {
             $element = New-WinToolTerminalChip -Text ([string]$item.Text) -Background "BrushOkSoft" -Foreground "BrushOk"
         }
-        else {
+        elseif ($kind -eq "update") {
+            $element = New-WinToolTerminalChip -Text ([string]$item.Text) -Background "BrushOkSoft" -Foreground "BrushOk"
+        }
+        elseif ($kind -eq "change") {
             $element = New-WinToolTerminalChip -Text ([string]$item.Text) -Background "BrushWarnSoft" -Foreground "BrushWarn"
         }
-        $element.Tag = [string]$item.Kind
+        else {
+            $element = New-WinToolTerminalChip -Text ([string]$item.Text) -Background "BrushNavHover" -Foreground "BrushMuted"
+        }
+        $element.Tag = $kind
         [void]$summaryHost.Children.Add($element)
     }
 }

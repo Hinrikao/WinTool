@@ -370,24 +370,98 @@ function Backup-WinToolTerminalSetting {
 }
 
 function Invoke-WinToolTerminalLigature {
-    $path = Get-WinToolTerminalSettingsPath
-    if ([string]::IsNullOrWhiteSpace($path)) {
-        Write-WinToolLog -Message "Windows Terminal settings were not found. Open Terminal once, then run terminal setup again to turn on font ligatures." -Level "warn"
-        return
+    param(
+        [string[]]$SettingsPath
+    )
+    $paths = @($SettingsPath | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    if ($paths.Count -eq 0) {
+        $paths = @(Get-WinToolTerminalSettingsPathList)
     }
-    $settings = [pscustomobject]@{}
-    if (Test-Path -LiteralPath $path) {
-        Backup-WinToolTerminalSetting -Path $path
-        $raw = [System.IO.File]::ReadAllText($path)
-        if (-not [string]::IsNullOrWhiteSpace($raw)) {
+    if ($paths.Count -eq 0) {
+        Write-WinToolLog -Message "Windows Terminal settings were not found. Open Terminal once, then run terminal setup again to turn on font ligatures." -Level "warn"
+        return $false
+    }
+    $any = $false
+    $ownCount = 0
+    foreach ($path in $paths) {
+        $raw = "{}"
+        if (Test-Path -LiteralPath $path) {
+            $raw = [System.IO.File]::ReadAllText($path)
+            if ([string]::IsNullOrWhiteSpace($raw)) { $raw = "{}" }
+        }
+        $settings = $null
+        try {
             $settings = ConvertFrom-WinToolJsonText -Text $raw
         }
+        catch {
+            $settings = $null
+        }
+        if ($null -ne $settings -and (Test-WinToolSettingsLigatureMatch -Settings $settings)) {
+            continue
+        }
+        $result = Set-WinToolJsoncPath -Text $raw -Name @("profiles", "defaults", "font", "features", "calt") -Value 1 -Kind "number"
+        $raw = [string]$result.Text
+        $changed = [bool]$result.Changed
+        $result = Set-WinToolJsoncPath -Text $raw -Name @("profiles", "defaults", "font", "features", "liga") -Value 1 -Kind "number"
+        $raw = [string]$result.Text
+        if ([bool]$result.Changed) { $changed = $true }
+        # Profiles with their own font.features hide the default, so they get calt and liga too.
+        $listChanged = 0
+        $again = $true
+        $guard = 0
+        while ($again -and $guard -lt 40) {
+            $again = $false
+            $guard++
+            $root = Get-WinToolJsoncRootStart -Text $raw
+            if ($null -eq $root) { break }
+            $map = Get-WinToolJsoncObjectMap -Text $raw -Start ([int]$root)
+            $profiles = Get-WinToolJsoncProperty -Object $map -Name "profiles"
+            if ($null -eq $profiles -or [string]$profiles.Kind -ne "object") { break }
+            $profileMap = Get-WinToolJsoncObjectMap -Text $raw -Start ([int]$profiles.ValueStart)
+            $list = Get-WinToolJsoncProperty -Object $profileMap -Name "list"
+            if ($null -eq $list -or [string]$list.Kind -ne "array") { break }
+            foreach ($item in @(Get-WinToolJsoncArrayItem -Text $raw -Start ([int]$list.ValueStart))) {
+                if ([string]$item.Kind -ne "object") { continue }
+                $object = Get-WinToolJsoncObjectMap -Text $raw -Start ([int]$item.Start)
+                $font = Get-WinToolJsoncProperty -Object $object -Name "font"
+                if ($null -eq $font -or [string]$font.Kind -ne "object") { continue }
+                $fontMap = Get-WinToolJsoncObjectMap -Text $raw -Start ([int]$font.ValueStart)
+                $features = Get-WinToolJsoncProperty -Object $fontMap -Name "features"
+                if ($null -eq $features -or [string]$features.Kind -ne "object") { continue }
+                $featureMap = Get-WinToolJsoncObjectMap -Text $raw -Start ([int]$features.ValueStart)
+                foreach ($key in @("calt", "liga")) {
+                    $property = Get-WinToolJsoncProperty -Object $featureMap -Name $key
+                    if ($null -ne $property) {
+                        $current = $raw.Substring([int]$property.ValueStart, ([int]$property.ValueEnd - [int]$property.ValueStart)).Trim()
+                        if ($current -eq "1") { continue }
+                    }
+                    $raw = Set-WinToolJsoncObjectLiteral -Text $raw -Object $featureMap -Name $key -Literal "1"
+                    $changed = $true
+                    $listChanged++
+                    $again = $true
+                    break
+                }
+                if ($again) { break }
+            }
+        }
+        if ($listChanged -gt 0) { $ownCount += $listChanged }
+        if ($changed) {
+            Backup-WinToolTerminalSetting -Path $path
+            $out = $raw
+            if (-not $out.EndsWith("`n")) { $out += "`n" }
+            Write-WinToolUtf8File -Path $path -Text $out
+            $any = $true
+        }
     }
-    $own = Add-WinToolTerminalLigature -Settings $settings
-    Write-WinToolUtf8File -Path $path -Text ((ConvertTo-WinToolJsonText -Value $settings) + "`n")
-    $message = "Turned on font ligatures (calt, liga) for all Windows Terminal profiles."
-    if ($own -gt 0) { $message += " Also updated " + $own + " profile(s) with their own font features." }
-    Write-WinToolLog -Message $message -Level "ok"
+    if ($any) {
+        $message = "Turned on font ligatures (calt, liga) for all Windows Terminal profiles."
+        if ($ownCount -gt 0) { $message += " Also updated " + $ownCount + " profile(s) with their own font features." }
+        Write-WinToolLog -Message $message -Level "ok"
+    }
+    else {
+        Write-WinToolLog -Message "Font ligatures were already on." -Level "ok"
+    }
+    return $any
 }
 
 $script:WinToolSchemeColorKeys = @("black", "red", "green", "yellow", "blue", "purple", "cyan", "white", "brightBlack", "brightRed", "brightGreen", "brightYellow", "brightBlue", "brightPurple", "brightCyan", "brightWhite")
@@ -449,7 +523,8 @@ function Add-WinToolTerminalScheme {
 
 function Save-WinToolOhMyPoshTheme {
     param(
-        [Parameter(Mandatory = $true)][string]$ThemeFile
+        [Parameter(Mandatory = $true)][string]$ThemeFile,
+        [switch]$SkipIfPresent
     )
     # Keeps a copy of the theme where the profile can always find it.
     if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
@@ -458,6 +533,9 @@ function Save-WinToolOhMyPoshTheme {
     $folder = Join-Path $env:LOCALAPPDATA "WinTool\themes"
     $target = Join-Path $folder $ThemeFile
     $part = $target + ".part"
+    if ($SkipIfPresent -and (Test-Path -LiteralPath $target) -and (Get-Item -LiteralPath $target).Length -gt 2) {
+        return $target
+    }
     try {
         if (-not (Test-Path -LiteralPath $folder)) {
             New-Item -ItemType Directory -Path $folder -Force | Out-Null
@@ -492,16 +570,40 @@ function Write-WinToolShellProfile {
         [bool]$TerminalIcons = $true,
         [string]$PromptStyle = "",
         [bool]$PsReadLine = $false,
-        [bool]$Zoxide = $false
+        [bool]$Zoxide = $false,
+        [switch]$RefreshTheme,
+        [string[]]$ProfilePath
     )
+    $themeChanged = $false
     if ($PromptId -eq "oh-my-posh") {
-        Save-WinToolOhMyPoshTheme -ThemeFile (Get-WinToolOhMyPoshThemeFile -PromptStyle $PromptStyle) | Out-Null
+        $themeFile = Get-WinToolOhMyPoshThemeFile -PromptStyle $PromptStyle
+        $before = $false
+        if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+            $themePath = Join-Path $env:LOCALAPPDATA ("WinTool\themes\" + $themeFile)
+            $before = (Test-Path -LiteralPath $themePath)
+        }
+        if ($RefreshTheme) {
+            $saved = Save-WinToolOhMyPoshTheme -ThemeFile $themeFile
+        }
+        else {
+            $saved = Save-WinToolOhMyPoshTheme -ThemeFile $themeFile -SkipIfPresent
+        }
+        if ($RefreshTheme -and $null -ne $saved) {
+            $themeChanged = $true
+        }
+        elseif (-not $before -and $null -ne $saved) {
+            $themeChanged = $true
+        }
     }
     $body = Get-WinToolPromptScript -PromptId $PromptId -TerminalIcons $TerminalIcons -PromptStyle $PromptStyle -PsReadLine $PsReadLine -Zoxide $Zoxide
-    $paths = @(
-        (Get-WinToolShellProfilePath -HostName "powershell"),
-        (Get-WinToolShellProfilePath -HostName "pwsh")
-    )
+    $paths = @($ProfilePath | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    if ($paths.Count -eq 0) {
+        $paths = @(
+            (Get-WinToolShellProfilePath -HostName "powershell"),
+            (Get-WinToolShellProfilePath -HostName "pwsh")
+        )
+    }
+    $profileChanged = $false
     foreach ($path in $paths) {
         $directory = Split-Path -Parent $path
         if (-not (Test-Path -LiteralPath $directory)) {
@@ -512,9 +614,20 @@ function Write-WinToolShellProfile {
             $existing = [System.IO.File]::ReadAllText($path)
         }
         $updated = Update-WinToolManagedBlock -Text $existing -Begin $script:WinToolProfileBegin -End $script:WinToolProfileEnd -Body $body
+        if ($updated -eq $existing) {
+            continue
+        }
         Write-WinToolUtf8File -Path $path -Text $updated -Bom
         Write-WinToolLog -Message "Updated $path" -Level "ok"
+        $profileChanged = $true
     }
+    if (-not $profileChanged -and -not $themeChanged) {
+        Write-WinToolLog -Message "The PowerShell profiles were already up to date." -Level "ok"
+    }
+    elseif (-not $profileChanged -and $themeChanged) {
+        Write-WinToolLog -Message "Refreshed the Oh My Posh theme. The PowerShell profiles were already up to date." -Level "ok"
+    }
+    return ($profileChanged -or $themeChanged)
 }
 
 function ConvertTo-WinToolFontToken {
@@ -1462,35 +1575,87 @@ function Invoke-WinToolTerminalFont {
     param(
         [Parameter(Mandatory = $true)][string]$Face,
         [string]$Match,
-        [int]$Size = 12
+        [int]$Size = 12,
+        [string[]]$SettingsPath
     )
     if ($Size -lt 6 -or $Size -gt 48) { $Size = 12 }
     $chosen = Resolve-WinToolInstalledFontFace -Face $Face -Match $Match
     if ($null -eq $chosen) {
-        return
+        return $false
     }
-    $path = Get-WinToolTerminalSettingsPath
-    if ([string]::IsNullOrWhiteSpace($path)) {
+    $paths = @($SettingsPath | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    if ($paths.Count -eq 0) {
+        $paths = @(Get-WinToolTerminalSettingsPathList)
+    }
+    if ($paths.Count -eq 0) {
         Write-WinToolLog -Message "Windows Terminal settings were not found. Open Terminal once, then run terminal setup again to set the font." -Level "warn"
-        return
+        return $false
     }
-    $settings = [pscustomobject]@{}
-    if (Test-Path -LiteralPath $path) {
-        Backup-WinToolTerminalSetting -Path $path
-        $raw = [System.IO.File]::ReadAllText($path)
-        if (-not [string]::IsNullOrWhiteSpace($raw)) {
+    $any = $false
+    foreach ($path in $paths) {
+        $raw = "{}"
+        if (Test-Path -LiteralPath $path) {
+            $raw = [System.IO.File]::ReadAllText($path)
+            if ([string]::IsNullOrWhiteSpace($raw)) { $raw = "{}" }
+        }
+        $settings = $null
+        try {
             $settings = ConvertFrom-WinToolJsonText -Text $raw
         }
+        catch {
+            $settings = $null
+        }
+        if ($null -ne $settings -and (Test-WinToolSettingsFontMatch -Settings $settings -Face $chosen -Size $Size)) {
+            continue
+        }
+        $result = Set-WinToolJsoncPath -Text $raw -Name @("profiles", "defaults", "font", "face") -Value $chosen -Kind "string"
+        $raw = [string]$result.Text
+        $changed = [bool]$result.Changed
+        $result = Set-WinToolJsoncPath -Text $raw -Name @("profiles", "defaults", "font", "size") -Value $Size -Kind "number"
+        $raw = [string]$result.Text
+        if ([bool]$result.Changed) { $changed = $true }
+        $root = Get-WinToolJsoncRootStart -Text $raw
+        if ($null -ne $root) {
+            $map = Get-WinToolJsoncObjectMap -Text $raw -Start ([int]$root)
+            $profiles = Get-WinToolJsoncProperty -Object $map -Name "profiles"
+            if ($null -ne $profiles -and [string]$profiles.Kind -eq "object") {
+                $profileMap = Get-WinToolJsoncObjectMap -Text $raw -Start ([int]$profiles.ValueStart)
+                $defaults = Get-WinToolJsoncProperty -Object $profileMap -Name "defaults"
+                if ($null -ne $defaults -and [string]$defaults.Kind -eq "object") {
+                    $defaultsMap = Get-WinToolJsoncObjectMap -Text $raw -Start ([int]$defaults.ValueStart)
+                    $legacy = Get-WinToolJsoncProperty -Object $defaultsMap -Name "fontFace"
+                    if ($null -ne $legacy) {
+                        $wanted = ConvertTo-WinToolJsonString -Text $chosen
+                        $current = $raw.Substring([int]$legacy.ValueStart, ([int]$legacy.ValueEnd - [int]$legacy.ValueStart))
+                        if ($current.Trim() -ne $wanted) {
+                            $raw = Set-WinToolJsoncObjectLiteral -Text $raw -Object $defaultsMap -Name "fontFace" -Literal $wanted
+                            $changed = $true
+                        }
+                    }
+                }
+            }
+        }
+        if ($changed) {
+            Backup-WinToolTerminalSetting -Path $path
+            $out = $raw
+            if (-not $out.EndsWith("`n")) { $out += "`n" }
+            Write-WinToolUtf8File -Path $path -Text $out
+            $any = $true
+        }
     }
-    Add-WinToolTerminalFont -Settings $settings -Face $chosen -Size $Size | Out-Null
-    $json = ConvertTo-WinToolJsonText -Value $settings
-    Write-WinToolUtf8File -Path $path -Text ($json + "`n")
-    Write-WinToolLog -Message "Set the Windows Terminal font to $chosen. Comments in settings.json are not kept." -Level "ok"
+    if ($any) {
+        Write-WinToolLog -Message ("Set the Windows Terminal font to {0}, {1} pt." -f $chosen, $Size) -Level "ok"
+    }
+    else {
+        Write-WinToolLog -Message ("Windows Terminal already uses {0}, {1} pt." -f $chosen, $Size) -Level "ok"
+    }
+    return $any
 }
 
 function Invoke-WinToolTerminalScheme {
     param(
-        [Parameter(Mandatory = $true)][string]$SchemeId
+        [Parameter(Mandatory = $true)][string]$SchemeId,
+        [string[]]$SettingsPath
     )
     $scheme = $null
     foreach ($item in @(Get-WinToolNote -Object (Get-WinToolTerminalCatalog) -Name "schemes" -Default @())) {
@@ -1501,24 +1666,49 @@ function Invoke-WinToolTerminalScheme {
     }
     if ($null -eq $scheme) {
         Write-WinToolLog -Message "Unknown color scheme '$SchemeId'." -Level "warn"
-        return
+        return $false
     }
-    $path = Get-WinToolTerminalSettingsPath
-    if ([string]::IsNullOrWhiteSpace($path)) {
+    $paths = @($SettingsPath | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    if ($paths.Count -eq 0) {
+        $paths = @(Get-WinToolTerminalSettingsPathList)
+    }
+    if ($paths.Count -eq 0) {
         Write-WinToolLog -Message "Windows Terminal settings were not found, so the color scheme was skipped." -Level "warn"
-        return
+        return $false
     }
-    $settings = [pscustomobject]@{}
-    if (Test-Path -LiteralPath $path) {
-        Backup-WinToolTerminalSetting -Path $path
-        $raw = [System.IO.File]::ReadAllText($path)
-        if (-not [string]::IsNullOrWhiteSpace($raw)) {
+    $any = $false
+    foreach ($path in $paths) {
+        $raw = "{}"
+        if (Test-Path -LiteralPath $path) {
+            $raw = [System.IO.File]::ReadAllText($path)
+            if ([string]::IsNullOrWhiteSpace($raw)) { $raw = "{}" }
+        }
+        $settings = $null
+        try {
             $settings = ConvertFrom-WinToolJsonText -Text $raw
         }
+        catch {
+            $settings = $null
+        }
+        if ($null -ne $settings -and (Test-WinToolSettingsSchemeMatch -Settings $settings -Scheme $scheme)) {
+            continue
+        }
+        $result = Set-WinToolJsoncColorScheme -Text $raw -Scheme $scheme
+        if ([bool]$result.Changed) {
+            Backup-WinToolTerminalSetting -Path $path
+            $out = [string]$result.Text
+            if (-not $out.EndsWith("`n")) { $out += "`n" }
+            Write-WinToolUtf8File -Path $path -Text $out
+            $any = $true
+        }
     }
-    Add-WinToolTerminalScheme -Settings $settings -Scheme $scheme | Out-Null
-    Write-WinToolUtf8File -Path $path -Text ((ConvertTo-WinToolJsonText -Value $settings) + "`n")
-    Write-WinToolLog -Message "Set the Windows Terminal color scheme to $($scheme.name)." -Level "ok"
+    if ($any) {
+        Write-WinToolLog -Message "Set the Windows Terminal color scheme to $($scheme.name)." -Level "ok"
+    }
+    else {
+        Write-WinToolLog -Message ("The color scheme {0} was already set." -f [string]$scheme.name) -Level "ok"
+    }
+    return $any
 }
 
 function Invoke-WinToolStarshipPreset {
@@ -1574,10 +1764,10 @@ function Get-WinToolFontInstallStep {
         if ([string]::IsNullOrWhiteSpace($release)) {
             $release = [string](Get-WinToolNote -Object (Get-WinToolFontDocument) -Name "nerdFontsRelease" -Default "v3.5.1")
         }
-        return @([pscustomobject]@{ Type = "font-download"; Label = ("Download " + $name); Release = $release; Asset = $asset; Face = [string]$Font.face })
+        return @([pscustomobject]@{ Type = "font-download"; Label = ("Download " + $name); Release = $release; Asset = $asset; Face = [string]$Font.face; FontId = [string]$Font.id })
     }
     if ($null -ne $github) {
-        return @([pscustomobject]@{ Type = "font-download"; Label = ("Download " + $name); Repo = [string]$github.repo; AssetPattern = [string]$github.asset; Files = @($github.files); Face = [string]$Font.face })
+        return @([pscustomobject]@{ Type = "font-download"; Label = ("Download " + $name); Repo = [string]$github.repo; AssetPattern = [string]$github.asset; Files = @($github.files); Face = [string]$Font.face; FontId = [string]$Font.id })
     }
     if (-not [string]::IsNullOrWhiteSpace($wingetId)) {
         return @([pscustomobject]@{ Type = "winget"; Label = ("Install " + $name); WingetId = $wingetId; Scope = "" })
@@ -1714,12 +1904,38 @@ function Get-WinToolSimpleTerminalChoice {
 
 function Get-WinToolTerminalSummary {
     param(
-        [Parameter(Mandatory = $true)]$Selection
+        [Parameter(Mandatory = $true)]$Selection,
+        $Cache,
+        [switch]$Update
     )
+    if ($null -eq $Cache) {
+        $Cache = Get-WinToolPackageCache
+    }
     $plan = @(Get-WinToolTerminalPlan -Selection $Selection)
+    $chips = @(Get-WinToolSummaryChip -Step $plan -Cache $Cache -Selection $Selection -Update:$Update)
     $lines = New-Object System.Collections.Generic.List[string]
-    foreach ($step in $plan) {
-        $lines.Add([string]$step.Label)
+    foreach ($chip in $chips) {
+        $kind = [string]$chip.Kind
+        if ($kind -eq "add") {
+            $lines.Add("Install " + [string]$chip.Text)
+        }
+        elseif ($kind -eq "have") {
+            $lines.Add("Already installed: " + [string]$chip.Text)
+        }
+        elseif ($kind -eq "set") {
+            $lines.Add("Already set: " + [string]$chip.Text)
+        }
+        elseif ($kind -eq "update") {
+            $lines.Add("Update " + [string]$chip.Text)
+        }
+        else {
+            $lines.Add("Change " + [string]$chip.Text)
+        }
+    }
+    if ($lines.Count -eq 0) {
+        foreach ($step in $plan) {
+            $lines.Add([string]$step.Label)
+        }
     }
     return $lines.ToArray()
 }
@@ -1829,12 +2045,12 @@ function Get-WinToolTerminalPlan {
         }
     }
     if ([bool]$icons) {
-        [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Install Terminal-Icons for Windows PowerShell"; Host = "powershell" })
-        [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Install Terminal-Icons for PowerShell 7"; Host = "pwsh" })
+        [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Install Terminal-Icons for Windows PowerShell"; Name = "Terminal-Icons"; Host = "powershell" })
+        [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Install Terminal-Icons for PowerShell 7"; Name = "Terminal-Icons"; Host = "pwsh" })
     }
     if ([bool]$psReadLine) {
         # 5.1 ships PSReadLine 2.0, too old for history predictions.
-        [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Update PSReadLine for Windows PowerShell"; Host = "powershell"; Module = "PSReadLine" })
+        [void]$steps.Add([pscustomobject]@{ Type = "module"; Label = "Update PSReadLine for Windows PowerShell"; Name = "PSReadLine"; Host = "powershell"; Module = "PSReadLine" })
     }
     [void]$steps.Add([pscustomobject]@{ Type = "profile"; Label = "Update PowerShell profiles"; Prompt = $promptId; PromptStyle = $promptStyle; TerminalIcons = [bool]$icons; PsReadLine = [bool]$psReadLine; Zoxide = [bool]$zoxide })
     if ([bool]$wsl) {
@@ -2363,10 +2579,21 @@ function Select-WinToolThemeRow {
 
 function Get-WinToolSummaryChip {
     param(
-        [AllowEmptyCollection()][object[]]$Step
+        [AllowEmptyCollection()][object[]]$Step,
+        $Cache,
+        $ConfigNeed,
+        $Selection,
+        [switch]$Update
     )
-    # Short "+ install" and "~ change" chips for the action bar, one per
-    # thing, in plan order.
+    # Short "+ install", "already installed", and "~ change" chips for the
+    # action bar, one per thing, in plan order.
+    if ($null -eq $Cache) {
+        $Cache = Get-WinToolPackageCache
+    }
+    $need = $ConfigNeed
+    if ($null -eq $need -and $null -ne $Selection) {
+        try { $need = Get-WinToolCachedConfigNeed -Selection $Selection } catch { $need = $null }
+    }
     $chips = New-Object System.Collections.Generic.List[object]
     $seen = @{}
     $add = {
@@ -2379,29 +2606,65 @@ function Get-WinToolSummaryChip {
     foreach ($item in @($Step | Where-Object { $null -ne $_ })) {
         $type = [string]$item.Type
         $label = [string]$item.Label
+        $decision = $null
+        if ($type -eq "winget" -or $type -eq "font-download" -or $type -eq "module") {
+            $decision = Get-WinToolPlanStepDecision -Step $item -Cache $Cache -Update:$Update
+        }
         switch ($type) {
-            "winget" { & $add "add" ($label -replace '^Install ', '') }
-            "font-download" { & $add "add" ($label -replace '^Download ', '') }
+            "winget" {
+                $name = ($label -replace '^Install ', '')
+                if ($null -ne $decision -and [string]$decision.Outcome -eq "already-had") { & $add "have" $name }
+                elseif ($null -ne $decision -and [string]$decision.Outcome -eq "update") { & $add "update" $name }
+                else { & $add "add" $name }
+            }
+            "font-download" {
+                $name = ($label -replace '^Download ', '')
+                if ($null -ne $decision -and [string]$decision.Outcome -eq "already-had") { & $add "have" $name }
+                else { & $add "add" $name }
+            }
             "tool-download" { & $add "add" ($label -replace '^Download ', '') }
             "wsl-install" { & $add "add" ("WSL " + [string]$item.Distro) }
             "module" {
-                if ($label -match '^Install (.+?) for ') { & $add "add" $Matches[1] }
-                elseif ($label -match '^Update (.+?) for ') { & $add "change" ($Matches[1] + " predictions") }
+                if ($label -match '^Install (.+?) for ') {
+                    $name = $Matches[1]
+                    if ($null -ne $decision -and [string]$decision.Outcome -eq "already-had") { & $add "have" $name }
+                    elseif ($null -ne $decision -and [string]$decision.Outcome -eq "update") { & $add "update" $name }
+                    else { & $add "add" $name }
+                }
+                elseif ($label -match '^Update (.+?) for ') {
+                    $name = $Matches[1] + " predictions"
+                    if ($null -ne $decision -and [string]$decision.Outcome -eq "already-had") { & $add "have" $name }
+                    elseif ($null -ne $decision -and [string]$decision.Outcome -eq "update") { & $add "update" $name }
+                    else { & $add "change" $name }
+                }
                 else { & $add "change" $label }
             }
             "font" {
                 $text = "Terminal font"
                 if ($null -ne $item.PSObject.Properties["Size"] -and [int]$item.Size -ne 12) { $text += " " + [int]$item.Size + " pt" }
-                & $add "change" $text
+                if ($null -ne $need -and -not [bool]$need.font) { & $add "set" $text }
+                else { & $add "change" $text }
             }
-            "ligatures" { & $add "change" "Font ligatures on" }
+            "ligatures" {
+                if ($null -ne $need -and -not [bool]$need.ligatures) { & $add "set" "Font ligatures on" }
+                else { & $add "change" "Font ligatures on" }
+            }
             "banner" {
-                if ([bool](Get-WinToolNote -Object $item -Name "Undo" -Default $false)) { & $add "change" "Startup banner shown" }
-                else { & $add "change" "Startup banner hidden" }
+                if ([bool](Get-WinToolNote -Object $item -Name "Undo" -Default $false)) { $text = "Startup banner shown" }
+                else { $text = "Startup banner hidden" }
+                if ($null -ne $need -and -not [bool]$need.banner) { & $add "set" $text }
+                else { & $add "change" $text }
             }
-            "scheme" { & $add "change" ($label -replace '^Set the Windows Terminal color scheme to ', 'Scheme ') }
+            "scheme" {
+                $text = ($label -replace '^Set the Windows Terminal color scheme to ', 'Scheme ')
+                if ($null -ne $need -and -not [bool]$need.scheme) { & $add "set" $text }
+                else { & $add "change" $text }
+            }
             "starship-preset" { & $add "change" ("Starship preset " + [string]$item.Preset) }
-            "profile" { & $add "change" "PowerShell `$PROFILE" }
+            "profile" {
+                if ($null -ne $need -and -not [bool]$need.profile) { & $add "set" "PowerShell `$PROFILE" }
+                else { & $add "change" "PowerShell `$PROFILE" }
+            }
             "wsl-shell" {
                 $text = $label -replace '^Install ', ''
                 $style = ""

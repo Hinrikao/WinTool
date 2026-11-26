@@ -750,6 +750,24 @@ function Complete-WinToolAppDetection {
     }
     Write-WinToolLog -Message ("Installed apps: winget export listed {0} packages." -f $installedIds.Count) -Level "info" -Diagnostic
     $counts = Set-WinToolAppState -InstalledId $installedIds -UpgradeText $upgradeText -ListText $listText -DisplayName $displayNames
+    $known = @(Get-WinToolTerminalWingetId)
+    $fromList = @()
+    $fromUpgrade = @()
+    if ($known.Count -gt 0) {
+        $fromList = @(Find-WinToolWingetIdInText -Text $listText -KnownId $known)
+        $fromUpgrade = @(Find-WinToolWingetIdInText -Text $upgradeText -KnownId $known)
+    }
+    $allInstalled = New-Object System.Collections.Generic.List[string]
+    foreach ($id in @($installedIds) + @($fromList) + @($fromUpgrade) + @($counts.InstalledIds)) {
+        if (-not [string]::IsNullOrWhiteSpace($id)) { $allInstalled.Add($id) | Out-Null }
+    }
+    $allUpdates = New-Object System.Collections.Generic.List[string]
+    foreach ($id in @($fromUpgrade) + @($counts.UpdateIds)) {
+        if (-not [string]::IsNullOrWhiteSpace($id)) { $allUpdates.Add($id) | Out-Null }
+    }
+    Set-WinToolWingetPackageCache -InstalledId $allInstalled.ToArray() -UpdateId $allUpdates.ToArray() | Out-Null
+    Update-WinToolLocalPackageCache | Out-Null
+    try { Update-WinToolTerminalSummary } catch { $null = $_.Exception.Message }
     if (@($counts.ByName).Count -gt 0) {
         Write-WinToolLog -Message ("Installed apps: found by name, outside winget: " + (@($counts.ByName) -join ", ")) -Level "info" -Diagnostic
     }
@@ -962,10 +980,24 @@ function Invoke-WinToolInstallClick {
         Write-WinToolLog -Message "Select at least one app first." -Level "warn"
         return
     }
-    $ok = Request-WinToolConfirmation -Message ("Install {0} app(s) with winget? Each vendor's license is accepted for you by winget." -f $apps.Count) -Title "Install apps"
+    $detected = $false
+    if ($null -ne $script:WinToolState -and [bool]$script:WinToolState.AppsDetected) {
+        $detected = $true
+    }
+    $split = Select-WinToolInstallApp -App $apps -Detected $detected
+    $pending = @($split.Pending)
+    $already = @($split.Already)
+    if ($pending.Count -eq 0) {
+        Write-WinToolLog -Message "Those apps are already installed. Use Update to look for newer versions." -Level "info"
+        return
+    }
+    if ($already.Count -gt 0) {
+        Write-WinToolLog -Message ("Skipped {0} already installed app(s). Use Update to look for newer versions." -f $already.Count) -Level "info"
+    }
+    $ok = Request-WinToolConfirmation -Message ("Install {0} app(s) with winget? Each vendor's license is accepted for you by winget." -f $pending.Count) -Title "Install apps"
     if (-not $ok) {
         return
     }
-    $steps = @(Get-WinToolAppPlan -App $apps)
+    $steps = @(Get-WinToolAppPlan -App $pending)
     Invoke-WinToolPlanAsync -Step $steps -DoneMessage "App install finished. Open a new terminal if a command is not on PATH yet." -AfterDone "Start-WinToolAppDetection"
 }

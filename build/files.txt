@@ -7,6 +7,7 @@ src/Private/Process.ps1
 src/Private/Tweaks.ps1
 src/Private/Terminal.ps1
 src/Private/TerminalBanner.ps1
+src/Private/PackageCache.ps1
 src/Private/Wsl.ps1
 src/Private/Updates.ps1
 src/Private/UpdateModes.ps1
