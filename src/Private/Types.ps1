@@ -271,7 +271,9 @@ function Start-WinToolDispatcherHeartbeat {
     }
     $script:WinToolDispatcherBeat = [System.Diagnostics.Stopwatch]::StartNew()
     $script:WinToolDispatcherLastMs = 0
-    $timer = New-Object System.Windows.Threading.DispatcherTimer
+    # Input is higher than ApplicationIdle, so the tick runs between post-paint
+    # idle slices instead of letting several of them stack into one gap.
+    $timer = [System.Windows.Threading.DispatcherTimer]::new([System.Windows.Threading.DispatcherPriority]::Input)
     $timer.Interval = [TimeSpan]::FromMilliseconds(50)
     Register-WinToolUiEvent -Control $timer -EventName "Tick" -Name "Dispatcher heartbeat" -Action {
         $now = 0
