@@ -398,6 +398,32 @@
 
 
 
+    <Style x:Key="SegmentRadio" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+      <Setter Property="FontSize" Value="{DynamicResource FontSizeBody}"/>
+      <Setter Property="Height" Value="30"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Bd" Background="Transparent" CornerRadius="7" Padding="16,0">
+              <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushNavHover}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BrushOnAccent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <Style TargetType="TextBox">
       <Setter Property="Foreground" Value="{DynamicResource BrushInk}"/>
       <Setter Property="Background" Value="{DynamicResource BrushInput}"/>
@@ -1767,9 +1793,9 @@
             <TextBlock x:Name="ActivityTitle" DockPanel.Dock="Left" Text="Activity" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource BrushInk}" Margin="0,0,12,0"/>
             <Border DockPanel.Dock="Left" VerticalAlignment="Center" Background="{DynamicResource BrushInput}" BorderBrush="{DynamicResource BrushLine}" BorderThickness="1" CornerRadius="8">
               <StackPanel Orientation="Horizontal">
-                <RadioButton x:Name="ActivityFilterAll" GroupName="ActivityFilter" Content="All" IsChecked="True" Style="{StaticResource TerminalSegment}"/>
-                <RadioButton x:Name="ActivityFilterWarnings" GroupName="ActivityFilter" Content="Warnings" Style="{StaticResource TerminalSegment}"/>
-                <RadioButton x:Name="ActivityFilterErrors" GroupName="ActivityFilter" Content="Errors" Style="{StaticResource TerminalSegment}"/>
+                <RadioButton x:Name="ActivityFilterAll" GroupName="ActivityFilter" Content="All" IsChecked="True" Style="{StaticResource SegmentRadio}"/>
+                <RadioButton x:Name="ActivityFilterWarnings" GroupName="ActivityFilter" Content="Warnings" Style="{StaticResource SegmentRadio}"/>
+                <RadioButton x:Name="ActivityFilterErrors" GroupName="ActivityFilter" Content="Errors" Style="{StaticResource SegmentRadio}"/>
               </StackPanel>
             </Border>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
