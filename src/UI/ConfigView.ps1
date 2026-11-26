@@ -289,18 +289,14 @@ function Invoke-WinToolSaveProfile {
         Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
-    $dialog = New-Object Microsoft.Win32.SaveFileDialog
-    $dialog.Filter = "WinTool profile (*.json)|*.json"
-    $dialog.FileName = "wintool-profile.json"
-    $dialog.Title = (Get-WinToolText "msg.save-wintool-profile")
-    $accepted = $dialog.ShowDialog($script:WinToolWindow)
-    if ($accepted -ne $true) {
+    $path = Select-WinToolDialogFile -Mode Save -Filter "WinTool profile (*.json)|*.json" -FileName "wintool-profile.json" -Title (Get-WinToolText "msg.save-wintool-profile") -DefaultExt ".json"
+    if ([string]::IsNullOrWhiteSpace($path)) {
         return
     }
     try {
         $toolProfile = Get-WinToolProfileFromUi
-        Write-WinToolProfile -Path $dialog.FileName -Profile $toolProfile
-        Write-WinToolLog -Message ((Get-WinToolText "msg.saved-profile-to-n") -f $dialog.FileName) -Level "ok"
+        Write-WinToolProfile -Path $path -Profile $toolProfile
+        Write-WinToolLog -Message ((Get-WinToolText "msg.saved-profile-to-n") -f $path) -Level "ok"
     }
     catch {
         Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-save-that-profile-n") -f $_.Exception.Message) -Level "error"
@@ -312,15 +308,12 @@ function Invoke-WinToolLoadProfile {
         Write-WinToolLog -Message (Get-WinToolText "drivers.scan.wait") -Level "warn"
         return
     }
-    $dialog = New-Object Microsoft.Win32.OpenFileDialog
-    $dialog.Filter = "WinTool profile (*.json)|*.json"
-    $dialog.Title = (Get-WinToolText "msg.load-wintool-profile")
-    $accepted = $dialog.ShowDialog($script:WinToolWindow)
-    if ($accepted -ne $true) {
+    $path = Select-WinToolDialogFile -Mode Open -Filter "WinTool profile (*.json)|*.json" -Title (Get-WinToolText "msg.load-wintool-profile")
+    if ([string]::IsNullOrWhiteSpace($path)) {
         return
     }
     try {
-        Import-WinToolProfileToUi -Path $dialog.FileName
+        Import-WinToolProfileToUi -Path $path
     }
     catch {
         Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-load-that-profile-n") -f $_.Exception.Message) -Level "error"
@@ -337,21 +330,17 @@ function Invoke-WinToolExportWinget {
         Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr") -Level "warn"
         return
     }
-    $dialog = New-Object Microsoft.Win32.SaveFileDialog
-    $dialog.Filter = "winget package list (*.json)|*.json"
-    $dialog.FileName = "winget-packages.json"
-    $dialog.Title = (Get-WinToolText "msg.export-winget-package-list")
-    $accepted = $dialog.ShowDialog($script:WinToolWindow)
-    if ($accepted -ne $true) {
+    $path = Select-WinToolDialogFile -Mode Save -Filter "winget package list (*.json)|*.json" -FileName "winget-packages.json" -Title (Get-WinToolText "msg.export-winget-package-list") -DefaultExt ".json"
+    if ([string]::IsNullOrWhiteSpace($path)) {
         return
     }
     $step = [pscustomobject]@{
         Type = "process"
         Label = (Get-WinToolText "msg.export-winget-packages")
         FilePath = $winget
-        Arguments = @("export", "-o", $dialog.FileName, "--accept-source-agreements")
+        Arguments = @("export", "-o", $path, "--accept-source-agreements")
     }
-    Invoke-WinToolPlanAsync -Step @($step) -DoneMessage "winget export finished."
+    Invoke-WinToolPlanAsync -Step @($step) -DoneMessage (Get-WinToolText "msg.winget-export-finished")
 }
 
 function Invoke-WinToolImportWinget {
@@ -364,11 +353,8 @@ function Invoke-WinToolImportWinget {
         Write-WinToolLog -Message (Get-WinToolText "msg.winget-was-not-found-install-app-installer-from-the-micr") -Level "warn"
         return
     }
-    $dialog = New-Object Microsoft.Win32.OpenFileDialog
-    $dialog.Filter = "winget package list (*.json)|*.json"
-    $dialog.Title = (Get-WinToolText "msg.import-winget-package-list")
-    $accepted = $dialog.ShowDialog($script:WinToolWindow)
-    if ($accepted -ne $true) {
+    $path = Select-WinToolDialogFile -Mode Open -Filter "winget package list (*.json)|*.json" -Title (Get-WinToolText "msg.import-winget-package-list")
+    if ([string]::IsNullOrWhiteSpace($path)) {
         return
     }
     $ok = Request-WinToolConfirmation -Message (Get-WinToolText "msg.ask-winget-to-install-every-package-in-this-file") -Title (Get-WinToolText "ui.ImportWinget.Content")
@@ -379,9 +365,9 @@ function Invoke-WinToolImportWinget {
         Type = "process"
         Label = (Get-WinToolText "msg.import-winget-packages")
         FilePath = $winget
-        Arguments = @("import", "-i", $dialog.FileName, "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity")
+        Arguments = @("import", "-i", $path, "--accept-package-agreements", "--accept-source-agreements", "--disable-interactivity")
     }
-    Invoke-WinToolPlanAsync -Step @($step) -DoneMessage "winget import finished." -AfterDone "Start-WinToolAppDetection"
+    Invoke-WinToolPlanAsync -Step @($step) -DoneMessage (Get-WinToolText "msg.winget-import-finished") -AfterDone "Start-WinToolAppDetection"
 }
 
 function Initialize-WinToolSystemView {

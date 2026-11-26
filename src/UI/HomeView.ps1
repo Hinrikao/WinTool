@@ -1100,14 +1100,15 @@ function Show-WinToolHomeReview {
 }
 
 function Show-WinToolHomeHistory {
+    $title = Get-WinToolText "msg.history"
     $items = @(Read-WinToolHomeHistory | Select-Object -Last 10)
     if ($items.Count -eq 0) {
-        $null = [System.Windows.MessageBox]::Show("No analysis was saved yet.", "History")
+        Show-WinToolNotice -Message (Get-WinToolText "msg.no-analysis-was-saved-yet") -Title $title
         return
     }
     [array]::Reverse($items)
     $lines = @($items | ForEach-Object { "{0}    Score {1}    {2}s" -f (Format-WinToolHomeWhen -Time ([datetime]$_.Time)), [int]$_.Score, [int]$_.Seconds })
-    $null = [System.Windows.MessageBox]::Show(($lines -join "`n"), "History")
+    Show-WinToolNotice -Message ($lines -join "`n") -Title $title
 }
 
 

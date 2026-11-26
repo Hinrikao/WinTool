@@ -1,12 +1,67 @@
 # Copyright (c) 2026 Henrique
 # SPDX-License-Identifier: MIT
 
+function Show-WinToolNotice {
+    param(
+        [Parameter(Mandatory = $true)][string]$Message,
+        [string]$Title = "WinTool"
+    )
+    $script:WinToolUiLastNotice = [pscustomobject]@{ Message = $Message; Title = $Title }
+    if ($script:WinToolUiQuiet) {
+        return
+    }
+    [System.Windows.MessageBox]::Show($Message, $Title) | Out-Null
+}
+
+function Select-WinToolDialogFile {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet("Open", "Save")][string]$Mode,
+        [string]$Filter,
+        [string]$FileName,
+        [string]$Title,
+        [string]$DefaultExt
+    )
+    if (-not [string]::IsNullOrWhiteSpace($script:WinToolUiFilePath)) {
+        return [string]$script:WinToolUiFilePath
+    }
+    if ($script:WinToolUiQuiet) {
+        return $null
+    }
+    if ($Mode -eq "Save") {
+        $dialog = New-Object Microsoft.Win32.SaveFileDialog
+        if (-not [string]::IsNullOrWhiteSpace($FileName)) {
+            $dialog.FileName = $FileName
+        }
+        if (-not [string]::IsNullOrWhiteSpace($DefaultExt)) {
+            $dialog.DefaultExt = $DefaultExt
+            $dialog.AddExtension = $true
+        }
+    }
+    else {
+        $dialog = New-Object Microsoft.Win32.OpenFileDialog
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Filter)) {
+        $dialog.Filter = $Filter
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Title)) {
+        $dialog.Title = $Title
+    }
+    $accepted = $dialog.ShowDialog($script:WinToolWindow)
+    if ($accepted -ne $true) {
+        return $null
+    }
+    return [string]$dialog.FileName
+}
+
 function Request-WinToolConfirmation {
     param(
         [Parameter(Mandatory = $true)][string]$Message,
         [Parameter(Mandatory = $true)][string]$Title
     )
-    # UI tests answer "no" without a modal dialog, so a click cannot hang the dispatcher.
+    # Tests can answer without a modal dialog, so a click cannot hang the dispatcher.
+    if ($null -ne $script:WinToolUiConfirm) {
+        return [bool]$script:WinToolUiConfirm
+    }
     if ($script:WinToolUiQuiet) {
         return $false
     }

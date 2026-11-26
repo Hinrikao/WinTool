@@ -186,12 +186,12 @@ function Invoke-WinToolFeatureApplyClick {
         return
     }
     $lines = New-Object System.Collections.Generic.List[string]
-    foreach ($feature in @($change.Enable)) { $lines.Add("Turn on: " + [string]$feature.name) }
-    foreach ($feature in @($change.Disable)) { $lines.Add("Turn off: " + [string]$feature.name) }
+    foreach ($feature in @($change.Enable)) { $lines.Add((Get-WinToolText "msg.turn-on-n" ([string]$feature.name))) }
+    foreach ($feature in @($change.Disable)) { $lines.Add((Get-WinToolText "msg.turn-off-n" ([string]$feature.name))) }
     $ok = Request-WinToolConfirmation -Message (Get-WinToolText "msg.change-these-windows-features-n" ($lines -join "`n")) -Title (Get-WinToolText "msg.windows-features")
     if (-not $ok) {
         return
     }
     $steps = @(Get-WinToolFeaturePlan -Enable $change.Enable -Disable $change.Disable)
-    Invoke-WinToolPlanAsync -Step $steps -DoneMessage "Windows features changed. Restart the PC to finish." -AfterDone "Start-WinToolFeatureDetection"
+    Invoke-WinToolPlanAsync -Step $steps -DoneMessage (Get-WinToolText "msg.windows-features-changed-restart-the-pc-to-finish") -AfterDone "Start-WinToolFeatureDetection"
 }

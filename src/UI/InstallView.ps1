@@ -881,7 +881,7 @@ function Invoke-WinToolUpgradeAllClick {
     if (-not $ok) {
         return
     }
-    Invoke-WinToolPlanAsync -Step @(Get-WinToolUpgradeAllPlan) -DoneMessage "Update all finished." -AfterDone "Start-WinToolAppDetection"
+    Invoke-WinToolPlanAsync -Step @(Get-WinToolUpgradeAllPlan) -DoneMessage (Get-WinToolText "msg.update-all-finished") -AfterDone "Start-WinToolAppDetection"
 }
 
 function Sync-WinToolAppCount {

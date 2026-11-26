@@ -2576,6 +2576,15 @@ Invoke-WinToolCase -Name "Locale detection follows the Windows display language 
     }
 }
 
+Invoke-WinToolCase -Name "History and feature confirm strings are localized" -Body {
+    Initialize-WinToolLocale -Language en -Force | Out-Null
+    Test-WinToolExpectation -Condition ((Get-WinToolText "msg.history") -eq "History") -Message "msg.history is in the English table."
+    Test-WinToolExpectation -Condition ((Get-WinToolText "msg.no-analysis-was-saved-yet") -eq "No analysis was saved yet.") -Message "msg.no-analysis-was-saved-yet is in the English table."
+    Test-WinToolExpectation -Condition ((Get-WinToolText "msg.turn-on-n" "Telnet client") -eq "Turn on: Telnet client") -Message "Feature confirm lines are localized."
+    Test-WinToolExpectation -Condition ((Get-WinToolText "msg.turn-off-n-n" "Telnet client" "TelnetClient") -eq "Turn off Telnet client (TelnetClient)") -Message "Feature plan labels are localized."
+    Test-WinToolExpectation -Condition ((Get-WinToolText "msg.update-all-finished") -eq "Update all finished.") -Message "Update-all done text is localized."
+}
+
 Invoke-WinToolCase -Name "The i18n scanner rejects hard-coded strings and checks placeholder parity" -Body {
     $python = $null
     foreach ($name in @("python3", "python")) {

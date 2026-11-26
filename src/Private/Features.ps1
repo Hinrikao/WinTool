@@ -95,7 +95,7 @@ function Get-WinToolFeaturePlan {
         foreach ($name in @($feature.names)) {
             $steps.Add([pscustomobject]@{
                 Type = "process"
-                Label = ("Turn on {0} ({1})" -f [string]$feature.name, [string]$name)
+                Label = (Get-WinToolText "msg.turn-on-n-n" ([string]$feature.name) ([string]$name))
                 FilePath = $dism
                 Arguments = @("/Online", "/Enable-Feature", ("/FeatureName:" + [string]$name), "/All", "/NoRestart")
                 SuccessCodes = @(0, $script:WinToolDismRestartCode)
@@ -110,7 +110,7 @@ function Get-WinToolFeaturePlan {
         foreach ($name in $names) {
             $steps.Add([pscustomobject]@{
                 Type = "process"
-                Label = ("Turn off {0} ({1})" -f [string]$feature.name, [string]$name)
+                Label = (Get-WinToolText "msg.turn-off-n-n" ([string]$feature.name) ([string]$name))
                 FilePath = $dism
                 Arguments = @("/Online", "/Disable-Feature", ("/FeatureName:" + [string]$name), "/NoRestart")
                 SuccessCodes = @(0, $script:WinToolDismRestartCode)

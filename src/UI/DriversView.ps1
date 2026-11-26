@@ -5,6 +5,9 @@ function Select-WinToolFolder {
     param(
         [string]$Description = (Get-WinToolText "drivers.folder.backup")
     )
+    if ($null -ne $script:WinToolUiFolder) {
+        return [string]$script:WinToolUiFolder
+    }
     if ($script:WinToolUiQuiet) {
         return $null
     }

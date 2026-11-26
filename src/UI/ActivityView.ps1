@@ -359,6 +359,16 @@ function Copy-WinToolActivityReport {
 }
 
 function Save-WinToolActivityReport {
+    if (-not [string]::IsNullOrWhiteSpace($script:WinToolUiSavePath)) {
+        try {
+            Write-WinToolUtf8File -Path $script:WinToolUiSavePath -Text (Format-WinToolActivityReport -Filter ([string]$script:WinToolState.ActivityFilter))
+            Write-WinToolLog -Message (Get-WinToolText "activity.saved") -Level "ok"
+        }
+        catch {
+            Write-WinToolLog -Message (Get-WinToolText "activity.saveFailed") -Level "warn"
+        }
+        return
+    }
     if ($script:WinToolUiQuiet) { return }
     $dialog = New-Object Microsoft.Win32.SaveFileDialog
     $dialog.Title = Get-WinToolText "activity.saveTitle"

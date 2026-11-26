@@ -41,6 +41,11 @@ jobs:
           WINTOOL_SHOT_DIR: ${{ runner.temp }}\wintool-shots
         run: pwsh -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolStartup.ps1
 
+      - name: Exercise every tab and action
+        shell: pwsh
+        timeout-minutes: 45
+        run: pwsh -STA -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolFeatures.ps1
+
       - name: Hand off from Windows PowerShell 5.1 to PowerShell 7
         shell: powershell
         run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-WinToolBootstrap.ps1
