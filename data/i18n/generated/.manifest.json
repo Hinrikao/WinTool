@@ -1498,7 +1498,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "es": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -2999,7 +3009,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "fr": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -4500,7 +4520,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "de": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -6001,7 +6031,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "it": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -7502,7 +7542,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "ja": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -9003,7 +9053,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "ko": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -10504,7 +10564,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "zh-Hans": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -12005,7 +12075,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "zh-Hant": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -13506,7 +13586,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "pl": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -15007,7 +15097,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "nl": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -16508,7 +16608,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "ru": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -18009,7 +18119,17 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   },
   "tr": {
     "language.name.de": "801cfe0fa1182664d16f4aaf7856cc73412f79ef508a866eebc2e5ccf125ff0a",
@@ -19510,6 +19630,16 @@
     "shell.installPowerShell7Failed": "7ecd1d579aa431ff102f43b16682c098793cc1dc8a6868f4e6cc5e40fdd8c495",
     "shell.installedPowerShell7": "13a8ad069a8b8340e806eca20ffe6b4fb3e4341e347a61115b1a049264dfe0e8",
     "shell.installingPowerShell7": "da57120c902e8a0a169ea3bd49eb24759ba0e2074ef4d6049684932986606153",
-    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6"
+    "msg.junk-scan-partial": "41dcab99ce8b28a152babf43b81b39cffdf22f0a6f7c0fb262c7f99d072495a6",
+    "msg.history": "0e769600933790607b2a13b33ddfade0fa17810eb62c3b28ee23e59516516491",
+    "msg.no-analysis-was-saved-yet": "47bf5f4f4ef69ff3a46fe4f0895dfddf8fad54f92b6f4101660ef40ba5c7dc93",
+    "msg.turn-off-n": "bd131a3cea6278d737b71fb8b6cb5c181be3b2120e3bc47730fb86fa7879c064",
+    "msg.turn-off-n-n": "e43a2624d5c4b4dd573d0d41795f1a7ae45ee7d7aaf9e45de11f5084ff78c723",
+    "msg.turn-on-n": "5d2bcbfc86ef3fa8534dc7512dca24de158f086e442a04d78380e8be935fd41b",
+    "msg.turn-on-n-n": "9b407a08ad4c79e25680016f8fe962d4f6af65d592e7bf80908611e6e95820c4",
+    "msg.update-all-finished": "b1e26d9d449019d84a9f435a1341192faa422d23737908d56c7a72a39191eb99",
+    "msg.windows-features-changed-restart-the-pc-to-finish": "467265f719b88164afb4938f5038b3cfab4dcdc1145d53c46933669d639fe129",
+    "msg.winget-export-finished": "07995ffa2fec8b635189f861068fa1dc87359b4e087b8a85615474dda5c5f16f",
+    "msg.winget-import-finished": "5caded7bc58ba3967d358b5148f246ce5a35dcdf4a69820ae7e1c766cbf88732"
   }
 }
