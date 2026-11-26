@@ -53,7 +53,7 @@ function Initialize-WinToolConsoleApi {
         return $false
     }
     if (Get-Command -Name Add-WinToolCSharpType -ErrorAction SilentlyContinue) {
-        return (Add-WinToolCSharpType -Name "WinToolConsoleApi" -TypeDefinition (Get-WinToolConsoleApiSource))
+        return (Add-WinToolCSharpType -Name "WinToolConsoleApi" -TypeDefinition (Get-WinToolConsoleApiSource) -ReferenceType @([object], [console], [System.Runtime.InteropServices.Marshal]))
     }
     try {
         Add-Type -TypeDefinition (Get-WinToolConsoleApiSource) -Language CSharp -ErrorAction Stop

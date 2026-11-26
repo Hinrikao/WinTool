@@ -12935,7 +12935,7 @@ function Initialize-WinToolConsoleApi {
         return $false
     }
     if (Get-Command -Name Add-WinToolCSharpType -ErrorAction SilentlyContinue) {
-        return (Add-WinToolCSharpType -Name "WinToolConsoleApi" -TypeDefinition (Get-WinToolConsoleApiSource))
+        return (Add-WinToolCSharpType -Name "WinToolConsoleApi" -TypeDefinition (Get-WinToolConsoleApiSource) -ReferenceType @([object], [console], [System.Runtime.InteropServices.Marshal]))
     }
     try {
         Add-Type -TypeDefinition (Get-WinToolConsoleApiSource) -Language CSharp -ErrorAction Stop
@@ -13306,6 +13306,8 @@ function Get-WinToolCSharpReference {
                 "System.Collections.Concurrent",
                 "System.ComponentModel.Primitives",
                 "System.ObjectModel",
+                "System.Console",
+                "System.Runtime.InteropServices",
                 "netstandard",
                 "System.Diagnostics.Process"
             )) {
@@ -13409,15 +13411,27 @@ function Add-WinToolCSharpType {
         return $true
     }
     catch {
-        $null = $_.Exception.Message
+        $cacheError = $_.Exception.Message
         try {
-            Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-compile-n-n") -f $Name, $_.Exception.Message) -Level "warn"
+            if ($refs.Count -gt 0) {
+                Add-Type -TypeDefinition $TypeDefinition -ReferencedAssemblies $refs -Language CSharp -ErrorAction Stop
+            }
+            else {
+                Add-Type -TypeDefinition $TypeDefinition -Language CSharp -ErrorAction Stop
+            }
+            Write-WinToolStartupMark -Name ("addType." + $Name) -Started $stamp
+            return $true
         }
         catch {
-            $null = $_.Exception.Message
+            try {
+                Write-WinToolLog -Message ((Get-WinToolText "msg.could-not-compile-n-n") -f $Name, $cacheError) -Level "warn"
+            }
+            catch {
+                $null = $_.Exception.Message
+            }
+            Write-WinToolStartupMark -Name ("addType." + $Name + ".failed") -Started $stamp
+            return $false
         }
-        Write-WinToolStartupMark -Name ("addType." + $Name + ".failed") -Started $stamp
-        return $false
     }
 }
 
