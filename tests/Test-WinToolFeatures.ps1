@@ -120,9 +120,19 @@ function Invoke-WinToolFeatureClick {
 }
 
 function Get-WinToolFeatureUiError {
-    $errors = @()
-    try { $errors = @(@(Get-WinToolUiError) | Where-Object { $null -ne $_ }) } catch { $errors = @() }
-    return @($errors | ForEach-Object { [string]$_.Name + ": " + [string]$_.Message })
+    $raw = @()
+    try { $raw = @(Get-WinToolUiError) } catch { return , @() }
+    $errors = New-Object System.Collections.Generic.List[string]
+    foreach ($item in $raw) {
+        if ($null -eq $item) { continue }
+        $name = ""
+        $message = ""
+        try { $name = [string]$item.Name } catch { continue }
+        try { $message = [string]$item.Message } catch { continue }
+        if ([string]::IsNullOrWhiteSpace($name) -and [string]::IsNullOrWhiteSpace($message)) { continue }
+        [void]$errors.Add($name + ": " + $message)
+    }
+    return $errors.ToArray()
 }
 
 function Test-WinToolFeatureUiState {
