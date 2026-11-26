@@ -817,14 +817,9 @@ function Start-WinToolHomeJob {
     $state = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
     if ($WithWinTool) {
         $copyStamp = Get-Date
-        $needed = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        # Only the functions the Home tweaks probe calls. A *Tweak* wildcard also
+        # copies the Tweaks page and stalls the UI thread.
         foreach ($name in @("Get-WinToolTweakProbe", "Get-WinToolTweakState", "Get-WinToolTweakStep", "Test-WinToolTweakStepState", "Add-WinToolActionStep", "Get-WinToolNote", "Get-WinToolText", "Test-WinToolTextKey", "Test-WinToolWindows", "Get-WinToolCountText", "Import-WinToolAppxModule", "Test-WinToolAdministrator")) {
-            [void]$needed.Add($name)
-        }
-        foreach ($function in @(Get-Command -Name *Tweak* -CommandType Function -ErrorAction SilentlyContinue)) {
-            [void]$needed.Add($function.Name)
-        }
-        foreach ($name in $needed) {
             $item = Get-Item -LiteralPath ("Function:" + $name) -ErrorAction SilentlyContinue
             if ($null -eq $item) { continue }
             $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $item.Name, $item.Definition

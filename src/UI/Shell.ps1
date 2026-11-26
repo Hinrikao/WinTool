@@ -426,14 +426,20 @@ function Invoke-WinToolAfterFirstFrameStep {
                 }
             }
             elseif ($null -ne $hs -and [string]$hs.Phase -eq "analyzing" -and -not $hs.Pending.ContainsKey("tweaks") -and -not $hs.Results.ContainsKey("tweaks")) {
-                $ready = $false
-                try { $ready = Complete-WinToolTweakCatalogPrefetch } catch { $ready = $false }
-                if ($ready) {
+                if (-not [bool]$script:WinToolTweaksCatalogReady) {
+                    $ready = $false
+                    try {
+                        $ready = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.catalog" -Script { Complete-WinToolTweakCatalogPrefetch }
+                    }
+                    catch { $ready = $false }
+                    if ($ready) { $script:WinToolTweaksCatalogReady = $true }
+                    # Yield so locale/parse work never shares a slice with the tweaks job.
+                }
+                else {
                     $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.tweaks" -Script {
                         Start-WinToolHomeTweakCheck
                     }
                 }
-                # Keep ticking until the catalog job finishes or analysis ends.
             }
             else {
                 $again = $false

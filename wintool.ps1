@@ -13742,7 +13742,7 @@ function Start-WinToolTweakCatalogPrefetch {
     $powershell.Runspace = $runspace
     $sync = [hashtable]::Synchronized(@{ Done = $false; Data = $null; Error = $null })
     [void]$powershell.AddScript({
-            param($Sync, $Payload, $Path)
+            param($Sync, $Payload, $Path, $LocaleText, $EnglishText)
             try {
                 if (-not [string]::IsNullOrWhiteSpace($Path) -and (Test-Path -LiteralPath $Path)) {
                     $text = [System.IO.File]::ReadAllText($Path)
@@ -13767,7 +13767,36 @@ function Start-WinToolTweakCatalogPrefetch {
                         $text = [System.Text.Encoding]::UTF8.GetString($bytes)
                     }
                 }
-                $Sync.Data = $text | ConvertFrom-Json
+                $value = $text | ConvertFrom-Json
+                $localeTable = $LocaleText
+                $englishTable = $EnglishText
+                $lookup = {
+                    param($Key)
+                    if ($null -ne $localeTable -and $localeTable.ContainsKey($Key)) { return [string]$localeTable[$Key] }
+                    if ($null -ne $englishTable -and $englishTable.ContainsKey($Key)) { return [string]$englishTable[$Key] }
+                    return $null
+                }
+                foreach ($preset in @($value.presets)) {
+                    $presetId = [string]$preset.id
+                    $name = & $lookup ("catalog.tweaks.preset.$presetId.name")
+                    if (-not [string]::IsNullOrEmpty($name)) { $preset.name = $name }
+                    $description = & $lookup ("catalog.tweaks.preset.$presetId.description")
+                    if (-not [string]::IsNullOrEmpty($description)) { $preset.description = $description }
+                }
+                foreach ($tweak in @($value.tweaks)) {
+                    $tid = [string]$tweak.id
+                    $name = & $lookup ("catalog.tweaks.$tid.name")
+                    if (-not [string]::IsNullOrEmpty($name)) { $tweak.name = $name }
+                    $description = & $lookup ("catalog.tweaks.$tid.description")
+                    if (-not [string]::IsNullOrEmpty($description)) { $tweak.description = $description }
+                    $category = [string]$tweak.category
+                    if (-not [string]::IsNullOrWhiteSpace($category)) {
+                        $slug = ($category.ToLowerInvariant() -replace '[^a-z0-9]+', '-').Trim("-")
+                        $label = & $lookup ("catalog.tweaks.category.$slug")
+                        if (-not [string]::IsNullOrEmpty($label)) { $tweak.category = $label }
+                    }
+                }
+                $Sync.Data = $value
             }
             catch {
                 $Sync.Error = $_.Exception.Message
@@ -13775,7 +13804,7 @@ function Start-WinToolTweakCatalogPrefetch {
             finally {
                 $Sync.Done = $true
             }
-        }).AddArgument($sync).AddArgument($payload).AddArgument($path)
+        }).AddArgument($sync).AddArgument($payload).AddArgument($path).AddArgument($script:WinToolText).AddArgument($script:WinToolEnglishText)
     [void]$powershell.BeginInvoke()
     $script:WinToolTweakCatalogPrefetch = @{ PowerShell = $powershell; Runspace = $runspace; Sync = $sync }
 }
@@ -13789,13 +13818,9 @@ function Complete-WinToolTweakCatalogPrefetch {
     if (-not $job.Sync.Done) { return $false }
     if ($null -ne $job.Sync.Data) {
         $value = $job.Sync.Data
-        $stamp = Get-Date
-        if (Get-Command -Name Set-WinToolCatalogLocale -ErrorAction SilentlyContinue) {
-            Set-WinToolCatalogLocale -Catalog $value -Kind "Tweaks" | Out-Null
-        }
         if ($null -eq $script:WinToolPayloadObject) { $script:WinToolPayloadObject = @{} }
         $script:WinToolPayloadObject["Tweaks"] = $value
-        Write-WinToolStartupMark -Name "catalog.Tweaks.locale" -Started $stamp
+        Write-WinToolStartupMark -Name "catalog.Tweaks"
     }
     elseif (-not [string]::IsNullOrWhiteSpace([string]$job.Sync.Error)) {
         Write-WinToolLog -Message ([string]$job.Sync.Error) -Level "warn"
@@ -27312,14 +27337,9 @@ function Start-WinToolHomeJob {
     $state = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
     if ($WithWinTool) {
         $copyStamp = Get-Date
-        $needed = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        # Only the functions the Home tweaks probe calls. A *Tweak* wildcard also
+        # copies the Tweaks page and stalls the UI thread.
         foreach ($name in @("Get-WinToolTweakProbe", "Get-WinToolTweakState", "Get-WinToolTweakStep", "Test-WinToolTweakStepState", "Add-WinToolActionStep", "Get-WinToolNote", "Get-WinToolText", "Test-WinToolTextKey", "Test-WinToolWindows", "Get-WinToolCountText", "Import-WinToolAppxModule", "Test-WinToolAdministrator")) {
-            [void]$needed.Add($name)
-        }
-        foreach ($function in @(Get-Command -Name *Tweak* -CommandType Function -ErrorAction SilentlyContinue)) {
-            [void]$needed.Add($function.Name)
-        }
-        foreach ($name in $needed) {
             $item = Get-Item -LiteralPath ("Function:" + $name) -ErrorAction SilentlyContinue
             if ($null -eq $item) { continue }
             $entry = New-Object System.Management.Automation.Runspaces.SessionStateFunctionEntry -ArgumentList $item.Name, $item.Definition
@@ -36564,14 +36584,20 @@ function Invoke-WinToolAfterFirstFrameStep {
                 }
             }
             elseif ($null -ne $hs -and [string]$hs.Phase -eq "analyzing" -and -not $hs.Pending.ContainsKey("tweaks") -and -not $hs.Results.ContainsKey("tweaks")) {
-                $ready = $false
-                try { $ready = Complete-WinToolTweakCatalogPrefetch } catch { $ready = $false }
-                if ($ready) {
+                if (-not [bool]$script:WinToolTweaksCatalogReady) {
+                    $ready = $false
+                    try {
+                        $ready = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.catalog" -Script { Complete-WinToolTweakCatalogPrefetch }
+                    }
+                    catch { $ready = $false }
+                    if ($ready) { $script:WinToolTweaksCatalogReady = $true }
+                    # Yield so locale/parse work never shares a slice with the tweaks job.
+                }
+                else {
                     $null = Invoke-WinToolMeasuredWork -Name "ui.afterFrame.tweaks" -Script {
                         Start-WinToolHomeTweakCheck
                     }
                 }
-                # Keep ticking until the catalog job finishes or analysis ends.
             }
             else {
                 $again = $false
